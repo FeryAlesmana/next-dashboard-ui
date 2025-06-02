@@ -2,31 +2,26 @@ import FormModal from "@/components/FormModal";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
-import { role, examsData } from "@/lib/data";
+import { role, eventsData } from "@/lib/data";
 import Image from "next/image";
+import Link from "next/link";
 
-type Exam = {
+type Event = {
   id: number;
-  subject: string;
+  title: string;
   class: string;
-  teacher: string;
   date: string;
   startTime: string;
   endTime: string;
 };
 const columns = [
   {
-    header: "Mata Pelajaran",
-    accessor: "Nama",
+    header: "Nama event",
+    accessor: "subjects",
   },
   {
     header: "Kelas",
     accessor: "kelas",
-  },
-  {
-    header: "Guru",
-    accessor: "teacher",
-    className: "hidden md:table-cell",
   },
   {
     header: "Tanggal",
@@ -39,24 +34,23 @@ const columns = [
     className: "hidden md:table-cell",
   },
   {
-    header: "Waktu Selesai",
+    header: "Selesai",
     accessor: "endTime",
     className: "hidden md:table-cell",
   },
   {
-    header: "Actions",
-    accessor: "Aksi",
+    header: "Aksi",
+    accessor: "action",
   },
 ];
-const ExamListPage = () => {
-  const renderRow = (item: Exam) => (
+const EventListPage = () => {
+  const renderRow = (item: Event) => (
     <tr
       key={item.id}
       className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight"
     >
-      <td className="flex items-center p-4 gap-4">{item.subject}</td>
+      <td className="flex items-center p-4 gap-4">{item.title}</td>
       <td>{item.class}</td>
-      <td className="hidden md:table-cell">{item.teacher}</td>
       <td className="hidden md:table-cell">{item.date}</td>
       <td className="hidden md:table-cell">{item.startTime}</td>
       <td className="hidden md:table-cell">{item.endTime}</td>
@@ -65,8 +59,16 @@ const ExamListPage = () => {
         <div className="flex items-center gap-2">
           {role === "admin" && (
             <>
-              <FormModal table="exam" type="update" data={item}></FormModal>
-              <FormModal table="exam" type="delete" id={item.id}></FormModal>
+                <FormModal
+                  table="event"
+                  type="update"
+                  data={item}
+                ></FormModal>
+              <FormModal
+                table="event"
+                type="delete"
+                id={item.id}
+              ></FormModal>
             </>
           )}
         </div>
@@ -78,7 +80,7 @@ const ExamListPage = () => {
     <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
       {/* TOP */}
       <div className="flex items-center justify-between">
-        <h1 className="hidden md:block text-lg font-semibold">All Exams</h1>
+        <h1 className="hidden md:block text-lg font-semibold">Semua Acara</h1>
         <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
           <TableSearch></TableSearch>
           <div className="flex items-center gap-4 self-end">
@@ -89,14 +91,21 @@ const ExamListPage = () => {
               <Image src="/sort.png" alt="" width={14} height={14}></Image>
             </button>
             {role === "admin" && (
-              <FormModal table="exam" type="create"></FormModal>
+              <FormModal
+                table="event"
+                type="create"
+              ></FormModal>
             )}
           </div>
         </div>
       </div>
       {/* LIST */}
       <div className="">
-        <Table columns={columns} renderRow={renderRow} data={examsData}></Table>
+        <Table
+          columns={columns}
+          renderRow={renderRow}
+          data={eventsData}
+        ></Table>
       </div>
       {/* PAGINATION*/}
       <div className="">
@@ -106,4 +115,4 @@ const ExamListPage = () => {
   );
 };
 
-export default ExamListPage;
+export default EventListPage;
