@@ -1,10 +1,42 @@
 "use client";
 
+import {
+  deleteClass,
+  deleteExam,
+  deleteStudent,
+  deleteSubject,
+  deleteTeacher,
+} from "@/lib/actions";
 import dynamic from "next/dynamic";
 import Image from "next/image";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import {
+  Dispatch,
+  SetStateAction,
+  useActionState,
+  useEffect,
+  useState,
+} from "react";
+import { toast } from "react-toastify";
+import { FormContainerProps } from "./FormContainer";
+import { role } from "@/lib/data";
 // import StudentForm from "./forms/StudentForm";
 // import TeacherForm from "./forms/TeacherForm";
+
+const deleteActionMap = {
+  subject: deleteSubject,
+  class: deleteClass,
+  teacher: deleteTeacher,
+  student: deleteStudent,
+  parent: deleteSubject,
+  lesson: deleteSubject,
+  exam: deleteExam,
+  assignment: deleteSubject,
+  result: deleteSubject,
+  attendance: deleteSubject,
+  event: deleteSubject,
+  announcement: deleteSubject,
+};
 
 const TeacherForm = dynamic(() => import("./forms/TeacherForm"), {
   loading: () => <h1>Loading...</h1>,
@@ -36,44 +68,86 @@ const ParentForm = dynamic(() => import("./forms/ParentForm"), {
 const ResultForm = dynamic(() => import("./forms/ResultForm"), {
   loading: () => <h1>Loading...</h1>,
 });
+const SubjectForm = dynamic(() => import("./forms/SubjectForm"), {
+  loading: () => <h1>Loading...</h1>,
+});
 
 const forms: {
-  [key: string]: (type: "create" | "update", data?: any) => JSX.Element;
+  [key: string]: (
+    setOpen: Dispatch<SetStateAction<boolean>>,
+    type: "create" | "update",
+    data?: any,
+    relatedData?: any,
+    role?:string
+  ) => JSX.Element;
 } = {
-  teacher: (type, data) => <TeacherForm type={type} />,
-  student: (type, data) => <StudentForm type={type} />,
-  announcement:(type, data) => <AnnouncementForm type={type}/>,
-  assignment:(type, data) => <AssignmentForm type={type}/>,
-  class:(type, data) => <ClassForm type={type}/>,
-  event:(type, data) => <EventsForm type={type}/>,
-  exam:(type, data) => <ExamForm type={type}/>,
-  lesson:(type, data) => <LessonForm type={type}/>,
-  parent:(type, data) => <ParentForm type={type}/>,
-  result:(type, data) => <ResultForm type={type}/>,
+  teacher: (setOpen, type, data, relatedData) => (
+    <TeacherForm
+      setOpen={setOpen}
+      type={type}
+      data={data}
+      relatedData={relatedData}
+    />
+  ),
+  student: (setOpen, type, data, relatedData) => (
+    <StudentForm
+      setOpen={setOpen}
+      type={type}
+      data={data}
+      relatedData={relatedData}
+    />
+  ),
+  subject: (setOpen, type, data, relatedData) => (
+    <SubjectForm
+      type={type}
+      setOpen={setOpen}
+      data={data}
+      relatedData={relatedData}
+    />
+  ),
+  class: (setOpen, type, data, relatedData) => (
+    <ClassForm
+      type={type}
+      setOpen={setOpen}
+      data={data}
+      relatedData={relatedData}
+    />
+  ),
+  // announcement: (setOpen, type, data) => (
+  //   <AnnouncementForm type={type} setOpen={setOpen} relatedData={relatedData} />
+  // ),
+  // assignment: (setOpen, type, data) => (
+  //   <AssignmentForm type={type} setOpen={setOpen} relatedData={relatedData} />
+  // ),
+  // event: (setOpen, type, data) => (
+  //   <EventsForm type={type} setOpen={setOpen} relatedData={relatedData} />
+  // ),
+  exam: (setOpen, type, data, relatedData) => (
+    <ExamForm
+      type={type}
+      setOpen={setOpen}
+      data={data}
+      relatedData={relatedData}
+    />
+  ),
+  // lesson: (setOpen, type, data) => (
+  //   <LessonForm type={type} setOpen={setOpen} relatedData={relatedData} />
+  // ),
+  // parent: (setOpen, type, data) => (
+  //   <ParentForm type={type} setOpen={setOpen} relatedData={relatedData} />
+  // ),
+  // result: (setOpen, type, data) => (
+  //   <ResultForm type={type} setOpen={setOpen} relatedData={relatedData} />
+  // ),
 };
 const FormModal = ({
   table,
   type,
   data,
   id,
-}: {
-  table:
-    | "teacher"
-    | "student"
-    | "parent"
-    | "subject"
-    | "class"
-    | "lesson"
-    | "exam"
-    | "assignment"
-    | "result"
-    | "attendance"
-    | "event"
-    | "announcement";
-  type: "create" | "update" | "delete";
-  data?: any;
-  id?: number;
-}) => {
+  relatedData,
+  role
+}: FormContainerProps & { relatedData?: any }) => {
   const size = type === "create" ? "w-8 h-8" : "w-7 h-7";
   const bgColor =
     type === "create"
@@ -85,9 +159,24 @@ const FormModal = ({
   const [open, setOpen] = useState(false);
 
   const Form = () => {
+    const [state, formAction] = useActionState(deleteActionMap[table], {
+      success: false,
+      error: false,
+    });
+
+    const router = useRouter();
+
+    useEffect(() => {
+      if (state.success) {
+        toast(`${table} telah berhasil di Hapus`);
+        setOpen(false);
+        router.refresh();
+      }
+    }, [state, router]);
+
     return type === "delete" && id ? (
-      <form action="" className="p4 flex flex-col gap-4">
-        {" "}
+      <form action={formAction} className="p4 flex flex-col gap-4">
+        <input type="text | number" name="id" value={id} hidden readOnly />
         <span className="text-center font-medium">
           Data akan terhapus. Apakah anda yakin?
         </span>
@@ -96,7 +185,7 @@ const FormModal = ({
         </button>
       </form>
     ) : type === "create" || type === "update" ? (
-      forms[table](type, data)
+      forms[table](setOpen, type, data, relatedData)
     ) : (
       "Form tidak ditemukan!"
     );

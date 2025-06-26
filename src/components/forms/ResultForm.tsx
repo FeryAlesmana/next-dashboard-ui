@@ -85,8 +85,10 @@ const ResultForm = ({
           error={errors?.date}
         ></InputField>
       </div>
-
-      <button>{type === "create" ? "Create" : "Update"}</button>
+      {state.error && <span className="text-red-500">Terjadi Kesalahan!</span>}
+      <button className="bg-blue-400 text-white p-2 rounded-md">
+        {type === "create" ? "Create" : "Update"}
+      </button>
     </form>
   );
 };

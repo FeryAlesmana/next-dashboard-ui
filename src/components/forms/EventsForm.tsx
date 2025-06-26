@@ -36,9 +36,7 @@ const EventsForm = ({
   return (
     <form action="" className="flex flex-col gap-8" onSubmit={onSubmit}>
       <h1 className="text-xl font-semibold">Tambah Acara Baru</h1>
-      <span className="text-xs text-gray-400 font-medium">
-        Informasi Acara
-      </span>
+      <span className="text-xs text-gray-400 font-medium">Informasi Acara</span>
       <div className="flex justify-between flex-wrap gap-4 m-4 mb-8">
         <InputField
           label="Nama Event"
@@ -80,7 +78,9 @@ const EventsForm = ({
         ></InputField>
       </div>
 
-      <button>{type === "create" ? "Create" : "Update"}</button>
+      <button className="bg-blue-400 text-white p-2 rounded-md">
+        {type === "create" ? "Create" : "Update"}
+      </button>
     </form>
   );
 };

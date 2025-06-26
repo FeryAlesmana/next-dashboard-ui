@@ -74,7 +74,9 @@ const AssignmentForm = ({
         ></InputField>
       </div>
 
-      <button>{type === "create" ? "Create" : "Update"}</button>
+      <button className="bg-blue-400 text-white p-2 rounded-md">
+        {type === "create" ? "Create" : "Update"}
+      </button>
     </form>
   );
 };

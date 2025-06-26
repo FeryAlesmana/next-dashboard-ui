@@ -3,90 +3,150 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import InputField from "../InputField";
-
-const schema = z.object({
-  exam: z.string().min(4, { message: "Nama Ujian wajib diisi!" }),
-  class: z.string().min(2, { message: "Nama Kelas wajib diisi!" }),
-  teacher: z.string().min(2, { message: "Nama Guru wajib diisi!" }),
-  date: z.string().min(2, { message: "Tannggal event wajib diisi!" }),
-  startTime: z.string().min(1, { message: "Waktu mulai event wajib diisi!" }),
-  endTime: z.string().min(1, { message: "Waktu selesai event wajib diisi!" }),
-});
-
-type Inputs = z.infer<typeof schema>;
+import {
+  Dispatch,
+  SetStateAction,
+  startTransition,
+  useActionState,
+  useEffect,
+} from "react";
+import { examSchema, ExamSchema } from "@/lib/formValidationSchema";
+import { createExam, CurrentState, updateExam } from "@/lib/actions";
+import { useRouter } from "next/navigation";
+import { toast } from "react-toastify";
 
 const ExamForm = ({
+  setOpen,
   type,
   data,
+  relatedData,
 }: {
+  setOpen: Dispatch<SetStateAction<boolean>>;
   type: "create" | "update";
   data?: any;
+  relatedData?: any;
 }) => {
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<Inputs>({
-    resolver: zodResolver(schema),
+  } = useForm<ExamSchema>({
+    resolver: zodResolver(examSchema),
   });
+  const createExamHandler = async (
+    prevState: CurrentState,
+    payload: ExamSchema
+  ): Promise<CurrentState> => {
+    return await createExam(prevState, payload);
+  };
+
+  const updateExamHandler = async (
+    prevState: CurrentState,
+    payload: ExamSchema
+  ): Promise<CurrentState> => {
+    return await updateExam(prevState, payload);
+  };
+
+  const initialState: CurrentState = {
+    success: false,
+    error: false,
+    message: "",
+  };
+  const [state, formAction] = useActionState(
+    type === "create" ? createExamHandler : updateExamHandler,
+    initialState
+  );
 
   const onSubmit = handleSubmit((data) => {
-    console.log(data);
+    startTransition(() => {
+      formAction(data);
+    });
   });
+
+  const router = useRouter();
+
+  useEffect(() => {
+    if (state.success) {
+      toast(
+        `Ujian telah berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`
+      );
+      setOpen(false);
+      router.refresh();
+    }
+  }, [state, type, setOpen, router]);
+
+  const { lessons } = relatedData;
+  const formatDateForInput = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toISOString().slice(0, 16); // returns "YYYY-MM-DDTHH:MM"
+  };
 
   return (
     <form action="" className="flex flex-col gap-8" onSubmit={onSubmit}>
-      <h1 className="text-xl font-semibold">Tambah Ujian Baru</h1>
-      <span className="text-xs text-gray-400 font-medium">
-        Informasi Ujian
-      </span>
+      <h1 className="text-xl font-semibold">
+        {type === "create" ? "Tambah Ujian baru" : "Edit Guru"}
+      </h1>
+      <span className="text-xs text-gray-400 font-medium">Informasi Ujian</span>
       <div className="flex justify-between flex-wrap gap-10 m-4 mb-8">
         <InputField
           label="Nama Ujian"
-          name="exam"
-          defaultValue={data?.exam}
+          name="title"
+          defaultValue={data?.title}
           register={register}
-          error={errors?.exam}
-        ></InputField>
-        <InputField
-          label="Kelas"
-          name="class"
-          defaultValue={data?.class}
-          register={register}
-          error={errors?.class}
-        ></InputField>
-        <InputField
-          label="Guru/Pengawas"
-          name="teacher"
-          defaultValue={data?.teacher}
-          register={register}
-          error={errors?.teacher}
-        ></InputField>
-        <InputField
-          label="Tanggal"
-          name="date"
-          type="date"
-          defaultValue={data?.date}
-          register={register}
-          error={errors?.date}
+          error={errors?.title}
         ></InputField>
         <InputField
           label="Waktu mulai"
           name="startTime"
-          defaultValue={data?.startTime}
+          defaultValue={
+            data?.startTime ? formatDateForInput(data.startTime) : ""
+          }
           register={register}
           error={errors?.startTime}
+          type="datetime-local"
         ></InputField>
         <InputField
           label="Waktu selesai"
           name="endTime"
-          defaultValue={data?.endTime}
+          defaultValue={data?.endTime ? formatDateForInput(data.endTime) : ""}
           register={register}
           error={errors?.endTime}
+          type="datetime-local"
         ></InputField>
+        <div className="flex flex-col gap-2 w-full md:w-1/4">
+          <label className="text-xs text-gray-400">Pelajaran</label>
+          <select
+            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
+            {...register("lessonId")}
+            defaultValue={data?.lessonId}
+          >
+            {lessons.map((lesson: { id: number; name: string }) => (
+              <option value={lesson.id} key={lesson.id}>
+                {lesson.name}
+              </option>
+            ))}
+          </select>
+          {errors.lessonId?.message && (
+            <p className="text-xs text-red-400">
+              {errors.lessonId.message.toString()}
+            </p>
+          )}
+        </div>
+        {data && (
+          <InputField
+            label="Id"
+            name="id"
+            defaultValue={data?.id}
+            register={register}
+            error={errors?.id}
+            hidden
+          />
+        )}
       </div>
-
-      <button>{type === "create" ? "Create" : "Update"}</button>
+      {state.error && <span className="text-red-500">Terjadi Kesalahan!</span>}
+      <button className="bg-blue-400 text-white p-2 rounded-md">
+        {type === "create" ? "Create" : "Update"}
+      </button>
     </form>
   );
 };

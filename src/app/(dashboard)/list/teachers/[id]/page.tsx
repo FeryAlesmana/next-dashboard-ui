@@ -1,13 +1,41 @@
-"use client";
+"use server";
 import Announcements from "@/components/Announcements";
-import BigCalendar from "@/components/BigCalendar";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import Image from "next/image";
 import Link from "next/link";
 import Perfomance from "@/components/Perfomance";
-import FormModal from "@/components/FormModal";
+import BigCalendarContainer from "@/components/BigCalendarContainer";
+import prisma from "@/lib/prisma";
+import { Teacher } from "@prisma/client";
+import { notFound } from "next/navigation";
+import FormContainer from "@/components/FormContainer";
+import { getCurrentUser } from "@/lib/utils";
 
-const SingleTeacherPage = () => {
+const SingleTeacherPage = async ({ params }: { params: { id: string } }) => {
+  const { id } = await params;
+  const { role } = await getCurrentUser();
+  const teacher:
+    | (Teacher & {
+        _count: { subjects: number; lessons: number; classes: number };
+      })
+    | null = await prisma.teacher.findUnique({
+    where: {
+      id,
+    },
+    include: {
+      _count: {
+        select: {
+          subjects: true,
+          lessons: true,
+          classes: true,
+        },
+      },
+    },
+  });
+
+  if (!teacher) {
+    return notFound();
+  }
   return (
     <div className="p-4 flex gap-4 flex-col xl:flex-row flex-1">
       {/* LEFT */}
@@ -18,7 +46,7 @@ const SingleTeacherPage = () => {
           <div className="bg-lamaSky py-6 px-4 rounded-md flex-1 flex gap-4">
             <div className="w-1/3">
               <Image
-                src="https://images.pexels.com/photos/2888150/pexels-photo-2888150.jpeg?auto=compress&cs=tinysrgb&w=1200"
+                src={teacher.img || "/noAvatar.png"}
                 alt=""
                 width={144}
                 height={144}
@@ -27,46 +55,38 @@ const SingleTeacherPage = () => {
             </div>
             <div className="w-2/3 flex flex-col justify-between gap-4">
               <div className="flex items-center gap-4">
-                <h1 className="text-xl font-semibold">Lenard Snyder</h1>
-                <FormModal
-                  table="teacher"
-                  type="update"
-                  data={{
-                    id: 1,
-                    username: "J.Doe",
-                    password: "123@",
-                    firstName:"John",
-                    lastName:"Doe",
-                    name: "John Doe",
-                    email: "john@doe.com",
-                    photo:
-                      "https://images.pexels.com/photos/2888150/pexels-photo-2888150.jpeg?auto=compress&cs=tinysrgb&w=1200",
-                    phone: "1234567890",
-                    sex: "male",
-                    bloodType: "B",
-                    address: "123 Main St, Anytown, USA",
-                  }}
-                ></FormModal>
+                <h1 className="text-xl font-semibold">
+                  {teacher.name + " " + teacher.surname}
+                </h1>
+                {role === "admin" && (
+                  <FormContainer
+                    table="teacher"
+                    type="update"
+                    data={teacher}
+                  ></FormContainer>
+                )}
               </div>
               <p className="text-sm text-gray-500">
                 Lorem ipsum dolor sit amet consectetur adipisicing elit.
               </p>
               <div className="flex items-center justify-between gap-2 flex-wrap text-xs font-medium">
-                <div className="w-full md:w-1/3 flex items- gap-2 ">
+                {/* <div className="w-full md:w-1/3 flex items- gap-2 ">
                   <Image src="/blood.png" alt="" width={14} height={14}></Image>
                   <span>A+</span>
-                </div>
+                </div> */}
                 <div className="w-full md:w-1/3 lg:w-full 2xl:w-1/3 flex items-center gap-2">
                   <Image src="/date.png" alt="" width={14} height={14}></Image>
-                  <span>September 2020</span>
+                  <span>
+                    {new Intl.DateTimeFormat("en-UK").format(teacher.birthday)}
+                  </span>
                 </div>
                 <div className="w-full md:w-1/3 lg:w-full 2xl:w-1/3 flex items-center gap-2">
                   <Image src="/mail.png" alt="" width={14} height={14}></Image>
-                  <span>exam@gmail.com</span>
+                  <span>{teacher.email || "-"}</span>
                 </div>
                 <div className="w-full md:w-1/3 lg:w-full 2xl:w-1/3 flex items-center gap-2">
                   <Image src="/phone.png" alt="" width={14} height={14}></Image>
-                  <span>082247571</span>
+                  <span>{teacher.phone}</span>
                 </div>
               </div>
             </div>
@@ -97,7 +117,9 @@ const SingleTeacherPage = () => {
                 className="w-6 h-6"
               ></Image>
               <div className="">
-                <h1 className="text-xl font-semibold">2</h1>
+                <h1 className="text-xl font-semibold">
+                  {teacher._count.subjects}
+                </h1>
                 <span className="text-sm text-gray-400">Cabang</span>
               </div>
             </div>
@@ -111,7 +133,9 @@ const SingleTeacherPage = () => {
                 className="w-6 h-6"
               ></Image>
               <div className="">
-                <h1 className="text-xl font-semibold">6</h1>
+                <h1 className="text-xl font-semibold">
+                  {teacher._count.lessons}
+                </h1>
                 <span className="text-sm text-gray-400">Mata Pelajaran</span>
               </div>
             </div>
@@ -125,7 +149,9 @@ const SingleTeacherPage = () => {
                 className="w-6 h-6"
               ></Image>
               <div className="">
-                <h1 className="text-xl font-semibold">6</h1>
+                <h1 className="text-xl font-semibold">
+                  {teacher._count.classes}
+                </h1>
                 <span className="text-sm text-gray-400">Kelas</span>
               </div>
             </div>
@@ -134,7 +160,7 @@ const SingleTeacherPage = () => {
         {/* BOTTOM */}
         <div className="mt-4 bg-white rounded-md p-4 h-[800px] ">
           <h1>Jadwal Guru</h1>
-          <BigCalendar />
+          <BigCalendarContainer type="teacherId" id={teacher?.id!} />
         </div>
       </div>
       {/* RIGHT */}
@@ -142,19 +168,34 @@ const SingleTeacherPage = () => {
         <div className="bg-white p-4 rounded-md">
           <h1 className="text-xl font-semibold">Shortcuts</h1>
           <div className="mt-4 flex gap-4 flex-wrap text-xs text-gray-500">
-            <Link className="p-3 rounded-md bg-lamaSkyLight" href="/">
+            <Link
+              className="p-3 rounded-md bg-lamaSkyLight"
+              href={`/list/classes?supervisorId=${"teacher2"}`}
+            >
               Kelas
             </Link>
-            <Link className="p-3 rounded-md bg-lamaPurpleLight" href="/">
+            <Link
+              className="p-3 rounded-md bg-lamaPurpleLight"
+              href={`/list/students?teacherId=${"teacher2"}`}
+            >
               Murid
             </Link>
-            <Link className="p-3 rounded-md bg-lamaYellowLight" href="/">
-              Mata Pelajaran
+            <Link
+              className="p-3 rounded-md bg-lamaYellowLight"
+              href={`/list/lessons?teacherId=${"teacher2"}`}
+            >
+              Mengajar materi
             </Link>
-            <Link className="p-3 rounded-md bg-pink-50" href="/">
+            <Link
+              className="p-3 rounded-md bg-pink-50"
+              href={`/list/exams?teacherId=${"teacher2"}`}
+            >
               Ujian
             </Link>
-            <Link className="p-3 rounded-md bg-lamaSkyLight" href="/">
+            <Link
+              className="p-3 rounded-md bg-lamaSkyLight"
+              href={`/list/assignments?teacherId=${"teacher2"}`}
+            >
               Tugas
             </Link>
           </div>
