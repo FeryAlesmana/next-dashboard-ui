@@ -9,9 +9,17 @@ cloudinary.config({
 
 import { revalidatePath } from "next/cache";
 import {
+  AnnouncementSchema,
+  AssignmentSchema,
+  ClassSchema,
   classSchema,
+  EventSchema,
   ExamSchema,
+  LessonSchema,
+  ParentSchema,
+  ResultSchema,
   StudentSchema,
+  SubjectSchema,
   subjectSchema,
   TeacherSchema,
   teacherSchema,
@@ -30,27 +38,15 @@ const client = await clerkClient();
 
 export const createSubject = async (
   currentState: CurrentState,
-  formData: FormData
-): Promise<CurrentState> => {
-  const raw = {
-    name: formData.get("name") as string,
-    teachers: formData.getAll("teachers") as string[],
-  };
-
-  const parsed = subjectSchema.safeParse(raw);
-
-  if (!parsed.success) {
-    console.log("Validation error:", parsed.error.format());
-    return { success: false, error: true };
-  }
-
+  data: SubjectSchema
+) => {
   try {
     await new Promise((resolve) => setTimeout(resolve, 1000));
     await prisma.subject.create({
       data: {
-        name: parsed.data.name,
+        name: data.name,
         teachers: {
-          connect: parsed.data.teachers.map((teacherId) => ({ id: teacherId })),
+          connect: data.teachers.map((teacherId) => ({ id: teacherId })),
         },
       },
     });
@@ -63,32 +59,18 @@ export const createSubject = async (
 
 export const updateSubject = async (
   currentState: CurrentState,
-  formData: FormData
-): Promise<CurrentState> => {
-  const raw = {
-    id: formData.get("id") ? Number(formData.get("id")) : undefined,
-    name: formData.get("name") as string,
-    teachers: formData.getAll("teachers") as string[],
-  };
-
-  const parsed = subjectSchema.safeParse(raw);
-  console.log(parsed.data + " SubjectSchema");
-
-  if (!parsed.success) {
-    console.log("Validation error:", parsed.error.format());
-    return { success: false, error: true };
-  }
-
+  data: SubjectSchema
+) => {
   try {
     await new Promise((resolve) => setTimeout(resolve, 1000));
     await prisma.subject.update({
       where: {
-        id: parsed.data.id,
+        id: data.id,
       },
       data: {
-        name: parsed.data.name,
+        name: data.name,
         teachers: {
-          set: parsed.data.teachers.map((teacherId) => ({ id: teacherId })),
+          set: data.teachers.map((teacherId) => ({ id: teacherId })),
         },
       },
     });
@@ -119,30 +101,12 @@ export const deleteSubject = async (
 
 export const createClass = async (
   currentState: CurrentState,
-  formData: FormData
+  data: ClassSchema
 ): Promise<CurrentState> => {
-  const raw = {
-    name: formData.get("name") as string,
-    capacity: formData.get("capacity")
-      ? Number(formData.get("capacity"))
-      : undefined,
-    gradeId: formData.get("gradeId")
-      ? Number(formData.get("gradeId"))
-      : undefined,
-    supervisorId: formData.get("supervisorId") as string,
-  };
-
-  const parsed = classSchema.safeParse(raw);
-
-  if (!parsed.success) {
-    console.log("Validation error:", parsed.error.format());
-    return { success: false, error: true };
-  }
-
   try {
     await new Promise((resolve) => setTimeout(resolve, 1000));
     await prisma.class.create({
-      data: parsed.data,
+      data: data,
     });
     return { success: true, error: false };
   } catch (error) {
@@ -153,37 +117,15 @@ export const createClass = async (
 
 export const updateClass = async (
   currentState: CurrentState,
-  formData: FormData
-): Promise<CurrentState> => {
-  const id = formData.get("id") as string;
-
-  const raw = {
-    id: formData.get("id") ? Number(formData.get("id")) : undefined,
-    name: formData.get("name") as string,
-    capacity: formData.get("capacity")
-      ? Number(formData.get("capacity"))
-      : undefined,
-    gradeId: formData.get("gradeId")
-      ? Number(formData.get("gradeId"))
-      : undefined,
-    supervisorId: formData.get("supervisorId") as string,
-  };
-
-  const parsed = classSchema.safeParse(raw);
-  console.log(parsed.data + " ClassSchema");
-
-  if (!parsed.success) {
-    console.log("Validation error:", parsed.error.format());
-    return { success: false, error: true };
-  }
-
+  data: ClassSchema
+) => {
   try {
     await new Promise((resolve) => setTimeout(resolve, 1000));
     await prisma.class.update({
       where: {
-        id: parsed.data.id,
+        id: data.id,
       },
-      data: parsed.data,
+      data: data,
     });
     return { success: true, error: false };
   } catch (error) {
@@ -213,23 +155,6 @@ export const createTeacher = async (
   currentState: CurrentState,
   data: TeacherSchema
 ) => {
-  // const raw = {
-  //   name: formData.get("name") as string,
-  //   capacity: formData.get("capacity")
-  //     ? Number(formData.get("capacity"))
-  //     : undefined,
-  //   gradeId: formData.get("gradeId")
-  //     ? Number(formData.get("gradeId"))
-  //     : undefined,
-  //   supervisorId: formData.get("supervisorId") as string,
-  // };
-
-  // const parsed = teacherSchema.safeParse(raw);
-
-  // if (!parsed.success) {
-  //   console.log("Validation error:", parsed.error.format());
-  //   return { success: false, error: true };
-
   try {
     const user = await client.users.createUser({
       username: data.username,
@@ -252,16 +177,39 @@ export const createTeacher = async (
         sex: data.sex,
         birthday: data.birthday,
         subjects: {
-          connect: data.subjects?.map((subjectId: string) => ({
-            id: parseInt(subjectId),
+          connect: data.subjects?.map((subjectId: number) => ({
+            id: subjectId,
+          })),
+        },
+        lessons: {
+          connect: data.lessons?.map((lessonId: number) => ({
+            id: lessonId,
+          })),
+        },
+        classes: {
+          connect: data.classes?.map((classId: number) => ({
+            id: classId,
           })),
         },
       },
     });
     return { success: true, error: false };
-  } catch (error) {
-    console.log(error + " Di server action");
-    return { success: false, error: true };
+  } catch (error: any) {
+    let message = "Unknown error";
+    // Handle Clerk API errors properly
+
+    if (
+      error?.errors &&
+      Array.isArray(error.errors) &&
+      error.errors.length > 0
+    ) {
+      message = error.errors[0].message;
+    } else if (error instanceof Error) {
+      message = error.message;
+    } else if (typeof error === "string") {
+      message = error;
+    }
+    return { success: false, error: true, message };
   }
 };
 
@@ -269,40 +217,28 @@ export const updateTeacher = async (
   currentState: CurrentState,
   data: TeacherSchema
 ) => {
-  // const id = formData.get("id") as string;
-
-  // const raw = {
-  //   id: formData.get("id") ? Number(formData.get("id")) : undefined,
-  //   name: formData.get("name") as string,
-  //   capacity: formData.get("capacity")
-  //     ? Number(formData.get("capacity"))
-  //     : undefined,
-  //   gradeId: formData.get("gradeId")
-  //     ? Number(formData.get("gradeId"))
-  //     : undefined,
-  //   supervisorId: formData.get("supervisorId") as string,
-  // };
-
-  // const parsed = teacherSchema.safeParse(raw);
-  // console.log(parsed.data + " teacherSchema");
-
-  // if (!parsed.success) {
-  //   console.log("Validation error:", parsed.error.format());
-  //   return { success: false, error: true };
-  // }
-
   try {
     if (!data.id) {
       console.log(data.id + "Data.id");
 
       return { success: false, error: true, message: "Missing teacher ID" };
     }
-    const user = await client.users.updateUser(data.id, {
-      username: data.username,
-      ...(data.password !== "" && { password: data.password }),
-      firstName: data.name,
-      lastName: data.surname,
-    });
+    let userId = data.id;
+    try {
+      const user = await client.users.updateUser(data.id, {
+        username: data.username,
+        ...(data.password !== "" && { password: data.password }),
+        firstName: data.name,
+        lastName: data.surname,
+      });
+      userId = user.id;
+    } catch (error) {
+      console.warn(
+        "⚠️ Clerk returned no user info. User may already be deleted?"
+      );
+      console.error();
+    }
+
     await new Promise((resolve) => setTimeout(resolve, 1000));
     await prisma.teacher.update({
       where: {
@@ -310,7 +246,7 @@ export const updateTeacher = async (
       },
       data: {
         ...(data.password !== "" && { password: data.password }),
-        id: user.id,
+        id: userId,
         username: data.username,
         name: data.name,
         surname: data.surname,
@@ -321,8 +257,18 @@ export const updateTeacher = async (
         sex: data.sex,
         birthday: data.birthday,
         subjects: {
-          set: data.subjects?.map((subjectId: string) => ({
-            id: parseInt(subjectId),
+          set: data.subjects?.map((subjectId: number) => ({
+            id: subjectId,
+          })),
+        },
+        lessons: {
+          set: data.lessons?.map((lessonId: number) => ({
+            id: lessonId,
+          })),
+        },
+        classes: {
+          set: data.classes?.map((classId: number) => ({
+            id: classId,
           })),
         },
       },
@@ -365,16 +311,18 @@ export const deleteTeacher = async (
         id: id,
       },
     });
+    try {
+      const deletedUser = await client.users.deleteUser(id);
 
-    const deletedUser = await client.users.deleteUser(id);
-
-    if (deletedUser) {
-      console.log("✅ User Sucessfully deleted:", deletedUser.id);
-    } else {
+      if (deletedUser) {
+        console.log("✅ User Sucessfully deleted:", deletedUser.id);
+      }
+    } catch (error) {
       console.warn(
         "⚠️ Clerk returned no user info. User may already be deleted?"
       );
     }
+
     return { success: true, error: false };
   } catch (error) {
     const message =
@@ -393,22 +341,6 @@ export const createStudent = async (
   currentState: CurrentState,
   data: StudentSchema
 ) => {
-  // const raw = {
-  //   name: formData.get("name") as string,
-  //   capacity: formData.get("capacity")
-  //     ? Number(formData.get("capacity"))
-  //     : undefined,
-  //   gradeId: formData.get("gradeId")
-  //     ? Number(formData.get("gradeId"))
-  //     : undefined,
-  //   supervisorId: formData.get("supervisorId") as string,
-  // };
-
-  // const parsed = StudentSchema.safeParse(raw);
-
-  // if (!parsed.success) {
-  //   console.log("Validation error:", parsed.error.format());
-  //   return { success: false, error: true };
   const classItem = await prisma.class.findUnique({
     where: { id: data.classId },
     include: {
@@ -450,9 +382,22 @@ export const createStudent = async (
       },
     });
     return { success: true, error: false };
-  } catch (error) {
-    console.log(error + " Di server action");
-    return { success: false, error: true };
+  } catch (error: any) {
+    let message = "Unknown error";
+    // Handle Clerk API errors properly
+
+    if (
+      error?.errors &&
+      Array.isArray(error.errors) &&
+      error.errors.length > 0
+    ) {
+      message = error.errors[0].message;
+    } else if (error instanceof Error) {
+      message = error.message;
+    } else if (typeof error === "string") {
+      message = error;
+    }
+    return { success: false, error: true, message };
   }
 };
 
@@ -460,28 +405,6 @@ export const updateStudent = async (
   currentState: CurrentState,
   data: StudentSchema
 ) => {
-  // const id = formData.get("id") as string;
-
-  // const raw = {
-  //   id: formData.get("id") ? Number(formData.get("id")) : undefined,
-  //   name: formData.get("name") as string,
-  //   capacity: formData.get("capacity")
-  //     ? Number(formData.get("capacity"))
-  //     : undefined,
-  //   gradeId: formData.get("gradeId")
-  //     ? Number(formData.get("gradeId"))
-  //     : undefined,
-  //   supervisorId: formData.get("supervisorId") as string,
-  // };
-
-  // const parsed = StudentSchema.safeParse(raw);
-  // console.log(parsed.data + " StudentSchema");
-
-  // if (!parsed.success) {
-  //   console.log("Validation error:", parsed.error.format());
-  //   return { success: false, error: true };
-  // }
-
   try {
     if (!data.id) {
       console.log(data.id + "Data.id");
@@ -555,15 +478,18 @@ export const deleteStudent = async (
       },
     });
 
-    const deletedUser = await client.users.deleteUser(id);
+    try {
+      const deletedUser = await client.users.deleteUser(id);
 
-    if (deletedUser) {
-      console.log("✅ User Sucessfully deleted:", deletedUser.id);
-    } else {
+      if (deletedUser) {
+        console.log("✅ User Sucessfully deleted:", deletedUser.id);
+      }
+    } catch (error) {
       console.warn(
         "⚠️ Clerk returned no user info. User may already be deleted?"
       );
     }
+
     return { success: true, error: false };
   } catch (error) {
     const message =
@@ -665,6 +591,558 @@ export const deleteExam = async (
       where: {
         id: parseInt(id),
         ...(role === "teacher" ? { lesson: { teacherId: userId! } } : {}),
+      },
+    });
+    return { success: true, error: false };
+  } catch (error) {
+    console.log(error + " Di server action");
+    return { success: false, error: true };
+  }
+};
+
+export const createEvent = async (
+  currentState: CurrentState,
+  data: EventSchema
+) => {
+  try {
+    await prisma.event.create({
+      data: {
+        title: data.title,
+        description: data.description,
+        startTime: new Date(data.startTime),
+        endTime: new Date(data.endTime),
+        classId: data.classId,
+      },
+    });
+    return { success: true, error: false };
+  } catch (error) {
+    console.error("Create Event error: ", error);
+    return { success: false, error: true };
+  }
+};
+
+export const updateEvent = async (
+  currentState: CurrentState,
+  data: EventSchema
+) => {
+  try {
+    await prisma.event.update({
+      where: {
+        id: data.id,
+      },
+      data: {
+        title: data.title,
+        description: data.description,
+        startTime: new Date(data.startTime),
+        endTime: new Date(data.endTime),
+        classId: data.classId,
+      },
+    });
+    return { success: true, error: false };
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === "string"
+        ? error
+        : "Unknown error";
+
+    console.error("update Ujian error: ", error);
+    return { success: false, error: true, message };
+  }
+};
+
+export const deleteEvent = async (
+  currentState: CurrentState,
+  formData: FormData
+): Promise<CurrentState> => {
+  const id = formData.get("id") as string;
+
+  try {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await prisma.event.delete({
+      where: {
+        id: parseInt(id),
+      },
+    });
+    return { success: true, error: false };
+  } catch (error) {
+    console.log(error + " Di server action");
+    return { success: false, error: true };
+  }
+};
+export const createAnnouncement = async (
+  currentState: CurrentState,
+  data: AnnouncementSchema
+) => {
+  try {
+    const classIdRaw = data.classId; // comes from the form
+    const classId = classIdRaw === undefined ? null : data.classId;
+    await prisma.announcement.create({
+      data: {
+        title: data.title,
+        description: data.description,
+        date: new Date(),
+        classId: classId,
+      },
+    });
+    return { success: true, error: false };
+  } catch (error) {
+    console.error("Create Event error: ", error);
+    return { success: false, error: true };
+  }
+};
+
+export const updateAnnouncement = async (
+  currentState: CurrentState,
+  data: AnnouncementSchema
+) => {
+  try {
+    await prisma.announcement.update({
+      where: {
+        id: data.id,
+      },
+      data: {
+        title: data.title,
+        description: data.description,
+        date: new Date(),
+        classId: data.classId,
+      },
+    });
+    return { success: true, error: false };
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === "string"
+        ? error
+        : "Unknown error";
+
+    console.error("update Ujian error: ", error);
+    return { success: false, error: true, message };
+  }
+};
+
+export const deleteAnnouncement = async (
+  currentState: CurrentState,
+  formData: FormData
+): Promise<CurrentState> => {
+  const id = formData.get("id") as string;
+
+  try {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await prisma.announcement.delete({
+      where: {
+        id: parseInt(id),
+      },
+    });
+    return { success: true, error: false };
+  } catch (error) {
+    console.log(error + " Di server action");
+    return { success: false, error: true };
+  }
+};
+
+export const createAssignment = async (
+  currentState: CurrentState,
+  data: AssignmentSchema
+) => {
+  try {
+    const { userId, role } = await getCurrentUser();
+    if (role == "teacher") {
+      const teacherLesson = await prisma.lesson.findFirst({
+        where: {
+          teacherId: userId!,
+          id: data.lessonId,
+        },
+      });
+      if (!teacherLesson) {
+        return { success: false, error: true };
+      }
+    }
+    await prisma.assignment.create({
+      data: {
+        title: data.title,
+        startDate: new Date(),
+        dueDate: data.dueDate,
+        lessonId: data.lessonId,
+      },
+    });
+    return { success: true, error: false };
+  } catch (error) {
+    console.error("Create Ujian error: ", error);
+    return { success: false, error: true };
+  }
+};
+
+export const updateAssignment = async (
+  currentState: CurrentState,
+  data: AssignmentSchema
+) => {
+  try {
+    const { userId, role } = await getCurrentUser();
+    if (role == "teacher") {
+      const teacherLesson = await prisma.lesson.findFirst({
+        where: {
+          teacherId: userId!,
+          id: data.lessonId,
+        },
+      });
+      if (!teacherLesson) {
+        return { success: false, error: true };
+      }
+    }
+    await prisma.assignment.update({
+      where: {
+        id: data.id,
+      },
+      data: {
+        title: data.title,
+        startDate: new Date(),
+        dueDate: new Date(data.dueDate),
+        lessonId: data.lessonId,
+      },
+    });
+    return { success: true, error: false };
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === "string"
+        ? error
+        : "Unknown error";
+
+    console.error("update Ujian error: ", error);
+    return { success: false, error: true, message };
+  }
+};
+
+export const deleteAssignment = async (
+  currentState: CurrentState,
+  formData: FormData
+): Promise<CurrentState> => {
+  const id = formData.get("id") as string;
+
+  try {
+    const { userId, role } = await getCurrentUser();
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await prisma.assignment.delete({
+      where: {
+        id: parseInt(id),
+        ...(role === "teacher" ? { lesson: { teacherId: userId! } } : {}),
+      },
+    });
+    return { success: true, error: false };
+  } catch (error) {
+    console.log(error + " Di server action");
+    return { success: false, error: true };
+  }
+};
+
+export const createParent = async (
+  currentState: CurrentState,
+  data: ParentSchema
+) => {
+  try {
+    const user = await client.users.createUser({
+      username: data.username,
+      password: data.password,
+      firstName: data.name,
+      lastName: data.surname,
+      publicMetadata: { role: "parent" },
+    });
+    if (user) {
+      console.log("✅ User Sucessfully created:", user.id);
+    } else {
+      console.warn(
+        "⚠️ Clerk returned no user info. User may already be created?"
+      );
+    }
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await prisma.parent.create({
+      data: {
+        id: user.id,
+        username: data.username,
+        name: data.name,
+        surname: data.surname,
+        email: data.email,
+        phone: data.phone,
+        address: data.address,
+        students: {
+          connect: data.students.map((studentId) => ({ id: studentId })),
+        },
+      },
+    });
+    return { success: true, error: false };
+  } catch (error: any) {
+    console.log(error + " Di server action");
+
+    let message = "Unknown error";
+    // Handle Clerk API errors properly
+
+    if (
+      error?.errors &&
+      Array.isArray(error.errors) &&
+      error.errors.length > 0
+    ) {
+      message = error.errors[0].message;
+    } else if (error instanceof Error) {
+      message = error.message;
+    } else if (typeof error === "string") {
+      message = error;
+    }
+    return { success: false, error: true, message };
+  }
+};
+
+export const updateParent = async (
+  currentState: CurrentState,
+  data: ParentSchema
+) => {
+  try {
+    if (!data.id) {
+      console.log(data.id + "Data.id");
+
+      return { success: false, error: true, message: "Missing Parent ID" };
+    }
+
+    const user = await client.users.updateUser(data.id, {
+      username: data.username,
+      ...(data.password !== "" && { password: data.password }),
+      firstName: data.name,
+      lastName: data.surname,
+    });
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await prisma.parent.update({
+      where: {
+        id: data.id,
+      },
+      data: {
+        ...(data.password !== "" && { password: data.password }),
+        id: user.id,
+        username: data.username,
+        name: data.name,
+        surname: data.surname,
+        email: data.email,
+        phone: data.phone,
+        address: data.address,
+        students: {
+          set: data.students.map((studentId) => ({ id: studentId })),
+        },
+      },
+    });
+    return { success: true, error: false };
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === "string"
+        ? error
+        : "Unknown error";
+
+    console.error("updateParent error:", error);
+    return { success: false, error: true, message };
+  }
+};
+export const deleteParent = async (
+  currentState: CurrentState,
+  formData: FormData
+): Promise<CurrentState> => {
+  const id = formData.get("id") as string;
+
+  try {
+    if (!id) {
+      console.log(id);
+      return { success: false, error: true, message: "Missing Parent ID" };
+    }
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await prisma.student.updateMany({
+      where: { parentId: id },
+      data: { parentId: "-" },
+    });
+    await prisma.parent.delete({
+      where: {
+        id: id,
+      },
+    });
+
+    try {
+      const deletedUser = await client.users.deleteUser(id);
+
+      if (deletedUser) {
+        console.log("✅ User Sucessfully deleted:", deletedUser.id);
+      }
+    } catch (error) {
+      console.warn(
+        "⚠️ Clerk returned no user info. User may already be deleted?"
+      );
+    }
+
+    return { success: true, error: false };
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === "string"
+        ? error
+        : "Unknown error";
+
+    console.error("Delete Parent error: ", error);
+    return { success: false, error: true, message };
+  }
+};
+
+export const createLesson = async (
+  currentState: CurrentState,
+  data: LessonSchema
+) => {
+  try {
+    await prisma.lesson.create({
+      data: {
+        name: data.name,
+        startTime: data.startTime,
+        day: data.day,
+        endTime: data.endTime,
+        subjectId: data.subjectId,
+        classId: data.classId,
+        teacherId: data.teacherId,
+      },
+    });
+    return { success: true, error: false };
+  } catch (error) {
+    console.error("Create Jadwal error: ", error);
+    return { success: false, error: true };
+  }
+};
+
+export const updateLesson = async (
+  currentState: CurrentState,
+  data: LessonSchema
+) => {
+  try {
+    await prisma.lesson.update({
+      where: {
+        id: data.id,
+      },
+      data: {
+        name: data.name,
+        startTime: data.startTime,
+        day: data.day,
+        endTime: data.endTime,
+        subjectId: data.subjectId,
+        classId: data.classId,
+        teacherId: data.teacherId,
+      },
+    });
+    return { success: true, error: false };
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === "string"
+        ? error
+        : "Unknown error";
+
+    console.error("update Ujian error: ", error);
+    return { success: false, error: true, message };
+  }
+};
+
+export const deleteLesson = async (
+  currentState: CurrentState,
+  formData: FormData
+): Promise<CurrentState> => {
+  const id = formData.get("id") as string;
+
+  try {
+    const { userId, role } = await getCurrentUser();
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await prisma.lesson.delete({
+      where: {
+        id: parseInt(id),
+      },
+    });
+    return { success: true, error: false };
+  } catch (error) {
+    console.log(error + " Di server action");
+    return { success: false, error: true };
+  }
+};
+
+export const createResult = async (
+  currentState: CurrentState,
+  data: ResultSchema
+) => {
+  try {
+    await prisma.result.create({
+      data: {
+        score: data.score,
+        studentId: data.studentId,
+        ...(data.selectedType === "Ujian" && {
+          examId: data.examId,
+          assignmentId: null,
+        }),
+        ...(data.selectedType === "Tugas" && {
+          assignmentId: data.assignmentId,
+          examId: null,
+        }),
+      },
+    });
+    return { success: true, error: false };
+  } catch (error) {
+    console.error("Create Jadwal error: ", error);
+    return { success: false, error: true };
+  }
+};
+
+export const updateResult = async (
+  currentState: CurrentState,
+  data: ResultSchema
+) => {
+  try {
+    await prisma.result.update({
+      where: {
+        id: data.id,
+      },
+      data: {
+        score: data.score,
+        studentId: data.studentId,
+        ...(data.selectedType === "Ujian" && {
+          examId: data.examId,
+          assignmentId: null,
+        }),
+        ...(data.selectedType === "Tugas" && {
+          assignmentId: data.assignmentId,
+          examId: null,
+        }),
+      },
+    });
+    return { success: true, error: false };
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === "string"
+        ? error
+        : "Unknown error";
+
+    console.error("update Ujian error: ", error);
+    return { success: false, error: true, message };
+  }
+};
+
+export const deleteResult = async (
+  currentState: CurrentState,
+  formData: FormData
+): Promise<CurrentState> => {
+  const id = formData.get("id") as string;
+
+  try {
+    const { userId, role } = await getCurrentUser();
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await prisma.result.delete({
+      where: {
+        id: parseInt(id),
       },
     });
     return { success: true, error: false };

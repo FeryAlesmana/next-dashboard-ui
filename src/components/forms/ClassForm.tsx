@@ -2,10 +2,16 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import InputField from "../InputField";
-import { Dispatch, SetStateAction, useActionState, useEffect } from "react";
+import {
+  Dispatch,
+  SetStateAction,
+  startTransition,
+  useActionState,
+  useEffect,
+} from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
-import { createClass, updateClass } from "@/lib/actions";
+import { createClass, CurrentState, updateClass } from "@/lib/actions";
 import { classSchema, ClassSchema } from "@/lib/formValidationSchema";
 
 const ClassForm = ({
@@ -27,18 +33,34 @@ const ClassForm = ({
     resolver: zodResolver(classSchema),
   });
 
+  const createClassHandler = async (
+    prevState: CurrentState,
+    payload: ClassSchema
+  ): Promise<CurrentState> => {
+    return await createClass(prevState, payload);
+  };
+
+  const updateClassHandler = async (
+    prevState: CurrentState,
+    payload: ClassSchema
+  ): Promise<CurrentState> => {
+    return await updateClass(prevState, payload);
+  };
+
   const [state, formAction] = useActionState(
-    type === "create" ? createClass : updateClass,
+    type === "create" ? createClassHandler : updateClassHandler,
     {
       success: false,
       error: false,
+      message: "",
     }
   );
 
-  // const onSubmit = handleSubmit((data) => {
-  //   console.log(data);
-  //   formAction(data);
-  // });
+  const onSubmit = handleSubmit((data) => {
+    startTransition(() => {
+      formAction(data);
+    });
+  });
 
   const router = useRouter();
 
@@ -55,8 +77,10 @@ const ClassForm = ({
   const { teachers, grades } = relatedData;
 
   return (
-    <form action={formAction} className="flex flex-col gap-8">
-      <h1 className="text-xl font-semibold">Tambah Kelas Baru</h1>
+    <form action="" className="flex flex-col gap-8" onSubmit={onSubmit}>
+      <h1 className="text-xl font-semibold">
+        {type === "create" ? "Tambah Kelas baru" : "Edit Kelas"}
+      </h1>
       <span className="text-xs text-gray-400 font-medium">Informasi Kelas</span>
       <div className="flex justify-between flex-wrap gap-4 m-4 mb-8">
         <InputField
@@ -92,8 +116,15 @@ const ClassForm = ({
                 </option>
               )
             )}
-            {type === "update" && (
-              <input type="hidden" name="id" value={data?.id} readOnly />
+            {data && (
+              <InputField
+                label="Id"
+                name="id"
+                defaultValue={data?.id}
+                register={register}
+                error={errors?.id}
+                hidden
+              />
             )}
           </select>
           {errors.supervisorId?.message && (
@@ -126,6 +157,16 @@ const ClassForm = ({
           )}
         </div>
       </div>
+      {(state.error || Object.keys(errors).length > 0) && (
+        <span className="text-red-500">
+          Terjadi Kesalahan! {state.message ?? ""}
+          <pre>
+            {Object.entries(errors)
+              .map(([key, val]) => `${key}: ${val?.message}`)
+              .join("\n")}
+          </pre>
+        </span>
+      )}
 
       <button className="bg-blue-400 text-white p-2 rounded-md">
         {type === "create" ? "Create" : "Update"}

@@ -1,47 +1,88 @@
 "use client";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
+import { Controller, useForm } from "react-hook-form";
 import InputField from "../InputField";
-import Image from "next/image";
-
-const schema = z.object({
-  username: z
-    .string()
-    .min(3, { message: "Username harus lebih dari 3 karakter!" })
-    .max(20, { message: "Username harus kurang dari 20 karakter!" }),
-  email: z.string().email({ message: "Email anda Tidak valid!" }),
-  password: z
-    .string()
-    .min(8, { message: "Password harus mempunyai 8 karakter!" }),
-  firstName: z.string().min(1, { message: "Nama depan wajib diisi!" }),
-  lastName: z.string().min(1, { message: "Nama belakang wajib diisi!" }),
-  student: z.string().min(1, { message: "Nama murid wajib diisi!" }),
-  phone: z.string().min(1, { message: "Nomor telepon wajib diisi!" }),
-  sex: z.enum(["male", "female"], { message: "Jenis Kelamin wajib diisi!" }),
-  address: z.string().min(1, { message: "Alamat wajib diisi!" }),
-});
-
-type Inputs = z.infer<typeof schema>;
+import { parentSchema, ParentSchema } from "@/lib/formValidationSchema";
+import {
+  Dispatch,
+  SetStateAction,
+  startTransition,
+  useActionState,
+  useEffect,
+} from "react";
+import { useRouter } from "next/navigation";
+import { createParent, CurrentState, updateParent } from "@/lib/actions";
+import { toast } from "react-toastify";
+import Select from "react-select";
 
 const ParentForm = ({
+  setOpen,
   type,
   data,
+  relatedData,
 }: {
+  setOpen: Dispatch<SetStateAction<boolean>>;
   type: "create" | "update";
   data?: any;
+  relatedData?: any;
 }) => {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
-  } = useForm<Inputs>({
-    resolver: zodResolver(schema),
+  } = useForm<ParentSchema>({
+    resolver: zodResolver(parentSchema),
   });
+  const createParentHandler = async (
+    prevState: CurrentState,
+    payload: ParentSchema
+  ): Promise<CurrentState> => {
+    return await createParent(prevState, payload);
+  };
+
+  const updateParentHandler = async (
+    prevState: CurrentState,
+    payload: ParentSchema
+  ): Promise<CurrentState> => {
+    return await updateParent(prevState, payload);
+  };
+
+  const [state, formAction] = useActionState(
+    type === "create" ? createParentHandler : updateParentHandler,
+    {
+      success: false,
+      error: false,
+      message: "",
+    }
+  );
 
   const onSubmit = handleSubmit((data) => {
-    console.log(data);
+    startTransition(() => {
+      formAction(data);
+    });
   });
+
+  const router = useRouter();
+
+  useEffect(() => {
+    if (state.success) {
+      toast(
+        `Orang tua telah berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`
+      );
+      setOpen(false);
+      router.refresh();
+    }
+  }, [state, type, setOpen, router]);
+
+  const { students = [] } = relatedData ?? {};
+
+  const studentOptions = students.map(
+    (student: { id: string; name: string; surname: string }) => ({
+      value: student.id,
+      label: `${student.name} ${student.surname}`,
+    })
+  );
 
   return (
     <form action="" className="flex flex-col gap-8" onSubmit={onSubmit}>
@@ -80,17 +121,17 @@ const ParentForm = ({
       <div className="flex justify-between flex-wrap gap-4">
         <InputField
           label="Nama depan"
-          name="firstName"
-          defaultValue={data?.firstName}
+          name="name"
+          defaultValue={data?.name}
           register={register}
-          error={errors?.firstName}
+          error={errors?.name}
         ></InputField>
         <InputField
           label="Nama Belakang"
-          name="lastName"
-          defaultValue={data?.lastName}
+          name="surname"
+          defaultValue={data?.surname}
           register={register}
-          error={errors?.lastName}
+          error={errors?.surname}
         ></InputField>
         <InputField
           label="No. Telepon"
@@ -106,30 +147,66 @@ const ParentForm = ({
           register={register}
           error={errors?.address}
         ></InputField>
-        <InputField
-          label="Nama Murid"
-          name="student"
-          defaultValue={data?.student}
-          register={register}
-          error={errors?.student}
-        ></InputField>
         <div className="flex flex-col gap-2 w-full md:w-1/4">
-          <label className="text-xs text-gray-400">Jenis Kelamin</label>
-          <select
-            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
-            {...register("sex")}
-            defaultValue={data?.sex}
-          >
-            <option value="male">Lelaki</option>
-            <option value="female">Perempuan</option>
-          </select>
-          {errors.sex?.message && (
+          <label className="text-xs text-gray-400">Siswa</label>
+
+          <Controller
+            name="students"
+            control={control}
+            defaultValue={
+              data?.students?.map((student: { id: string }) => student.id) || []
+            }
+            render={({ field }) => {
+              const selectedValues = studentOptions.filter(
+                (opt: { value: string; label: string }) =>
+                  field.value?.includes(opt.value)
+              );
+
+              return (
+                <Select
+                  {...field}
+                  isMulti
+                  options={studentOptions}
+                  className="text-sm"
+                  classNamePrefix="select"
+                  placeholder="Cari siswa..."
+                  value={selectedValues}
+                  onChange={(selectedOptions) => {
+                    field.onChange(selectedOptions.map((opt) => opt.value));
+                  }}
+                />
+              );
+            }}
+          />
+
+          {errors.students?.message && (
             <p className="text-xs text-red-400">
-              {errors.sex.message.toString()}
+              {errors.students.message.toString()}
             </p>
           )}
         </div>
+        {data && (
+          <InputField
+            label="Id"
+            name="id"
+            defaultValue={data?.id}
+            register={register}
+            error={errors?.id}
+            hidden
+          />
+        )}
       </div>
+      {(state.error || Object.keys(errors).length > 0) && (
+        <span className="text-red-500">
+          Terjadi Kesalahan! {state.message ?? ""}
+          <pre>
+            {Object.entries(errors)
+              .map(([key, val]) => `${key}: ${val?.message}`)
+              .join("\n")}
+          </pre>
+        </span>
+      )}
+
       <button className="bg-blue-400 text-white p-2 rounded-md">
         {type === "create" ? "Create" : "Update"}
       </button>

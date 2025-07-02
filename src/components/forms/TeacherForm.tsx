@@ -1,6 +1,6 @@
 "use client";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import InputField from "../InputField";
 import Image from "next/image";
 import {
@@ -17,6 +17,8 @@ import { toast } from "react-toastify";
 import { createTeacher, CurrentState, updateTeacher } from "@/lib/actions";
 import { useFormState } from "react-dom";
 import { CldUploadWidget } from "next-cloudinary";
+import Select from "react-select";
+import { Day } from "@prisma/client";
 
 const TeacherForm = ({
   type,
@@ -32,10 +34,18 @@ const TeacherForm = ({
   const {
     register,
     handleSubmit,
+    control,
+    reset,
     formState: { errors },
   } = useForm<TeacherSchema>({
     resolver: zodResolver(teacherSchema),
+    defaultValues: {
+      subjects: [],
+      lessons: [],
+      classes: [],
+    },
   });
+  console.log("✅ TeacherForm rendered");
 
   const [img, setImg] = useState<any>();
   // const [state, formAction] = useActionState(
@@ -54,6 +64,7 @@ const TeacherForm = ({
   );
 
   const onSubmit = handleSubmit((data) => {
+    console.log("✅ Form data ready to submit:", data);
     startTransition(() => {
       formAction({ ...data, img: img?.secure_url });
     });
@@ -61,7 +72,36 @@ const TeacherForm = ({
 
   const router = useRouter();
 
+  const { subjects = [], classes = [], lessons = [] } = relatedData ?? {};
+  const subjectOption = subjects.map(
+    (subject: { id: number; name: string }) => ({
+      value: subject.id,
+      label: `${subject.name}`,
+    })
+  );
+  const classOptions = classes.map((kelas: { id: number; name: string }) => ({
+    value: kelas.id,
+    label: `${kelas.name}`,
+  }));
+  const lessonOptions = lessons.map(
+    (lesson: { id: number; name: string; day: Day }) => ({
+      value: lesson.id,
+      label: `${lesson.name} ${lesson.day}`,
+    })
+  );
   useEffect(() => {
+    console.log("✅ data received:", data);
+    if (type === "update" && data?.subjects) {
+      reset({
+        ...data,
+        birthday: data?.birthday
+          ? new Date(data.birthday).toISOString().split("T")[0]
+          : "",
+        subjects: data.subjects.map((s: { id: number }) => s.id),
+        lessons: data.lessons.map((l: { id: number }) => l.id),
+        classes: data.classes.map((c: { id: number }) => c.id),
+      });
+    }
     if (state.success) {
       toast(
         `Guru telah berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`
@@ -69,9 +109,7 @@ const TeacherForm = ({
       setOpen(false);
       router.refresh();
     }
-  }, [state, type, setOpen, router]);
-
-  const { subjects } = relatedData;
+  }, [state, type, setOpen, router, data, reset]);
 
   return (
     <form action="" className="flex flex-col gap-8" onSubmit={onSubmit}>
@@ -168,11 +206,6 @@ const TeacherForm = ({
           label="Birthday"
           name="birthday"
           type="date"
-          defaultValue={
-            data?.birthday
-              ? new Date(data.birthday).toISOString().split("T")[0]
-              : ""
-          }
           register={register}
           error={errors?.birthday}
         ></InputField>
@@ -203,7 +236,7 @@ const TeacherForm = ({
             </p>
           )}
         </div>
-        <div className="flex flex-col gap-2 w-full md:w-1/4">
+        {/* <div className="flex flex-col gap-2 w-full md:w-1/4">
           <label className="text-xs text-gray-400">Mata Pelajaaran</label>
           <select
             multiple
@@ -222,9 +255,133 @@ const TeacherForm = ({
               {errors.subjects.message.toString()}
             </p>
           )}
+        </div> */}
+        <div className="flex flex-col gap-2 w-full md:w-1/4">
+          <label className="text-xs text-gray-400">Mata Pelajaran</label>
+
+          <Controller
+            name="subjects"
+            control={control}
+            render={({ field }) => {
+              const selectedValues = subjectOption.filter(
+                (opt: { value: number; label: string }) =>
+                  field.value?.includes(opt.value)
+              );
+              return (
+                <Select
+                  {...field}
+                  isMulti
+                  options={subjectOption}
+                  value={selectedValues}
+                  onChange={(selected) => {
+                    field.onChange(selected.map((opt) => opt.value));
+                  }}
+                />
+              );
+            }}
+          />
+
+          {errors.subjects?.message && (
+            <p className="text-xs text-red-400">
+              {errors.subjects.message.toString()}
+            </p>
+          )}
+        </div>
+        <div className="flex flex-col gap-2 w-full md:w-1/4">
+          <label className="text-xs text-gray-400">Jadwal</label>
+
+          <Controller
+            name="lessons"
+            control={control}
+            defaultValue={
+              data?.lessons?.map(
+                (lesson: { id: number; name: string; day: Day }) => lesson.id
+              ) || []
+            }
+            render={({ field }) => {
+              const selectedValues = lessonOptions.filter(
+                (opt: { value: number; label: string }) =>
+                  field.value?.includes(opt.value)
+              );
+              return (
+                <Select
+                  {...field}
+                  isMulti
+                  options={lessonOptions}
+                  className="text-sm"
+                  classNamePrefix="select"
+                  placeholder="Cari Jadwal..."
+                  value={selectedValues}
+                  onChange={(selectedOptions) => {
+                    field.onChange(
+                      selectedOptions.map((opt) => Number(opt.value))
+                    );
+                  }}
+                />
+              );
+            }}
+          />
+
+          {errors.lessons?.message && (
+            <p className="text-xs text-red-400">
+              {errors.lessons.message.toString()}
+            </p>
+          )}
+        </div>
+        <div className="flex flex-col gap-2 w-full md:w-1/4">
+          <label className="text-xs text-gray-400">Kelas</label>
+
+          <Controller
+            name="classes"
+            control={control}
+            defaultValue={
+              data?.classes?.map(
+                (kelas: { id: number; name: string }) => kelas.id
+              ) || []
+            }
+            render={({ field }) => {
+              const selectedValues = classOptions.filter(
+                (opt: { value: number; label: string }) =>
+                  field.value?.includes(opt.value)
+              );
+
+              return (
+                <Select
+                  {...field}
+                  isMulti
+                  options={classOptions}
+                  className="text-sm"
+                  classNamePrefix="select"
+                  placeholder="Cari Kelas..."
+                  value={selectedValues}
+                  onChange={(selectedOptions) => {
+                    field.onChange(
+                      selectedOptions.map((opt) => Number(opt.value))
+                    );
+                  }}
+                />
+              );
+            }}
+          />
+
+          {errors.classes?.message && (
+            <p className="text-xs text-red-400">
+              {errors.classes.message.toString()}
+            </p>
+          )}
         </div>
       </div>
-     {state.error && <span className="text-red-500">Terjadi Kesalahan!</span>}
+      {(state.error || Object.keys(errors).length > 0) && (
+        <span className="text-red-500">
+          Terjadi Kesalahan! {state.message ?? ""}
+          <pre>
+            {Object.entries(errors)
+              .map(([key, val]) => `${key}: ${val?.message}`)
+              .join("\n")}
+          </pre>
+        </span>
+      )}
+
       <button className="bg-blue-400 text-white p-2 rounded-md">
         {type === "create" ? "Create" : "Update"}
       </button>

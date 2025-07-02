@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { currentUser } from "@clerk/nextjs/server";
+import { SignOutButton, UserButton } from "@clerk/nextjs";
 
 const menuItems = [
   {
@@ -44,9 +45,9 @@ const menuItems = [
       },
       {
         icon: "/lesson.png",
-        label: "Lessons",
+        label: "Jadwal",
         href: "/list/lessons",
-        visible: ["admin", "teacher"],
+        visible: ["admin", "teacher", "student", "parent"],
       },
       {
         icon: "/exam.png",
@@ -56,19 +57,19 @@ const menuItems = [
       },
       {
         icon: "/assignment.png",
-        label: "Assignments",
+        label: "Tugas",
         href: "/list/assignments",
         visible: ["admin", "teacher", "student", "parent"],
       },
       {
         icon: "/result.png",
-        label: "Results",
+        label: "Nilai",
         href: "/list/results",
         visible: ["admin", "teacher", "student", "parent"],
       },
       {
         icon: "/attendance.png",
-        label: "Attendance",
+        label: "Kehadiran",
         href: "/list/attendance",
         visible: ["admin", "teacher", "student", "parent"],
       },
@@ -80,13 +81,13 @@ const menuItems = [
       },
       {
         icon: "/message.png",
-        label: "Messages",
+        label: "Pesan",
         href: "/list/messages",
         visible: ["admin", "teacher", "student", "parent"],
       },
       {
         icon: "/announcement.png",
-        label: "Announcements",
+        label: "Pemberitahuan",
         href: "/list/announcements",
         visible: ["admin", "teacher", "student", "parent"],
       },
@@ -98,7 +99,7 @@ const menuItems = [
       {
         icon: "/profile.png",
         label: "Profile",
-        href: "/profile",
+        href: "",
         visible: ["admin", "teacher", "student", "parent"],
       },
       {
@@ -110,8 +111,9 @@ const menuItems = [
       {
         icon: "/logout.png",
         label: "Logout",
-        href: "/logout",
+        href: "",
         visible: ["admin", "teacher", "student", "parent"],
+        action: "logout",
       },
     ],
   },
@@ -120,6 +122,13 @@ const menuItems = [
 const Menu = async () => {
   const user = await currentUser();
   const role = user?.publicMetadata.role as string;
+  const userId = user?.id;
+  const profileHref =
+    role === "student"
+      ? `/list/students/${userId}`
+      : role === "teacher"
+      ? `/list/teachers/${userId}`
+      : "/profile"; // fallback for other roles
   return (
     <div className="mt-4 text-sm">
       {menuItems.map((i) => (
@@ -129,9 +138,22 @@ const Menu = async () => {
           </span>
           {i.items.map((item) => {
             if (item.visible.includes(role)) {
+               // Override profile href dynamically
+              const href =
+                item.label === "Profile" ? profileHref : item.href;
+              if (item.action === "logout") {
+                return (
+                  <SignOutButton key={item.label}>
+                    <button className="flex items-center justify-center lg:justify-start gap-4 text-gray-500 py-2 rounded-md md:px-2 hover:bg-lamaSkyLight">
+                      <Image src={item.icon} alt="" width={20} height={20} />
+                      <span className="hidden lg:block">{item.label}</span>
+                    </button>
+                  </SignOutButton>
+                );
+              }
               return (
                 <Link
-                  href={item.href}
+                  href={href}
                   key={item.label}
                   className="flex items-center justify-center lg:justify-start gap-4 text-gray-500 py-2 rounded-md md:px-2 hover:bg-lamaSkyLight"
                 >

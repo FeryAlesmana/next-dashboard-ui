@@ -1,5 +1,4 @@
-
-import FormModal from "@/components/FormModal";
+import FormContainer from "@/components/FormContainer";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
@@ -52,19 +51,29 @@ const renderRow = (item: AssignmentList) => (
     <td className="hidden md:table-cell">{item.lesson.teacher.name}</td>
     <td className="hidden md:table-cell">
       {" "}
-      {new Intl.DateTimeFormat("en-US").format(item.dueDate)}
+      {item.dueDate.toLocaleDateString("en-UK", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+        day: "numeric",
+        month: "numeric",
+      })}
     </td>
 
     <td>
       <div className="flex items-center gap-2">
         {(role === "admin" || role === "teacher") && (
           <>
-            <FormModal table="assignment" type="update" data={item}></FormModal>
-            <FormModal
+            <FormContainer
+              table="assignment"
+              type="update"
+              data={item}
+            ></FormContainer>
+            <FormContainer
               table="assignment"
               type="delete"
               id={item.id}
-            ></FormModal>
+            ></FormContainer>
           </>
         )}
       </div>
@@ -101,7 +110,6 @@ const AssignmentListPage = async ({
         }
     }
   }
-  
 
   // ROLE CONDITION
 
@@ -109,13 +117,22 @@ const AssignmentListPage = async ({
     case "admin":
       break;
     case "teacher":
-      query.lesson.teacherId = userId!;
+      const teacher = await prisma.teacher.findUnique({
+        where: { id: userId! },
+        include: { classes: true },
+      });
+
+      const classIds = teacher?.classes.map((cls) => cls.id) ?? [];
+
+      query.lesson.classId = {
+        in: classIds,
+      };
       break;
     case "student":
       query.lesson.class = {
         students: {
           some: {
-            id: userId!
+            id: userId!,
           },
         },
       };
@@ -124,7 +141,7 @@ const AssignmentListPage = async ({
       query.lesson.class = {
         students: {
           some: {
-            parentId: userId!
+            parentId: userId!,
           },
         },
       };
@@ -164,8 +181,8 @@ const AssignmentListPage = async ({
             <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
               <Image src="/sort.png" alt="" width={14} height={14}></Image>
             </button>
-            {role === "admin" && (
-              <FormModal table="assignment" type="create"></FormModal>
+            {(role === "admin" || role === "teacher") && (
+              <FormContainer table="assignment" type="create"></FormContainer>
             )}
           </div>
         </div>

@@ -6,14 +6,20 @@ import Link from "next/link";
 import Perfomance from "@/components/Perfomance";
 import BigCalendarContainer from "@/components/BigCalendarContainer";
 import prisma from "@/lib/prisma";
-import { Teacher } from "@prisma/client";
+import { Class, Teacher } from "@prisma/client";
 import { notFound } from "next/navigation";
 import FormContainer from "@/components/FormContainer";
 import { getCurrentUser } from "@/lib/utils";
+import EmailCopy from "@/components/EmailCopy";
 
 const SingleTeacherPage = async ({ params }: { params: { id: string } }) => {
   const { id } = await params;
-  const { role } = await getCurrentUser();
+  const { userId, role } = await getCurrentUser();
+
+  // Block users from viewing others' profiles unless they are admin
+  if (role !== "admin" && userId !== params.id) {
+    return notFound();
+  }
   const teacher:
     | (Teacher & {
         _count: { subjects: number; lessons: number; classes: number };
@@ -23,6 +29,9 @@ const SingleTeacherPage = async ({ params }: { params: { id: string } }) => {
       id,
     },
     include: {
+      subjects: true,
+      lessons: true,
+      classes: true,
       _count: {
         select: {
           subjects: true,
@@ -80,10 +89,7 @@ const SingleTeacherPage = async ({ params }: { params: { id: string } }) => {
                     {new Intl.DateTimeFormat("en-UK").format(teacher.birthday)}
                   </span>
                 </div>
-                <div className="w-full md:w-1/3 lg:w-full 2xl:w-1/3 flex items-center gap-2">
-                  <Image src="/mail.png" alt="" width={14} height={14}></Image>
-                  <span>{teacher.email || "-"}</span>
-                </div>
+                <EmailCopy email={teacher.email} />
                 <div className="w-full md:w-1/3 lg:w-full 2xl:w-1/3 flex items-center gap-2">
                   <Image src="/phone.png" alt="" width={14} height={14}></Image>
                   <span>{teacher.phone}</span>
@@ -170,31 +176,31 @@ const SingleTeacherPage = async ({ params }: { params: { id: string } }) => {
           <div className="mt-4 flex gap-4 flex-wrap text-xs text-gray-500">
             <Link
               className="p-3 rounded-md bg-lamaSkyLight"
-              href={`/list/classes?supervisorId=${"teacher2"}`}
+              href={`/list/classes?supervisorId=${teacher.id}`}
             >
               Kelas
             </Link>
             <Link
               className="p-3 rounded-md bg-lamaPurpleLight"
-              href={`/list/students?teacherId=${"teacher2"}`}
+              href={`/list/students?teacherId=${teacher.id}`}
             >
               Murid
             </Link>
             <Link
               className="p-3 rounded-md bg-lamaYellowLight"
-              href={`/list/lessons?teacherId=${"teacher2"}`}
+              href={`/list/lessons?teacherId=${teacher.id}`}
             >
               Mengajar materi
             </Link>
             <Link
               className="p-3 rounded-md bg-pink-50"
-              href={`/list/exams?teacherId=${"teacher2"}`}
+              href={`/list/exams?teacherId=${teacher.id}`}
             >
               Ujian
             </Link>
             <Link
               className="p-3 rounded-md bg-lamaSkyLight"
-              href={`/list/assignments?teacherId=${"teacher2"}`}
+              href={`/list/assignments?teacherId=${teacher.id}`}
             >
               Tugas
             </Link>

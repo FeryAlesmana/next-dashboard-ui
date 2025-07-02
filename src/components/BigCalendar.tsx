@@ -14,7 +14,6 @@ const BigCalendar = ({
   const handleOnChangeView = (selectedView: View) => {
     setView(selectedView);
   };
-    console.log(data);
 
   return (
     <Calendar

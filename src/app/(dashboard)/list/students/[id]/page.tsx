@@ -15,6 +15,12 @@ import FormContainer from "@/components/FormContainer";
 
 const SingleStudentPage = async ({ params }: { params: { id: string } }) => {
   const { id } = await params;
+  const { userId, role } = await getCurrentUser();
+
+  // Block users from viewing others' profiles unless they are admin
+  if (role !== "admin" && userId !== params.id) {
+    return notFound();
+  }
   const student:
     | (Student & {
         class: Class & { _count: { lessons: number } };
@@ -31,7 +37,6 @@ const SingleStudentPage = async ({ params }: { params: { id: string } }) => {
     return notFound();
   }
   const classId = student.class?.id;
-  const { role } = await getCurrentUser();
   return (
     <div className="p-4 flex gap-4 flex-col xl:flex-row flex-1">
       {/* LEFT */}
@@ -165,31 +170,31 @@ const SingleStudentPage = async ({ params }: { params: { id: string } }) => {
           <div className="mt-4 flex gap-4 flex-wrap text-xs text-gray-500">
             <Link
               className="p-3 rounded-md bg-lamaSkyLight"
-              href={`/list/lessons?classId=${2}`}
+              href={`/list/lessons?classId=${classId}`}
             >
               Mata Pelajaran
             </Link>
             <Link
               className="p-3 rounded-md bg-lamaPurpleLight"
-              href={`/list/teachers?classId=${2}`}
+              href={`/list/teachers?classId=${classId}`}
             >
               Guru murid
             </Link>
             <Link
               className="p-3 rounded-md bg-pink-50"
-              href={`/list/exams?classId=${2}`}
+              href={`/list/exams?classId=${classId}`}
             >
               Ujian
             </Link>
             <Link
               className="p-3 rounded-md bg-lamaSkyLight"
-              href={`/list/assignments?classId=${2}`}
+              href={`/list/assignments?classId=${classId}`}
             >
               Tugas
             </Link>
             <Link
               className="p-3 rounded-md bg-lamaYellowLight"
-              href={`/list/results?studentId=${"student2"}`}
+              href={`/list/results?studentId=${student.id}`}
             >
               Hasil
             </Link>

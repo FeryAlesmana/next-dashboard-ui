@@ -56,10 +56,24 @@ const renderRow = (item: ExamList) => (
       {item.lesson.teacher.name + " " + item.lesson.teacher.surname}
     </td>
     <td className="hidden md:table-cell">
-      {new Intl.DateTimeFormat("en-US").format(item.startTime)}
+      {" "}
+      {item.startTime.toLocaleDateString("en-UK", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+        day: "numeric",
+        month: "numeric",
+      })}
     </td>
     <td className="hidden md:table-cell">
-      {new Intl.DateTimeFormat("en-US").format(item.endTime)}
+      {" "}
+      {item.endTime.toLocaleDateString("en-UK", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+        day: "numeric",
+        month: "numeric",
+      })}
     </td>
 
     <td>

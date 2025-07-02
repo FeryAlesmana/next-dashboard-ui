@@ -1,8 +1,14 @@
 "use client";
 
 import {
+  deleteAnnouncement,
+  deleteAssignment,
   deleteClass,
+  deleteEvent,
   deleteExam,
+  deleteLesson,
+  deleteParent,
+  deleteResult,
   deleteStudent,
   deleteSubject,
   deleteTeacher,
@@ -28,14 +34,14 @@ const deleteActionMap = {
   class: deleteClass,
   teacher: deleteTeacher,
   student: deleteStudent,
-  parent: deleteSubject,
-  lesson: deleteSubject,
+  parent: deleteParent,
+  lesson: deleteLesson,
   exam: deleteExam,
-  assignment: deleteSubject,
-  result: deleteSubject,
+  assignment: deleteAssignment,
+  result: deleteResult,
   attendance: deleteSubject,
-  event: deleteSubject,
-  announcement: deleteSubject,
+  event: deleteEvent,
+  announcement: deleteAnnouncement,
 };
 
 const TeacherForm = dynamic(() => import("./forms/TeacherForm"), {
@@ -78,7 +84,7 @@ const forms: {
     type: "create" | "update",
     data?: any,
     relatedData?: any,
-    role?:string
+    role?: string
   ) => JSX.Element;
 } = {
   teacher: (setOpen, type, data, relatedData) => (
@@ -113,15 +119,30 @@ const forms: {
       relatedData={relatedData}
     />
   ),
-  // announcement: (setOpen, type, data) => (
-  //   <AnnouncementForm type={type} setOpen={setOpen} relatedData={relatedData} />
-  // ),
-  // assignment: (setOpen, type, data) => (
-  //   <AssignmentForm type={type} setOpen={setOpen} relatedData={relatedData} />
-  // ),
-  // event: (setOpen, type, data) => (
-  //   <EventsForm type={type} setOpen={setOpen} relatedData={relatedData} />
-  // ),
+  announcement: (setOpen, type, data, relatedData) => (
+    <AnnouncementForm
+      setOpen={setOpen}
+      type={type}
+      data={data}
+      relatedData={relatedData}
+    />
+  ),
+  assignment: (setOpen, type, data, relatedData) => (
+    <AssignmentForm
+      setOpen={setOpen}
+      type={type}
+      data={data}
+      relatedData={relatedData}
+    />
+  ),
+  event: (setOpen, type, data, relatedData) => (
+    <EventsForm
+      setOpen={setOpen}
+      type={type}
+      data={data}
+      relatedData={relatedData}
+    />
+  ),
   exam: (setOpen, type, data, relatedData) => (
     <ExamForm
       type={type}
@@ -130,15 +151,30 @@ const forms: {
       relatedData={relatedData}
     />
   ),
-  // lesson: (setOpen, type, data) => (
-  //   <LessonForm type={type} setOpen={setOpen} relatedData={relatedData} />
-  // ),
-  // parent: (setOpen, type, data) => (
-  //   <ParentForm type={type} setOpen={setOpen} relatedData={relatedData} />
-  // ),
-  // result: (setOpen, type, data) => (
-  //   <ResultForm type={type} setOpen={setOpen} relatedData={relatedData} />
-  // ),
+  lesson: (setOpen, type, data, relatedData) => (
+    <LessonForm
+      type={type}
+      setOpen={setOpen}
+      data={data}
+      relatedData={relatedData}
+    />
+  ),
+  parent: (setOpen, type, data, relatedData) => (
+    <ParentForm
+      type={type}
+      setOpen={setOpen}
+      data={data}
+      relatedData={relatedData}
+    />
+  ),
+  result: (setOpen, type, data, relatedData) => (
+    <ResultForm
+      type={type}
+      setOpen={setOpen}
+      data={data}
+      relatedData={relatedData}
+    />
+  ),
 };
 const FormModal = ({
   table,
@@ -146,7 +182,7 @@ const FormModal = ({
   data,
   id,
   relatedData,
-  role
+  role,
 }: FormContainerProps & { relatedData?: any }) => {
   const size = type === "create" ? "w-8 h-8" : "w-7 h-7";
   const bgColor =
@@ -200,7 +236,7 @@ const FormModal = ({
       </button>
       {open && (
         <div className="w-screen h-screen absolute left-0 top-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">
-          <div className="bg-white p-4 rounded-md relative w-[90%] md:w-[70%] lg:w-[60%] xl:w-[50%] 2xl:w-[40%]">
+          <div className="bg-white p-4 rounded-md relative w-[90%] md:w-[70%] lg:w-[60%] xl:w-[50%] 2xl:w-[40%] ">
             <Form />
             <div
               className="absolute top-4 right-4 cursor-pointer"

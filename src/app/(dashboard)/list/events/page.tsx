@@ -1,4 +1,4 @@
-import FormModal from "@/components/FormModal";
+import FormContainer from "@/components/FormContainer";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
@@ -34,7 +34,7 @@ const columns = [
     accessor: "endTime",
     className: "hidden md:table-cell",
   },
-  ...(role === "admin"
+  ...(role === "admin" || role === "teacher"
     ? [
         {
           header: "Aksi",
@@ -70,10 +70,18 @@ const renderRow = (item: EventList) => (
 
     <td>
       <div className="flex items-center gap-2">
-        {role === "admin" && (
+        {(role === "admin" || role === "teacher") && (
           <>
-            <FormModal table="event" type="update" data={item}></FormModal>
-            <FormModal table="event" type="delete" id={item.id}></FormModal>
+            <FormContainer
+              table="event"
+              type="update"
+              data={item}
+            ></FormContainer>
+            <FormContainer
+              table="event"
+              type="delete"
+              id={item.id}
+            ></FormContainer>
           </>
         )}
       </div>
@@ -101,7 +109,7 @@ const EventListPage = async ({
         }
     }
   }
-  // ROLE CONDITIONS 
+  // ROLE CONDITIONS
 
   const roleConditions = {
     teacher: { lessons: { some: { teacherId: userId! } } },
@@ -118,6 +126,9 @@ const EventListPage = async ({
 
   const [data, count] = await prisma.$transaction([
     prisma.event.findMany({
+      orderBy: {
+        startTime: "asc",
+      },
       where: query,
       include: {
         class: true,
@@ -145,8 +156,8 @@ const EventListPage = async ({
             <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
               <Image src="/sort.png" alt="" width={14} height={14}></Image>
             </button>
-            {role === "admin" && (
-              <FormModal table="event" type="create"></FormModal>
+            {(role === "admin" || role === "teacher") && (
+              <FormContainer table="event" type="create"></FormContainer>
             )}
           </div>
         </div>

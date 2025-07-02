@@ -1,40 +1,105 @@
 "use client";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
+import { Controller, useForm } from "react-hook-form";
 import InputField from "../InputField";
-
-const schema = z.object({
-  subject: z.string().min(4, { message: "Nama Mata Pelajaran wajib diisi!" }),
-  student: z.string().min(1, { message: "Nama murid wajib diisi!" }),
-  result: z.number().min(1, { message: "Nilai murid wajib diisi!" }),
-  class: z.string().min(2, { message: "Nama Kelas wajib diisi!" }),
-  teacher: z.string().min(2, { message: "Nama Guru wajib diisi!" }),
-  date: z.string().min(2, { message: "Tannggal event wajib diisi!" }),
-  startTime: z.string().min(1, { message: "Waktu mulai event wajib diisi!" }),
-  endTime: z.string().min(1, { message: "Waktu selesai event wajib diisi!" }),
-});
-
-type Inputs = z.infer<typeof schema>;
+import { resultSchema, ResultSchema } from "@/lib/formValidationSchema";
+import {
+  Dispatch,
+  SetStateAction,
+  startTransition,
+  useActionState,
+  useEffect,
+  useState,
+} from "react";
+import Select from "react-select";
+import { createResult, CurrentState, updateResult } from "@/lib/actions";
+import { useRouter } from "next/navigation";
+import { toast } from "react-toastify";
 
 const ResultForm = ({
+  setOpen,
   type,
   data,
+  relatedData,
 }: {
+  setOpen: Dispatch<SetStateAction<boolean>>;
   type: "create" | "update";
   data?: any;
+  relatedData?: any;
 }) => {
   const {
     register,
     handleSubmit,
+    control,
+    setValue,
     formState: { errors },
-  } = useForm<Inputs>({
-    resolver: zodResolver(schema),
+  } = useForm<ResultSchema>({
+    resolver: zodResolver(resultSchema),
   });
+  const createResultHandler = async (
+    prevState: CurrentState,
+    payload: ResultSchema
+  ): Promise<CurrentState> => {
+    return await createResult(prevState, payload);
+  };
+
+  const updateResultHandler = async (
+    prevState: CurrentState,
+    payload: ResultSchema
+  ): Promise<CurrentState> => {
+    return await updateResult(prevState, payload);
+  };
+
+  const initialState: CurrentState = {
+    success: false,
+    error: false,
+    message: "",
+  };
+  const [state, formAction] = useActionState(
+    type === "create" ? createResultHandler : updateResultHandler,
+    initialState
+  );
 
   const onSubmit = handleSubmit((data) => {
-    console.log(data);
+    startTransition(() => {
+      formAction(data);
+    });
   });
+
+  const router = useRouter();
+
+  const [selectedType, setSelectedType] = useState<"Ujian" | "Tugas" | "">(
+    data?.examId ? "Ujian" : data?.assignmentId ? "Tugas" : ""
+  );
+  useEffect(() => {
+    setValue("selectedType", selectedType);
+    if (state.success) {
+      toast(
+        `Ujian telah berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`
+      );
+      setOpen(false);
+      router.refresh();
+    }
+  }, [state, type, setOpen, router, setValue, selectedType]);
+
+  const { students = [], exams = [], assignments = [] } = relatedData ?? {};
+  const studentOption = students.map(
+    (student: { id: string; name: string; surname: string }) => ({
+      value: student.id,
+      label: `${student.name} ${student.surname}`,
+    })
+  );
+  const ExamOption = exams.map((exam: { id: number; title: string }) => ({
+    value: exam.id,
+    label: `${exam.title}`,
+  }));
+  const AssignmentOption = assignments.map(
+    (assignment: { id: number; title: string }) => ({
+      value: assignment.id,
+      label: `${assignment.title}`,
+    })
+  );
+  console.log(JSON.stringify(data) + "<= sended data");
 
   return (
     <form action="" className="flex flex-col gap-8" onSubmit={onSubmit}>
@@ -42,50 +107,175 @@ const ResultForm = ({
       <span className="text-xs text-gray-400 font-medium">Informasi Nilai</span>
       <div className="flex justify-between flex-wrap gap-10 m-4 mb-8">
         <InputField
-          label="Nama Ujian"
-          name="subject"
-          defaultValue={data?.subject}
-          register={register}
-          error={errors?.subject}
-        ></InputField>
-        <InputField
-          label="Nama Murid"
-          name="student"
-          defaultValue={data?.student}
-          register={register}
-          error={errors?.student}
-        ></InputField>
-        <InputField
           label="Nilai"
-          name="result"
-          defaultValue={data?.result}
+          name="score"
+          type="number"
+          defaultValue={data?.score}
           register={register}
-          error={errors?.result}
-        ></InputField>
-        <InputField
-          label="Guru"
-          name="teacher"
-          defaultValue={data?.teacher}
-          register={register}
-          error={errors?.teacher}
-        ></InputField>
-        <InputField
-          label="Kelas"
-          name="class"
-          defaultValue={data?.class}
-          register={register}
-          error={errors?.class}
-        ></InputField>
-        <InputField
-          label="Tanggal"
-          name="date"
-          type="date"
-          defaultValue={data?.date}
-          register={register}
-          error={errors?.date}
-        ></InputField>
+          error={errors?.score}
+        />
+
+        {/* Student select */}
+        <div className="flex flex-col gap-2 w-full md:w-1/4">
+          <label className="text-xs text-gray-400">Siswa</label>
+
+          <Controller
+            name="studentId"
+            control={control}
+            defaultValue={data?.studentId || ""}
+            render={({ field }) => {
+              return (
+                <Select
+                  {...field}
+                  options={studentOption}
+                  className="text-sm"
+                  classNamePrefix="select"
+                  placeholder="Cari Siswa..."
+                  onChange={(selectedOption) =>
+                    field.onChange(selectedOption?.value)
+                  }
+                  value={
+                    studentOption.find(
+                      (opt: { value: string; label: string }) =>
+                        opt.value === field.value
+                    ) || null
+                  }
+                />
+              );
+            }}
+          />
+
+          {errors.studentId?.message && (
+            <p className="text-xs text-red-400">
+              {errors.studentId.message.toString()}
+            </p>
+          )}
+        </div>
+
+        {/* Type selector */}
+        <div className="flex flex-col gap-2 w-full md:w-1/4">
+          <label className="text-xs text-gray-400">Jenis Penilaian</label>
+          <select
+            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
+            value={selectedType}
+            onChange={(e) =>
+              setSelectedType(e.target.value as "" | "Ujian" | "Tugas")
+            }
+          >
+            <option value="">-- Pilih Jenis --</option>
+            <option value="Ujian">Ujian</option>
+            <option value="Tugas">Tugas</option>
+          </select>
+        </div>
+
+        {/* Conditional dropdown */}
+        {selectedType === "Ujian" && (
+          <div className="flex flex-col gap-2 w-full md:w-1/4">
+            <label className="text-xs text-gray-400">Ujian</label>
+
+            <Controller
+              name="examId"
+              control={control}
+              defaultValue={data?.examId || ""}
+              render={({ field }) => {
+                return (
+                  <Select
+                    {...field}
+                    options={ExamOption}
+                    className="text-sm"
+                    classNamePrefix="select"
+                    placeholder="Cari Ujian..."
+                    onChange={(selectedOption) =>
+                      field.onChange(selectedOption?.value)
+                    }
+                    value={
+                      ExamOption.find(
+                        (opt: { value: number; label: string }) =>
+                          opt.value === field.value
+                      ) || null
+                    }
+                  />
+                );
+              }}
+            />
+
+            {errors.examId?.message && (
+              <p className="text-xs text-red-400">
+                {errors.examId.message.toString()}
+              </p>
+            )}
+          </div>
+        )}
+
+        {selectedType === "Tugas" && (
+          <div className="flex flex-col gap-2 w-full md:w-1/4">
+            <label className="text-xs text-gray-400">Tugas</label>
+
+            <Controller
+              name="assignmentId"
+              control={control}
+              defaultValue={data?.assignmentId || ""}
+              render={({ field }) => {
+                return (
+                  <Select
+                    {...field}
+                    options={AssignmentOption}
+                    className="text-sm"
+                    classNamePrefix="select"
+                    placeholder="Cari Tugas..."
+                    onChange={(selectedOption) =>
+                      field.onChange(selectedOption?.value)
+                    }
+                    value={
+                      AssignmentOption.find(
+                        (opt: { value: number; label: string }) =>
+                          opt.value === field.value
+                      ) || null
+                    }
+                  />
+                );
+              }}
+            />
+
+            {errors.assignmentId?.message && (
+              <p className="text-xs text-red-400">
+                {errors.assignmentId.message.toString()}
+              </p>
+            )}
+          </div>
+        )}
       </div>
-      {state.error && <span className="text-red-500">Terjadi Kesalahan!</span>}
+      {data && (
+        <InputField
+          label="Id"
+          name="id"
+          defaultValue={data?.id}
+          register={register}
+          error={errors?.id}
+          hidden
+        />
+      )}
+      {data && (
+        <InputField
+          label="selectedType"
+          name="selectedType"
+          defaultValue={selectedType}
+          register={register}
+          // error={errors?.id}
+          hidden
+        />
+      )}
+      {(state.error || Object.keys(errors).length > 0) && (
+        <span className="text-red-500">
+          Terjadi Kesalahan! {state.message ?? ""}
+          <pre>
+            {Object.entries(errors)
+              .map(([key, val]) => `${key}: ${val?.message}`)
+              .join("\n")}
+          </pre>
+        </span>
+      )}
+
       <button className="bg-blue-400 text-white p-2 rounded-md">
         {type === "create" ? "Create" : "Update"}
       </button>

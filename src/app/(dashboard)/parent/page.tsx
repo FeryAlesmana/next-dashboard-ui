@@ -23,7 +23,7 @@ const ParentPage = async () => {
               <h1 className="text-xl font-semibold">
                 Jadwal {student.name + " " + student.surname}
               </h1>
-              <BigCalendarContainer type="classId" id={student.classId} />
+              <BigCalendarContainer type="classId" id={student.classId!} />
             </div>
           </div>
         ))}

@@ -1,9 +1,9 @@
 import { auth } from "@clerk/nextjs/server";
 
 export const getCurrentUser = async () => {
-  const { userId, sessionClaims } = await auth();
+  const { userId, sessionClaims,actor } = await auth();
   const role = (sessionClaims?.metadata as { role?: string })?.role;
-  return { userId, role };
+  return { userId, role, actor };
 };
 
 

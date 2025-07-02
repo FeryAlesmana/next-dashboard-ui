@@ -4,37 +4,93 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import InputField from "../InputField";
 import Image from "next/image";
-
-const schema = z.object({
-  judul: z
-    .string()
-    .min(3, { message: "judul harus lebih dari 3 karakter!" })
-    .max(20, { message: "judul harus kurang dari 20 karakter!" }),
-  class: z.string().min(2, { message: "Nama Kelas wajib diisi!" }),
-  teacher: z.string().min(8, { message: "Nama guru wajib diisi!" }),
-  dueDate: z.string().min(1, { message: "Tanggal wajib diisi!" }),
-});
-
-type Inputs = z.infer<typeof schema>;
+import {
+  Dispatch,
+  SetStateAction,
+  startTransition,
+  useActionState,
+  useEffect,
+} from "react";
+import {
+  AnnouncementSchema,
+  AssignmentSchema,
+  assignmentSchema,
+} from "@/lib/formValidationSchema";
+import {
+  createAssignment,
+  CurrentState,
+  updateAssignment,
+} from "@/lib/actions";
+import { useRouter } from "next/navigation";
+import { toast } from "react-toastify";
 
 const AssignmentForm = ({
+  setOpen,
   type,
   data,
+  relatedData,
 }: {
+  setOpen: Dispatch<SetStateAction<boolean>>;
   type: "create" | "update";
   data?: any;
+  relatedData?: any;
 }) => {
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<Inputs>({
-    resolver: zodResolver(schema),
+  } = useForm<AssignmentSchema>({
+    resolver: zodResolver(assignmentSchema),
   });
 
+  const createAssignmentHandler = async (
+    prevState: CurrentState,
+    payload: AssignmentSchema
+  ): Promise<CurrentState> => {
+    return await createAssignment(prevState, payload);
+  };
+
+  const updateAssignmentHandler = async (
+    prevState: CurrentState,
+    payload: AssignmentSchema
+  ): Promise<CurrentState> => {
+    return await updateAssignment(prevState, payload);
+  };
+
+  const initialState: CurrentState = {
+    success: false,
+    error: false,
+    message: "",
+  };
+  const [state, formAction] = useActionState(
+    type === "create" ? createAssignmentHandler : updateAssignmentHandler,
+    initialState
+  );
+
   const onSubmit = handleSubmit((data) => {
-    console.log(data);
+    startTransition(() => {
+      formAction(data);
+    });
   });
+
+  const router = useRouter();
+
+  useEffect(() => {
+    if (state.success) {
+      toast(
+        `Tugas telah berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`
+      );
+      setOpen(false);
+      router.refresh();
+    }
+  }, [state, type, setOpen, router]);
+
+  const { lessons, kelas2 } = relatedData;
+
+  const formatDateForInput = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toISOString().slice(0, 16); // returns "YYYY-MM-DDTHH:MM"
+  };
 
   return (
     <form action="" className="flex flex-col gap-8" onSubmit={onSubmit}>
@@ -45,34 +101,85 @@ const AssignmentForm = ({
       <div className="flex justify-between flex-wrap gap-4 m-4">
         <InputField
           label="Judul"
-          name="judul"
-          defaultValue={data?.judul}
+          name="title"
+          defaultValue={data?.title}
           register={register}
-          error={errors?.judul}
+          error={errors?.title}
         ></InputField>
-        <InputField
-          label="Kelas"
-          name="class"
-          defaultValue={data?.class}
-          register={register}
-          error={errors?.class}
-        ></InputField>
-        <InputField
+        <div className="flex flex-col gap-2 w-full md:w-1/4">
+          <label className="text-xs text-gray-400">Pelajaran</label>
+          <select
+            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
+            {...register("lessonId")}
+            defaultValue={data?.lessonId}
+          >
+            {lessons.map((lesson: { id: number; name: string }) => (
+              <option value={lesson.id} key={lesson.id}>
+                {lesson.name}
+              </option>
+            ))}
+          </select>
+          {errors.lessonId?.message && (
+            <p className="text-xs text-red-400">
+              {errors.lessonId.message.toString()}
+            </p>
+          )}
+        </div>
+        {/* <InputField
           label="Guru"
           name="teacher"
           defaultValue={data?.teacher}
           register={register}
           error={errors?.teacher}
-        ></InputField>
+        ></InputField> */}
+        <div className="flex flex-col gap-2 w-full md:w-1/4">
+          <label className="text-xs text-gray-400">Kelas</label>
+          <select
+            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
+            {...register("classId")}
+            defaultValue={data?.classId}
+          >
+            {kelas2.map((kelas: { id: number; name: string }) => (
+              <option value={kelas.id} key={kelas.id}>
+                {kelas.name}
+              </option>
+            ))}
+          </select>
+          {errors.classId?.message && (
+            <p className="text-xs text-red-400">
+              {errors.classId.message.toString()}
+            </p>
+          )}
+        </div>
         <InputField
           label="Deadline"
           name="dueDate"
-          type="date"
-          defaultValue={data?.dueDate}
+          type="datetime-local"
+          defaultValue={data?.dueDate ? formatDateForInput(data.dueDate) : ""}
           register={register}
           error={errors?.dueDate}
         ></InputField>
+        {data && (
+          <InputField
+            label="Id"
+            name="id"
+            defaultValue={data?.id}
+            register={register}
+            error={errors?.id}
+            hidden
+          />
+        )}
       </div>
+      {(state.error || Object.keys(errors).length > 0) && (
+        <span className="text-red-500">
+          Terjadi Kesalahan! {state.message ?? ""}
+          <pre>
+            {Object.entries(errors)
+              .map(([key, val]) => `${key}: ${val?.message}`)
+              .join("\n")}
+          </pre>
+        </span>
+      )}
 
       <button className="bg-blue-400 text-white p-2 rounded-md">
         {type === "create" ? "Create" : "Update"}

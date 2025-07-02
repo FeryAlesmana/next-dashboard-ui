@@ -1,4 +1,4 @@
-import FormModal from "@/components/FormModal";
+import FormContainer from "@/components/FormContainer";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
@@ -7,12 +7,11 @@ import { ITEM_PER_PAGE } from "@/lib/setting";
 import { getCurrentUser } from "@/lib/utils";
 import { Class, Lesson, Prisma, Subject, Teacher } from "@prisma/client";
 import Image from "next/image";
-import Link from "next/link";
 
 type LessonList = Lesson & { subject: Subject } & { class: Class } & {
   teacher: Teacher;
 };
-const { role } = await getCurrentUser();
+const { role, userId } = await getCurrentUser();
 const columns = [
   {
     header: "Mata Pelajaran",
@@ -21,6 +20,18 @@ const columns = [
   {
     header: "Kelas",
     accessor: "kelas",
+  },
+  {
+    header: "Mulai",
+    accessor: "startTime",
+  },
+  {
+    header: "Berakhir",
+    accessor: "endTime",
+  },
+  {
+    header: "Hari",
+    accessor: "Day",
   },
   {
     header: "Teacher",
@@ -43,6 +54,23 @@ const renderRow = (item: LessonList) => (
   >
     <td className="flex items-center p-4 gap-4">{item.subject.name}</td>
     <td>{item.class.name}</td>
+    <td>
+      {" "}
+      {item.startTime.toLocaleTimeString("en-UK", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      })}
+    </td>
+    <td>
+      {" "}
+      {item.endTime.toLocaleTimeString("en-UK", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      })}
+    </td>
+    <td>{item.day}</td>
     <td className="hidden md:table-cell">
       {item.teacher.name + " " + item.teacher.surname}
     </td>
@@ -50,8 +78,16 @@ const renderRow = (item: LessonList) => (
       <div className="flex items-center gap-2">
         {role === "admin" && (
           <>
-            <FormModal table="lesson" type="update" data={item}></FormModal>
-            <FormModal table="lesson" type="delete" id={item.id}></FormModal>
+            <FormContainer
+              table="lesson"
+              type="update"
+              data={item}
+            ></FormContainer>
+            <FormContainer
+              table="lesson"
+              type="delete"
+              id={item.id}
+            ></FormContainer>
           </>
         )}
       </div>
@@ -89,6 +125,44 @@ const LessonListPage = async ({
         }
     }
   }
+  // ROLE CONDITION
+
+  switch (role) {
+    case "admin":
+      break;
+    case "teacher":
+      const teacher = await prisma.teacher.findUnique({
+        where: { id: userId! },
+        include: { classes: true },
+      });
+
+      const classIds = teacher?.classes.map((cls) => cls.id) ?? [];
+
+      query.classId = {
+        in: classIds,
+      };
+      break;
+    case "student":
+      query.class = {
+        students: {
+          some: {
+            id: userId!,
+          },
+        },
+      };
+      break;
+    case "parent":
+      query.class = {
+        students: {
+          some: {
+            parentId: userId!,
+          },
+        },
+      };
+      break;
+    default:
+      break;
+  }
 
   const [data, count] = await prisma.$transaction([
     prisma.lesson.findMany({
@@ -108,7 +182,7 @@ const LessonListPage = async ({
     <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
       {/* TOP */}
       <div className="flex items-center justify-between">
-        <h1 className="hidden md:block text-lg font-semibold">All Lessons</h1>
+        <h1 className="hidden md:block text-lg font-semibold">Jadwal Siswa</h1>
         <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
           <TableSearch></TableSearch>
           <div className="flex items-center gap-4 self-end">
@@ -119,7 +193,7 @@ const LessonListPage = async ({
               <Image src="/sort.png" alt="" width={14} height={14}></Image>
             </button>
             {role === "admin" && (
-              <FormModal table="lesson" type="create"></FormModal>
+              <FormContainer table="lesson" type="create"></FormContainer>
             )}
           </div>
         </div>

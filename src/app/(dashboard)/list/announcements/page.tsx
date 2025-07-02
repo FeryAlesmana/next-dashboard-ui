@@ -1,4 +1,4 @@
-import FormModal from "@/components/FormModal";
+import FormContainer from "@/components/FormContainer";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
@@ -48,16 +48,16 @@ const renderRow = (item: AnnouncementList) => (
       <div className="flex items-center gap-2">
         {role === "admin" && (
           <>
-            <FormModal
+            <FormContainer
               table="announcement"
               type="update"
               data={item}
-            ></FormModal>
-            <FormModal
+            ></FormContainer>
+            <FormContainer
               table="announcement"
               type="delete"
               id={item.id}
-            ></FormModal>
+            ></FormContainer>
           </>
         )}
       </div>
@@ -69,7 +69,7 @@ const AnnouncementListPage = async ({
 }: {
   searchParams: { [key: string]: string | undefined };
 }) => {
-  const { page, ...queryParams } = searchParams;
+  const { page, ...queryParams } = await searchParams;
   const p = page ? parseInt(page) : 1;
 
   const query: Prisma.AnnouncementWhereInput = {};
@@ -102,6 +102,9 @@ const AnnouncementListPage = async ({
 
   const [data, count] = await prisma.$transaction([
     prisma.announcement.findMany({
+      orderBy: {
+        date: "desc",
+      },
       where: query,
       include: {
         class: true,
@@ -129,7 +132,7 @@ const AnnouncementListPage = async ({
               <Image src="/sort.png" alt="" width={14} height={14}></Image>
             </button>
             {role === "admin" && (
-              <FormModal table="announcement" type="create"></FormModal>
+              <FormContainer table="announcement" type="create"></FormContainer>
             )}
           </div>
         </div>

@@ -1,6 +1,6 @@
 "use client";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import InputField from "../InputField";
 import Image from "next/image";
@@ -17,6 +17,7 @@ import { createStudent, CurrentState, updateStudent } from "@/lib/actions";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { CldUploadWidget } from "next-cloudinary";
+import Select from "react-select";
 
 const StudentForm = ({
   type,
@@ -32,16 +33,26 @@ const StudentForm = ({
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
   } = useForm<StudentSchema>({
     resolver: zodResolver(studentSchema),
   });
 
   const [img, setImg] = useState<any>();
-  // const [state, formAction] = useActionState(
-  //   type === "create" ? createTeacher : updateTeacher,
-  //   initialState
-  // );
+  const createStudentHandler = async (
+    prevState: CurrentState,
+    payload: StudentSchema
+  ): Promise<CurrentState> => {
+    return await createStudent(prevState, payload);
+  };
+
+  const updateStudentHandler = async (
+    prevState: CurrentState,
+    payload: StudentSchema
+  ): Promise<CurrentState> => {
+    return await updateStudent(prevState, payload);
+  };
 
   const initialState: CurrentState = {
     success: false,
@@ -49,7 +60,7 @@ const StudentForm = ({
     message: "",
   };
   const [state, formAction] = useActionState(
-    type === "create" ? createStudent : updateStudent,
+    type === "create" ? createStudentHandler : updateStudentHandler,
     initialState
   );
 
@@ -70,7 +81,14 @@ const StudentForm = ({
       router.refresh();
     }
   }, [state, type, setOpen, router]);
-  const { grades, classes } = relatedData;
+  const { grades, classes, parents } = relatedData;
+
+  const parentOption = parents.map(
+    (parent: { id: string; name: string; surname: string }) => ({
+      value: parent.id,
+      label: `${parent.name} ${parent.surname}`,
+    })
+  );
   return (
     <form action="" className="flex flex-col gap-8" onSubmit={onSubmit}>
       <h1 className="text-xl font-semibold">
@@ -174,13 +192,41 @@ const StudentForm = ({
           register={register}
           error={errors?.birthday}
         ></InputField>
-        <InputField
-          label="Parent Id"
-          name="parentId"
-          defaultValue={data?.parentId}
-          register={register}
-          error={errors?.parentId}
-        ></InputField>
+        <div className="flex flex-col gap-2 w-full md:w-1/4">
+          <label className="text-xs text-gray-400">Orang tua</label>
+
+          <Controller
+            name="parentId"
+            control={control}
+            defaultValue={data?.parentId || ""}
+            render={({ field }) => {
+              return (
+                <Select
+                  {...field}
+                  options={parentOption}
+                  className="text-sm"
+                  classNamePrefix="select"
+                  placeholder="Cari Ortu..."
+                  onChange={(selectedOption) =>
+                    field.onChange(selectedOption?.value)
+                  }
+                  value={
+                    parentOption.find(
+                      (opt: { value: string; label: string }) =>
+                        opt.value === field.value
+                    ) || null
+                  }
+                />
+              );
+            }}
+          />
+
+          {errors.parentId?.message && (
+            <p className="text-xs text-red-400">
+              {errors.parentId.message.toString()}
+            </p>
+          )}
+        </div>
         {data && (
           <InputField
             label="Id"
@@ -255,7 +301,17 @@ const StudentForm = ({
           )}
         </div>
       </div>
-      {state.error && <span className="text-red-500">Terjadi Kesalahan!</span>}
+      {(state.error || Object.keys(errors).length > 0) && (
+        <span className="text-red-500">
+          Terjadi Kesalahan! {state.message ?? ""}
+          <pre>
+            {Object.entries(errors)
+              .map(([key, val]) => `${key}: ${val?.message}`)
+              .join("\n")}
+          </pre>
+        </span>
+      )}
+
       <button className="bg-blue-400 text-white p-2 rounded-md">
         {type === "create" ? "Create" : "Update"}
       </button>
