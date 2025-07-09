@@ -5,16 +5,17 @@ import CountChartCountainer from "@/components/CountChartCountainer";
 import AttendanceChartContainer from "@/components/AttendanceChartContainer";
 import EventCalendarContainer from "@/components/EventCalendarContainer";
 
-const AdminPage = ({
+export default function Page({
   searchParams,
 }: {
   searchParams?: { [key: string]: string | string[] | undefined };
-}) => {
+}) {
   const normalizedSearchParams: { [key: string]: string | undefined } = {};
 
   Object.entries(searchParams ?? {}).forEach(([key, value]) => {
     normalizedSearchParams[key] = Array.isArray(value) ? value[0] : value;
   });
+
   return (
     <div className="p-4 flex gap-4 flex-col md:flex-row">
       {/* LEFT */}
@@ -49,6 +50,4 @@ const AdminPage = ({
       </div>
     </div>
   );
-};
-
-export default AdminPage;
+}
