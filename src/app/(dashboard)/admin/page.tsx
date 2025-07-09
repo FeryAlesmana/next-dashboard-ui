@@ -4,11 +4,12 @@ import Announcements from "@/components/Announcements";
 import CountChartCountainer from "@/components/CountChartCountainer";
 import AttendanceChartContainer from "@/components/AttendanceChartContainer";
 import EventCalendarContainer from "@/components/EventCalendarContainer";
-interface PageProps {
-  searchParams?: { [key: string]: string | string[] | undefined };
-}
 
-const AdminPage = ({ searchParams }: PageProps) => {
+const AdminPage = ({
+  searchParams,
+}: {
+  searchParams?: { [key: string]: string | string[] | undefined };
+}) => {
   const normalizedSearchParams: { [key: string]: string | undefined } = {};
 
   Object.entries(searchParams ?? {}).forEach(([key, value]) => {
