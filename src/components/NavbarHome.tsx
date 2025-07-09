@@ -1,5 +1,5 @@
 "use client";
-import { useUser } from "@clerk/nextjs";
+import { useClerk, useUser } from "@clerk/nextjs";
 import { redirect, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 // import LoginModal from "./LoginModal";
@@ -12,21 +12,18 @@ import {
   FaImages,
   FaEnvelope,
   FaUserPlus,
+  FaUserShield,
+  FaSignOutAlt,
 } from "react-icons/fa";
 import { FaMosque } from "react-icons/fa6";
 
 const NavbarHome: React.FC = () => {
-  const [isOpen, setIsOpen] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
-  const { isSignedIn, user, isLoaded } = useUser();
+  const [isOpen, setIsOpen] = useState(false);
+  const { isSignedIn, user } = useUser();
+  const { signOut, openSignIn } = useClerk();
   const router = useRouter();
-  useEffect(() => {
-    const role = user?.publicMetadata.role;
-
-    if (isSignedIn) {
-      router.push(`/${role}`);
-    }
-  }, [user, router, isSignedIn]);
+  const role = user?.publicMetadata.role;
   return (
     <>
       <nav className="fixed top-0 left-0 w-full bg-gradient-to-r from-blue-50 to-orange-50/50 backdrop-blur-md shadow-sm z-50 border-b border-white/30">
@@ -42,28 +39,47 @@ const NavbarHome: React.FC = () => {
 
             {/* Desktop Menu */}
             <div className="hidden md:flex items-center space-x-6">
-              <NavLink href="#home" icon={<FaHome />}>
+              <NavLink href="/#home" icon={<FaHome />}>
                 Home
               </NavLink>
-              <NavLink href="#profil" icon={<FaInfoCircle />}>
+              <NavLink href="/#profil" icon={<FaInfoCircle />}>
                 Profil
               </NavLink>
-              <NavLink href="#galeri" icon={<FaImages />}>
+              <NavLink href="/#galeri" icon={<FaImages />}>
                 Galeri
               </NavLink>
-              <NavLink href="#kontak" icon={<FaEnvelope />}>
+              <NavLink href="/#kontak" icon={<FaEnvelope />}>
                 Kontak
               </NavLink>
-              <NavLink href="#daftar" icon={<FaUserPlus />}>
+              <NavLink href="/#daftar" icon={<FaUserPlus />}>
                 Daftar
               </NavLink>
-              <button
-                onClick={() => redirect("/sign-in")}
-                className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-orange-500 text-white px-4 py-2 rounded-full hover:shadow-md transition-all duration-300"
-              >
-                <FaUser className="text-sm" />
-                <span>Login</span>
-              </button>
+              {isSignedIn ? (
+                <>
+                  <button
+                    onClick={() => router.push(`/${role}`)}
+                    className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-full hover:shadow-md transition-all duration-300"
+                  >
+                    <FaUserShield className="text-sm" />
+                    <span>Dashboard</span>
+                  </button>
+                  <button
+                    onClick={() => signOut()}
+                    className="flex items-center space-x-2 bg-red-500 text-white px-4 py-2 rounded-full hover:shadow-md transition-all duration-300"
+                  >
+                    <FaSignOutAlt className="text-sm" />
+                    <span>Logout</span>
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => router.push("/sign-in")}
+                  className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-orange-500 text-white px-4 py-2 rounded-full hover:shadow-md transition-all duration-300"
+                >
+                  <FaUser className="text-sm" />
+                  <span>Login</span>
+                </button>
+              )}
             </div>
 
             {/* Mobile Toggle */}
@@ -82,41 +98,41 @@ const NavbarHome: React.FC = () => {
           {showMenu && (
             <div className="md:hidden bg-white/90 backdrop-blur-sm rounded-lg mt-3 p-4 space-y-3 shadow-lg border border-white/20">
               <MobileNavLink
-                href="#home"
+                href="/#home"
                 icon={<FaHome />}
                 onClick={() => setShowMenu(false)}
               >
                 Home
               </MobileNavLink>
               <MobileNavLink
-                href="#profil"
+                href="/#profil"
                 icon={<FaInfoCircle />}
                 onClick={() => setShowMenu(false)}
               >
                 Profil
               </MobileNavLink>
               <MobileNavLink
-                href="#galeri"
+                href="/#galeri"
                 icon={<FaImages />}
                 onClick={() => setShowMenu(false)}
               >
                 Galeri
               </MobileNavLink>
               <MobileNavLink
-                href="#kontak"
+                href="/#kontak"
                 icon={<FaEnvelope />}
                 onClick={() => setShowMenu(false)}
               >
                 Kontak
               </MobileNavLink>
               <MobileNavLink
-                href="#daftar"
+                href="/#daftar"
                 icon={<FaUserPlus />}
                 onClick={() => setShowMenu(false)}
               >
                 Daftar
               </MobileNavLink>
-              <button
+              {/* <button
                 className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-blue-600 to-orange-500 text-white px-4 py-3 rounded-lg hover:shadow-md transition-all duration-300 mt-2"
                 onClick={() => {
                   setIsOpen(true);
@@ -125,7 +141,33 @@ const NavbarHome: React.FC = () => {
               >
                 <FaUser />
                 <span>Login</span>
-              </button>
+              </button> */}
+              {isSignedIn ? (
+                <>
+                  <button
+                    onClick={() => router.push(`/${role}`)}
+                    className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-full hover:shadow-md transition-all duration-300"
+                  >
+                    <FaUserShield className="text-sm" />
+                    <span>Dashboard</span>
+                  </button>
+                  <button
+                    onClick={() => signOut()}
+                    className="flex items-center space-x-2 bg-red-500 text-white px-4 py-2 rounded-full hover:shadow-md transition-all duration-300"
+                  >
+                    <FaSignOutAlt className="text-sm" />
+                    <span>Logout</span>
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => router.push("/sign-in")}
+                  className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-blue-600 to-orange-500 text-white px-4 py-3 rounded-lg hover:shadow-md transition-all duration-300 mt-2"
+                >
+                  <FaUser className="text-sm" />
+                  <span>Login</span>
+                </button>
+              )}
             </div>
           )}
         </div>

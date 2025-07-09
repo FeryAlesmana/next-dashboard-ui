@@ -1,6 +1,15 @@
-import { Day, PrismaClient, UserSex } from "@prisma/client";
+import {
+  Day,
+  PrismaClient,
+  UserSex,
+  Agama,
+  KPS,
+  TTinggal,
+  Awards,
+  Degree
+} from "@prisma/client";
 const prisma = new PrismaClient();
-const grades = []
+const grades = [];
 async function main() {
   // ADMIN
   await prisma.admin.create({
@@ -23,15 +32,15 @@ async function main() {
         level: i,
       },
     });
-    grades.push(grade)
+    grades.push(grade);
   }
 
   // CLASS
   for (let i = 1; i <= 3; i++) {
     await prisma.class.create({
       data: {
-        name: `${i}A`, 
-        gradeId: i, 
+        name: `${i}A`,
+        gradeId: i,
         capacity: Math.floor(Math.random() * (20 - 15 + 1)) + 15,
       },
     });
@@ -66,10 +75,18 @@ async function main() {
         email: `teacher${i}@example.com`,
         phone: `123-456-789${i}`,
         address: `Address${i}`,
+        religion:
+          Agama[
+            Object.keys(Agama)[
+              Math.floor(Math.random() * Object.keys(Agama).length)
+            ] as keyof typeof Agama
+          ],
         sex: i % 2 === 0 ? UserSex.MALE : UserSex.FEMALE,
-        subjects: { connect: [{ id: (i % 10) + 1 }] }, 
-        classes: { connect: [{ id: (i % 3) + 1 }] }, 
-        birthday: new Date(new Date().setFullYear(new Date().getFullYear() - 30)),
+        subjects: { connect: [{ id: (i % 10) + 1 }] },
+        classes: { connect: [{ id: (i % 3) + 1 }] },
+        birthday: new Date(
+          new Date().setFullYear(new Date().getFullYear() - 30)
+        ),
       },
     });
   }
@@ -78,17 +95,17 @@ async function main() {
   for (let i = 1; i <= 30; i++) {
     await prisma.lesson.create({
       data: {
-        name: `Lesson${i}`, 
+        name: `Lesson${i}`,
         day: Day[
           Object.keys(Day)[
             Math.floor(Math.random() * Object.keys(Day).length)
           ] as keyof typeof Day
-        ], 
-        startTime: new Date(new Date().setHours(new Date().getHours() + 1)), 
-        endTime: new Date(new Date().setHours(new Date().getHours() + 3)), 
-        subjectId: (i % 10) + 1, 
-        classId: (i % 3) + 1, 
-        teacherId: `teacher${(i % 15) + 1}`, 
+        ],
+        startTime: new Date(new Date().setHours(new Date().getHours() + 1)),
+        endTime: new Date(new Date().setHours(new Date().getHours() + 3)),
+        subjectId: (i % 10) + 1,
+        classId: (i % 3) + 1,
+        teacherId: `teacher${(i % 15) + 1}`,
       },
     });
   }
@@ -104,38 +121,95 @@ async function main() {
         email: `parent${i}@example.com`,
         phone: `123-456-789${i}`,
         address: `Address${i}`,
+        job: `Job${i}`,
+        income: 1000000 + i * 10000,
+        degree: Degree[
+          Object.keys(Degree)[
+            Math.floor(Math.random() * Object.keys(Degree).length)
+          ] as keyof typeof Degree
+        ],
       },
     });
   }
 
   // STUDENT
   for (let i = 1; i <= 50; i++) {
-    await prisma.student.create({
+    const student = await prisma.student.create({
       data: {
-        id: `student${i}`, 
-        username: `student${i}`, 
+        id: `student${i}`,
+        username: `student${i}`,
         name: `SName${i}`,
         surname: `SSurname ${i}`,
         email: `student${i}@example.com`,
         phone: `987-654-321${i}`,
         address: `Address${i}`,
+        religion:
+          Agama[
+            Object.keys(Agama)[
+              Math.floor(Math.random() * Object.keys(Agama).length)
+            ] as keyof typeof Agama
+          ],
         sex: i % 2 === 0 ? UserSex.MALE : UserSex.FEMALE,
-        parentId: `parentId${Math.ceil(i / 2) % 25 || 25}`, 
-        gradeId: (i % 3) + 1, 
-        classId: (i % 3) + 1, 
-        birthday: new Date(new Date().setFullYear(new Date().getFullYear() - 10)),
+        parentId: `parentId${Math.ceil(i / 2) % 25 || 25}`,
+        gradeId: (i % 3) + 1,
+        classId: (i % 3) + 1,
+        birthday: new Date(
+          new Date().setFullYear(new Date().getFullYear() - 10)
+        ),
+      },
+    });
+
+    await prisma.student_details.create({
+      data: {
+        studentId: student.id,
+        birthPlace: `birthplace${i}`,
+        nisn: `100000 ${i}`,
+        npsn: `200000 ${i}`,
+        no_ijz: `300000 ${i}`,
+        nik: `400000 ${i}`,
+        asalSekolah: `SD ${i}`,
+        kps: KPS[
+          Object.keys(KPS)[
+            Math.floor(Math.random() * Object.keys(KPS).length)
+          ] as keyof typeof KPS
+        ],
+        no_kps: `500000 ${i}`,
+        height: 140 + (i % 20),
+        weight: 40 + (i % 10),
+        transportation: `transport ${i}`,
+        tempat_tinggal:
+          TTinggal[
+            Object.keys(TTinggal)[
+              Math.floor(Math.random() * Object.keys(TTinggal).length)
+            ] as keyof typeof TTinggal
+          ],
+        distance_from_home: 2 + (i % 5),
+        time_from_home: 15 + (i % 30),
+        number_of_siblings: i % 4,
+        postcode: 16100 + i,
+        awards: `Award ${i}`,
+        awards_lvl: Awards[
+            Object.keys(Awards)[
+              Math.floor(Math.random() * Object.keys(Awards).length)
+            ] as keyof typeof Awards
+          ],
+        awards_date: new Date(new Date().setFullYear(2023)),
+        scholarship: i % 2 === 0 ? "KIP" : "Beasiswa Prestasi",
+        scholarship_detail: `Detail scholarship ${i}`,
       },
     });
   }
+
+  console.log("✅ Done seeding students + student_details.");
 
   // EXAM
   for (let i = 1; i <= 10; i++) {
     await prisma.exam.create({
       data: {
-        title: `Exam ${i}`, 
-        startTime: new Date(new Date().setHours(new Date().getHours() + 1)), 
-        endTime: new Date(new Date().setHours(new Date().getHours() + 2)), 
-        lessonId: (i % 30) + 1, 
+        title: `Exam ${i}`,
+        startTime: new Date(new Date().setHours(new Date().getHours() + 1)),
+        endTime: new Date(new Date().setHours(new Date().getHours() + 2)),
+        lessonId: (i % 30) + 1,
       },
     });
   }
@@ -144,10 +218,10 @@ async function main() {
   for (let i = 1; i <= 10; i++) {
     await prisma.assignment.create({
       data: {
-        title: `Assignment ${i}`, 
-        startDate: new Date(new Date().setHours(new Date().getHours() + 1)), 
-        dueDate: new Date(new Date().setDate(new Date().getDate() + 1)), 
-        lessonId: (i % 30) + 1, 
+        title: `Assignment ${i}`,
+        startDate: new Date(new Date().setHours(new Date().getHours() + 1)),
+        dueDate: new Date(new Date().setDate(new Date().getDate() + 1)),
+        lessonId: (i % 30) + 1,
       },
     });
   }
@@ -156,9 +230,9 @@ async function main() {
   for (let i = 1; i <= 10; i++) {
     await prisma.result.create({
       data: {
-        score: 90, 
-        studentId: `student${i}`, 
-        ...(i <= 5 ? { examId: i } : { assignmentId: i - 5 }), 
+        score: 90,
+        studentId: `student${i}`,
+        ...(i <= 5 ? { examId: i } : { assignmentId: i - 5 }),
       },
     });
   }
@@ -167,10 +241,10 @@ async function main() {
   for (let i = 1; i <= 10; i++) {
     await prisma.attendance.create({
       data: {
-        date: new Date(), 
-        present: true, 
-        studentId: `student${i}`, 
-        lessonId: (i % 30) + 1, 
+        date: new Date(),
+        present: true,
+        studentId: `student${i}`,
+        lessonId: (i % 30) + 1,
       },
     });
   }
@@ -179,11 +253,11 @@ async function main() {
   for (let i = 1; i <= 5; i++) {
     await prisma.event.create({
       data: {
-        title: `Event ${i}`, 
-        description: `Description for Event ${i}`, 
-        startTime: new Date(new Date().setHours(new Date().getHours() + 1)), 
-        endTime: new Date(new Date().setHours(new Date().getHours() + 2)), 
-        classId: (i % 2) + 1, 
+        title: `Event ${i}`,
+        description: `Description for Event ${i}`,
+        startTime: new Date(new Date().setHours(new Date().getHours() + 1)),
+        endTime: new Date(new Date().setHours(new Date().getHours() + 2)),
+        classId: (i % 2) + 1,
       },
     });
   }
@@ -192,10 +266,10 @@ async function main() {
   for (let i = 1; i <= 5; i++) {
     await prisma.announcement.create({
       data: {
-        title: `Announcement ${i}`, 
-        description: `Description for Announcement ${i}`, 
-        date: new Date(), 
-        classId: (i % 2) + 1, 
+        title: `Announcement ${i}`,
+        description: `Description for Announcement ${i}`,
+        date: new Date(),
+        classId: (i % 2) + 1,
       },
     });
   }

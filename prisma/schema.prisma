@@ -13,25 +13,27 @@ model Admin {
 }
 
 model Student {
-  id         String       @id
-  username   String       @unique
-  name       String
-  surname    String
-  email      String?      @unique
-  phone      String?      @unique
-  address    String
-  img        String?
-  sex        UserSex
-  createdAt  DateTime     @default(now())
-  parentId   String?
-  parent     Parent?      @relation(fields: [parentId], references: [id], onDelete: SetNull)
-  classId    Int?
-  class      Class?       @relation(fields: [classId], references: [id], onDelete: SetNull)
-  gradeId    Int?
-  grade      Grade?       @relation(fields: [gradeId], references: [id], onDelete: SetNull)
-  attendance Attendance[]
-  results    Result[]
-  birthday   DateTime
+  id              String           @id
+  username        String           @unique
+  name            String
+  surname         String
+  email           String?          @unique
+  phone           String?          @unique
+  address         String
+  img             String?
+  religion        Agama
+  sex             UserSex
+  createdAt       DateTime         @default(now())
+  parentId        String?
+  parent          Parent?          @relation(fields: [parentId], references: [id], onDelete: SetNull)
+  classId         Int?
+  class           Class?           @relation(fields: [classId], references: [id], onDelete: SetNull)
+  gradeId         Int?
+  grade           Grade?           @relation(fields: [gradeId], references: [id], onDelete: SetNull)
+  student_details student_details?
+  attendance      Attendance[]
+  results         Result[]
+  birthday        DateTime
 }
 
 model Teacher {
@@ -42,6 +44,7 @@ model Teacher {
   email     String?   @unique
   phone     String    @unique
   address   String
+  religion  Agama
   img       String?
   sex       UserSex
   createdAt DateTime  @default(now())
@@ -59,8 +62,86 @@ model Parent {
   email     String?   @unique
   phone     String    @unique
   address   String
+  job       String
+  income    Int
+  degree    Degree
   createdAt DateTime  @default(now())
   students  Student[]
+}
+
+model student_details {
+  id                 Int       @id @default(autoincrement())
+  studentId          String    @unique
+  student            Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  asalSekolah        String
+  birthPlace         String
+  noWa               String?
+  nisn               String    @unique
+  npsn               String    @unique
+  no_ijz             String    @unique
+  nik                String    @unique
+  kps                KPS?
+  no_kps             String?   @unique
+  height             Int
+  weight             Int
+  transportation     String
+  tempat_tinggal     TTinggal
+  distance_from_home Int
+  time_from_home     Int //in minutes 
+  number_of_siblings Int
+  postcode           Int
+  awards             String?
+  awards_lvl         Awards?
+  awards_date        DateTime?
+  scholarship        String?
+  scholarship_detail String?
+  dokumenIjazah      String?
+  dokumenAkte        String?
+  dokumenPasfoto     String?
+  dokumenKKKTP       String?
+}
+
+model PPDB {
+  id                 Int       @id
+  name               String
+  surname            String
+  birthPlace         String
+  birthday           DateTime
+  sex                UserSex
+  religion           Agama
+  asalSekolah        String
+  npsn               String    @unique
+  nisn               String    @unique
+  no_ijz             String    @unique
+  nik                String    @unique
+  address            String
+  postcode           Int
+  phone              String?   @unique
+  noWa               String?
+  transportation     String
+  tempat_tinggal     TTinggal
+  kps                KPS?
+  no_kps             String?   @unique
+  email              String?   @unique
+  height             Int
+  weight             Int
+  distance_from_home Int
+  time_from_home     Int //in minutes 
+  number_of_siblings Int
+  awards             String?
+  awards_lvl         Awards?
+  awards_date        DateTime?
+  scholarship        String?
+  scholarship_detail String?
+  scholarship_date   DateTime?
+  isvalid            Boolean
+  father_degree      Degree
+  mother_degree      Degree
+  guardian_degree    Degree
+  dokumenIjazah      String?
+  dokumenAkte        String?
+  dokumenPasfoto     String?
+  dokumenKKKTP       String?
 }
 
 model Grade {
@@ -105,7 +186,7 @@ model Lesson {
   classId     Int?
   class       Class?       @relation(fields: [classId], references: [id], onDelete: SetNull)
   teacherId   String?
-  teacher     Teacher?     @relation(fields: [teacherId], references: [id], onDelete: SetNull )
+  teacher     Teacher?     @relation(fields: [teacherId], references: [id], onDelete: SetNull)
   exams       Exam[]
   assignments Assignment[]
   attendance  Attendance[]
@@ -160,7 +241,7 @@ model Event {
   id          Int      @id @default(autoincrement())
   title       String
   description String
-  startTime   DateTime 
+  startTime   DateTime
   endTime     DateTime
 
   classId Int?
@@ -180,6 +261,48 @@ model Announcement {
 enum UserSex {
   MALE
   FEMALE
+}
+
+enum KPS {
+  KIP
+  KIS
+  KKS
+}
+
+enum TTinggal {
+  Orang_Tua
+  Wali
+  Kost
+  Asrama
+  Panti_asuhan
+  Pesantren
+}
+
+enum Awards {
+  kecamatan
+  kota
+  kabupaten
+  provinsi
+  nasional
+  internasional
+}
+
+enum Degree {
+  TIDAK_ADA
+  SD
+  SMP
+  SMA
+  D3
+  S1
+  S2
+  S3
+}
+
+enum Agama {
+  Islam
+  Kristen
+  Buddha
+  Lainnya
 }
 
 enum Day {

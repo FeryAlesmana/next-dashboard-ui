@@ -7,10 +7,11 @@ import { ITEM_PER_PAGE } from "@/lib/setting";
 import { getCurrentUser } from "@/lib/utils";
 import { Class, Lesson, Prisma, Subject, Teacher } from "@prisma/client";
 import Image from "next/image";
+import Link from "next/link";
 
-type LessonList = Lesson & { subject: Subject } & { class: Class } & {
-  teacher: Teacher;
-};
+// type LessonList = Lesson & { subject: Subject } & { class: Class } & {
+//   teacher: Teacher;
+// };
 const { role, userId } = await getCurrentUser();
 const columns = [
   {
@@ -47,7 +48,7 @@ const columns = [
       ]
     : []),
 ];
-const renderRow = (item: LessonList) => (
+const renderRow = (item: any) => (
   <tr
     key={item.id}
     className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight"
@@ -72,7 +73,9 @@ const renderRow = (item: LessonList) => (
     </td>
     <td>{item.day}</td>
     <td className="hidden md:table-cell">
-      {item.teacher.name + " " + item.teacher.surname}
+      {item.teacher
+        ? `${item.teacher.name} ${item.teacher.surname}`
+        : "Tidak ada guru"}
     </td>
     <td>
       <div className="flex items-center gap-2">
@@ -109,7 +112,9 @@ const LessonListPage = async ({
       if (value !== undefined)
         switch (key) {
           case "teacherId":
-            query.teacherId = value;
+            query.teacherId = value.trim();
+            console.log("teacherId param:", value);
+
             break;
           case "classId":
             query.classId = parseInt(value);
@@ -127,20 +132,20 @@ const LessonListPage = async ({
   }
   // ROLE CONDITION
 
+  const hasTeacherIdParam = query.teacherId !== undefined;
   switch (role) {
     case "admin":
       break;
     case "teacher":
-      const teacher = await prisma.teacher.findUnique({
-        where: { id: userId! },
-        include: { classes: true },
-      });
+      if (!hasTeacherIdParam) {
+        const teacher = await prisma.teacher.findUnique({
+          where: { id: userId! },
+          include: { classes: true },
+        });
 
-      const classIds = teacher?.classes.map((cls) => cls.id) ?? [];
-
-      query.classId = {
-        in: classIds,
-      };
+        const classIds = teacher?.classes.map((cls) => cls.id) ?? [];
+        query.classId = { in: classIds };
+      }
       break;
     case "student":
       query.class = {
@@ -182,13 +187,15 @@ const LessonListPage = async ({
     <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
       {/* TOP */}
       <div className="flex items-center justify-between">
-        <h1 className="hidden md:block text-lg font-semibold">Jadwal Siswa</h1>
+        <h1 className="hidden md:block text-lg font-semibold">Jadwal {}</h1>
         <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
           <TableSearch></TableSearch>
           <div className="flex items-center gap-4 self-end">
-            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
-              <Image src="/filter.png" alt="" width={14} height={14}></Image>
-            </button>
+            <Link href={`/list/lessons?teacherId=${userId!}`}>
+              <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
+                <Image src="/filter.png" alt="" width={14} height={14} />
+              </button>
+            </Link>
             <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
               <Image src="/sort.png" alt="" width={14} height={14}></Image>
             </button>

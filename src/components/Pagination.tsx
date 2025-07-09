@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 
 const Pagination = ({ page, count }: { page: number; count: number }) => {
   const router = useRouter();
-
-  const hasPrev = ITEM_PER_PAGE* (page-1)> 0;
-  const hasNext = ITEM_PER_PAGE * (page+1) + ITEM_PER_PAGE< count;
+  
+  const totalPages = Math.ceil(count / ITEM_PER_PAGE);
+  const hasPrev = page > 1;
+  const hasNext = page < totalPages;
   const changePage = (newPage: number) => {
     const params = new URLSearchParams(window.location.search);
     params.set("page", newPage.toString());

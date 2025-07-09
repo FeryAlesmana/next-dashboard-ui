@@ -61,8 +61,40 @@ const LessonForm = ({
   );
 
   const onSubmit = handleSubmit((data) => {
+    const dayMap: Record<LessonSchema["day"], number> = {
+      SENIN: 1,
+      SELASA: 2,
+      RABU: 3,
+      KAMIS: 4,
+      JUMAT: 5,
+    };
+    const targetDayIndex = dayMap[data.day]; // 1–5 (Senin–Jumat)
+    const today = new Date();
+    const currentWeekMonday = new Date(today);
+    const dayOfWeek = today.getDay();
+
+    // Geser ke Senin minggu ini
+    currentWeekMonday.setDate(today.getDate() - ((dayOfWeek + 6) % 7));
+    currentWeekMonday.setHours(0, 0, 0, 0);
+
+    // Tambahkan offset hari (0–4) tergantung hari yang dipilih
+    const targetDate = new Date(currentWeekMonday);
+    targetDate.setDate(currentWeekMonday.getDate() + (targetDayIndex - 1));
+
+    const toDateTime = (timeStr: string): Date => {
+      const [hour, minute] = timeStr.split(":").map(Number);
+      const result = new Date(targetDate);
+      result.setHours(hour, minute, 0, 0);
+      return result;
+    };
+
+    const payload = {
+      ...data,
+      startTime: toDateTime(data.startTime),
+      endTime: toDateTime(data.endTime),
+    };
     startTransition(() => {
-      formAction(data);
+      formAction(payload);
     });
   });
 
@@ -101,9 +133,9 @@ const LessonForm = ({
   };
   return (
     <form action="" className="flex flex-col gap-8" onSubmit={onSubmit}>
-      <h1 className="text-xl font-semibold">Tambah Pelajaran Baru</h1>
+      <h1 className="text-xl font-semibold">Tambah Jadwal Baru</h1>
       <span className="text-xs text-gray-400 font-medium">
-        Informasi Pelajaran
+        Informasi Jadwal
       </span>
 
       <div className="flex justify-between flex-wrap gap-4 m-4">
@@ -153,20 +185,27 @@ const LessonForm = ({
           label="Waktu mulai"
           name="startTime"
           defaultValue={
-            data?.startTime ? formatDateForInput(data.startTime) : ""
-          }
+            data?.startTime
+              ? new Date(data.startTime).toISOString().slice(11, 16) // safely get "HH:MM"
+              : ""
+          } // HH:MM
           register={register}
           error={errors?.startTime}
-          type="datetime-local"
-        ></InputField>
+          type="time"
+        />
+
         <InputField
           label="Waktu selesai"
           name="endTime"
-          defaultValue={data?.endTime ? formatDateForInput(data.endTime) : ""}
+          defaultValue={
+            data?.startTime
+              ? new Date(data.endTime).toISOString().slice(11, 16) // safely get "HH:MM"
+              : ""
+          } // HH:MM
           register={register}
           error={errors?.endTime}
-          type="datetime-local"
-        ></InputField>
+          type="time"
+        />
         <div className="flex flex-col gap-2 w-full md:w-1/4">
           <label className="text-xs text-gray-400">Kelas</label>
 
@@ -257,6 +296,16 @@ const LessonForm = ({
           )}
         </div>
       </div>
+      {data && (
+        <InputField
+          label="Id"
+          name="id"
+          defaultValue={data?.id}
+          register={register}
+          error={errors?.id}
+          hidden
+        />
+      )}
 
       {(state.error || Object.keys(errors).length > 0) && (
         <span className="text-red-500">

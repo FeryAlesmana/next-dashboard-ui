@@ -1,6 +1,6 @@
 import prisma from "@/lib/prisma";
 import BigCalendar from "./BigCalendar";
-import { adjustScheduleToCurentWeek } from "@/lib/utils";
+import { adjustScheduleToCurentWeek, generateRecurringLessons } from "@/lib/utils";
 
 const BigCalendarContainer = async ({
   type,
@@ -22,7 +22,7 @@ const BigCalendarContainer = async ({
     start: lesson.startTime,
     end: lesson.endTime,
   }));
-  const schedule = adjustScheduleToCurentWeek(data);
+  const schedule = generateRecurringLessons(data, 6);;
   
   return (
     <div className="">

@@ -53,7 +53,9 @@ const renderRow = (item: ExamList) => (
     <td className="flex items-center p-4 gap-4">{item.lesson.subject.name}</td>
     <td>{item.lesson.class.name}</td>
     <td className="hidden md:table-cell">
-      {item.lesson.teacher.name + " " + item.lesson.teacher.surname}
+      {item.lesson.teacher
+        ? `${item.lesson.teacher.name} ${item.lesson.teacher.surname}`
+        : "Tidak ada guru"}
     </td>
     <td className="hidden md:table-cell">
       {" "}

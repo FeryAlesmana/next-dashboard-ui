@@ -142,7 +142,7 @@ const SingleTeacherPage = async ({ params }: { params: { id: string } }) => {
                 <h1 className="text-xl font-semibold">
                   {teacher._count.lessons}
                 </h1>
-                <span className="text-sm text-gray-400">Mata Pelajaran</span>
+                <span className="text-sm text-gray-400">Jadwal Guru</span>
               </div>
             </div>
             {/* CARD */}

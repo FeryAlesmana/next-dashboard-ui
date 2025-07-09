@@ -48,7 +48,11 @@ const renderRow = (item: AssignmentList) => (
   >
     <td className="flex items-center p-4 gap-4">{item.lesson.subject.name}</td>
     <td>{item.lesson.class.name}</td>
-    <td className="hidden md:table-cell">{item.lesson.teacher.name}</td>
+    <td className="hidden md:table-cell">
+      {item.lesson.teacher
+        ? `${item.lesson.teacher.name} ${item.lesson.teacher.surname}`
+        : "Tidak ada guru"}
+    </td>
     <td className="hidden md:table-cell">
       {" "}
       {item.dueDate.toLocaleDateString("en-UK", {
@@ -112,21 +116,23 @@ const AssignmentListPage = async ({
   }
 
   // ROLE CONDITION
-
+  const hasTeacherIdParam = query.lesson.teacherId !== undefined;
   switch (role) {
     case "admin":
       break;
     case "teacher":
-      const teacher = await prisma.teacher.findUnique({
-        where: { id: userId! },
-        include: { classes: true },
-      });
+      if (!hasTeacherIdParam) {
+        const teacher = await prisma.teacher.findUnique({
+          where: { id: userId! },
+          include: { classes: true },
+        });
 
-      const classIds = teacher?.classes.map((cls) => cls.id) ?? [];
+        const classIds = teacher?.classes.map((cls) => cls.id) ?? [];
 
-      query.lesson.classId = {
-        in: classIds,
-      };
+        query.lesson.classId = {
+          in: classIds,
+        };
+      }
       break;
     case "student":
       query.lesson.class = {

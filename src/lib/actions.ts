@@ -173,6 +173,7 @@ export const createTeacher = async (
         email: data.email,
         phone: data.phone,
         address: data.address,
+        religion: data.religion,
         img: data.img || null,
         sex: data.sex,
         birthday: data.birthday,
@@ -373,12 +374,44 @@ export const createStudent = async (
         email: data.email,
         phone: data.phone,
         address: data.address,
+        religion: data.religion,
         img: data.img || null,
         sex: data.sex,
         birthday: data.birthday,
         gradeId: data.gradeId,
         classId: data.classId,
         parentId: data.parentId,
+      },
+    });
+    await prisma.student_details.create({
+      data: {
+        student: {
+          connect: { id: user?.id || data.id },
+        },
+        asalSekolah: data.asalSekolah,
+        birthPlace: data.birthPlace,
+        nisn: data.nisn,
+        npsn: data.npsn,
+        no_ijz: data.no_ijz,
+        nik: data.nik,
+        kps: data.kps || null,
+        no_kps: data.no_kps || null,
+        height: data.height,
+        weight: data.weight,
+        transportation: data.transportation,
+        tempat_tinggal: data.tempat_tinggal,
+        distance_from_home: data.distance_from_home,
+        time_from_home: data.time_from_home,
+        number_of_siblings: data.number_of_siblings,
+        postcode: data.postcode,
+        awards: data.awards || null,
+        awards_date: data.awards_date || null,
+        scholarship: data.scholarship || null,
+        scholarship_detail: data.scholarship_detail || null,
+        dokumenIjazah: data.dokumenIjazah || null,
+        dokumenAkte: data.dokumenAkte || null,
+        dokumenPasfoto: data.dokumenPasfoto || null,
+        dokumenKKKTP: data.dokumenKKKTP || null,
       },
     });
     return { success: true, error: false };
@@ -411,12 +444,35 @@ export const updateStudent = async (
 
       return { success: false, error: true, message: "Missing student ID" };
     }
-    const user = await client.users.updateUser(data.id, {
-      username: data.username,
-      ...(data.password !== "" && { password: data.password }),
-      firstName: data.name,
-      lastName: data.surname,
-    });
+    //     try {
+    //     const deletedUser = await client.users.deleteUser(id);
+
+    //     if (deletedUser) {
+    //       console.log("✅ User Sucessfully deleted:", deletedUser.id);
+    //     }
+    //   } catch (error) {
+    //     console.warn(
+    //       "⚠️ Clerk returned no user info. User may already be deleted?"
+    //     );
+    //   }
+
+    //   return { success: true, error: false };
+    // }
+    let user;
+    try {
+      user = await client.users.updateUser(data.id, {
+        username: data.username,
+        ...(data.password !== "" && { password: data.password }),
+        firstName: data.name,
+        lastName: data.surname,
+      });
+      if (user) {
+        console.log("✅ User Sucessfully Updated:", user.id);
+      }
+      return { success: true, error: false };
+    } catch (error) {
+      console.warn("⚠️ Clerk returned no user info. User maybe didnt exist?");
+    }
     await new Promise((resolve) => setTimeout(resolve, 1000));
     await prisma.student.update({
       where: {
@@ -424,7 +480,7 @@ export const updateStudent = async (
       },
       data: {
         ...(data.password !== "" && { password: data.password }),
-        id: user.id,
+        id: user?.id || data.id,
         username: data.username,
         name: data.name,
         surname: data.surname,
@@ -437,6 +493,40 @@ export const updateStudent = async (
         gradeId: data.gradeId,
         classId: data.classId,
         parentId: data.parentId,
+      },
+    });
+    await prisma.student_details.update({
+      where: {
+        id: parseInt(data.sdId),
+      },
+      data: {
+        student: {
+          connect: { id: user?.id || data.id },
+        },
+        asalSekolah: data.asalSekolah,
+        birthPlace: data.birthPlace,
+        nisn: data.nisn,
+        npsn: data.npsn,
+        no_ijz: data.no_ijz,
+        nik: data.nik,
+        kps: data.kps || null,
+        no_kps: data.no_kps || null,
+        height: data.height,
+        weight: data.weight,
+        transportation: data.transportation,
+        tempat_tinggal: data.tempat_tinggal,
+        distance_from_home: data.distance_from_home,
+        time_from_home: data.time_from_home,
+        number_of_siblings: data.number_of_siblings,
+        postcode: data.postcode,
+        awards: data.awards || null,
+        awards_date: data.awards_date || null,
+        scholarship: data.scholarship || null,
+        scholarship_detail: data.scholarship_detail || null,
+        dokumenIjazah: data.dokumenIjazah || null,
+        dokumenAkte: data.dokumenAkte || null,
+        dokumenPasfoto: data.dokumenPasfoto || null,
+        dokumenKKKTP: data.dokumenKKKTP || null,
       },
     });
     return { success: true, error: false };
@@ -866,6 +956,9 @@ export const createParent = async (
         name: data.name,
         surname: data.surname,
         email: data.email,
+        job: data.job,
+        income: data.income,
+        degree: data.degree,
         phone: data.phone,
         address: data.address,
         students: {

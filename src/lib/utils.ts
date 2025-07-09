@@ -1,11 +1,10 @@
 import { auth } from "@clerk/nextjs/server";
 
 export const getCurrentUser = async () => {
-  const { userId, sessionClaims,actor } = await auth();
+  const { userId, sessionClaims, actor } = await auth();
   const role = (sessionClaims?.metadata as { role?: string })?.role;
   return { userId, role, actor };
 };
-
 
 const currentWorkWeek = () => {
   const today = new Date();
@@ -56,6 +55,49 @@ export const adjustScheduleToCurentWeek = (
       end: adjustedEndDate,
     };
   });
+};
+
+export const generateRecurringLessons = (
+  lessons: { title: string; start: Date; end: Date }[],
+  numberOfWeeks: number = 6
+): { title: string; start: Date; end: Date }[] => {
+  const today = new Date();
+  const currentWeekMonday = new Date(today);
+  currentWeekMonday.setDate(today.getDate() - ((today.getDay() + 6) % 7)); // Senin minggu ini
+  currentWeekMonday.setHours(0, 0, 0, 0);
+
+  const result: { title: string; start: Date; end: Date }[] = [];
+
+  for (const lesson of lessons) {
+    const lessonDay = lesson.start.getDay(); // 0 (Sunday) to 6 (Saturday)
+    const timeStart = {
+      hours: lesson.start.getHours(),
+      minutes: lesson.start.getMinutes(),
+    };
+    const timeEnd = {
+      hours: lesson.end.getHours(),
+      minutes: lesson.end.getMinutes(),
+    };
+
+    for (let i = 0; i < numberOfWeeks; i++) {
+      const baseDate = new Date(currentWeekMonday);
+      baseDate.setDate(currentWeekMonday.getDate() + lessonDay + i * 7);
+
+      const start = new Date(baseDate);
+      start.setHours(timeStart.hours, timeStart.minutes);
+
+      const end = new Date(baseDate);
+      end.setHours(timeEnd.hours, timeEnd.minutes);
+
+      result.push({
+        title: lesson.title,
+        start,
+        end,
+      });
+    }
+  }
+
+  return result;
 };
 export default function extractCloudinaryPublicId(url: string): string | null {
   try {
