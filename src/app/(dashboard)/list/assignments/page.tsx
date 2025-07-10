@@ -12,78 +12,7 @@ import Link from "next/link";
 type AssignmentList = Assignment & {
   lesson: { subject: Subject; class: Class; teacher: Teacher };
 };
-const { role, userId } = await getCurrentUser();
-const columns = [
-  {
-    header: "Mata Pelajaran",
-    accessor: "Nama",
-  },
-  {
-    header: "Kelas",
-    accessor: "kelas",
-  },
-  {
-    header: "Guru",
-    accessor: "teacher",
-    className: "hidden md:table-cell",
-  },
-  {
-    header: "Deadline",
-    accessor: "dueDate",
-    className: "hidden md:table-cell",
-  },
-  ...(role === "admin" || role == "teacher"
-    ? [
-        {
-          header: "Aksi",
-          accessor: "action",
-        },
-      ]
-    : []),
-];
-const renderRow = (item: AssignmentList) => (
-  <tr
-    key={item.id}
-    className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight"
-  >
-    <td className="flex items-center p-4 gap-4">{item.lesson.subject.name}</td>
-    <td>{item.lesson.class.name}</td>
-    <td className="hidden md:table-cell">
-      {item.lesson.teacher
-        ? `${item.lesson.teacher.name} ${item.lesson.teacher.surname}`
-        : "Tidak ada guru"}
-    </td>
-    <td className="hidden md:table-cell">
-      {" "}
-      {item.dueDate.toLocaleDateString("en-UK", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-        day: "numeric",
-        month: "numeric",
-      })}
-    </td>
 
-    <td>
-      <div className="flex items-center gap-2">
-        {(role === "admin" || role === "teacher") && (
-          <>
-            <FormContainer
-              table="assignment"
-              type="update"
-              data={item}
-            ></FormContainer>
-            <FormContainer
-              table="assignment"
-              type="delete"
-              id={item.id}
-            ></FormContainer>
-          </>
-        )}
-      </div>
-    </td>
-  </tr>
-);
 const AssignmentListPage = async ({
   searchParams,
 }: {
@@ -92,6 +21,82 @@ const AssignmentListPage = async ({
   const sp = normalizeSearchParams(searchParams);
   const { page, ...queryParams } = await sp;
   const p = page ? parseInt(page) : 1;
+  const { role, userId } = await getCurrentUser();
+
+  const columns = [
+    {
+      header: "Mata Pelajaran",
+      accessor: "Nama",
+    },
+    {
+      header: "Kelas",
+      accessor: "kelas",
+    },
+    {
+      header: "Guru",
+      accessor: "teacher",
+      className: "hidden md:table-cell",
+    },
+    {
+      header: "Deadline",
+      accessor: "dueDate",
+      className: "hidden md:table-cell",
+    },
+    ...(role === "admin" || role == "teacher"
+      ? [
+          {
+            header: "Aksi",
+            accessor: "action",
+          },
+        ]
+      : []),
+  ];
+
+  const renderRow = (item: AssignmentList) => (
+    <tr
+      key={item.id}
+      className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight"
+    >
+      <td className="flex items-center p-4 gap-4">
+        {item.lesson.subject.name}
+      </td>
+      <td>{item.lesson.class.name}</td>
+      <td className="hidden md:table-cell">
+        {item.lesson.teacher
+          ? `${item.lesson.teacher.name} ${item.lesson.teacher.surname}`
+          : "Tidak ada guru"}
+      </td>
+      <td className="hidden md:table-cell">
+        {" "}
+        {item.dueDate.toLocaleDateString("en-UK", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+          day: "numeric",
+          month: "numeric",
+        })}
+      </td>
+
+      <td>
+        <div className="flex items-center gap-2">
+          {(role === "admin" || role === "teacher") && (
+            <>
+              <FormContainer
+                table="assignment"
+                type="update"
+                data={item}
+              ></FormContainer>
+              <FormContainer
+                table="assignment"
+                type="delete"
+                id={item.id}
+              ></FormContainer>
+            </>
+          )}
+        </div>
+      </td>
+    </tr>
+  );
 
   const query: Prisma.AssignmentWhereInput = {};
   query.lesson = {};

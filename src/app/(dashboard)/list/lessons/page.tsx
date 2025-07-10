@@ -12,91 +12,7 @@ import Link from "next/link";
 // type LessonList = Lesson & { subject: Subject } & { class: Class } & {
 //   teacher: Teacher;
 // };
-const { role, userId } = await getCurrentUser();
-const columns = [
-  {
-    header: "Mata Pelajaran",
-    accessor: "Nama",
-  },
-  {
-    header: "Kelas",
-    accessor: "kelas",
-  },
-  {
-    header: "Mulai",
-    accessor: "startTime",
-  },
-  {
-    header: "Berakhir",
-    accessor: "endTime",
-  },
-  {
-    header: "Hari",
-    accessor: "Day",
-  },
-  {
-    header: "Teacher",
-    accessor: "teacher",
-    className: "hidden md:table-cell",
-  },
-  ...(role === "admin"
-    ? [
-        {
-          header: "Aksi",
-          accessor: "action",
-        },
-      ]
-    : []),
-];
-const renderRow = (item: any) => (
-  <tr
-    key={item.id}
-    className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight"
-  >
-    <td className="flex items-center p-4 gap-4">{item.subject.name}</td>
-    <td>{item.class.name}</td>
-    <td>
-      {" "}
-      {item.startTime.toLocaleTimeString("en-UK", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-      })}
-    </td>
-    <td>
-      {" "}
-      {item.endTime.toLocaleTimeString("en-UK", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-      })}
-    </td>
-    <td>{item.day}</td>
-    <td className="hidden md:table-cell">
-      {item.teacher
-        ? `${item.teacher.name} ${item.teacher.surname}`
-        : "Tidak ada guru"}
-    </td>
-    <td>
-      <div className="flex items-center gap-2">
-        {role === "admin" && (
-          <>
-            <FormContainer
-              table="lesson"
-              type="update"
-              data={item}
-            ></FormContainer>
-            <FormContainer
-              table="lesson"
-              type="delete"
-              id={item.id}
-            ></FormContainer>
-          </>
-        )}
-      </div>
-    </td>
-  </tr>
-);
+
 const LessonListPage = async ({
   searchParams,
 }: {
@@ -105,6 +21,92 @@ const LessonListPage = async ({
   const sp = normalizeSearchParams(searchParams);
   const { page, ...queryParams } = await sp;
   const p = page ? parseInt(page) : 1;
+
+  const { role, userId } = await getCurrentUser();
+  const columns = [
+    {
+      header: "Mata Pelajaran",
+      accessor: "Nama",
+    },
+    {
+      header: "Kelas",
+      accessor: "kelas",
+    },
+    {
+      header: "Mulai",
+      accessor: "startTime",
+    },
+    {
+      header: "Berakhir",
+      accessor: "endTime",
+    },
+    {
+      header: "Hari",
+      accessor: "Day",
+    },
+    {
+      header: "Teacher",
+      accessor: "teacher",
+      className: "hidden md:table-cell",
+    },
+    ...(role === "admin"
+      ? [
+          {
+            header: "Aksi",
+            accessor: "action",
+          },
+        ]
+      : []),
+  ];
+  const renderRow = (item: any) => (
+    <tr
+      key={item.id}
+      className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight"
+    >
+      <td className="flex items-center p-4 gap-4">{item.subject.name}</td>
+      <td>{item.class.name}</td>
+      <td>
+        {" "}
+        {item.startTime.toLocaleTimeString("en-UK", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        })}
+      </td>
+      <td>
+        {" "}
+        {item.endTime.toLocaleTimeString("en-UK", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        })}
+      </td>
+      <td>{item.day}</td>
+      <td className="hidden md:table-cell">
+        {item.teacher
+          ? `${item.teacher.name} ${item.teacher.surname}`
+          : "Tidak ada guru"}
+      </td>
+      <td>
+        <div className="flex items-center gap-2">
+          {role === "admin" && (
+            <>
+              <FormContainer
+                table="lesson"
+                type="update"
+                data={item}
+              ></FormContainer>
+              <FormContainer
+                table="lesson"
+                type="delete"
+                id={item.id}
+              ></FormContainer>
+            </>
+          )}
+        </div>
+      </td>
+    </tr>
+  );
 
   const query: Prisma.LessonWhereInput = {};
 

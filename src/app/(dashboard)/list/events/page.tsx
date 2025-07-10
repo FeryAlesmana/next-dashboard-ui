@@ -9,102 +9,7 @@ import { Class, Event, Prisma } from "@prisma/client";
 import Image from "next/image";
 
 type EventList = Event & { class: Class };
-const { role, userId } = await getCurrentUser();
-const columns = [
-  {
-    header: "Nama event",
-    accessor: "subjects",
-  },
-  {
-    header: "Kelas",
-    accessor: "kelas",
-  },
-  {
-    header: "Tanggal",
-    accessor: "date",
-    className: "hidden md:table-cell",
-  },
-  {
-    header: "Waktu Mulai",
-    accessor: "startTime",
-    className: "hidden md:table-cell",
-  },
-  {
-    header: "Selesai",
-    accessor: "endTime",
-    className: "hidden md:table-cell",
-  },
-  ...(role === "admin" || role === "teacher"
-    ? [
-        {
-          header: "Aksi",
-          accessor: "action",
-        },
-      ]
-    : []),
-];
 
-let supervisedClassIds: number[] = [];
-
-if (role === "teacher") {
-  const supervisedClasses = await prisma.class.findMany({
-    where: { supervisorId: userId! },
-    select: { id: true },
-  });
-
-  supervisedClassIds = supervisedClasses.map((cls) => cls.id);
-}
-
-const renderRow = (item: EventList) => {
-  const canEdit =
-    role === "admin" ||
-    (role === "teacher" && supervisedClassIds.includes(item.classId ?? -1));
-  return (
-    <tr
-      key={item.id}
-      className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight"
-    >
-      <td className="flex items-center p-4 gap-4">{item.title}</td>
-      <td>{item.class?.name || "-"} </td>
-      <td className="hidden md:table-cell">
-        {new Intl.DateTimeFormat("en-US").format(item.startTime)}
-      </td>
-      <td className="hidden md:table-cell">
-        {item.startTime.toLocaleTimeString("en-UK", {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: false,
-        })}
-      </td>
-      <td className="hidden md:table-cell">
-        {item.endTime.toLocaleTimeString("en-UK", {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: false,
-        })}
-      </td>
-
-      <td>
-        <div className="flex items-center gap-2">
-          {canEdit && (
-            <>
-              <FormContainer
-                table="event"
-                type="update"
-                data={item}
-              ></FormContainer>
-              <FormContainer
-                table="event"
-                type="delete"
-                id={item.id}
-              ></FormContainer>
-            </>
-          )}
-        </div>
-      </td>
-    </tr>
-  );
-};
 const EventListPage = async ({
   searchParams,
 }: {
@@ -113,6 +18,103 @@ const EventListPage = async ({
   const sp = normalizeSearchParams(searchParams);
   const { page, ...queryParams } = await sp;
   const p = page ? parseInt(page) : 1;
+
+  const { role, userId } = await getCurrentUser();
+  const columns = [
+    {
+      header: "Nama event",
+      accessor: "subjects",
+    },
+    {
+      header: "Kelas",
+      accessor: "kelas",
+    },
+    {
+      header: "Tanggal",
+      accessor: "date",
+      className: "hidden md:table-cell",
+    },
+    {
+      header: "Waktu Mulai",
+      accessor: "startTime",
+      className: "hidden md:table-cell",
+    },
+    {
+      header: "Selesai",
+      accessor: "endTime",
+      className: "hidden md:table-cell",
+    },
+    ...(role === "admin" || role === "teacher"
+      ? [
+          {
+            header: "Aksi",
+            accessor: "action",
+          },
+        ]
+      : []),
+  ];
+
+  let supervisedClassIds: number[] = [];
+
+  if (role === "teacher") {
+    const supervisedClasses = await prisma.class.findMany({
+      where: { supervisorId: userId! },
+      select: { id: true },
+    });
+
+    supervisedClassIds = supervisedClasses.map((cls) => cls.id);
+  }
+
+  const renderRow = (item: EventList) => {
+    const canEdit =
+      role === "admin" ||
+      (role === "teacher" && supervisedClassIds.includes(item.classId ?? -1));
+    return (
+      <tr
+        key={item.id}
+        className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight"
+      >
+        <td className="flex items-center p-4 gap-4">{item.title}</td>
+        <td>{item.class?.name || "-"} </td>
+        <td className="hidden md:table-cell">
+          {new Intl.DateTimeFormat("en-US").format(item.startTime)}
+        </td>
+        <td className="hidden md:table-cell">
+          {item.startTime.toLocaleTimeString("en-UK", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+          })}
+        </td>
+        <td className="hidden md:table-cell">
+          {item.endTime.toLocaleTimeString("en-UK", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+          })}
+        </td>
+
+        <td>
+          <div className="flex items-center gap-2">
+            {canEdit && (
+              <>
+                <FormContainer
+                  table="event"
+                  type="update"
+                  data={item}
+                ></FormContainer>
+                <FormContainer
+                  table="event"
+                  type="delete"
+                  id={item.id}
+                ></FormContainer>
+              </>
+            )}
+          </div>
+        </td>
+      </tr>
+    );
+  };
 
   const query: Prisma.EventWhereInput = {};
 

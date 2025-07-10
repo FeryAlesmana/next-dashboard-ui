@@ -10,85 +10,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 type StudentList = Student & { class: Class };
-const { role } = await getCurrentUser();
 
-const columns = [
-  {
-    header: "Info",
-    accessor: "info",
-  },
-  {
-    header: "Students ID",
-    accessor: "ID Murid",
-    className: "hidden md:table-cell",
-  },
-  {
-    header: "Grade",
-    accessor: "Kode Kelas",
-    className: "hidden md:table-cell",
-  },
-  {
-    header: "Phone",
-    accessor: "No. Tlp",
-    className: "hidden md:table-cell",
-  },
-  {
-    header: "Address",
-    accessor: "Alamat",
-    className: "hidden md:table-cell",
-  },
-  ...(role === "admin"
-    ? [
-        {
-          header: "Aksi",
-          accessor: "action",
-        },
-      ]
-    : []),
-];
-const renderRow = (item: StudentList) => (
-  <tr
-    key={item.id}
-    className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight"
-  >
-    <td className="flex items-center p-4 gap-4">
-      <Image
-        src={item.img || "/noAvatar.png"}
-        alt=""
-        width={40}
-        height={40}
-        className="md:hidden xl:block w-10 h-10 rounded-full object-cover"
-      ></Image>
-      <div className="flex flex-col">
-        <h3 className="font-semibold">{item.name}</h3>
-        <p className="text-xs text-gray-500">{item.class.name}</p>
-      </div>
-    </td>
-    <td className="hidden md:table-cell">{item.username}</td>
-    <td className="hidden md:table-cell">{item.class.name[0]}</td>
-    <td className="hidden md:table-cell">{item.phone}</td>
-    <td className="hidden md:table-cell">{item.address}</td>
-    <td>
-      <div className="flex items-center gap-2">
-        <Link href={`/list/students/${item.id}`}>
-          <button className="w-7 h-7 flex items-center justify-center rounded-full bg-lamaSky">
-            <Image src="/view.png" alt="" width={16} height={16}></Image>
-          </button>
-        </Link>
-        {role === "admin" && (
-          // <button className="w-7 h-7 flex items-center justify-center rounded-full bg-lamaPurple">
-          //   <Image src="/delete.png" alt="" width={16} height={16}></Image>
-          // </button>
-          <FormContainer
-            table="student"
-            type="delete"
-            id={item.id}
-          ></FormContainer>
-        )}
-      </div>
-    </td>
-  </tr>
-);
 const StudentsListPage = async ({
   searchParams,
 }: {
@@ -97,6 +19,86 @@ const StudentsListPage = async ({
   const sp = normalizeSearchParams(searchParams);
   const { page, ...queryParams } = await sp;
   const p = page ? parseInt(page) : 1;
+
+  const { role } = await getCurrentUser();
+
+  const columns = [
+    {
+      header: "Info",
+      accessor: "info",
+    },
+    {
+      header: "Students ID",
+      accessor: "ID Murid",
+      className: "hidden md:table-cell",
+    },
+    {
+      header: "Grade",
+      accessor: "Kode Kelas",
+      className: "hidden md:table-cell",
+    },
+    {
+      header: "Phone",
+      accessor: "No. Tlp",
+      className: "hidden md:table-cell",
+    },
+    {
+      header: "Address",
+      accessor: "Alamat",
+      className: "hidden md:table-cell",
+    },
+    ...(role === "admin"
+      ? [
+          {
+            header: "Aksi",
+            accessor: "action",
+          },
+        ]
+      : []),
+  ];
+  const renderRow = (item: StudentList) => (
+    <tr
+      key={item.id}
+      className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight"
+    >
+      <td className="flex items-center p-4 gap-4">
+        <Image
+          src={item.img || "/noAvatar.png"}
+          alt=""
+          width={40}
+          height={40}
+          className="md:hidden xl:block w-10 h-10 rounded-full object-cover"
+        ></Image>
+        <div className="flex flex-col">
+          <h3 className="font-semibold">{item.name}</h3>
+          <p className="text-xs text-gray-500">{item.class.name}</p>
+        </div>
+      </td>
+      <td className="hidden md:table-cell">{item.username}</td>
+      <td className="hidden md:table-cell">{item.class.name[0]}</td>
+      <td className="hidden md:table-cell">{item.phone}</td>
+      <td className="hidden md:table-cell">{item.address}</td>
+      <td>
+        <div className="flex items-center gap-2">
+          <Link href={`/list/students/${item.id}`}>
+            <button className="w-7 h-7 flex items-center justify-center rounded-full bg-lamaSky">
+              <Image src="/view.png" alt="" width={16} height={16}></Image>
+            </button>
+          </Link>
+          {role === "admin" && (
+            // <button className="w-7 h-7 flex items-center justify-center rounded-full bg-lamaPurple">
+            //   <Image src="/delete.png" alt="" width={16} height={16}></Image>
+            // </button>
+            <FormContainer
+              table="student"
+              type="delete"
+              id={item.id}
+            ></FormContainer>
+          )}
+        </div>
+      </td>
+    </tr>
+  );
 
   const query: Prisma.StudentWhereInput = {};
 
