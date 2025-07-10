@@ -36,17 +36,17 @@ const LessonForm = ({
   } = useForm<LessonSchema>({
     resolver: zodResolver(lessonSchema),
   });
-  const createLessonHandler = async (
+  const createLessonHandler: (
     prevState: CurrentState,
     payload: LessonSchema
-  ): Promise<CurrentState> => {
+  ) => Promise<CurrentState> = async (prevState, payload) => {
     return await createLesson(prevState, payload);
   };
 
-  const updateLessonHandler = async (
+  const updateLessonHandler: (
     prevState: CurrentState,
     payload: LessonSchema
-  ): Promise<CurrentState> => {
+  ) => Promise<CurrentState> = async (prevState, payload) => {
     return await updateLesson(prevState, payload);
   };
 
@@ -87,11 +87,13 @@ const LessonForm = ({
       result.setHours(hour, minute, 0, 0);
       return result;
     };
-
+    const formatTime = (date: Date): string => {
+      return date.toTimeString().slice(0, 5); // "HH:mm"
+    };
     const payload = {
       ...data,
-      startTime: toDateTime(data.startTime),
-      endTime: toDateTime(data.endTime),
+      startTime: formatTime(toDateTime(data.startTime)),
+      endTime: formatTime(toDateTime(data.endTime)),
     };
     startTransition(() => {
       formAction(payload);
@@ -127,10 +129,7 @@ const LessonForm = ({
       label: `${teacher.name} ${teacher.surname}`,
     })
   );
-  const formatDateForInput = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toISOString().slice(0, 16); // returns "YYYY-MM-DDTHH:MM"
-  };
+
   return (
     <form action="" className="flex flex-col gap-8" onSubmit={onSubmit}>
       <h1 className="text-xl font-semibold">Tambah Jadwal Baru</h1>
