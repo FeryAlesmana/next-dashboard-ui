@@ -12,12 +12,16 @@ import FormContainer from "@/components/FormContainer";
 import { getCurrentUser } from "@/lib/utils";
 import EmailCopy from "@/components/EmailCopy";
 
-const SingleTeacherPage = async ({ params }: { params: { id: string } }) => {
+const SingleTeacherPage = async ({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) => {
   const { id } = await params;
   const { userId, role } = await getCurrentUser();
 
   // Block users from viewing others' profiles unless they are admin
-  if (role !== "admin" && userId !== params.id) {
+  if (role !== "admin" && userId !== id) {
     return notFound();
   }
   const teacher:

@@ -4,7 +4,7 @@ import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/setting";
-import { getCurrentUser } from "@/lib/utils";
+import { getCurrentUser, normalizeSearchParams } from "@/lib/utils";
 import { Announcement, Class, Prisma } from "@prisma/client";
 import Image from "next/image";
 
@@ -67,9 +67,10 @@ const renderRow = (item: AnnouncementList) => (
 const AnnouncementListPage = async ({
   searchParams,
 }: {
-  searchParams: { [key: string]: string | undefined };
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) => {
-  const { page, ...queryParams } = await searchParams;
+  const sp = await normalizeSearchParams(searchParams);
+  const { page, ...queryParams } = await sp;
   const p = page ? parseInt(page) : 1;
 
   const query: Prisma.AnnouncementWhereInput = {};

@@ -1,4 +1,5 @@
-'use client';
+"use client";
+import Image from "next/image";
 import React from "react";
 
 const Gallery: React.FC = () => {
@@ -24,7 +25,9 @@ const Gallery: React.FC = () => {
               key={i}
               className="overflow-hidden rounded-xl border border-white/10 bg-white/10 backdrop-blur-md shadow-md hover:shadow-xl transition-all duration-300"
             >
-              <img
+              <Image
+                width={340}
+                height={192}
                 src={img}
                 alt={`Galeri ${i + 1}`}
                 className="w-full h-48 object-cover hover:scale-105 transition-transform duration-500 ease-in-out"

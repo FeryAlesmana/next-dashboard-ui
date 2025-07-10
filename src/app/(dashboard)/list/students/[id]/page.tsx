@@ -13,12 +13,16 @@ import { Suspense } from "react";
 import StudentAttendanceCard from "@/components/StudentAttendanceCard";
 import FormContainer from "@/components/FormContainer";
 
-const SingleStudentPage = async ({ params }: { params: { id: string } }) => {
+const SingleStudentPage = async ({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) => {
   const { id } = await params;
   const { userId, role } = await getCurrentUser();
 
   // Block users from viewing others' profiles unless they are admin
-  if (role !== "admin" && userId !== params.id) {
+  if (role !== "admin" && userId !== id) {
     return notFound();
   }
   const student:

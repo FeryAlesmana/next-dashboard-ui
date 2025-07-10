@@ -13,19 +13,26 @@ model Admin {
 }
 
 model Student {
-  id              String           @id
-  username        String           @unique
-  name            String
-  surname         String
-  email           String?          @unique
-  phone           String?          @unique
-  address         String
-  img             String?
-  religion        Agama
-  sex             UserSex
-  createdAt       DateTime         @default(now())
-  parentId        String?
-  parent          Parent?          @relation(fields: [parentId], references: [id], onDelete: SetNull)
+  id        String   @id
+  username  String   @unique
+  name      String
+  surname   String
+  email     String?  @unique
+  phone     String?  @unique
+  address   String
+  img       String?
+  religion  Agama
+  sex       UserSex
+  createdAt DateTime @default(now())
+
+  parentId       String?
+  secondParentId String?
+  guardianId     String?
+
+  parent       Parent? @relation(fields: [parentId], references: [id], onDelete: SetNull)
+  secondParent Parent? @relation("SecondParent", fields: [secondParentId], references: [id], onDelete: SetNull)
+  guardian     Parent? @relation("Guardian", fields: [guardianId], references: [id], onDelete: SetNull)
+
   classId         Int?
   class           Class?           @relation(fields: [classId], references: [id], onDelete: SetNull)
   gradeId         Int?
@@ -55,18 +62,21 @@ model Teacher {
 }
 
 model Parent {
-  id        String    @id
-  username  String    @unique
-  name      String
-  surname   String
-  email     String?   @unique
-  phone     String    @unique
-  address   String
-  job       String
-  income    Int
-  degree    Degree
-  createdAt DateTime  @default(now())
-  students  Student[]
+  id                String    @id
+  username          String    @unique
+  name              String
+  surname           String
+  birthday          DateTime
+  email             String?   @unique
+  phone             String    @unique
+  address           String
+  job               String
+  income            Int
+  degree            Degree
+  createdAt         DateTime  @default(now())
+  students          Student[]
+  secondaryStudents Student[] @relation("SecondParent")
+  guardianStudents  Student[] @relation("Guardian")
 }
 
 model student_details {
@@ -102,7 +112,7 @@ model student_details {
 }
 
 model PPDB {
-  id                 Int       @id
+  id                 Int       @id @default(autoincrement())
   name               String
   surname            String
   birthPlace         String
@@ -128,6 +138,24 @@ model PPDB {
   distance_from_home Int
   time_from_home     Int //in minutes 
   number_of_siblings Int
+  namaAyah           String
+  tahunLahirAyah     DateTime
+  pekerjaanAyah      String
+  pendidikanAyah     Degree
+  penghasilanAyah    Int
+  telpAyah           String
+  namaIbu            String
+  tahunLahirIbu      DateTime
+  pekerjaanIbu       String
+  pendidikanIbu      Degree
+  penghasilanIbu     Int
+  telpIbu            String
+  namaWali           String
+  tahunLahirWali     DateTime
+  pekerjaanWali      String
+  pendidikanWali     Degree
+  penghasilanWali    Int
+  telpWali           String
   awards             String?
   awards_lvl         Awards?
   awards_date        DateTime?
@@ -135,9 +163,6 @@ model PPDB {
   scholarship_detail String?
   scholarship_date   DateTime?
   isvalid            Boolean
-  father_degree      Degree
-  mother_degree      Degree
-  guardian_degree    Degree
   dokumenIjazah      String?
   dokumenAkte        String?
   dokumenPasfoto     String?

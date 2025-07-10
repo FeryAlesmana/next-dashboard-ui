@@ -1,4 +1,4 @@
-import { Awards, KPS, TTinggal } from "@prisma/client";
+import { Agama, Awards, Degree, KPS, TTinggal } from "@prisma/client";
 import { z } from "zod";
 
 export const subjectSchema = z.object({
@@ -79,7 +79,7 @@ export const studentSchema = z.object({
     .or(z.literal("")),
   phone: z.string().min(1, { message: "Nomor telepon wajib diisi!" }),
   address: z.string().min(1, { message: "Alamat wajib diisi!" }),
-  religion: z.enum(["Islam", "Kristen", "Buddha", "Lainnya"], {
+  religion: z.nativeEnum(Agama, {
     message: " Agama Siswa wajib diisi!",
   }),
   img: z.string().optional().nullable(),
@@ -241,6 +241,7 @@ export const parentSchema = z.object({
   name: z.string().min(1, { message: "Nama depan wajib diisi!" }),
   surname: z.string().min(1, { message: "Nama belakang wajib diisi!" }),
   phone: z.string().min(1, { message: "Nomor telepon wajib diisi!" }),
+  birthday: z.coerce.date({ message: "Tanggal lahir Ortu wajib disii!" }),
   job: z.string().min(1, { message: "Pekerjaan Ortu wajib diisi!" }),
   degree: z.enum(["TIDAK_ADA", "SD", "SMP", "SMA", "D3", "S1", "S2", "S3"], {
     message: "Pendidikan Ortu wajib diisi!",
@@ -307,7 +308,7 @@ export const ppdbSchema = z.object({
   sex: z.enum(["MALE", "FEMALE"], {
     message: " Jenis Kelamin Calon Siswa wajib diisi!",
   }),
-  religion: z.enum(["Islam", "Kristen", "Budha", "Lainnya"], {
+  religion: z.nativeEnum(Agama, {
     message: " Agama Calon Siswa wajib diisi!",
   }),
   phone: z
@@ -316,8 +317,7 @@ export const ppdbSchema = z.object({
     .regex(/^\d+$/),
   asalSekolah: z
     .string({ message: " Asal sekoolah Calon Siswa wajib diisi!" })
-    .min(1)
-    .regex(/^[A-Za-z\s]+$/),
+    .min(1),
   npsn: z
     .string({ message: " NPSN Calon Siswa wajib diisi!" })
     .length(8)
@@ -335,10 +335,9 @@ export const ppdbSchema = z.object({
     .length(20)
     .regex(/^\d+$/),
   address: z.string({ message: " Alamat Calon Siswa wajib diisi!" }).min(1),
-  postcode: z
-    .string({ message: " Kode Pos Calon Siswa wajib diisi!" })
-    .length(5)
-    .regex(/^\d+$/),
+  postcode: z.coerce
+    .number({ message: " Kode Pos Calon Siswa wajib diisi!" })
+    .min(5),
   rt: z
     .string({ message: " RT Calon Siswa wajib diisi!" })
     .length(2)
@@ -369,33 +368,35 @@ export const ppdbSchema = z.object({
     .string({ message: " Transportasi Calon Siswa wajib diisi!" })
     .min(1)
     .regex(/^[A-Za-z\s]+$/),
-  tempat_tinggal: z.enum(
-    ["Orang_Tua", "Wali", "Kost", "Asrama", "Panti_asuhan", "Pesantren"],
-    { message: " Tempat Tinggal Calon Siswa wajib diisi!" }
-  ),
-  email: z.string({ message: " Email Calon Siswa wajib diisi!" }).email(),
-  kps: z.enum(["KIP", "KIS", "KKS"], {
-    message: " KPS Calon Siswa wajib diisi!",
+  tempat_tinggal: z.nativeEnum(TTinggal, {
+    message: "Tempat tinggal Calon siswa wajib diisi",
   }),
+  email: z.string({ message: " Email Calon Siswa wajib diisi!" }).email(),
+  kps: z
+    .nativeEnum(KPS, {
+      message: " KPS Calon Siswa wajib diisi!",
+    })
+    .optional()
+    .nullable(),
   no_kps: z
     .string({ message: " No KPS Calon Siswa wajib diisi!" })
     .length(16)
-    .regex(/^\d+$/),
-  height: z
-    .string({ message: " Tinggi Calon Siswa wajib diisi!" })
-    .min(2)
-    .max(3)
-    .regex(/^\d+$/),
-  weight: z
-    .string({ message: " Berat Calon Siswa wajib diisi!" })
-    .min(2)
-    .max(3)
-    .regex(/^\d+$/),
-  distance_from_home: z
-    .string({ message: " Jarak dari rumah Calon Siswa wajib diisi!" })
+    .regex(/^\d+$/)
+    .optional()
+    .nullable(),
+  height: z.coerce
+    .number({ message: " Tinggi Calon Siswa wajib diisi!" })
+    .min(100)
+    .max(200),
+  weight: z.coerce
+    .number({ message: " Berat Calon Siswa wajib diisi!" })
+    .min(20)
+    .max(90),
+  distance_from_home: z.coerce
+    .number({ message: " Jarak dari rumah Calon Siswa wajib diisi!" })
     .min(1),
-  time_from_home: z
-    .string({ message: " Waktu tempuh Calon Siswa wajib diisi!" })
+  time_from_home: z.coerce
+    .number({ message: " Waktu tempuh Calon Siswa wajib diisi!" })
     .min(1),
   number_of_siblings: z.coerce
     .number({ message: " Banyak saudara Calon Siswa wajib diisi!" })
@@ -405,17 +406,9 @@ export const ppdbSchema = z.object({
     .optional()
     .nullable(),
   awards_lvl: z
-    .enum(
-      [
-        "kecamatan",
-        "kota",
-        "kabupaten",
-        "provinsi",
-        "nasional",
-        "internasional",
-      ],
-      { message: " Jenis Penghargaan Calon Siswa wajib diisi!" }
-    )
+    .nativeEnum(Awards, {
+      message: " Jenis Penghargaan Calon Siswa wajib diisi!",
+    })
     .optional()
     .nullable(),
   awards_date: z
@@ -440,16 +433,15 @@ export const ppdbSchema = z.object({
   namaAyah: z
     .string({ message: " Nama Ayah Calon Siswa wajib diisi!" })
     .regex(/^[A-Za-z\s]+$/),
-  tahunLahirAyah: z.string({
+  tahunLahirAyah: z.coerce.date({
     message: " Tanggal lahir Ayah Calon Siswa wajib diisi!",
   }),
   pekerjaanAyah: z.string({
     message: " Pekerjan Ayah Calon Siswa wajib diisi!",
   }),
-  pendidikanAyah: z.enum(
-    ["TIDAK_ADA", "SD", "SMP", "SMA", "D3", "S1", "S2", "S3"],
-    { message: " Pendidikan Ayah Calon Siswa wajib diisi!" }
-  ),
+  pendidikanAyah: z.nativeEnum(Degree, {
+    message: " Pendidikan Ayah Calon Siswa wajib diisi!",
+  }),
   penghasilanAyah: z.coerce.number({
     message: " Penghasilan Ayah Calon Siswa wajib diisi!",
   }),
@@ -460,19 +452,16 @@ export const ppdbSchema = z.object({
     .regex(/^\d+$/),
 
   // Ibu
-  namaIbu: z
-    .string({ message: " Nama Ibu Calon Siswa wajib diisi!" })
-    .regex(/^[A-Za-z\s]+$/),
-  tahunLahirIbu: z.string({
+  namaIbu: z.string({ message: " Nama Ibu Calon Siswa wajib diisi!" }),
+  tahunLahirIbu: z.coerce.date({
     message: " Tanggal Lahir Ibu Calon Siswa wajib diisi!",
   }),
   pekerjaanIbu: z.string({
     message: " Pekerjaan Ibu Calon Siswa wajib diisi!",
   }),
-  pendidikanIbu: z.enum(
-    ["TIDAK_ADA", "SD", "SMP", "SMA", "D3", "S1", "S2", "S3"],
-    { message: " Pendidikan Ibu Calon Siswa wajib diisi!" }
-  ),
+  pendidikanIbu: z.nativeEnum(Degree, {
+    message: " Pendidikan Ibu Calon Siswa wajib diisi!",
+  }),
   penghasilanIbu: z.coerce.number({
     message: " Penghasilan Ibu Calon Siswa wajib diisi!",
   }),
@@ -486,16 +475,15 @@ export const ppdbSchema = z.object({
   namaWali: z
     .string({ message: " Nama Wali Calon Siswa wajib diisi!" })
     .regex(/^[A-Za-z\s]+$/),
-  tahunLahirWali: z.string({
+  tahunLahirWali: z.coerce.date({
     message: " Tanggal Lahir Wali Calon Siswa wajib diisi!",
   }),
   pekerjaanWali: z.string({
     message: " Pekerjaan Wali Calon Siswa wajib diisi!",
   }),
-  pendidikanWali: z.enum(
-    ["tidak ada", "SD", "SMP", "SMA", "D3", "S1", "S2", "S3"],
-    { message: " Pendidikan Wali Calon Siswa wajib diisi!" }
-  ),
+  pendidikanWali: z.nativeEnum(Degree, {
+    message: " Pendidikan Wali Calon Siswa wajib diisi!",
+  }),
   penghasilanWali: z.coerce.number({
     message: " Penghasilan Wali Siswa wajib diisi!",
   }),
@@ -504,7 +492,6 @@ export const ppdbSchema = z.object({
     .min(11)
     .max(13)
     .regex(/^\d+$/),
-  img: z.string().optional().nullable(),
   dokumenIjazah: z.string().optional().nullable(),
   dokumenAkte: z.string().optional().nullable(),
   dokumenPasfoto: z.string().optional().nullable(),

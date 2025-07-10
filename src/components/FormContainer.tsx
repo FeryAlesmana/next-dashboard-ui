@@ -15,7 +15,8 @@ export type FormContainerProps = {
     | "result"
     | "attendance"
     | "event"
-    | "announcement";
+    | "announcement"
+    | "ppdb";
   type: "create" | "update" | "delete";
   data?: any;
   id?: number | string;
@@ -272,6 +273,8 @@ const FormContainer = async ({ table, type, data, id }: FormContainerProps) => {
           exams: studentExam,
           assignments: studentAssignment,
         };
+        break;
+      case "ppdb":
         break;
 
       default:

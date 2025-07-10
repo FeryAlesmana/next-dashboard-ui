@@ -112,3 +112,14 @@ export default function extractCloudinaryPublicId(url: string): string | null {
     return null;
   }
 }
+
+export async function normalizeSearchParams(
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }> | undefined
+): Promise<{ [key: string]: string | undefined }> {
+  const resolved = await searchParams;
+  const normalized: { [key: string]: string | undefined } = {};
+  Object.entries(resolved ?? {}).forEach(([key, value]) => {
+    normalized[key] = Array.isArray(value) ? value[0] : value;
+  });
+  return normalized;
+}

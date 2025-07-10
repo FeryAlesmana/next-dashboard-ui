@@ -1,5 +1,7 @@
 "use client";
 import React, {
+  Dispatch,
+  SetStateAction,
   startTransition,
   useActionState,
   useEffect,
@@ -10,16 +12,19 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { PpdbSchema, ppdbSchema } from "@/lib/formValidationSchema";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
-import { CurrentState } from "@/lib/actions";
+import { createPpdb, CurrentState, updatePpdb } from "@/lib/actions";
 import { cloudinaryUpload } from "@/lib/upload/cloudinaryUpload";
-import Image from "next/image";
 import { Preview } from "../preview";
+
+const FORM_KEY = "ppdb_draft_form";
 
 const FormulirPendaftaran = ({
   data,
   type,
   relatedData,
+  setOpen,
 }: {
+  setOpen: Dispatch<SetStateAction<boolean>>;
   data?: any;
   type: "create" | "update";
   relatedData: any;
@@ -27,11 +32,33 @@ const FormulirPendaftaran = ({
   const {
     register,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<PpdbSchema>({
     resolver: zodResolver(ppdbSchema),
   });
-  const [img, setImg] = useState<any>();
+  const watchedValues = watch();
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      localStorage.setItem(FORM_KEY, JSON.stringify(watchedValues));
+    }, 500); // Save after 500ms of inactivity
+
+    return () => clearTimeout(timeout);
+  }, [watchedValues]);
+
+  // Load saved data on mount
+  useEffect(() => {
+    const saved = localStorage.getItem(FORM_KEY);
+    if (saved) {
+      const values = JSON.parse(saved);
+      for (const key in values) {
+        setValue(key as keyof PpdbSchema, values[key]);
+      }
+    }
+  }, [setValue]);
+
   const [dokumen, setDokumen] = useState<{
     ijazah?: string;
     akte?: string;
@@ -79,9 +106,9 @@ const FormulirPendaftaran = ({
 
   const onSubmit = handleSubmit((data) => {
     startTransition(() => {
+      console.log(data);
       formAction({
         ...data,
-        img: img?.secure_url,
         dokumenIjazah: dokumen.ijazah,
         dokumenAkte: dokumen.akte,
         dokumenPasfoto: dokumen.pasfoto,
@@ -94,8 +121,9 @@ const FormulirPendaftaran = ({
 
   useEffect(() => {
     if (state.success) {
+      localStorage.removeItem(FORM_KEY);
       toast(
-        `Siswa telah berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`
+        `PPDB telah berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`
       );
       router.refresh();
     }
@@ -573,6 +601,7 @@ const FormulirPendaftaran = ({
             <div className="w-1/2">
               <label className="block mb-1 font-medium">Tahun Prestasi</label>
               <input
+                type="date"
                 {...register("awards_date")}
                 className="w-full border rounded px-3 py-2"
               />
@@ -640,6 +669,7 @@ const FormulirPendaftaran = ({
             <div className="w-1/2">
               <label className="block mb-1 font-medium">Tahun Lahir Ayah</label>
               <input
+                type="date"
                 {...register("tahunLahirAyah")}
                 className="w-full border rounded px-3 py-2"
               />
@@ -664,10 +694,10 @@ const FormulirPendaftaran = ({
                 className="w-full border rounded px-3 py-2"
               >
                 <option value="">-- Pilih --</option>
-                <option value="tidak Ada">Tidak Ada</option>
-                <option value="SD/Sederajat">SD/Sederajat</option>
-                <option value="SMP/Sederajat">SMP/Sederajat</option>
-                <option value="SMA/Sederajat">SMA/Sederajat</option>
+                <option value="TIDAK_ADA">Tidak Ada</option>
+                <option value="SD">SD/Sederajat</option>
+                <option value="SMP">SMP/Sederajat</option>
+                <option value="SMA">SMA/Sederajat</option>
                 <option value="D3">D3</option>
                 <option value="S1">S1</option>
                 <option value="S2">S2</option>
@@ -724,6 +754,7 @@ const FormulirPendaftaran = ({
             <div className="w-1/2">
               <label className="block mb-1 font-medium">Tahun Lahir Ibu</label>
               <input
+                type="date"
                 {...register("tahunLahirIbu")}
                 className="w-full border rounded px-3 py-2"
               />
@@ -806,6 +837,7 @@ const FormulirPendaftaran = ({
             <div className="w-1/2">
               <label className="block mb-1 font-medium">Tahun Lahir Wali</label>
               <input
+                type="date"
                 {...register("tahunLahirWali")}
                 className="w-full border rounded px-3 py-2"
               />
@@ -830,10 +862,10 @@ const FormulirPendaftaran = ({
                 className="w-full border rounded px-3 py-2"
               >
                 <option value="">-- Pilih --</option>
-                <option value="tidak Ada">Tidak Ada</option>
-                <option value="SD/Sederajat">SD/Sederajat</option>
-                <option value="SMP/Sederajat">SMP/Sederajat</option>
-                <option value="SMA/Sederajat">SMA/Sederajat</option>
+                <option value="TIDAK_ADA">Tidak Ada</option>
+                <option value="SD">SD/Sederajat</option>
+                <option value="SMP">SMP/Sederajat</option>
+                <option value="SMA">SMA/Sederajat</option>
                 <option value="D3">D3</option>
                 <option value="S1">S1</option>
                 <option value="S2">S2</option>
@@ -922,15 +954,21 @@ const FormulirPendaftaran = ({
             {dokumen.kk_ktp_sktm && <Preview fileUrl={dokumen.kk_ktp_sktm} />}
           </div>
 
-          {data && (
-            <input
-              hidden
-              type="number"
-              {...register("id")}
-              className="w-full border rounded px-3 py-2"
-            />
+          {data?.id && (
+            <input hidden type="number" {...register("id")} value={data.id} />
           )}
           {errors.id && <p className="text-red-600">{errors.id.message}</p>}
+
+          {(state.error || Object.keys(errors).length > 0) && (
+            <span className="text-red-500">
+              Terjadi Kesalahan! {state.message ?? ""}
+              <pre>
+                {Object.entries(errors)
+                  .map(([key, val]) => `${key}: ${val?.message}`)
+                  .join("\n")}
+              </pre>
+            </span>
+          )}
           {/* Tombol Submit */}
           <div className="text-center pt-4">
             <button

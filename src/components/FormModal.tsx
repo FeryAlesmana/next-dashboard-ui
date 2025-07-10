@@ -42,6 +42,7 @@ const deleteActionMap = {
   attendance: deleteSubject,
   event: deleteEvent,
   announcement: deleteAnnouncement,
+  ppdb: deleteSubject,
 };
 
 const TeacherForm = dynamic(() => import("./forms/TeacherForm"), {
@@ -77,6 +78,12 @@ const ResultForm = dynamic(() => import("./forms/ResultForm"), {
 const SubjectForm = dynamic(() => import("./forms/SubjectForm"), {
   loading: () => <h1>Loading...</h1>,
 });
+const FormulirPendaftaran = dynamic(
+  () => import("./forms/FormulirPendaftaran"),
+  {
+    loading: () => <h1>Loading...</h1>,
+  }
+);
 
 const forms: {
   [key: string]: (
@@ -175,6 +182,14 @@ const forms: {
       relatedData={relatedData}
     />
   ),
+  ppdb: (setOpen, type, data, relatedData) => (
+    <FormulirPendaftaran
+      type={type}
+      setOpen={setOpen}
+      data={data}
+      relatedData={relatedData}
+    />
+  ),
 };
 const FormModal = ({
   table,
@@ -182,7 +197,6 @@ const FormModal = ({
   data,
   id,
   relatedData,
-  role,
 }: FormContainerProps & { relatedData?: any }) => {
   const size = type === "create" ? "w-8 h-8" : "w-7 h-7";
   const bgColor =
@@ -226,6 +240,15 @@ const FormModal = ({
       "Form tidak ditemukan!"
     );
   };
+  if (table === "ppdb" && type === "create")
+    return (
+      <FormulirPendaftaran
+        type={type}
+        setOpen={setOpen}
+        data={data}
+        relatedData={relatedData}
+      />
+    ); // Skip rendering
   return (
     <>
       <button

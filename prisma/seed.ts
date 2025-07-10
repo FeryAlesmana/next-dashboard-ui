@@ -6,7 +6,7 @@ import {
   KPS,
   TTinggal,
   Awards,
-  Degree
+  Degree,
 } from "@prisma/client";
 const prisma = new PrismaClient();
 const grades = [];
@@ -123,17 +123,32 @@ async function main() {
         address: `Address${i}`,
         job: `Job${i}`,
         income: 1000000 + i * 10000,
-        degree: Degree[
-          Object.keys(Degree)[
-            Math.floor(Math.random() * Object.keys(Degree).length)
-          ] as keyof typeof Degree
-        ],
+        degree:
+          Degree[
+            Object.keys(Degree)[
+              Math.floor(Math.random() * Object.keys(Degree).length)
+            ] as keyof typeof Degree
+          ],
+        birthday: new Date(
+          new Date().setFullYear(new Date().getFullYear() - 30)
+        ),
       },
     });
   }
 
   // STUDENT
   for (let i = 1; i <= 50; i++) {
+    const parentIndex1 = Math.floor(Math.random() * 25) + 1;
+    let parentIndex2 = Math.floor(Math.random() * 25) + 1;
+    let guardianIndex = Math.floor(Math.random() * 25) + 1;
+
+    // Ensure all parents are different
+    while (parentIndex2 === parentIndex1) {
+      parentIndex2 = Math.floor(Math.random() * 25) + 1;
+    }
+    while (guardianIndex === parentIndex1 || guardianIndex === parentIndex2) {
+      guardianIndex = Math.floor(Math.random() * 25) + 1;
+    }
     const student = await prisma.student.create({
       data: {
         id: `student${i}`,
@@ -150,7 +165,9 @@ async function main() {
             ] as keyof typeof Agama
           ],
         sex: i % 2 === 0 ? UserSex.MALE : UserSex.FEMALE,
-        parentId: `parentId${Math.ceil(i / 2) % 25 || 25}`,
+        parentId: `parentId${parentIndex1}`,
+        secondParentId: `parentId${parentIndex2}`,
+        guardianId: `parentId${guardianIndex}`,
         gradeId: (i % 3) + 1,
         classId: (i % 3) + 1,
         birthday: new Date(
@@ -188,7 +205,8 @@ async function main() {
         number_of_siblings: i % 4,
         postcode: 16100 + i,
         awards: `Award ${i}`,
-        awards_lvl: Awards[
+        awards_lvl:
+          Awards[
             Object.keys(Awards)[
               Math.floor(Math.random() * Object.keys(Awards).length)
             ] as keyof typeof Awards

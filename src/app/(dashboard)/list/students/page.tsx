@@ -4,14 +4,13 @@ import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/setting";
-import { getCurrentUser } from "@/lib/utils";
+import { getCurrentUser, normalizeSearchParams } from "@/lib/utils";
 import { Class, Prisma, Student } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
 
 type StudentList = Student & { class: Class };
 const { role } = await getCurrentUser();
-
 
 const columns = [
   {
@@ -38,14 +37,14 @@ const columns = [
     accessor: "Alamat",
     className: "hidden md:table-cell",
   },
- ...(role === "admin"
-     ? [
-         {
-           header: "Aksi",
-           accessor: "action",
-         },
-       ]
-     : []),
+  ...(role === "admin"
+    ? [
+        {
+          header: "Aksi",
+          accessor: "action",
+        },
+      ]
+    : []),
 ];
 const renderRow = (item: StudentList) => (
   <tr
@@ -80,7 +79,11 @@ const renderRow = (item: StudentList) => (
           // <button className="w-7 h-7 flex items-center justify-center rounded-full bg-lamaPurple">
           //   <Image src="/delete.png" alt="" width={16} height={16}></Image>
           // </button>
-          <FormContainer table="student" type="delete" id={item.id}></FormContainer>
+          <FormContainer
+            table="student"
+            type="delete"
+            id={item.id}
+          ></FormContainer>
         )}
       </div>
     </td>
@@ -89,9 +92,10 @@ const renderRow = (item: StudentList) => (
 const StudentsListPage = async ({
   searchParams,
 }: {
-  searchParams: { [key: string]: string | undefined };
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) => {
-  const { page, ...queryParams } = await searchParams;
+  const sp = normalizeSearchParams(searchParams);
+  const { page, ...queryParams } = await sp;
   const p = page ? parseInt(page) : 1;
 
   const query: Prisma.StudentWhereInput = {};

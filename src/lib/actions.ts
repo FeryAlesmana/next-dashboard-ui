@@ -17,6 +17,7 @@ import {
   ExamSchema,
   LessonSchema,
   ParentSchema,
+  PpdbSchema,
   ResultSchema,
   StudentSchema,
   SubjectSchema,
@@ -444,20 +445,7 @@ export const updateStudent = async (
 
       return { success: false, error: true, message: "Missing student ID" };
     }
-    //     try {
-    //     const deletedUser = await client.users.deleteUser(id);
 
-    //     if (deletedUser) {
-    //       console.log("✅ User Sucessfully deleted:", deletedUser.id);
-    //     }
-    //   } catch (error) {
-    //     console.warn(
-    //       "⚠️ Clerk returned no user info. User may already be deleted?"
-    //     );
-    //   }
-
-    //   return { success: true, error: false };
-    // }
     let user;
     try {
       user = await client.users.updateUser(data.id, {
@@ -956,6 +944,7 @@ export const createParent = async (
         name: data.name,
         surname: data.surname,
         email: data.email,
+        birthday: data.birthday,
         job: data.job,
         income: data.income,
         degree: data.degree,
@@ -1242,5 +1231,245 @@ export const deleteResult = async (
   } catch (error) {
     console.log(error + " Di server action");
     return { success: false, error: true };
+  }
+};
+
+export const createPpdb = async (
+  currentState: CurrentState,
+  data: PpdbSchema
+) => {
+  try {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await prisma.pPDB.create({
+      data: {
+        id: data.id ? data.id : undefined,
+        name: data.name,
+        surname: data.name,
+        email: data.email,
+        phone: data.phone,
+        address:
+          data.address +
+          " " +
+          data.rw +
+          " " +
+          data.rt +
+          " " +
+          data.kelurahan +
+          " " +
+          data.kecamatan +
+          " " +
+          data.kota,
+        religion: data.religion,
+        sex: data.sex,
+        birthday: data.birthday,
+        asalSekolah: data.asalSekolah,
+        birthPlace: data.birthPlace,
+        nisn: data.nisn,
+        npsn: data.npsn,
+        no_ijz: data.no_ijz,
+        nik: data.nik,
+        kps: data.kps || null,
+        no_kps: data.no_kps || null,
+        height: data.height,
+        weight: data.weight,
+        transportation: data.transportation,
+        tempat_tinggal: data.tempat_tinggal,
+        distance_from_home: data.distance_from_home,
+        time_from_home: data.time_from_home,
+        number_of_siblings: data.number_of_siblings,
+        namaAyah: data.namaAyah,
+        tahunLahirAyah: data.tahunLahirAyah,
+        pekerjaanAyah: data.pekerjaanAyah,
+        pendidikanAyah: data.pendidikanAyah,
+        penghasilanAyah: data.penghasilanAyah,
+        telpAyah: data.telpAyah,
+        namaIbu: data.namaIbu,
+        tahunLahirIbu: data.tahunLahirIbu,
+        pekerjaanIbu: data.pekerjaanIbu,
+        pendidikanIbu: data.pendidikanIbu,
+        penghasilanIbu: data.penghasilanIbu,
+        telpIbu: data.telpIbu,
+        namaWali: data.namaWali,
+        tahunLahirWali: data.tahunLahirWali,
+        pekerjaanWali: data.pekerjaanWali,
+        pendidikanWali: data.pendidikanWali,
+        penghasilanWali: data.penghasilanWali,
+        telpWali: data.telpWali,
+        postcode: data.postcode,
+        awards: data.awards || null,
+        awards_date: data.awards_date ? new Date(data.awards_date) : null,
+        scholarship: data.scholarship || null,
+        scholarship_detail: data.scholarship_detail || null,
+        dokumenIjazah: data.dokumenIjazah || null,
+        dokumenAkte: data.dokumenAkte || null,
+        dokumenPasfoto: data.dokumenPasfoto || null,
+        dokumenKKKTP: data.dokumenKKKTP || null,
+        isvalid: false,
+      },
+    });
+
+    return { success: true, error: false };
+  } catch (error: any) {
+    let message = "Unknown error";
+
+    if (
+      error?.errors &&
+      Array.isArray(error.errors) &&
+      error.errors.length > 0
+    ) {
+      message = error.errors[0].message;
+    } else if (error instanceof Error) {
+      message = error.message;
+    } else if (typeof error === "string") {
+      message = error;
+    }
+    return { success: false, error: true, message };
+  }
+};
+
+export const updatePpdb = async (
+  currentState: CurrentState,
+  data: PpdbSchema
+) => {
+  try {
+    if (!data.id) {
+      console.log(data.id + "Data.id");
+
+      return { success: false, error: true, message: "Missing student ID" };
+    }
+
+    let user;
+    try {
+      user = await client.users.updateUser(data.id, {
+        username: data.username,
+        ...(data.password !== "" && { password: data.password }),
+        firstName: data.name,
+        lastName: data.surname,
+      });
+      if (user) {
+        console.log("✅ User Sucessfully Updated:", user.id);
+      }
+      return { success: true, error: false };
+    } catch (error) {
+      console.warn("⚠️ Clerk returned no user info. User maybe didnt exist?");
+    }
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await prisma.student.update({
+      where: {
+        id: data.id,
+      },
+      data: {
+        ...(data.password !== "" && { password: data.password }),
+        id: user?.id || data.id,
+        username: data.username,
+        name: data.name,
+        surname: data.surname,
+        email: data.email || null,
+        phone: data.phone,
+        address: data.address,
+        ...(data.img && { img: data.img }),
+        sex: data.sex,
+        birthday: data.birthday,
+        gradeId: data.gradeId,
+        classId: data.classId,
+        parentId: data.parentId,
+      },
+    });
+    await prisma.student_details.update({
+      where: {
+        id: parseInt(data.sdId),
+      },
+      data: {
+        student: {
+          connect: { id: user?.id || data.id },
+        },
+        asalSekolah: data.asalSekolah,
+        birthPlace: data.birthPlace,
+        nisn: data.nisn,
+        npsn: data.npsn,
+        no_ijz: data.no_ijz,
+        nik: data.nik,
+        kps: data.kps || null,
+        no_kps: data.no_kps || null,
+        height: data.height,
+        weight: data.weight,
+        transportation: data.transportation,
+        tempat_tinggal: data.tempat_tinggal,
+        distance_from_home: data.distance_from_home,
+        time_from_home: data.time_from_home,
+        number_of_siblings: data.number_of_siblings,
+        postcode: data.postcode,
+        awards: data.awards || null,
+        awards_date: data.awards_date || null,
+        scholarship: data.scholarship || null,
+        scholarship_detail: data.scholarship_detail || null,
+        dokumenIjazah: data.dokumenIjazah || null,
+        dokumenAkte: data.dokumenAkte || null,
+        dokumenPasfoto: data.dokumenPasfoto || null,
+        dokumenKKKTP: data.dokumenKKKTP || null,
+      },
+    });
+    return { success: true, error: false };
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === "string"
+        ? error
+        : "Unknown error";
+
+    console.error("updatePpdb error:", error);
+    return { success: false, error: true, message };
+  }
+};
+export const deletePpdb = async (
+  currentState: CurrentState,
+  formData: FormData
+): Promise<CurrentState> => {
+  const id = formData.get("id") as string;
+
+  try {
+    if (!id) {
+      console.log(id);
+      return { success: false, error: true, message: "Missing Ppdb ID" };
+    }
+    const student = await prisma.student.findUnique({ where: { id } });
+    if (student?.img) {
+      const publicId = extractCloudinaryPublicId(student.img);
+      if (publicId) {
+        await cloudinary.uploader.destroy(publicId);
+        console.log("Cloudinary image deleted:", publicId);
+      }
+    }
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await prisma.student.delete({
+      where: {
+        id: id,
+      },
+    });
+
+    try {
+      const deletedUser = await client.users.deleteUser(id);
+
+      if (deletedUser) {
+        console.log("✅ User Sucessfully deleted:", deletedUser.id);
+      }
+    } catch (error) {
+      console.warn(
+        "⚠️ Clerk returned no user info. User may already be deleted?"
+      );
+    }
+
+    return { success: true, error: false };
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === "string"
+        ? error
+        : "Unknown error";
+
+    console.error("Delete Ppdb error: ", error);
+    return { success: false, error: true, message };
   }
 };

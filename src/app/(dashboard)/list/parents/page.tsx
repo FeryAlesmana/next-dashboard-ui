@@ -4,7 +4,7 @@ import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/setting";
-import { getCurrentUser } from "@/lib/utils";
+import { getCurrentUser, normalizeSearchParams } from "@/lib/utils";
 import { Parent, Prisma, Student } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
@@ -79,9 +79,10 @@ const renderRow = (item: ParentList) => (
 const ParentsListPage = async ({
   searchParams,
 }: {
-  searchParams: { [key: string]: string | undefined };
-}) => {
-  const { page, ...queryParams } = await searchParams;
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
+  }) => {
+    const sp = normalizeSearchParams(searchParams);
+    const { page, ...queryParams } = await sp;
   const p = page ? parseInt(page) : 1;
 
   const query: Prisma.ParentWhereInput = {};

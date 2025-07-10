@@ -2,7 +2,8 @@
 import NavbarHome from "@/components/NavbarHome";
 import { FaSchool, FaLaptop, FaPrint } from "react-icons/fa";
 import { useRef, useState } from "react";
-import FormulirPendaftaran from "@/components/forms/FormulirPendaftaran";
+import FormModal from "@/components/FormModal";
+
 
 export default function PPDBPage() {
   const formRef = useRef<HTMLDivElement>(null);
@@ -105,7 +106,7 @@ export default function PPDBPage() {
             <h3 className="text-xl font-semibold mb-4 text-white">
               Formulir Pendaftaran Online
             </h3>
-            <FormulirPendaftaran></FormulirPendaftaran>
+            <FormModal type="create" table="ppdb" />
           </div>
         )}
       </div>

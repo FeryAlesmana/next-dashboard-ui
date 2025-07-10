@@ -4,7 +4,7 @@ import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/setting";
-import { getCurrentUser } from "@/lib/utils";
+import { getCurrentUser, normalizeSearchParams } from "@/lib/utils";
 import { Prisma, Subject, Teacher } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
@@ -42,8 +42,16 @@ const renderRow = (item: SubjectList) => (
       <div className="flex items-center gap-2">
         {role === "admin" && (
           <>
-            <FormContainer table="subject" type="update" data={item}></FormContainer>
-            <FormContainer table="subject" type="delete" id={item.id}></FormContainer>
+            <FormContainer
+              table="subject"
+              type="update"
+              data={item}
+            ></FormContainer>
+            <FormContainer
+              table="subject"
+              type="delete"
+              id={item.id}
+            ></FormContainer>
           </>
         )}
       </div>
@@ -53,9 +61,10 @@ const renderRow = (item: SubjectList) => (
 const SubjectListPage = async ({
   searchParams,
 }: {
-  searchParams: { [key: string]: string | undefined };
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) => {
-  const { page, ...queryParams } = await searchParams;
+  const sp = normalizeSearchParams(searchParams);
+  const { page, ...queryParams } = await sp;
   const p = page ? parseInt(page) : 1;
 
   const query: Prisma.SubjectWhereInput = {};
