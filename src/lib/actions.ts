@@ -1338,51 +1338,31 @@ export const updatePpdb = async (
       return { success: false, error: true, message: "Missing student ID" };
     }
 
-    let user;
-    try {
-      user = await client.users.updateUser(data.id, {
-        username: data.username,
-        ...(data.password !== "" && { password: data.password }),
-        firstName: data.name,
-        lastName: data.surname,
-      });
-      if (user) {
-        console.log("✅ User Sucessfully Updated:", user.id);
-      }
-      return { success: true, error: false };
-    } catch (error) {
-      console.warn("⚠️ Clerk returned no user info. User maybe didnt exist?");
-    }
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    await prisma.student.update({
+    await prisma.pPDB.update({
       where: {
         id: data.id,
       },
       data: {
-        ...(data.password !== "" && { password: data.password }),
-        id: user?.id || data.id,
-        username: data.username,
         name: data.name,
-        surname: data.surname,
-        email: data.email || null,
+        surname: data.name,
+        email: data.email,
         phone: data.phone,
-        address: data.address,
-        ...(data.img && { img: data.img }),
+        address:
+          data.address +
+          " " +
+          data.rw +
+          " " +
+          data.rt +
+          " " +
+          data.kelurahan +
+          " " +
+          data.kecamatan +
+          " " +
+          data.kota,
+        religion: data.religion,
         sex: data.sex,
         birthday: data.birthday,
-        gradeId: data.gradeId,
-        classId: data.classId,
-        parentId: data.parentId,
-      },
-    });
-    await prisma.student_details.update({
-      where: {
-        id: parseInt(data.sdId),
-      },
-      data: {
-        student: {
-          connect: { id: user?.id || data.id },
-        },
         asalSekolah: data.asalSekolah,
         birthPlace: data.birthPlace,
         nisn: data.nisn,
@@ -1398,15 +1378,33 @@ export const updatePpdb = async (
         distance_from_home: data.distance_from_home,
         time_from_home: data.time_from_home,
         number_of_siblings: data.number_of_siblings,
+        namaAyah: data.namaAyah,
+        tahunLahirAyah: data.tahunLahirAyah,
+        pekerjaanAyah: data.pekerjaanAyah,
+        pendidikanAyah: data.pendidikanAyah,
+        penghasilanAyah: data.penghasilanAyah,
+        telpAyah: data.telpAyah,
+        namaIbu: data.namaIbu,
+        tahunLahirIbu: data.tahunLahirIbu,
+        pekerjaanIbu: data.pekerjaanIbu,
+        pendidikanIbu: data.pendidikanIbu,
+        penghasilanIbu: data.penghasilanIbu,
+        telpIbu: data.telpIbu,
+        namaWali: data.namaWali,
+        tahunLahirWali: data.tahunLahirWali,
+        pekerjaanWali: data.pekerjaanWali,
+        pendidikanWali: data.pendidikanWali,
+        penghasilanWali: data.penghasilanWali,
+        telpWali: data.telpWali,
         postcode: data.postcode,
         awards: data.awards || null,
-        awards_date: data.awards_date || null,
+        awards_date: data.awards_date ? new Date(data.awards_date) : null,
         scholarship: data.scholarship || null,
         scholarship_detail: data.scholarship_detail || null,
-        dokumenIjazah: data.dokumenIjazah || null,
-        dokumenAkte: data.dokumenAkte || null,
-        dokumenPasfoto: data.dokumenPasfoto || null,
-        dokumenKKKTP: data.dokumenKKKTP || null,
+        ...(data.dokumenIjazah !== "" && { dokumenIjazah: data.dokumenIjazah }),
+        ...(data.dokumenAkte !== "" && { dokumenAkte: data.dokumenAkte }),
+        ...(data.dokumenKKKTP !== "" && { dokumenKKKTP: data.dokumenKKKTP }),
+        isvalid: false,
       },
     });
     return { success: true, error: false };

@@ -60,7 +60,7 @@ export type TeacherSchema = z.infer<typeof teacherSchema>;
 
 export const studentSchema = z.object({
   id: z.string().optional(),
-  sdId: z.string().optional(),
+  sdId: z.string({ message: "Student details Id harus diisi!" }),
   username: z
     .string()
     .min(3, { message: "Username harus lebih dari 3 karakter!" })
