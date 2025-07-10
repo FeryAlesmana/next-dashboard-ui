@@ -208,10 +208,7 @@ export const announcementSchema = z.object({
   title: z.string().min(4, { message: "Event wajib diisi!" }),
   description: z.string().min(10, { message: "Deskripsi wajib diisi!" }),
   date: z.coerce.date({ message: "Tanggal wajib diisi!" }),
-  classId: z.preprocess((val) => {
-    if (val === "" || val === undefined) return null;
-    return Number(val);
-  }, z.number().nullable()),
+  classId: z.number().nullable(),
 });
 
 export type AnnouncementSchema = z.infer<typeof announcementSchema>;
