@@ -8,6 +8,7 @@ import {
   deleteExam,
   deleteLesson,
   deleteParent,
+  deletePpdb,
   deleteResult,
   deleteStudent,
   deleteSubject,
@@ -42,7 +43,7 @@ const deleteActionMap = {
   attendance: deleteSubject,
   event: deleteEvent,
   announcement: deleteAnnouncement,
-  ppdb: deleteSubject,
+  ppdb: deletePpdb,
 };
 
 const TeacherForm = dynamic(() => import("./forms/TeacherForm"), {
@@ -197,6 +198,7 @@ const FormModal = ({
   data,
   id,
   relatedData,
+  prefilEmail,
 }: FormContainerProps & { relatedData?: any }) => {
   const size = type === "create" ? "w-8 h-8" : "w-7 h-7";
   const bgColor =
@@ -247,6 +249,7 @@ const FormModal = ({
         setOpen={setOpen}
         data={data}
         relatedData={relatedData}
+        prefilEmail={prefilEmail}
       />
     ); // Skip rendering
   return (
@@ -261,7 +264,9 @@ const FormModal = ({
         <div className="w-screen h-screen absolute left-0 top-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">
           <div
             className={`bg-white p-4 rounded-md relative w-[90%] md:w-[70%] lg:w-[60%] xl:w-[50%] 2xl:w-[40%] ${
-              table === "student"
+              type === "delete"
+                ? "w-[350px] h-auto"
+                : ["student", "ppdb"].includes(table)
                 ? "w-[95%] h-[95%] md:w-[90%] lg:w-[85%] xl:w-[80%] 2xl:w-[75%] overflow-y-auto"
                 : "w-[90%] md:w-[70%] lg:w-[60%] xl:w-[50%] 2xl:w-[40%]"
             }`}

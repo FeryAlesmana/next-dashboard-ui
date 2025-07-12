@@ -7,6 +7,7 @@ import React, {
   useEffect,
   useState,
 } from "react";
+import Select from "react-select";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PpdbSchema, ppdbSchema } from "@/lib/formValidationSchema";
@@ -14,7 +15,6 @@ import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
 import { createPpdb, CurrentState, updatePpdb } from "@/lib/actions";
 import { cloudinaryUpload } from "@/lib/upload/cloudinaryUpload";
-import { Preview } from "../preview";
 
 const FORM_KEY = "ppdb_draft_form";
 
@@ -23,20 +23,27 @@ const FormulirPendaftaran = ({
   type,
   relatedData,
   setOpen,
+  prefilEmail,
 }: {
   setOpen: Dispatch<SetStateAction<boolean>>;
   data?: any;
   type: "create" | "update";
   relatedData: any;
+  prefilEmail?: string;
 }) => {
   const {
     register,
     handleSubmit,
+    reset,
     setValue,
+    setError,
     watch,
     formState: { errors },
   } = useForm<PpdbSchema>({
     resolver: zodResolver(ppdbSchema),
+    defaultValues: {
+      isvalid: false, // set default to false here
+    },
   });
   const watchedValues = watch();
 
@@ -57,14 +64,101 @@ const FormulirPendaftaran = ({
         setValue(key as keyof PpdbSchema, values[key]);
       }
     }
-  }, [setValue]);
 
+    if (type === "create" && prefilEmail) {
+      reset({
+        isvalid: false,
+        email: prefilEmail ?? "",
+      });
+    }
+
+    if (type === "update" && data) {
+      reset({
+        id: data.id,
+        name: data.name ?? "",
+        surname: data.surname ?? "",
+        birthPlace: data.birthPlace ?? "",
+        birthday: data.birthday
+          ? new Date(data.birthday).toISOString().split("T")[0]
+          : "",
+        address: data.address ?? "",
+        rw: data.rw ?? "",
+        rt: data.rt ?? "",
+        kelurahan: data.kelurahan ?? "",
+        kecamatan: data.kecamatan ?? "",
+        kota: data.kota ?? "",
+        asalSekolah: data.asalSekolah ?? "",
+        awards: data.awards ?? "",
+        awards_date: data.awards_date
+          ? new Date(data.awards_date).toISOString().split("T")[0]
+          : "",
+        awards_lvl: data.awards_lvl ?? "",
+        distance_from_home: data.distance_from_home ?? 0,
+        dokumenAkte: data.dokumenAkte ?? "",
+        dokumenIjazah: data.dokumenIjazah ?? "",
+        dokumenKKKTP: data.dokumenKKKTP ?? "",
+        dokumenPasfoto: data.dokumenPasfoto ?? "",
+        email: data.email ?? "",
+        height: data.height ?? 0,
+        isvalid: Boolean(data.isvalid),
+        kps: data.kps ?? "",
+        namaAyah: data.namaAyah ?? "",
+        namaIbu: data.namaIbu ?? "",
+        namaWali: data.namaWali ?? "",
+        nik: data.nik ?? "",
+        nisn: data.nisn ?? "",
+        // noWa: data.noWa ?? "",
+        no_ijz: data.no_ijz ?? "",
+        no_kps: data.no_kps ?? "",
+        npsn: data.npsn ?? "",
+        number_of_siblings: data.number_of_siblings ?? 0,
+        pekerjaanAyah: data.pekerjaanAyah ?? "",
+        pekerjaanIbu: data.pekerjaanIbu ?? "",
+        pekerjaanWali: data.pekerjaanWali ?? "",
+        pendidikanAyah: data.pendidikanAyah ?? "",
+        pendidikanIbu: data.pendidikanIbu ?? "",
+        pendidikanWali: data.pendidikanWali ?? "",
+        penghasilanAyah: data.penghasilanAyah ?? 0,
+        penghasilanIbu: data.penghasilanIbu ?? 0,
+        penghasilanWali: data.penghasilanWali ?? 0,
+        phone: data.phone ?? "",
+        postcode: data.postcode ?? 0,
+        religion: data.religion ?? "",
+        scholarship: data.scholarship ?? "",
+        scholarship_date: data.scholarship_date
+          ? new Date(data.scholarship_date).toISOString().split("T")[0]
+          : "",
+        scholarship_detail: data.scholarship_detail ?? "",
+        sex: data.sex ?? "",
+        tahunLahirAyah: data.tahunLahirAyah
+          ? new Date(data.tahunLahirAyah).toISOString().split("T")[0]
+          : "",
+        tahunLahirIbu: data.tahunLahirIbu
+          ? new Date(data.tahunLahirIbu).toISOString().split("T")[0]
+          : "",
+        tahunLahirWali: data.tahunLahirWali
+          ? new Date(data.tahunLahirWali).toISOString().split("T")[0]
+          : "",
+        telpAyah: data.telpAyah ?? "",
+        telpIbu: data.telpIbu ?? "",
+        telpWali: data.telpWali ?? "",
+        tempat_tinggal: data.tempat_tinggal ?? "",
+        time_from_home: data.time_from_home ?? 0,
+        transportation: data.transportation ?? "",
+        weight: data.weight ?? 0,
+      });
+    }
+  }, [setValue, data, reset, type, prefilEmail]);
   const [dokumen, setDokumen] = useState<{
     ijazah?: string;
     akte?: string;
     pasfoto?: string;
     kk_ktp_sktm?: string;
   }>({});
+
+  // For email feedback
+  const [selectedFields, setSelectedFields] = useState<any[]>([]);
+  const [sendingFeedback, setSendingFeedback] = useState(false);
   const createPpdbHandler = async (
     prevState: CurrentState,
     payload: PpdbSchema
@@ -104,45 +198,97 @@ const FormulirPendaftaran = ({
     }
   };
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const onSubmit = handleSubmit((data) => {
+    setIsSubmitting(true);
     startTransition(() => {
-      console.log(data);
       formAction({
         ...data,
-        dokumenIjazah: dokumen.ijazah,
-        dokumenAkte: dokumen.akte,
-        dokumenPasfoto: dokumen.pasfoto,
-        dokumenKKKTP: dokumen.kk_ktp_sktm,
+        dokumenIjazah: dokumen.ijazah ?? "",
+        dokumenAkte: dokumen.akte ?? "",
+        dokumenKKKTP: dokumen.kk_ktp_sktm ?? "",
+        dokumenPasfoto: dokumen.pasfoto ?? "",
       });
     });
   });
 
+  useEffect(() => {
+    if (!state.success && !state.error) return;
+    setIsSubmitting(false);
+  }, [state.success, state.error]);
+
   const router = useRouter();
 
   useEffect(() => {
+    console.log("state.success:", state.success);
     if (state.success) {
       localStorage.removeItem(FORM_KEY);
       toast(
         `PPDB telah berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`
       );
-      router.refresh();
+      if (type === "update") {
+        setOpen(false);
+      }
+      setTimeout(() => {
+        if (type === "update") setOpen(false);
+        router.refresh();
+      }, 300); // 300ms delay;
     }
-  }, [state, type, router]);
+    if (state.error && state.message) {
+      // If the error is a field name (like "nisn"), set it on that field
+      if (
+        ["nisn", "nik", "npsn", "email", "phone", "no_kps"].includes(
+          state.message
+        )
+      ) {
+        setError(state.message as keyof PpdbSchema, {
+          type: "manual",
+          message: "Sudah ada murid dengan data tersebut.",
+        });
+      }
+    }
+  }, [state, type, router, setOpen, setError]);
+  // All possible field options for react-select
+  const fieldOptions = Object.keys(ppdbSchema.shape).map((key) => ({
+    value: key,
+    label: key,
+  }));
+
+  // Send feedback email
+  const sendFeedbackEmail = async (isValid: boolean) => {
+    setSendingFeedback(true);
+    let message = "";
+    if (isValid) {
+      message = `Selamat formulir anda valid, silahkan bawa dokumen2 yang diminta ke sekolah.\n${
+        watchedValues.reason || ""
+      }`;
+    } else {
+      const fields = selectedFields.map((f) => f.label).join(", ");
+      message = `Tolong kirim ulang kembali PPDB formulir anda karena tidak valid atau ada kesalahan pada: ${fields}.\n${
+        watchedValues.reason || ""
+      }`;
+    }
+    try {
+      const res = await fetch("/api/send-ppdb-feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: watchedValues.email, message }),
+      });
+      if (res.ok) {
+        toast.success("Notifikasi email telah dikirim!");
+      } else {
+        toast.error("Gagal mengirim notifikasi email.");
+      }
+    } catch (err) {
+      toast.error("Gagal mengirim notifikasi email.");
+    } finally {
+      setSendingFeedback(false);
+    }
+  };
+  const { grades = [], classes = [] } = relatedData ?? {};
 
   return (
     <div className="max-w-4xl mx-auto p-4">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">
-          Formulir Pendaftaran Peserta Didik
-        </h1>
-        <a
-          href="/"
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm"
-        >
-          Kembali ke Halaman Utama
-        </a>
-      </div>
-
       <div className="border border-gray-300 rounded-lg p-6 shadow-sm bg-white space-y-6 text-black">
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
@@ -150,6 +296,7 @@ const FormulirPendaftaran = ({
             <input
               {...register("name")}
               className="w-full border rounded px-3 py-2"
+              defaultValue={data?.name}
             />
             {errors.name && (
               <p className="text-red-600">{errors.name.message}</p>
@@ -210,7 +357,7 @@ const FormulirPendaftaran = ({
                 <option value="">Pilih</option>
                 <option value="Islam">Islam</option>
                 <option value="Kristen">Kristen</option>
-                <option value="Budha">Budha</option>
+                <option value="Buddha">Buddha</option>
                 <option value="Lainnya">Lainnya</option>
               </select>
               {errors.religion && (
@@ -589,7 +736,8 @@ const FormulirPendaftaran = ({
               >
                 <option value="">-- Pilih --</option>
                 <option value="kecamatan">Kecamatan</option>
-                <option value="kabupaten/Kota">Kabupaten/Kota</option>
+                <option value="kota">Kota</option>
+                <option value="kabupaten">Kabupaten</option>
                 <option value="provinsi">Provinsi</option>
                 <option value="nasional">Nasional</option>
                 <option value="internasional">Internasional</option>
@@ -638,6 +786,7 @@ const FormulirPendaftaran = ({
             <div className="w-1/3">
               <label className="block mb-1 font-medium">Tahun Beasiswa</label>
               <input
+                type="date"
                 {...register("scholarship_date")}
                 className="w-full border rounded px-3 py-2"
               />
@@ -902,57 +1051,374 @@ const FormulirPendaftaran = ({
             </div>
           </div>
           {/* ========== Upload Dokumen ========== */}
-          <div>
-            <label className="font-medium block mb-1 ">
-              Fotokopi Ijazah / STTB
-            </label>
-            <input
-              type="file"
-              accept=".jpg,.jpeg,.png,.pdf"
-              onChange={(e) => handleFileUpload(e, "ijazah")}
-              className="block w-full text-sm text-white file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-600 file:text-white"
-            />
-            {dokumen.ijazah && <Preview fileUrl={dokumen.ijazah} />}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full mb-4">
+            <div className="flex flex-col gap-2">
+              <label className="font-medium">Fotokopi Ijazah / STTB</label>
+
+              {/* Upload input (only shown if no file yet) */}
+              {!dokumen.ijazah && !data?.dokumenIjazah && (
+                <input
+                  type="file"
+                  accept=".jpg,.jpeg,.png,.pdf"
+                  onChange={(e) => handleFileUpload(e, "ijazah")}
+                  className="block w-full text-sm text-white file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-600 file:text-white"
+                />
+              )}
+
+              {/* Show preview if file exists in local state */}
+              {dokumen.ijazah && (
+                <div className="flex items-center justify-between bg-white/10 p-2 rounded shadow">
+                  <a
+                    href={dokumen.ijazah}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-400 underline truncate"
+                  >
+                    Lihat Dokumen (Ijazah)
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setDokumen((prev) => ({ ...prev, ijazah: undefined }))
+                    }
+                    className="ml-2 px-2 py-1 bg-red-600 text-white text-xs rounded"
+                  >
+                    Hapus
+                  </button>
+                </div>
+              )}
+
+              {/* Show preview if file exists in DB but not in local state */}
+              {!dokumen.ijazah && data?.dokumenIjazah && (
+                <div className="flex items-center justify-between bg-white/10 p-2 rounded shadow">
+                  <a
+                    href={data?.dokumenIjazah}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-400 underline truncate"
+                  >
+                    Lihat Dokumen (Ijazah)
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setDokumen((prev) => ({ ...prev, ijazah: undefined }))
+                    }
+                    className="ml-2 px-2 py-1 bg-red-600 text-white text-xs rounded"
+                  >
+                    Hapus
+                  </button>
+                </div>
+              )}
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="font-medium">Fotokopi Akte Kelahiran</label>
+
+              {/* Upload input (only shown if no file yet) */}
+              {!dokumen.akte && !data?.dokumenAkte && (
+                <input
+                  type="file"
+                  accept=".jpg,.jpeg,.png,.pdf"
+                  onChange={(e) => handleFileUpload(e, "akte")}
+                  className="block w-full text-sm text-white file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-600 file:text-white"
+                />
+              )}
+
+              {/* Show preview if file exists in local state */}
+              {dokumen.akte && (
+                <div className="flex items-center justify-between bg-white/10 p-2 rounded shadow">
+                  <a
+                    href={dokumen.akte}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-400 underline truncate"
+                  >
+                    Lihat Dokumen (akte)
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setDokumen((prev) => ({ ...prev, akte: undefined }))
+                    }
+                    className="ml-2 px-2 py-1 bg-red-600 text-white text-xs rounded"
+                  >
+                    Hapus
+                  </button>
+                </div>
+              )}
+
+              {/* Show preview if file exists in DB but not in local state */}
+              {!dokumen.akte && data?.dokumenAkte && (
+                <div className="flex items-center justify-between bg-white/10 p-2 rounded shadow">
+                  <a
+                    href={data?.dokumenAkte}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-400 underline truncate"
+                  >
+                    Lihat Dokumen (Akte)
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setDokumen((prev) => ({ ...prev, akte: undefined }))
+                    }
+                    className="ml-2 px-2 py-1 bg-red-600 text-white text-xs rounded"
+                  >
+                    Hapus
+                  </button>
+                </div>
+              )}
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="font-medium ">
+                Fotokopi KK, KTP Orang Tua, SKTM / KIP
+              </label>
+
+              {/* Upload input (only shown if no file yet) */}
+              {!dokumen.kk_ktp_sktm && !data?.dokumenKKKTP && (
+                <input
+                  type="file"
+                  accept=".jpg,.jpeg,.png,.pdf"
+                  onChange={(e) => handleFileUpload(e, "kk_ktp_sktm")}
+                  className="block w-full text-sm text-white file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-600 file:text-white"
+                />
+              )}
+
+              {/* Show preview if file exists in local state */}
+              {dokumen.kk_ktp_sktm && (
+                <div className="flex items-center justify-between bg-white/10 p-2 rounded shadow">
+                  <a
+                    href={dokumen.kk_ktp_sktm}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-400 underline truncate"
+                  >
+                    Lihat Dokumen (KK, KTP, SKTM/KIP)
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setDokumen((prev) => ({
+                        ...prev,
+                        kk_ktp_sktm: undefined,
+                      }))
+                    }
+                    className="ml-2 px-2 py-1 bg-red-600 text-white text-xs rounded"
+                  >
+                    Hapus
+                  </button>
+                </div>
+              )}
+
+              {/* Show preview if file exists in DB but not in local state */}
+              {!dokumen.kk_ktp_sktm && data?.dokumenKKKTP && (
+                <div className="flex items-center justify-between bg-white/10 p-2 rounded shadow">
+                  <a
+                    href={data?.dokumenKKKTP}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-400 underline truncate"
+                  >
+                    Lihat Dokumen (KK, KTP, SKTM/KIP)
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setDokumen((prev) => ({
+                        ...prev,
+                        kk_ktp_sktm: undefined,
+                      }))
+                    }
+                    className="ml-2 px-2 py-1 bg-red-600 text-white text-xs rounded"
+                  >
+                    Hapus
+                  </button>
+                </div>
+              )}
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="font-medium ">Foto Siswa</label>
+
+              {/* Upload input (only shown if no file yet) */}
+              {!dokumen.pasfoto && !data?.dokumenPasfoto && (
+                <input
+                  type="file"
+                  accept=".jpg,.jpeg,.png,.pdf"
+                  onChange={(e) => handleFileUpload(e, "pasfoto")}
+                  className="block w-full text-sm text-white file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-600 file:text-white"
+                />
+              )}
+
+              {/* Show preview if file exists in local state */}
+              {dokumen.pasfoto && (
+                <div className="flex items-center justify-between bg-white/10 p-2 rounded shadow">
+                  <a
+                    href={dokumen.pasfoto}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-400 underline truncate"
+                  >
+                    Lihat Foto Siswa
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setDokumen((prev) => ({ ...prev, pasfoto: undefined }))
+                    }
+                    className="ml-2 px-2 py-1 bg-red-600 text-white text-xs rounded"
+                  >
+                    Hapus
+                  </button>
+                </div>
+              )}
+
+              {/* Show preview if file exists in DB but not in local state */}
+              {!dokumen.pasfoto && data?.dokumenPasfoto && (
+                <div className="flex items-center justify-between bg-white/10 p-2 rounded shadow">
+                  <a
+                    href={data?.dokumenKKKTP}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-400 underline truncate"
+                  >
+                    Lihat Foto Siswa
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setDokumen((prev) => ({ ...prev, pasfoto: undefined }))
+                    }
+                    className="ml-2 px-2 py-1 bg-red-600 text-white text-xs rounded"
+                  >
+                    Hapus
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
-          <div>
-            <label className="font-medium block mb-1 ">
-              Fotokopi Akte Kelahiran
-            </label>
-            <input
-              type="file"
-              accept=".jpg,.jpeg,.png,.pdf"
-              onChange={(e) => handleFileUpload(e, "akte")}
-              className="block w-full text-sm text-white file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-600 file:text-white"
-            />
-            {dokumen.akte && <Preview fileUrl={dokumen.akte} />}
-          </div>
-
-          <div>
-            <label className="font-medium block mb-1 ">
-              Foto Background warna merah
-            </label>
-            <input
-              type="file"
-              accept=".jpg,.jpeg,.png"
-              onChange={(e) => handleFileUpload(e, "pasfoto")}
-              className="block w-full text-sm text-white file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-600 file:text-white"
-            />
-            {dokumen.pasfoto && <Preview fileUrl={dokumen.pasfoto} />}
-          </div>
-
-          <div>
-            <label className="font-medium block mb-1 ">
-              Fotokopi KK, KTP Orang Tua, SKTM / KIP
-            </label>
-            <input
-              type="file"
-              accept=".jpg,.jpeg,.png,.pdf"
-              onChange={(e) => handleFileUpload(e, "kk_ktp_sktm")}
-              className="block w-full text-sm text-white file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-600 file:text-white"
-            />
-            {dokumen.kk_ktp_sktm && <Preview fileUrl={dokumen.kk_ktp_sktm} />}
-          </div>
+          {type === "update" && (
+            <div className="flex-row gap-4">
+              {/* Validasi */}
+              <div className="w-full">
+                <label className="flex items-center gap-2 mt-10 mb-10">
+                  <input
+                    type="checkbox"
+                    {...register("isvalid")}
+                    className="w-4 h-4"
+                  />
+                  Formulir Valid?
+                </label>
+                {errors.isvalid && (
+                  <p className="text-red-600">{errors.isvalid.message}</p>
+                )}
+                {/* Email feedback section */}
+                {watchedValues.isvalid ? (
+                  <div>
+                    <div className="flex flex-row gap-4 mb-2">
+                      <div className="flex-1 min-w-[120px]">
+                        <label className="text-xs text-gray-400 mb-1 block">
+                          Tingkat
+                        </label>
+                        <select
+                          className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
+                          {...register("gradeId")}
+                          defaultValue={data?.gradeId}
+                        >
+                          {grades.map(
+                            (grade: { id: number; level: number }) => (
+                              <option value={grade.id} key={grade.id}>
+                                {grade.level}
+                              </option>
+                            )
+                          )}
+                        </select>
+                        {errors.gradeId?.message && (
+                          <p className="text-xs text-red-400 mt-1">
+                            {errors.gradeId.message.toString()}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-[180px]">
+                        <label className="text-xs text-gray-400 mb-1 block">
+                          Kelas
+                        </label>
+                        <select
+                          className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
+                          {...register("classId")}
+                          defaultValue={data?.classId}
+                        >
+                          {classes.map(
+                            (kelas: {
+                              id: number;
+                              name: string;
+                              capacity: number;
+                              _count: { students: number };
+                            }) => (
+                              <option value={kelas.id} key={kelas.id}>
+                                {kelas.name} -{" "}
+                                {kelas._count.students + "/" + kelas.capacity}{" "}
+                                Kapasitas
+                              </option>
+                            )
+                          )}
+                        </select>
+                        {errors.classId?.message && (
+                          <p className="text-xs text-red-400 mt-1">
+                            {errors.classId.message.toString()}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded text-white mb-2"
+                      disabled={sendingFeedback}
+                      onClick={() => sendFeedbackEmail(true)}
+                    >
+                      {sendingFeedback
+                        ? "Mengirim..."
+                        : "Kirim Notifikasi Valid ke Email"}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="mb-2">
+                    <label className="block mb-1 font-medium">
+                      Pilih field yang salah (bisa lebih dari satu):
+                    </label>
+                    <Select
+                      isMulti
+                      options={fieldOptions}
+                      value={selectedFields}
+                      onChange={(newValue) => setSelectedFields([...newValue])}
+                      className="mb-2"
+                    />
+                    <button
+                      type="button"
+                      className="bg-yellow-600 hover:bg-yellow-700 px-4 py-2 rounded text-white"
+                      disabled={sendingFeedback}
+                      onClick={() => sendFeedbackEmail(false)}
+                    >
+                      {sendingFeedback
+                        ? "Mengirim..."
+                        : "Kirim Notifikasi Tidak Valid ke Email"}
+                    </button>
+                  </div>
+                )}
+                <label className="block mb-1 font-medium">
+                  Pesan tambahan Bagi calon siswa
+                </label>
+                <textarea
+                  {...register("reason")}
+                  className="w-full border rounded px-3 py-2 h-[90px]"
+                />
+                {errors.reason && (
+                  <p className="text-red-600">{errors.reason.message}</p>
+                )}
+              </div>
+            </div>
+          )}
 
           {data?.id && (
             <input hidden type="number" {...register("id")} value={data.id} />
@@ -970,12 +1436,20 @@ const FormulirPendaftaran = ({
             </span>
           )}
           {/* Tombol Submit */}
-          <div className="text-center pt-4">
+          <div className="text-center pt-4 justify-items-center">
             <button
               type="submit"
-              className="bg-blue-600 text-white font-semibold px-6 py-3 rounded hover:bg-blue-700"
+              className="bg-blue-600 text-white font-semibold px-6 py-3 rounded hover:bg-blue-700 flex items-center justify-center gap-2"
+              disabled={isSubmitting}
             >
-              Kirim Pendaftaran
+              {isSubmitting && (
+                <span className="animate-spin inline-block w-5 h-5 border-2 border-white border-t-blue-400 rounded-full mr-2"></span>
+              )}
+              {isSubmitting
+                ? "Memproses..."
+                : type === "create"
+                ? "Kirim Pendaftaraan"
+                : "Update dan Simpan"}
             </button>
           </div>
         </form>

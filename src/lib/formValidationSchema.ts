@@ -1,5 +1,5 @@
-import { Agama, Awards, Degree, KPS, TTinggal } from "@prisma/client";
-import { z } from "zod";
+import { Agama, Awards, Degree, KPS, TTinggal, UserSex } from "@prisma/client";
+import { isValid, z } from "zod";
 
 export const subjectSchema = z.object({
   id: z.coerce.number().optional(),
@@ -40,6 +40,11 @@ export const teacherSchema = z.object({
     .or(z.literal("")),
   phone: z.string().min(1, { message: "Nomor telepon wajib diisi!" }),
   address: z.string().min(1, { message: "Alamat wajib diisi!" }),
+  rt: z.string({ message: " RT Guru wajib diisi!" }).length(2),
+  rw: z.string({ message: " RW Guru wajib diisi!" }).length(2),
+  kelurahan: z.string({ message: " Nama Kelurahan Guru wajib diisi!" }).min(1),
+  kecamatan: z.string({ message: " Nama Kecamatan Guru wajib diisi!" }).min(1),
+  kota: z.string({ message: " Nama Kota Guru wajib diisi!" }).min(1),
   religion: z.enum(["Islam", "Kristen", "Buddha", "Lainnya"], {
     message: " Agama Guru wajib diisi!",
   }),
@@ -98,20 +103,11 @@ export const studentSchema = z.object({
   nik: z.string({ message: " NIK Siswa wajib diisi!" }),
   // .length(20)
   postcode: z.coerce.number({ message: " Kode Pos Siswa wajib diisi!" }).min(5),
-  // rt: z.string({ message: " RT Siswa wajib diisi!" }).length(2).regex(/^\d+$/),
-  // rw: z.string({ message: " RW Siswa wajib diisi!" }).length(2).regex(/^\d+$/),
-  // kelurahan: z
-  //   .string({ message: " Nama Kelurahan Siswa wajib diisi!" })
-  //   .min(1)
-  //   .regex(/^[A-Za-z\s]+$/),
-  // kecamatan: z
-  //   .string({ message: " Nama Kecamatan Siswa wajib diisi!" })
-  //   .min(1)
-  //   .regex(/^[A-Za-z\s]+$/),
-  // kota: z
-  //   .string({ message: " Nama Kota Siswa wajib diisi!" })
-  //   .min(1)
-  //   .regex(/^[A-Za-z\s]+$/),
+  rt: z.string({ message: " RT Siswa wajib diisi!" }).length(2),
+  rw: z.string({ message: " RW Siswa wajib diisi!" }).length(2),
+  kelurahan: z.string({ message: " Nama Kelurahan Siswa wajib diisi!" }).min(1),
+  kecamatan: z.string({ message: " Nama Kecamatan Siswa wajib diisi!" }).min(1),
+  kota: z.string({ message: " Nama Kota Siswa wajib diisi!" }).min(1),
   transportation: z
     .string({ message: " Transportasi Siswa wajib diisi!" })
     .min(1),
@@ -157,7 +153,6 @@ export const studentSchema = z.object({
     .nullable(),
   awards_date: z.coerce
     .date({ message: " Tanggal penghargaan Siswa wajib diisi!" })
-    .optional()
     .nullable(),
 
   scholarship: z
@@ -237,10 +232,13 @@ export const parentSchema = z.object({
   email: z.string().email({ message: "Email anda Tidak valid!" }),
   name: z.string().min(1, { message: "Nama depan wajib diisi!" }),
   surname: z.string().min(1, { message: "Nama belakang wajib diisi!" }),
+  sex: z.nativeEnum(UserSex, {
+    message: " Jenis Kelamin Calon Siswa wajib diisi!",
+  }),
   phone: z.string().min(1, { message: "Nomor telepon wajib diisi!" }),
   birthday: z.coerce.date({ message: "Tanggal lahir Ortu wajib disii!" }),
   job: z.string().min(1, { message: "Pekerjaan Ortu wajib diisi!" }),
-  degree: z.enum(["TIDAK_ADA", "SD", "SMP", "SMA", "D3", "S1", "S2", "S3"], {
+  degree: z.nativeEnum(Degree, {
     message: "Pendidikan Ortu wajib diisi!",
   }),
   income: z.coerce.number().min(1, { message: "Pendapatan Ortu wajib diisi!" }),
@@ -286,17 +284,17 @@ export type ResultSchema = z.infer<typeof resultSchema>;
 
 export const ppdbSchema = z.object({
   id: z.coerce.number().optional(),
-  name: z
-    .string({ message: " Nama Calon Siswa wajib diisi!" })
-    .min(1)
-    .regex(/^[A-Za-z\s]+$/),
+  name: z.string({
+    message: " nama Calon Siswa wajib diisi!",
+  }),
   surname: z
-    .string()
-    .min(1)
-    .regex(/^[A-Za-z\s]+$/)
+    .string({
+      message: " nama Calon Siswa wajib diisi!",
+    })
     .optional()
-    .nullable(),
-  birthday: z.coerce.date({
+    .nullable()
+    .or(z.literal("")),
+  birthday: z.string({
     message: " Tanggal lahir Calon Siswa wajib diisi!",
   }),
   birthPlace: z
@@ -374,13 +372,15 @@ export const ppdbSchema = z.object({
       message: " KPS Calon Siswa wajib diisi!",
     })
     .optional()
-    .nullable(),
+    .nullable()
+    .or(z.literal("")),
   no_kps: z
     .string({ message: " No KPS Calon Siswa wajib diisi!" })
     .length(16)
     .regex(/^\d+$/)
     .optional()
-    .nullable(),
+    .nullable()
+    .or(z.literal("")),
   height: z.coerce
     .number({ message: " Tinggi Calon Siswa wajib diisi!" })
     .min(100)
@@ -410,7 +410,6 @@ export const ppdbSchema = z.object({
     .nullable(),
   awards_date: z
     .string({ message: " Tanggal penghargaan Calon Siswa wajib diisi!" })
-    .optional()
     .nullable(),
 
   scholarship: z
@@ -429,70 +428,149 @@ export const ppdbSchema = z.object({
   // Ayah
   namaAyah: z
     .string({ message: " Nama Ayah Calon Siswa wajib diisi!" })
-    .regex(/^[A-Za-z\s]+$/),
-  tahunLahirAyah: z.coerce.date({
-    message: " Tanggal lahir Ayah Calon Siswa wajib diisi!",
-  }),
-  pekerjaanAyah: z.string({
-    message: " Pekerjan Ayah Calon Siswa wajib diisi!",
-  }),
-  pendidikanAyah: z.nativeEnum(Degree, {
-    message: " Pendidikan Ayah Calon Siswa wajib diisi!",
-  }),
-  penghasilanAyah: z.coerce.number({
-    message: " Penghasilan Ayah Calon Siswa wajib diisi!",
-  }),
+    .regex(/^[A-Za-z\s]+$/)
+    .optional()
+    .nullable()
+    .or(z.literal("")),
+  tahunLahirAyah: z
+    .string({
+      message: " Tanggal lahir Ayah Calon Siswa wajib diisi!",
+    })
+    .optional()
+    .nullable()
+    .or(z.literal("")),
+  pekerjaanAyah: z
+    .string({
+      message: " Pekerjan Ayah Calon Siswa wajib diisi!",
+    })
+    .optional()
+    .nullable()
+    .or(z.literal("")),
+  pendidikanAyah: z
+    .nativeEnum(Degree, {
+      message: " Pendidikan Ayah Calon Siswa wajib diisi!",
+    })
+    .optional()
+    .nullable()
+    .or(z.literal("")),
+  penghasilanAyah: z.coerce
+    .number({
+      message: " Penghasilan Ayah Calon Siswa wajib diisi!",
+    })
+    .optional()
+    .nullable()
+    .or(z.literal("")),
   telpAyah: z
     .string({ message: " No telepon Ayah Calon Siswa wajib diisi!" })
     .min(11)
     .max(13)
-    .regex(/^\d+$/),
+    .regex(/^\d+$/)
+    .optional()
+    .nullable()
+    .or(z.literal("")),
 
   // Ibu
-  namaIbu: z.string({ message: " Nama Ibu Calon Siswa wajib diisi!" }),
-  tahunLahirIbu: z.coerce.date({
-    message: " Tanggal Lahir Ibu Calon Siswa wajib diisi!",
-  }),
-  pekerjaanIbu: z.string({
-    message: " Pekerjaan Ibu Calon Siswa wajib diisi!",
-  }),
-  pendidikanIbu: z.nativeEnum(Degree, {
-    message: " Pendidikan Ibu Calon Siswa wajib diisi!",
-  }),
-  penghasilanIbu: z.coerce.number({
-    message: " Penghasilan Ibu Calon Siswa wajib diisi!",
-  }),
+  namaIbu: z
+    .string({ message: " Nama Ibu Calon Siswa wajib diisi!" })
+    .optional()
+    .nullable()
+    .or(z.literal("")),
+  tahunLahirIbu: z
+    .string({
+      message: " Tanggal Lahir Ibu Calon Siswa wajib diisi!",
+    })
+    .optional()
+    .nullable()
+    .or(z.literal("")),
+  pekerjaanIbu: z
+    .string({
+      message: " Pekerjaan Ibu Calon Siswa wajib diisi!",
+    })
+    .optional()
+    .nullable()
+    .or(z.literal("")),
+  pendidikanIbu: z
+    .nativeEnum(Degree, {
+      message: " Pendidikan Ibu Calon Siswa wajib diisi!",
+    })
+    .optional()
+    .nullable()
+    .or(z.literal("")),
+  penghasilanIbu: z.coerce
+    .number({
+      message: " Penghasilan Ibu Calon Siswa wajib diisi!",
+    })
+    .optional()
+    .nullable()
+    .or(z.literal("")),
   telpIbu: z
     .string({ message: " No telepon Ibu Calon Siswa wajib diisi!" })
     .min(11)
     .max(13)
-    .regex(/^\d+$/),
+    .regex(/^\d+$/)
+    .optional()
+    .nullable()
+    .or(z.literal("")),
 
   // Wali
   namaWali: z
     .string({ message: " Nama Wali Calon Siswa wajib diisi!" })
-    .regex(/^[A-Za-z\s]+$/),
-  tahunLahirWali: z.coerce.date({
-    message: " Tanggal Lahir Wali Calon Siswa wajib diisi!",
-  }),
-  pekerjaanWali: z.string({
-    message: " Pekerjaan Wali Calon Siswa wajib diisi!",
-  }),
-  pendidikanWali: z.nativeEnum(Degree, {
-    message: " Pendidikan Wali Calon Siswa wajib diisi!",
-  }),
-  penghasilanWali: z.coerce.number({
-    message: " Penghasilan Wali Siswa wajib diisi!",
-  }),
+    .regex(/^[A-Za-z\s]+$/)
+    .optional()
+    .nullable()
+    .or(z.literal("")),
+  tahunLahirWali: z
+    .string({
+      message: " Tanggal Lahir Wali Calon Siswa wajib diisi!",
+    })
+    .optional()
+    .nullable()
+    .or(z.literal("")),
+  pekerjaanWali: z
+    .string({
+      message: " Pekerjaan Wali Calon Siswa wajib diisi!",
+    })
+    .optional()
+    .nullable()
+    .or(z.literal("")),
+  pendidikanWali: z
+    .nativeEnum(Degree, {
+      message: " Pendidikan Wali Calon Siswa wajib diisi!",
+    })
+    .optional()
+    .nullable()
+    .or(z.literal("")),
+  penghasilanWali: z.coerce
+    .number({
+      message: " Penghasilan Wali Siswa wajib diisi!",
+    })
+    .optional()
+    .nullable()
+    .or(z.literal("")),
   telpWali: z
     .string({ message: " No telepon Wali Calon Siswa wajib diisi!" })
     .min(11)
     .max(13)
-    .regex(/^\d+$/),
+    .regex(/^\d+$/)
+    .optional()
+    .nullable()
+    .or(z.literal("")),
   dokumenIjazah: z.string().optional().nullable(),
   dokumenAkte: z.string().optional().nullable(),
   dokumenPasfoto: z.string().optional().nullable(),
   dokumenKKKTP: z.string().optional().nullable(),
+  isvalid: z.boolean().default(false).optional(),
+  reason: z.string().optional().nullable(),
+  gradeId: z.coerce
+    .number()
+    .min(1, { message: "Id tingkatan wajib diisi!" })
+    .optional()
+    .nullable(),
+  classId: z.coerce
+    .number()
+    .min(1, { message: "Id kelas wajib diisi!" })
+    .optional()
+    .nullable(),
 });
 
 export type PpdbSchema = z.infer<typeof ppdbSchema>;

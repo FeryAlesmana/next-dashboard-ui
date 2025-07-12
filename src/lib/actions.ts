@@ -29,6 +29,7 @@ import prisma from "./prisma";
 import { clerkClient } from "@clerk/nextjs/server";
 import extractCloudinaryPublicId, { getCurrentUser } from "./utils";
 import { error } from "console";
+import { Degree, Prisma } from "@prisma/client";
 
 export type CurrentState = {
   success: boolean;
@@ -174,6 +175,11 @@ export const createTeacher = async (
         email: data.email,
         phone: data.phone,
         address: data.address,
+        rw: data.rw,
+        rt: data.rt,
+        kelurahan: data.kelurahan,
+        kecamatan: data.kecamatan,
+        kota: data.kota,
         religion: data.religion,
         img: data.img || null,
         sex: data.sex,
@@ -375,6 +381,11 @@ export const createStudent = async (
         email: data.email,
         phone: data.phone,
         address: data.address,
+        rw: data.rw,
+        rt: data.rt,
+        kelurahan: data.kelurahan,
+        kecamatan: data.kecamatan,
+        kota: data.kota,
         religion: data.religion,
         img: data.img || null,
         sex: data.sex,
@@ -415,7 +426,7 @@ export const createStudent = async (
         dokumenKKKTP: data.dokumenKKKTP || null,
       },
     });
-    return { success: true, error: false };
+    return { success: true, error: false, id: user.id };
   } catch (error: any) {
     let message = "Unknown error";
     // Handle Clerk API errors properly
@@ -475,6 +486,11 @@ export const updateStudent = async (
         email: data.email || null,
         phone: data.phone,
         address: data.address,
+        rw: data.rw,
+        rt: data.rt,
+        kelurahan: data.kelurahan,
+        kecamatan: data.kecamatan,
+        kota: data.kota,
         ...(data.img && { img: data.img }),
         sex: data.sex,
         birthday: data.birthday,
@@ -944,6 +960,7 @@ export const createParent = async (
         name: data.name,
         surname: data.surname,
         email: data.email,
+        sex: data.sex,
         birthday: data.birthday,
         job: data.job,
         income: data.income,
@@ -1247,21 +1264,15 @@ export const createPpdb = async (
         surname: data.name,
         email: data.email,
         phone: data.phone,
-        address:
-          data.address +
-          " " +
-          data.rw +
-          " " +
-          data.rt +
-          " " +
-          data.kelurahan +
-          " " +
-          data.kecamatan +
-          " " +
-          data.kota,
+        address: data.address,
+        rw: data.rw,
+        rt: data.rt,
+        kelurahan: data.kelurahan,
+        kecamatan: data.kecamatan,
+        kota: data.kota,
         religion: data.religion,
         sex: data.sex,
-        birthday: data.birthday,
+        birthday: new Date(data.birthday),
         asalSekolah: data.asalSekolah,
         birthPlace: data.birthPlace,
         nisn: data.nisn,
@@ -1277,29 +1288,45 @@ export const createPpdb = async (
         distance_from_home: data.distance_from_home,
         time_from_home: data.time_from_home,
         number_of_siblings: data.number_of_siblings,
-        namaAyah: data.namaAyah,
-        tahunLahirAyah: data.tahunLahirAyah,
-        pekerjaanAyah: data.pekerjaanAyah,
-        pendidikanAyah: data.pendidikanAyah,
-        penghasilanAyah: data.penghasilanAyah,
-        telpAyah: data.telpAyah,
-        namaIbu: data.namaIbu,
-        tahunLahirIbu: data.tahunLahirIbu,
-        pekerjaanIbu: data.pekerjaanIbu,
-        pendidikanIbu: data.pendidikanIbu,
-        penghasilanIbu: data.penghasilanIbu,
-        telpIbu: data.telpIbu,
-        namaWali: data.namaWali,
-        tahunLahirWali: data.tahunLahirWali,
-        pekerjaanWali: data.pekerjaanWali,
-        pendidikanWali: data.pendidikanWali,
-        penghasilanWali: data.penghasilanWali,
-        telpWali: data.telpWali,
+        namaAyah: data.namaAyah === "" ? null : data.namaAyah,
+        tahunLahirAyah:
+          data.tahunLahirAyah && data.tahunLahirAyah !== ""
+            ? new Date(data.tahunLahirAyah)
+            : null,
+        pekerjaanAyah: data.pekerjaanAyah === "" ? null : data.pekerjaanAyah,
+        pendidikanAyah: data.pendidikanAyah === "" ? null : data.pendidikanAyah,
+        penghasilanAyah:
+          data.penghasilanAyah === "" ? null : data.penghasilanAyah ?? null,
+        telpAyah: data.telpAyah === "" ? null : data.telpAyah,
+        namaIbu: data.namaIbu === "" ? null : data.namaIbu,
+        tahunLahirIbu:
+          data.tahunLahirIbu && data.tahunLahirIbu !== ""
+            ? new Date(data.tahunLahirIbu)
+            : null,
+        pekerjaanIbu: data.pekerjaanIbu === "" ? null : data.pekerjaanIbu,
+        pendidikanIbu: data.pendidikanIbu === "" ? null : data.pendidikanIbu,
+        penghasilanIbu:
+          data.penghasilanIbu === "" ? null : data.penghasilanIbu ?? null,
+        telpIbu: data.telpIbu === "" ? null : data.telpIbu,
+        namaWali: data.namaWali === "" ? null : data.namaWali,
+        tahunLahirWali:
+          data.tahunLahirWali && data.tahunLahirWali !== ""
+            ? new Date(data.tahunLahirWali)
+            : null,
+        pekerjaanWali: data.pekerjaanWali === "" ? null : data.pekerjaanWali,
+        pendidikanWali: data.pendidikanWali === "" ? null : data.pendidikanWali,
+        penghasilanWali:
+          data.penghasilanWali === "" ? null : data.penghasilanWali ?? null,
+        telpWali: data.telpWali === "" ? null : data.telpWali,
         postcode: data.postcode,
         awards: data.awards || null,
+        awards_lvl: data.awards_lvl || null,
         awards_date: data.awards_date ? new Date(data.awards_date) : null,
         scholarship: data.scholarship || null,
         scholarship_detail: data.scholarship_detail || null,
+        scholarship_date: data.scholarship_date
+          ? new Date(data.scholarship_date)
+          : null,
         dokumenIjazah: data.dokumenIjazah || null,
         dokumenAkte: data.dokumenAkte || null,
         dokumenPasfoto: data.dokumenPasfoto || null,
@@ -1310,6 +1337,21 @@ export const createPpdb = async (
 
     return { success: true, error: false };
   } catch (error: any) {
+    // Prisma unique constraint error handling
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      let field = "unknown";
+      if (Array.isArray(error.meta?.target) && error.meta?.target.length > 0) {
+        field = error.meta.target[0];
+      }
+      return {
+        success: false,
+        error: true,
+        message: field, // return the field name
+      };
+    }
     let message = "Unknown error";
 
     if (
@@ -1334,7 +1376,6 @@ export const updatePpdb = async (
   try {
     if (!data.id) {
       console.log(data.id + "Data.id");
-
       return { success: false, error: true, message: "Missing student ID" };
     }
 
@@ -1348,21 +1389,15 @@ export const updatePpdb = async (
         surname: data.name,
         email: data.email,
         phone: data.phone,
-        address:
-          data.address +
-          " " +
-          data.rw +
-          " " +
-          data.rt +
-          " " +
-          data.kelurahan +
-          " " +
-          data.kecamatan +
-          " " +
-          data.kota,
+        address: data.address,
+        rw: data.rw,
+        rt: data.rt,
+        kelurahan: data.kelurahan,
+        kecamatan: data.kecamatan,
+        kota: data.kota,
         religion: data.religion,
         sex: data.sex,
-        birthday: data.birthday,
+        birthday: new Date(data.birthday),
         asalSekolah: data.asalSekolah,
         birthPlace: data.birthPlace,
         nisn: data.nisn,
@@ -1378,35 +1413,192 @@ export const updatePpdb = async (
         distance_from_home: data.distance_from_home,
         time_from_home: data.time_from_home,
         number_of_siblings: data.number_of_siblings,
-        namaAyah: data.namaAyah,
-        tahunLahirAyah: data.tahunLahirAyah,
-        pekerjaanAyah: data.pekerjaanAyah,
-        pendidikanAyah: data.pendidikanAyah,
-        penghasilanAyah: data.penghasilanAyah,
-        telpAyah: data.telpAyah,
-        namaIbu: data.namaIbu,
-        tahunLahirIbu: data.tahunLahirIbu,
-        pekerjaanIbu: data.pekerjaanIbu,
-        pendidikanIbu: data.pendidikanIbu,
-        penghasilanIbu: data.penghasilanIbu,
-        telpIbu: data.telpIbu,
-        namaWali: data.namaWali,
-        tahunLahirWali: data.tahunLahirWali,
-        pekerjaanWali: data.pekerjaanWali,
-        pendidikanWali: data.pendidikanWali,
-        penghasilanWali: data.penghasilanWali,
-        telpWali: data.telpWali,
+        namaAyah: data.namaAyah === "" ? null : data.namaAyah,
+        tahunLahirAyah:
+          data.tahunLahirAyah && data.tahunLahirAyah !== ""
+            ? new Date(data.tahunLahirAyah)
+            : null,
+        pekerjaanAyah: data.pekerjaanAyah === "" ? null : data.pekerjaanAyah,
+        pendidikanAyah: data.pendidikanAyah === "" ? null : data.pendidikanAyah,
+        penghasilanAyah:
+          data.penghasilanAyah === "" ? null : data.penghasilanAyah ?? null,
+        telpAyah: data.telpAyah === "" ? null : data.telpAyah,
+        namaIbu: data.namaIbu === "" ? null : data.namaIbu,
+        tahunLahirIbu:
+          data.tahunLahirIbu && data.tahunLahirIbu !== ""
+            ? new Date(data.tahunLahirIbu)
+            : null,
+        pekerjaanIbu: data.pekerjaanIbu === "" ? null : data.pekerjaanIbu,
+        pendidikanIbu: data.pendidikanIbu === "" ? null : data.pendidikanIbu,
+        penghasilanIbu:
+          data.penghasilanIbu === "" ? null : data.penghasilanIbu ?? null,
+        telpIbu: data.telpIbu === "" ? null : data.telpIbu,
+        namaWali: data.namaWali === "" ? null : data.namaWali,
+        tahunLahirWali:
+          data.tahunLahirWali && data.tahunLahirWali !== ""
+            ? new Date(data.tahunLahirWali)
+            : null,
+        pekerjaanWali: data.pekerjaanWali === "" ? null : data.pekerjaanWali,
+        pendidikanWali: data.pendidikanWali === "" ? null : data.pendidikanWali,
+        penghasilanWali:
+          data.penghasilanWali === "" ? null : data.penghasilanWali ?? null,
+        telpWali: data.telpWali === "" ? null : data.telpWali,
         postcode: data.postcode,
         awards: data.awards || null,
+        awards_lvl: data.awards_lvl || null,
         awards_date: data.awards_date ? new Date(data.awards_date) : null,
         scholarship: data.scholarship || null,
         scholarship_detail: data.scholarship_detail || null,
         ...(data.dokumenIjazah !== "" && { dokumenIjazah: data.dokumenIjazah }),
         ...(data.dokumenAkte !== "" && { dokumenAkte: data.dokumenAkte }),
+        ...(data.dokumenPasfoto !== "" && {
+          dokumenPasfoto: data.dokumenPasfoto,
+        }),
         ...(data.dokumenKKKTP !== "" && { dokumenKKKTP: data.dokumenKKKTP }),
-        isvalid: false,
+        isvalid: data.isvalid || false,
       },
     });
+
+    // If isvalid is true, create a new user and student
+    if (data.isvalid === true) {
+      // Prepare StudentSchema payload
+      const studentPayload = {
+        id: undefined,
+        sdId: "", // You may want to generate or fetch this value
+        username: data.nisn + "_student",
+        password: `${data.nisn}@Sm2024!`, // Or generate a random password
+        name: data.name,
+        surname: data.surname ?? "",
+        email: data.email,
+        phone: data.phone,
+        address: data.address,
+        rw: data.rw,
+        rt: data.rt,
+        kelurahan: data.kelurahan,
+        kecamatan: data.kecamatan,
+        kota: data.kota,
+        religion: data.religion,
+        img: null,
+        birthday: new Date(data.birthday),
+        birthPlace: data.birthPlace,
+        sex: data.sex,
+        asalSekolah: data.asalSekolah,
+        npsn: data.npsn,
+        nisn: data.nisn,
+        no_ijz: data.no_ijz,
+        nik: data.nik,
+        postcode: data.postcode,
+        transportation: data.transportation,
+        tempat_tinggal: data.tempat_tinggal,
+        kps: data.kps === "" ? null : data.kps,
+        no_kps: data.no_kps ?? null,
+        height: data.height,
+        weight: data.weight,
+        distance_from_home: data.distance_from_home,
+        time_from_home: data.time_from_home,
+        number_of_siblings: data.number_of_siblings,
+        awards: data.awards ?? null,
+        awards_lvl: data.awards_lvl ?? null,
+        awards_date: data.awards_date ? new Date(data.awards_date) : null,
+        scholarship: data.scholarship ?? null,
+        scholarship_detail: data.scholarship_detail ?? null,
+        dokumenIjazah: data.dokumenIjazah ?? null,
+        dokumenAkte: data.dokumenAkte ?? null,
+        dokumenPasfoto: data.dokumenPasfoto ?? null,
+        dokumenKKKTP: data.dokumenKKKTP ?? null,
+        gradeId: data.gradeId ?? 1, // You may want to set this properly
+        classId: data.classId ?? 1, // You may want to set this properly
+        parentId: null,
+      };
+      const studentResult = await createStudent(
+        { success: false, error: false },
+        studentPayload
+      );
+      const studentId = studentResult?.id;
+      function toDegree(val: any): Degree {
+        const allowed = [
+          "TIDAK_ADA",
+          "SD",
+          "SMP",
+          "SMA",
+          "D3",
+          "S1",
+          "S2",
+          "S3",
+        ];
+        return allowed.includes(val) ? val : "TIDAK_ADA";
+      }
+      // Create Ayah parent if name exists
+      if (data.namaAyah) {
+        const ayahPayload = {
+          id: undefined,
+          username: data.nik + "_ayah",
+          password: `${data.nik}@Sm2024!`,
+          email: `${data.nik}_ayah@parent.local`,
+          name: data.namaAyah,
+          surname: "",
+          phone: data.telpAyah ?? "",
+          birthday: data.tahunLahirAyah
+            ? new Date(data.tahunLahirAyah)
+            : new Date(1970, 0, 1),
+          job: data.pekerjaanAyah ?? "",
+          degree: toDegree(data.pendidikanAyah),
+          income:
+            typeof data.penghasilanAyah === "number" ? data.penghasilanAyah : 0,
+          address: data.address,
+          sex: "MALE" as "MALE" | "FEMALE",
+          students: [studentId!],
+        };
+        await createParent({ success: false, error: false }, ayahPayload);
+      }
+      // Create Ibu parent if name exists
+      if (data.namaIbu) {
+        const ibuPayload = {
+          id: undefined,
+          username: data.nik + "_ibu",
+          password: `${data.nik}@Sm2024!`,
+          email: `${data.nik}_ibu@parent.local`,
+          name: data.namaIbu,
+          surname: "",
+          phone: data.telpIbu ?? "",
+          birthday: data.tahunLahirIbu
+            ? new Date(data.tahunLahirIbu)
+            : new Date(1970, 0, 1),
+          job: data.pekerjaanIbu ?? "",
+          degree: toDegree(data.pendidikanIbu),
+          income:
+            typeof data.penghasilanIbu === "number" ? data.penghasilanIbu : 0,
+          address: data.address,
+          sex: "FEMALE" as "MALE" | "FEMALE",
+          students: [studentId!],
+        };
+        await createParent({ success: false, error: false }, ibuPayload);
+      }
+      // Create Wali parent if name exists
+      if (data.namaWali) {
+        const waliPayload = {
+          id: undefined,
+          username: data.nik + "_wali",
+          password: `${data.nik}@Sm2024!`,
+          email: `${data.nik}_wali@parent.local`,
+          name: data.namaWali,
+          surname: "",
+          phone: data.telpWali ?? "",
+          birthday: data.tahunLahirWali
+            ? new Date(data.tahunLahirWali)
+            : new Date(1970, 0, 1),
+          job: data.pekerjaanWali ?? "",
+          degree: toDegree(data.pendidikanWali),
+          income:
+            typeof data.penghasilanWali === "number" ? data.penghasilanWali : 0,
+          address: data.address,
+          sex: "MALE" as "MALE" | "FEMALE",
+          students: [studentId!],
+        };
+        await createParent({ success: false, error: false }, waliPayload);
+      }
+    }
+
     return { success: true, error: false };
   } catch (error) {
     const message =
@@ -1427,36 +1619,12 @@ export const deletePpdb = async (
   const id = formData.get("id") as string;
 
   try {
-    if (!id) {
-      console.log(id);
-      return { success: false, error: true, message: "Missing Ppdb ID" };
-    }
-    const student = await prisma.student.findUnique({ where: { id } });
-    if (student?.img) {
-      const publicId = extractCloudinaryPublicId(student.img);
-      if (publicId) {
-        await cloudinary.uploader.destroy(publicId);
-        console.log("Cloudinary image deleted:", publicId);
-      }
-    }
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    await prisma.student.delete({
+    await prisma.pPDB.delete({
       where: {
-        id: id,
+        id: parseInt(id),
       },
     });
-
-    try {
-      const deletedUser = await client.users.deleteUser(id);
-
-      if (deletedUser) {
-        console.log("✅ User Sucessfully deleted:", deletedUser.id);
-      }
-    } catch (error) {
-      console.warn(
-        "⚠️ Clerk returned no user info. User may already be deleted?"
-      );
-    }
 
     return { success: true, error: false };
   } catch (error) {

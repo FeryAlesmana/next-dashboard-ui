@@ -20,9 +20,15 @@ export type FormContainerProps = {
   type: "create" | "update" | "delete";
   data?: any;
   id?: number | string;
-  role?: string;
+  prefilEmail?: string;
 };
-const FormContainer = async ({ table, type, data, id }: FormContainerProps) => {
+const FormContainer = async ({
+  table,
+  type,
+  data,
+  id,
+  prefilEmail,
+}: FormContainerProps) => {
   const { userId, role } = await getCurrentUser();
   let relatedData = {};
 
@@ -275,6 +281,28 @@ const FormContainer = async ({ table, type, data, id }: FormContainerProps) => {
         };
         break;
       case "ppdb":
+        const newStudentGrades = await prisma.grade.findMany({
+          select: {
+            id: true,
+            level: true,
+          },
+        });
+        const newStudentClasses = await prisma.class.findMany({
+          include: { _count: { select: { students: true } } },
+        });
+        const newStudentParents = await prisma.parent.findMany({
+          select: {
+            id: true,
+            name: true,
+            surname: true,
+          },
+        });
+
+        relatedData = {
+          grades: newStudentGrades,
+          classes: newStudentClasses,
+          parents: newStudentParents,
+        };
         break;
 
       default:
@@ -289,7 +317,7 @@ const FormContainer = async ({ table, type, data, id }: FormContainerProps) => {
         data={data}
         id={id}
         relatedData={relatedData}
-        role={role}
+        prefilEmail={prefilEmail}
       ></FormModal>
     </div>
   );

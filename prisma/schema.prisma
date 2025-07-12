@@ -20,6 +20,11 @@ model Student {
   email     String?  @unique
   phone     String?  @unique
   address   String
+  rw        String
+  rt        String
+  kelurahan String
+  kecamatan String
+  kota      String
   img       String?
   religion  Agama
   sex       UserSex
@@ -51,6 +56,11 @@ model Teacher {
   email     String?   @unique
   phone     String    @unique
   address   String
+  rw        String
+  rt        String
+  kelurahan String
+  kecamatan String
+  kota      String
   religion  Agama
   img       String?
   sex       UserSex
@@ -65,6 +75,7 @@ model Parent {
   id                String    @id
   username          String    @unique
   name              String
+  sex               UserSex
   surname           String
   birthday          DateTime
   email             String?   @unique
@@ -125,6 +136,11 @@ model PPDB {
   no_ijz             String    @unique
   nik                String    @unique
   address            String
+  rw                 String
+  rt                 String
+  kelurahan          String
+  kecamatan          String
+  kota               String
   postcode           Int
   phone              String?   @unique
   noWa               String?
@@ -138,24 +154,24 @@ model PPDB {
   distance_from_home Int
   time_from_home     Int //in minutes 
   number_of_siblings Int
-  namaAyah           String
-  tahunLahirAyah     DateTime
-  pekerjaanAyah      String
-  pendidikanAyah     Degree
-  penghasilanAyah    Int
-  telpAyah           String
-  namaIbu            String
-  tahunLahirIbu      DateTime
-  pekerjaanIbu       String
-  pendidikanIbu      Degree
-  penghasilanIbu     Int
-  telpIbu            String
-  namaWali           String
-  tahunLahirWali     DateTime
-  pekerjaanWali      String
-  pendidikanWali     Degree
-  penghasilanWali    Int
-  telpWali           String
+  namaAyah           String?
+  tahunLahirAyah     DateTime?
+  pekerjaanAyah      String?
+  pendidikanAyah     Degree?
+  penghasilanAyah    Int?
+  telpAyah           String?
+  namaIbu            String?
+  tahunLahirIbu      DateTime?
+  pekerjaanIbu       String?
+  pendidikanIbu      Degree?
+  penghasilanIbu     Int?
+  telpIbu            String?
+  namaWali           String?
+  tahunLahirWali     DateTime?
+  pekerjaanWali      String?
+  pendidikanWali     Degree?
+  penghasilanWali    Int?
+  telpWali           String?
   awards             String?
   awards_lvl         Awards?
   awards_date        DateTime?
@@ -167,6 +183,7 @@ model PPDB {
   dokumenAkte        String?
   dokumenPasfoto     String?
   dokumenKKKTP       String?
+  createdAt          DateTime  @default(now())
 }
 
 model Grade {
@@ -336,4 +353,12 @@ enum Day {
   RABU
   KAMIS
   JUMAT
+}
+
+model EmailOtp {
+  id        Int      @id @default(autoincrement())
+  email     String
+  code      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
 }

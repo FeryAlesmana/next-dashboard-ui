@@ -10,6 +10,7 @@ import {
   startTransition,
   useActionState,
   useEffect,
+  useState,
 } from "react";
 import {
   AnnouncementSchema,
@@ -66,8 +67,15 @@ const AssignmentForm = ({
     type === "create" ? createAssignmentHandler : updateAssignmentHandler,
     initialState
   );
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!state.success && !state.error) return;
+    setIsSubmitting(false);
+  }, [state.success, state.error]);
 
   const onSubmit = handleSubmit((data) => {
+    setIsSubmitting(true);
     startTransition(() => {
       formAction(data);
     });
@@ -181,9 +189,22 @@ const AssignmentForm = ({
         </span>
       )}
 
-      <button className="bg-blue-400 text-white p-2 rounded-md">
-        {type === "create" ? "Create" : "Update"}
-      </button>
+      <div className="text-center pt-4 justify-items-center">
+        <button
+          type="submit"
+          className="bg-blue-600 text-white font-semibold px-6 py-3 rounded hover:bg-blue-700 flex items-center justify-center gap-2"
+          disabled={isSubmitting}
+        >
+          {isSubmitting && (
+            <span className="animate-spin inline-block w-5 h-5 border-2 border-white border-t-blue-400 rounded-full mr-2"></span>
+          )}
+          {isSubmitting
+            ? "Memproses..."
+            : type === "create"
+            ? "Tambah tugas"
+            : "Update dan Simpan"}
+        </button>
+      </div>
     </form>
   );
 };

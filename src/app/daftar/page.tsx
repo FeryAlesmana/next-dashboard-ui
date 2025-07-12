@@ -3,7 +3,7 @@ import NavbarHome from "@/components/NavbarHome";
 import { FaSchool, FaLaptop, FaPrint } from "react-icons/fa";
 import { useRef, useState } from "react";
 import FormModal from "@/components/FormModal";
-
+import { EmailVerificationGate } from "@/components/EmailVerificationGate";
 
 export default function PPDBPage() {
   const formRef = useRef<HTMLDivElement>(null);
@@ -106,7 +106,7 @@ export default function PPDBPage() {
             <h3 className="text-xl font-semibold mb-4 text-white">
               Formulir Pendaftaran Online
             </h3>
-            <FormModal type="create" table="ppdb" />
+            <EmailVerificationGate />
           </div>
         )}
       </div>

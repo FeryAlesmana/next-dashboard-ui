@@ -9,6 +9,7 @@ import {
   startTransition,
   useActionState,
   useEffect,
+  useState,
 } from "react";
 import { useRouter } from "next/navigation";
 import { createParent, CurrentState, updateParent } from "@/lib/actions";
@@ -56,8 +57,16 @@ const ParentForm = ({
       message: "",
     }
   );
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!state.success && !state.error) return;
+    setIsSubmitting(false);
+  }, [state.success, state.error]);
 
   const onSubmit = handleSubmit((data) => {
+    setIsSubmitting(true);
+
     startTransition(() => {
       formAction(data);
     });
@@ -147,6 +156,59 @@ const ParentForm = ({
           register={register}
           error={errors?.address}
         ></InputField>
+        <InputField
+          label="Pekerjaan"
+          name="job"
+          defaultValue={data?.job}
+          register={register}
+          error={errors?.job}
+        ></InputField>
+        <InputField
+          label="Penghasilan"
+          name="income"
+          defaultValue={data?.income}
+          register={register}
+          error={errors?.income}
+        ></InputField>
+        <div className="flex flex-col gap-2 w-full md:w-1/4">
+          <label className="text-xs text-gray-400">Jenis Kelamin</label>
+          <select
+            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
+            {...register("sex")}
+            defaultValue={data?.sex}
+          >
+            <option value="MALE">Lelaki</option>
+            <option value="FEMALE">Perempuan</option>
+          </select>
+          {errors.sex?.message && (
+            <p className="text-xs text-red-400">
+              {errors.sex.message.toString()}
+            </p>
+          )}
+        </div>
+        <div className="flex flex-col gap-2 w-full md:w-1/4">
+          <label className="text-xs text-gray-400">Pendidikan</label>
+          <select
+            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
+            {...register("degree")}
+            defaultValue={data?.degree}
+          >
+            <option value="">-- Pilih --</option>
+            <option value="TIDAK_ADA">Tidak Ada</option>
+            <option value="SD">SD/Sederajat</option>
+            <option value="SMP">SMP/Sederajat</option>
+            <option value="SMA">SMA/Sederajat</option>
+            <option value="D3">D3</option>
+            <option value="S1">S1</option>
+            <option value="S2">S2</option>
+            <option value="S3">S3</option>
+          </select>
+          {errors.degree?.message && (
+            <p className="text-xs text-red-400">
+              {errors.degree.message.toString()}
+            </p>
+          )}
+        </div>
         <div className="flex flex-col gap-2 w-full md:w-1/4">
           <label className="text-xs text-gray-400">Siswa</label>
 
@@ -207,9 +269,22 @@ const ParentForm = ({
         </span>
       )}
 
-      <button className="bg-blue-400 text-white p-2 rounded-md">
-        {type === "create" ? "Create" : "Update"}
-      </button>
+      <div className="text-center pt-4 justify-items-center">
+        <button
+          type="submit"
+          className="bg-blue-600 text-white font-semibold px-6 py-3 rounded hover:bg-blue-700 flex items-center justify-center gap-2"
+          disabled={isSubmitting}
+        >
+          {isSubmitting && (
+            <span className="animate-spin inline-block w-5 h-5 border-2 border-white border-t-blue-400 rounded-full mr-2"></span>
+          )}
+          {isSubmitting
+            ? "Memproses..."
+            : type === "create"
+            ? "Tambah Orang Tua"
+            : "Update dan Simpan"}
+        </button>
+      </div>
     </form>
   );
 };

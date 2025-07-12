@@ -13,6 +13,7 @@ import {
   startTransition,
   useActionState,
   useEffect,
+  useState,
 } from "react";
 import {
   createAnnouncement,
@@ -61,8 +62,16 @@ const AnnouncementForm = ({
       error: false,
     }
   );
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!state.success && !state.error) return;
+    setIsSubmitting(false);
+  }, [state.success, state.error]);
 
   const onSubmit = handleSubmit((data) => {
+    setIsSubmitting(true);
+
     startTransition(() => {
       formAction(data);
     });
@@ -112,8 +121,10 @@ const AnnouncementForm = ({
           <label className="text-xs text-gray-400">Kelas</label>
           <select
             className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
-            {...register("classId")}
-            defaultValue={data?.classId ?? ""}
+            {...register("classId", {
+              setValueAs: (v) => (v === "" ? null : Number(v)),
+            })}
+            defaultValue={data?.classId == null ? "" : String(data.classId)}
           >
             <option value="">Semua Kelas</option> {/* <-- empty value */}
             {kelas2.map((kelas: { id: number; name: string }) => (
@@ -160,9 +171,22 @@ const AnnouncementForm = ({
         </span>
       )}
 
-      <button className="bg-blue-400 text-white p-2 rounded-md">
-        {type === "create" ? "Create" : "Update"}
-      </button>
+      <div className="text-center pt-4 justify-items-center">
+        <button
+          type="submit"
+          className="bg-blue-600 text-white font-semibold px-6 py-3 rounded hover:bg-blue-700 flex items-center justify-center gap-2"
+          disabled={isSubmitting}
+        >
+          {isSubmitting && (
+            <span className="animate-spin inline-block w-5 h-5 border-2 border-white border-t-blue-400 rounded-full mr-2"></span>
+          )}
+          {isSubmitting
+            ? "Memproses..."
+            : type === "create"
+            ? "Tambah pengumuman"
+            : "Update dan Simpan"}
+        </button>
+      </div>
     </form>
   );
 };

@@ -20,6 +20,12 @@ const menuItems = [
         visible: ["admin", "teacher"],
       },
       {
+        icon: "/lesson.png",
+        label: "PPDB",
+        href: "/list/ppdb",
+        visible: ["admin"],
+      },
+      {
         icon: "/student.png",
         label: "Students",
         href: "/list/students",
@@ -44,7 +50,7 @@ const menuItems = [
         visible: ["admin", "teacher"],
       },
       {
-        icon: "/lesson.png",
+        icon: "/jadwal.png",
         label: "Jadwal",
         href: "/list/lessons",
         visible: ["admin", "teacher", "student", "parent"],

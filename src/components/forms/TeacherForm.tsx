@@ -63,10 +63,18 @@ const TeacherForm = ({
     initialState
   );
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!state.success && !state.error) return;
+    setIsSubmitting(false);
+  }, [state.success, state.error]);
+
   const onSubmit = handleSubmit((data) => {
-    console.log("✅ Form data ready to submit:", data);
+    setIsSubmitting(true);
+
     startTransition(() => {
-      formAction({ ...data, img: img?.secure_url });
+      formAction(data);
     });
   });
 
@@ -195,6 +203,41 @@ const TeacherForm = ({
           register={register}
           error={errors?.address}
         ></InputField>
+        <InputField
+          label="RT"
+          name="rt"
+          defaultValue={data?.rt}
+          register={register}
+          error={errors?.rt}
+        ></InputField>
+        <InputField
+          label="RW"
+          name="rw"
+          defaultValue={data?.rw}
+          register={register}
+          error={errors?.rw}
+        ></InputField>
+        <InputField
+          label="Kelurahan"
+          name="kelurahan"
+          defaultValue={data?.kelurahan}
+          register={register}
+          error={errors?.kelurahan}
+        ></InputField>
+        <InputField
+          label="Kecamatan"
+          name="kecamatan"
+          defaultValue={data?.kecamatan}
+          register={register}
+          error={errors?.kecamatan}
+        ></InputField>
+        <InputField
+          label="Kota"
+          name="kota"
+          defaultValue={data?.kota}
+          register={register}
+          error={errors?.kota}
+        ></InputField>
         {/* <InputField
           label="Gol. darah"
           name="bloodType"
@@ -272,6 +315,9 @@ const TeacherForm = ({
                   {...field}
                   isMulti
                   options={subjectOption}
+                  className="text-sm"
+                  classNamePrefix="select"
+                  placeholder="Cari Matpel..."
                   value={selectedValues}
                   onChange={(selected) => {
                     field.onChange(selected.map((opt) => opt.value));
@@ -382,9 +428,22 @@ const TeacherForm = ({
         </span>
       )}
 
-      <button className="bg-blue-400 text-white p-2 rounded-md">
-        {type === "create" ? "Create" : "Update"}
-      </button>
+      <div className="text-center pt-4 justify-items-center">
+        <button
+          type="submit"
+          className="bg-blue-600 text-white font-semibold px-6 py-3 rounded hover:bg-blue-700 flex items-center justify-center gap-2"
+          disabled={isSubmitting}
+        >
+          {isSubmitting && (
+            <span className="animate-spin inline-block w-5 h-5 border-2 border-white border-t-blue-400 rounded-full mr-2"></span>
+          )}
+          {isSubmitting
+            ? "Memproses..."
+            : type === "create"
+            ? "Kirim Pendaftaraan"
+            : "Update dan Simpan"}
+        </button>
+      </div>
     </form>
   );
 };
