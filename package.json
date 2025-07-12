@@ -5,8 +5,10 @@
   "scripts": {
     "dev": "next dev",
     "build": "npx prisma generate && next build",
+    "postinstall": "prisma generate",
     "start": "next start",
     "lint": "next lint"
+    
   },
   "dependencies": {
     "@clerk/elements": "^0.23.32",
