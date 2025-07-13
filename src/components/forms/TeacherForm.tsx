@@ -252,6 +252,25 @@ const TeacherForm = ({
           register={register}
           error={errors?.birthday}
         ></InputField>
+        <div className="flex flex-col gap-2 w-full md:w-1/4">
+          <label className="text-xs text-gray-400">Agama</label>
+          <select
+            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
+            {...register("religion")}
+            defaultValue={data?.religion}
+          >
+            <option value="">Pilih</option>
+            <option value="Islam">Islam</option>
+            <option value="Kristen">Kristen</option>
+            <option value="Buddha">Budha</option>
+            <option value="Lainnya">Lainnya</option>
+          </select>
+          {errors.religion?.message && (
+            <p className="text-xs text-red-400">
+              {errors.religion.message.toString()}
+            </p>
+          )}
+        </div>
         {data && (
           <InputField
             label="Id"

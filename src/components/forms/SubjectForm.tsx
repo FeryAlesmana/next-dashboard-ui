@@ -118,7 +118,7 @@ const SubjectForm = ({
           />
         )}
         <div className="flex flex-col gap-2 w-full md:w-1/4">
-          <label className="text-xs text-gray-400">Siswa</label>
+          <label className="text-xs text-gray-400">Guru</label>
 
           <Controller
             name="teachers"
@@ -139,7 +139,7 @@ const SubjectForm = ({
                   options={teacherOption}
                   className="text-sm"
                   classNamePrefix="select"
-                  placeholder="Cari siswa..."
+                  placeholder="Cari guru..."
                   value={selectedValues}
                   onChange={(selectedOptions) => {
                     field.onChange(selectedOptions.map((opt) => opt.value));
