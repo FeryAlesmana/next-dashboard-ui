@@ -58,7 +58,7 @@ const AssignmentListPage = async ({
       className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight"
     >
       <td className="flex items-center p-4 gap-4">
-        {item.lesson.subject.name}
+        {item.lesson.subject?.name || "-"}
       </td>
       <td>{item.lesson.class.name}</td>
       <td className="hidden md:table-cell">
@@ -153,7 +153,11 @@ const AssignmentListPage = async ({
       query.lesson.class = {
         students: {
           some: {
-            parentId: userId!,
+            OR: [
+              { parentId: userId! },
+              { secondParentId: userId! },
+              { guardianId: userId! },
+            ],
           },
         },
       };

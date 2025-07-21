@@ -167,7 +167,7 @@ const SubjectForm = ({
         </span>
       )}
 
-     <div className="text-center pt-4 justify-items-center">
+      <div className="text-center pt-4 justify-items-center">
         <button
           type="submit"
           className="bg-blue-600 text-white font-semibold px-6 py-3 rounded hover:bg-blue-700 flex items-center justify-center gap-2"
@@ -183,7 +183,6 @@ const SubjectForm = ({
             : "Update dan Simpan"}
         </button>
       </div>
-
     </form>
   );
 };

@@ -1,6 +1,5 @@
 import prisma from "@/lib/prisma";
 import BigCalendar from "./BigCalendar";
-import { adjustScheduleToCurentWeek, generateRecurringLessons } from "@/lib/utils";
 
 const BigCalendarContainer = async ({
   type,
@@ -9,24 +8,30 @@ const BigCalendarContainer = async ({
   type: "teacherId" | "classId";
   id: string | number;
 }) => {
-  const dataRes = await prisma.lesson.findMany({
+  const meetings = await prisma.meeting.findMany({
     where: {
-      ...(type === "teacherId"
-        ? { teacherId: id as string }
-        : { classId: id as number }),
+      lesson: {
+        ...(type === "teacherId"
+          ? { teacherId: id as string }
+          : { classId: id as number }),
+      },
+    },
+    include: {
+      lesson: true, // Needed to access lesson.name
     },
   });
 
-  const data = dataRes.map((lesson) => ({
-    title: lesson.name,
-    start: lesson.startTime,
-    end: lesson.endTime,
+  const data = meetings.map((meeting) => ({
+    title: meeting.lesson?.name
+      ? `Pertemuan ${meeting.meetingNo} - ${meeting.lesson.name}`
+      : `Pertemuan ${meeting.meetingNo}`,
+    start: meeting.startTime,
+    end: meeting.endTime,
   }));
-  const schedule = generateRecurringLessons(data, 6);;
-  
+
   return (
-    <div className="">
-      <BigCalendar data={schedule}></BigCalendar>
+    <div>
+      <BigCalendar data={data} />
     </div>
   );
 };

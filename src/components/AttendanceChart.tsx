@@ -2,7 +2,6 @@
 import {
   BarChart,
   Bar,
-  Rectangle,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -10,50 +9,11 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import Image from "next/image";
-
-// const data = [
-//   {
-//     name: "Senin",
-//     present: 40,
-//     absent: 20,
-//   },
-//   {
-//     name: "Selasa",
-//     present: 30,
-//     absent: 18,
-//   },
-//   {
-//     name: "Rabu",
-//     present: 20,
-//     absent: 90,
-//   },
-//   {
-//     name: "Kamis",
-//     present: 20,
-//     absent: 38,
-//   },
-//   {
-//     name: "Jum'at",
-//     present: 10,
-//     absent: 40,
-//   },
-//   {
-//     name: "Sabtu",
-//     present: 20,
-//     absent: 30,
-//   },
-//   {
-//     name: "Minggu",
-//     present: 30,
-//     absent: 40,
-//   },
-// ];
 
 const AttendanceChart = ({
   data,
 }: {
-  data: { name: string; present: number; absent: number }[];
+  data: { name: string; hadir: number; sakit: number; absen: number }[];
 }) => {
   return (
     <ResponsiveContainer width="100%" height="90%">
@@ -85,15 +45,25 @@ const AttendanceChart = ({
           verticalAlign="top"
           wrapperStyle={{ paddingTop: "20px", paddingBottom: "40px" }}
         />
+
         <Bar
-          dataKey="present"
-          fill="#fae27c"
+          dataKey="hadir"
+          fill="#4caf50" // green
+          name="Hadir"
           legendType="circle"
           radius={[5, 5, 0, 0]}
         />
         <Bar
-          dataKey="absent"
-          fill="#c3ebfa"
+          dataKey="sakit"
+          fill="#ff9800" // orange
+          name="Sakit"
+          legendType="circle"
+          radius={[5, 5, 0, 0]}
+        />
+        <Bar
+          dataKey="absen"
+          fill="#f44336" // red
+          name="Absen"
           legendType="circle"
           radius={[5, 5, 0, 0]}
         />

@@ -10,7 +10,11 @@ const ParentPage = async () => {
 
   const students = await prisma.student.findMany({
     where: {
-      parentId: userId!,
+      OR: [
+        { parentId: userId! },
+        { secondParentId: userId! },
+        { guardianId: userId! },
+      ],
     },
   });
   return (

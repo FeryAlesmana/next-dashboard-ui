@@ -96,12 +96,12 @@ const LessonForm = ({
       return result;
     };
     const formatTime = (date: Date): string => {
-      return date.toTimeString().slice(0, 5); // "HH:mm"
+      return date.toTimeString().slice(0, 16); 
     };
     const payload = {
       ...data,
-      startTime: formatTime(toDateTime(data.startTime)),
-      endTime: formatTime(toDateTime(data.endTime)),
+      startTime: toDateTime(data.startTime).toISOString(),
+      endTime: toDateTime(data.endTime).toISOString(),
     };
     startTransition(() => {
       formAction(payload);
@@ -205,7 +205,7 @@ const LessonForm = ({
           label="Waktu selesai"
           name="endTime"
           defaultValue={
-            data?.startTime
+            data?.endTime
               ? new Date(data.endTime).toISOString().slice(11, 16) // safely get "HH:MM"
               : ""
           } // HH:MM

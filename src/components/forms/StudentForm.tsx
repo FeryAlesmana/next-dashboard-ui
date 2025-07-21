@@ -167,7 +167,7 @@ const StudentForm = ({
         imageUrl={img?.secure_url || data?.img}
         onUpload={(url) => setImg({ secure_url: url })}
       />
-      <div className="flex justify-left flex-wrap gap-4 gap-x-20">
+      <div className="flex justify-center flex-wrap gap-4 gap-x-20">
         <InputField
           label="Nama depan"
           name="name"
@@ -188,6 +188,13 @@ const StudentForm = ({
           defaultValue={data?.phone}
           register={register}
           error={errors?.phone}
+        ></InputField>
+        <InputField
+          label="No. WhatsApp"
+          name="noWa"
+          defaultValue={data?.student_details?.noWa}
+          register={register}
+          error={errors?.noWa}
         ></InputField>
         <InputField
           label="Alamat"
@@ -276,34 +283,41 @@ const StudentForm = ({
           register={register}
           error={errors?.postcode}
         ></InputField>
-        {/* <InputField
+        <InputField
           label="RT"
           name="rt"
-          defaultValue={data?.student_details?.rt}
+          defaultValue={data?.rt}
           register={register}
           error={errors?.rt}
         ></InputField>
         <InputField
           label="RW"
           name="rw"
-          defaultValue={data?.student_details?.rw}
+          defaultValue={data?.rw}
           register={register}
           error={errors?.rw}
         ></InputField>
         <InputField
           label="Kelurahan"
           name="kelurahan"
-          defaultValue={data?.student_details?.kelurahan}
+          defaultValue={data?.kelurahan}
           register={register}
           error={errors?.kelurahan}
         ></InputField>
         <InputField
+          label="Kecamatan"
+          name="kecamatan"
+          defaultValue={data?.kecamatan}
+          register={register}
+          error={errors?.kecamatan}
+        ></InputField>
+        <InputField
           label="Kota"
           name="kota"
-          defaultValue={data?.student_details?.kota}
+          defaultValue={data?.kota}
           register={register}
           error={errors?.kota}
-        ></InputField> */}
+        ></InputField>
         <InputField
           label="Transportasi"
           name="transportation"
@@ -663,7 +677,7 @@ const StudentForm = ({
             hidden
           />
         )}
-        {data.student_details && (
+        {data?.student_details && (
           <InputField
             label="sdId"
             name="sdId"
@@ -764,7 +778,6 @@ const StudentForm = ({
             : "Update dan Simpan"}
         </button>
       </div>
-
     </form>
   );
 };

@@ -3,9 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  // directUrl = env("DIRECT_URL")
 }
 
 model Admin {
@@ -233,6 +233,7 @@ model Lesson {
   exams       Exam[]
   assignments Assignment[]
   attendance  Attendance[]
+  meetings    Meeting[]
 }
 
 model Exam {
@@ -270,14 +271,35 @@ model Result {
 }
 
 model Attendance {
-  id      Int      @id @default(autoincrement())
-  date    DateTime
-  present Boolean
-
+  id        Int              @id @default(autoincrement())
+  date      DateTime
+  present   Boolean
+  status    AttendanceStatus @default(HADIR)
   studentId String?
-  student   Student? @relation(fields: [studentId], references: [id], onDelete: SetNull)
+  student   Student?         @relation(fields: [studentId], references: [id], onDelete: SetNull)
   lessonId  Int?
-  lesson    Lesson?  @relation(fields: [lessonId], references: [id], onDelete: SetNull)
+  lesson    Lesson?          @relation(fields: [lessonId], references: [id], onDelete: SetNull)
+  meetingId Int?
+  meeting   Meeting?         @relation(fields: [meetingId], references: [id], onDelete: SetNull)
+
+  @@unique([studentId, meetingId])
+}
+
+enum AttendanceStatus {
+  HADIR
+  SAKIT
+  ABSEN
+}
+
+model Meeting {
+  id          Int          @id @default(autoincrement())
+  lessonId    Int
+  lesson      Lesson       @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  meetingNo   Int // Tatap muka pertemuan-1, 2, ...
+  date        DateTime
+  startTime   DateTime
+  endTime     DateTime
+  attendances Attendance[]
 }
 
 model Event {

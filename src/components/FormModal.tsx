@@ -3,6 +3,7 @@
 import {
   deleteAnnouncement,
   deleteAssignment,
+  deleteAttendance,
   deleteClass,
   deleteEvent,
   deleteExam,
@@ -40,7 +41,7 @@ const deleteActionMap = {
   exam: deleteExam,
   assignment: deleteAssignment,
   result: deleteResult,
-  attendance: deleteSubject,
+  attendance: deleteAttendance,
   event: deleteEvent,
   announcement: deleteAnnouncement,
   ppdb: deletePpdb,
@@ -85,6 +86,15 @@ const FormulirPendaftaran = dynamic(
     loading: () => <h1>Loading...</h1>,
   }
 );
+const AttendanceMeetingForm = dynamic(
+  () => import("./forms/AttendanceMeetingForm"),
+  {
+    loading: () => <h1>Loading...</h1>,
+  }
+);
+const MeetingForm = dynamic(() => import("./forms/MeetingForm"), {
+  loading: () => <h1>Loading...</h1>,
+});
 
 const forms: {
   [key: string]: (
@@ -92,7 +102,8 @@ const forms: {
     type: "create" | "update",
     data?: any,
     relatedData?: any,
-    role?: string
+    role?: string,
+    lessonId?: string
   ) => JSX.Element;
 } = {
   teacher: (setOpen, type, data, relatedData) => (
@@ -191,12 +202,21 @@ const forms: {
       relatedData={relatedData}
     />
   ),
+  attendance: (setOpen, type, data, relatedData) => (
+    <AttendanceMeetingForm
+      type={type}
+      setOpen={setOpen}
+      data={data}
+      relatedData={relatedData}
+    />
+  ),
 };
 const FormModal = ({
   table,
   type,
   data,
   id,
+  lessonId,
   relatedData,
   prefilEmail,
 }: FormContainerProps & { relatedData?: any }) => {
@@ -252,6 +272,75 @@ const FormModal = ({
         prefilEmail={prefilEmail}
       />
     ); // Skip rendering
+  if (table === "attendance" && type === "create")
+    return (
+      <>
+        <button
+          className={`${size} flex items-center justify-center rounded-full ${bgColor}`}
+          onClick={() => setOpen(true)}
+        >
+          <Image src={`/${type}.png`} alt="" width={15} height={16}></Image>
+        </button>
+        {open && (
+          <div className="w-screen h-screen absolute left-0 top-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">
+            <div
+              className={`bg-white p-4 rounded-md relative w-[90%] md:w-[70%] lg:w-[60%] xl:w-[50%] 2xl:w-[40%] `}
+            >
+              <MeetingForm
+                type={"create"}
+                setOpen={setOpen}
+                data={data}
+                relatedData={relatedData}
+                lessonId={lessonId}
+              />
+              <div
+                className="absolute top-4 right-4 cursor-pointer"
+                onClick={() => setOpen(false)}
+              >
+                <Image src="/close.png" width={14} height={14} alt=""></Image>
+              </div>
+            </div>
+          </div>
+        )}
+      </>
+    ); // Skip rendering
+
+  if (table === "attendance" && type === "update") {
+    return (
+      <>
+        <div className="mb-4">
+          <button
+            onClick={() => setOpen(true)}
+            className={`flex items-center gap-2 ${bgColor} text-white font-semibold px-4 py-2 rounded-md hover:bg-blue-700 transition`}
+          >
+            <Image src={`/${type}.png`} alt="Edit" width={16} height={16} />
+            Isi Absensi Kelas
+          </button>
+        </div>
+        {open && (
+          <div className="w-screen h-screen absolute left-0 top-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">
+            <div
+              className={`bg-white p-4 rounded-md relative w-[95%] h-[95%] md:w-[90%] lg:w-[85%] xl:w-[80%] 2xl:w-[75%] overflow-y-auto `}
+            >
+              <AttendanceMeetingForm
+                type={"update"}
+                setOpen={setOpen}
+                data={data}
+                relatedData={relatedData}
+              />
+              <div
+                className="absolute top-4 right-4 cursor-pointer"
+                onClick={() => setOpen(false)}
+              >
+                <Image src="/close.png" width={14} height={14} alt=""></Image>
+              </div>
+            </div>
+          </div>
+        )}
+      </>
+    );
+  }
+
   return (
     <>
       <button

@@ -73,12 +73,12 @@ const menuItems = [
         href: "/list/results",
         visible: ["admin", "teacher", "student", "parent"],
       },
-      {
-        icon: "/attendance.png",
-        label: "Kehadiran",
-        href: "/list/attendance",
-        visible: ["admin", "teacher", "student", "parent"],
-      },
+      // {
+      //   icon: "/attendance.png",
+      //   label: "Kehadiran",
+      //   href: "/list/attendance",
+      //   visible: ["admin", "teacher", "student", "parent"],
+      // },
       {
         icon: "/calendar.png",
         label: "Events",

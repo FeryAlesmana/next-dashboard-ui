@@ -20,6 +20,7 @@ export type FormContainerProps = {
   type: "create" | "update" | "delete";
   data?: any;
   id?: number | string;
+  lessonId?: string; // For attendance form
   prefilEmail?: string;
 };
 const FormContainer = async ({
@@ -27,10 +28,12 @@ const FormContainer = async ({
   type,
   data,
   id,
+  lessonId,
   prefilEmail,
 }: FormContainerProps) => {
   const { userId, role } = await getCurrentUser();
   let relatedData = {};
+  console.log(data, " data in form container");
 
   if (type !== "delete") {
     switch (table) {
@@ -158,7 +161,6 @@ const FormContainer = async ({
             name: true,
           },
         });
-        console.log(relatedClasses + " Kelas Event");
 
         relatedData = { classes: relatedClasses };
         break;
@@ -304,6 +306,46 @@ const FormContainer = async ({
           parents: newStudentParents,
         };
         break;
+      case "attendance":
+        const attendanceLessons = await prisma.lesson.findMany({
+          where: {
+            ...(role === "teacher" ? { teacherId: userId! } : {}),
+          },
+          select: {
+            id: true,
+            name: true,
+          },
+        });
+        // Only fetch students in the class of the meeting/lesson
+        let classId = data?.classId;
+        // If not present, try to get from lessonId
+        if (!classId && data?.lessonId) {
+          const lesson = await prisma.lesson.findUnique({
+            where: { id: Number(data.lessonId) },
+            select: { classId: true },
+          });
+          classId = lesson?.classId;
+        }
+        const classStudents = classId
+          ? await prisma.student.findMany({
+              where: { classId },
+              select: {
+                id: true,
+                name: true,
+                surname: true,
+                class: {
+                  select: {
+                    name: true,
+                  },
+                },
+              },
+            })
+          : [];
+
+        relatedData = {
+          lessons: attendanceLessons,
+          students: classStudents,
+        };
 
       default:
         break;
@@ -316,6 +358,7 @@ const FormContainer = async ({
         type={type}
         data={data}
         id={id}
+        lessonId={lessonId}
         relatedData={relatedData}
         prefilEmail={prefilEmail}
       ></FormModal>

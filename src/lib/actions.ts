@@ -11,8 +11,8 @@ import { revalidatePath } from "next/cache";
 import {
   AnnouncementSchema,
   AssignmentSchema,
+  AttendanceSchema,
   ClassSchema,
-  classSchema,
   EventSchema,
   ExamSchema,
   LessonSchema,
@@ -21,14 +21,12 @@ import {
   ResultSchema,
   StudentSchema,
   SubjectSchema,
-  subjectSchema,
   TeacherSchema,
   teacherSchema,
 } from "./formValidationSchema";
 import prisma from "./prisma";
 import { clerkClient } from "@clerk/nextjs/server";
 import extractCloudinaryPublicId, { getCurrentUser } from "./utils";
-import { error } from "console";
 import { Degree, Prisma } from "@prisma/client";
 
 export type CurrentState = {
@@ -404,6 +402,7 @@ export const createStudent = async (
         birthPlace: data.birthPlace,
         nisn: data.nisn,
         npsn: data.npsn,
+        noWa: data.noWa,
         no_ijz: data.no_ijz,
         nik: data.nik,
         kps: data.kps || null,
@@ -1471,6 +1470,7 @@ export const updatePpdb = async (
         surname: data.surname ?? "",
         email: data.email,
         phone: data.phone,
+        noWa: data.noWhatsapp,
         address: data.address,
         rw: data.rw,
         rt: data.rt,
@@ -1637,5 +1637,113 @@ export const deletePpdb = async (
 
     console.error("Delete Ppdb error: ", error);
     return { success: false, error: true, message };
+  }
+};
+
+export const createMeeting = async (
+  currentState: CurrentState,
+  data: AttendanceSchema,
+  lessonId?: number
+) => {
+  // lessonId can be passed as third arg, or from data.lessonId
+  const resolvedLessonId = lessonId ?? data.lessonId;
+  if (!resolvedLessonId) {
+    return { success: false, error: true, message: "Missing lessonId" };
+  }
+  try {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    const lastMeeting = await prisma.meeting.findFirst({
+      where: { lessonId: resolvedLessonId },
+      orderBy: { meetingNo: "desc" },
+    });
+    let newDate: Date;
+    if (lastMeeting && lastMeeting.date) {
+      newDate = new Date(lastMeeting.date);
+      newDate.setDate(newDate.getDate() + 7);
+    } else {
+      newDate = new Date();
+    }
+    const nextMeetingNo = (lastMeeting?.meetingNo ?? 0) + 1;
+    await prisma.meeting.create({
+      data: {
+        lessonId: resolvedLessonId,
+        meetingNo: nextMeetingNo,
+        date: newDate,
+        startTime: newDate,
+        endTime: newDate,
+      },
+    });
+    return { success: true, error: false };
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === "string"
+        ? error
+        : "Unknown error";
+
+    console.error("updatePpdb error:", error);
+    return { success: false, error: true, message };
+  }
+};
+
+export const updateAttendance = async (
+  currentState: CurrentState,
+  data: AttendanceSchema
+) => {
+  try {
+    const meetingId = data.meetingId!;
+    const lessonId = data.lessonId!;
+
+    await Promise.all(
+      Object.entries(data.attendance || {}).map(
+        async ([studentId, { status }]) => {
+          await prisma.attendance.upsert({
+            where: {
+              studentId_meetingId: {
+                studentId,
+                meetingId,
+              },
+            },
+            update: {
+              status,
+              present: status === "HADIR",
+              date: data.date ?? new Date(),
+            },
+            create: {
+              studentId,
+              meetingId,
+              lessonId,
+              date: data.date ?? new Date(),
+              status,
+              present: status === "HADIR",
+            },
+          });
+        }
+      )
+    );
+
+    return { success: true, error: false };
+  } catch (error) {
+    console.error("updateAttendance error:", error);
+    return { success: false, error: true, message: "Gagal update attendance." };
+  }
+};
+export const deleteAttendance = async (
+  currentState: CurrentState,
+  formData: FormData
+): Promise<CurrentState> => {
+  const id = formData.get("id") as string;
+  try {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await prisma.meeting.delete({
+      where: {
+        id: parseInt(id),
+      },
+    });
+    return { success: true, error: false };
+  } catch (error) {
+    console.log(error + " Di server action");
+    return { success: false, error: true };
   }
 };

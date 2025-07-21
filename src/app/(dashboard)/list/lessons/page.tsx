@@ -25,6 +25,10 @@ const LessonListPage = async ({
   const { role, userId } = await getCurrentUser();
   const columns = [
     {
+      header: "ID Jadwal",
+      accessor: "lessonId",
+    },
+    {
       header: "Mata Pelajaran",
       accessor: "Nama",
     },
@@ -49,6 +53,10 @@ const LessonListPage = async ({
       accessor: "teacher",
       className: "hidden md:table-cell",
     },
+    {
+      header: "Pertemuan",
+      accessor: "meeting",
+    },
     ...(role === "admin"
       ? [
           {
@@ -63,11 +71,14 @@ const LessonListPage = async ({
       key={item.id}
       className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight"
     >
-      <td className="flex items-center p-4 gap-4">{item.subject.name}</td>
+      <td>{item?.id}</td>
+      <td className="flex items-center p-4 gap-4">
+        {item.subject?.name || "-"}
+      </td>
       <td>{item.class.name}</td>
       <td>
         {" "}
-        {item.startTime.toLocaleTimeString("en-UK", {
+        {item.startTime.toLocaleTimeString("id-ID", {
           hour: "2-digit",
           minute: "2-digit",
           hour12: false,
@@ -75,7 +86,7 @@ const LessonListPage = async ({
       </td>
       <td>
         {" "}
-        {item.endTime.toLocaleTimeString("en-UK", {
+        {item.endTime.toLocaleTimeString("id-ID", {
           hour: "2-digit",
           minute: "2-digit",
           hour12: false,
@@ -86,6 +97,13 @@ const LessonListPage = async ({
         {item.teacher
           ? `${item.teacher.name} ${item.teacher.surname}`
           : "Tidak ada guru"}
+      </td>
+      <td>
+        <Link href={`/list/attendance/${item.class.name}/${item.id}`}>
+          <button className="w-7 h-7 flex items-center justify-center rounded-full">
+            <Image src="/moreDark.png" alt="" width={16} height={16} />
+          </button>
+        </Link>
       </td>
       <td>
         <div className="flex items-center gap-2">
@@ -139,17 +157,130 @@ const LessonListPage = async ({
   switch (role) {
     case "admin":
       break;
-    case "teacher":
+    case "teacher": {
       if (!hasTeacherIdParam) {
         const teacher = await prisma.teacher.findUnique({
           where: { id: userId! },
-          include: { classes: true },
+          include: { classes: { select: { id: true, name: true } } },
         });
 
-        const classIds = teacher?.classes.map((cls) => cls.id) ?? [];
-        query.classId = { in: classIds };
+        // Fetch supervised classes directly
+        const supervisedClasses = teacher?.classes || [];
+        const supervisedClassesWithLessons = await Promise.all(
+          supervisedClasses.map(async (cls) => {
+            const lessons = await prisma.lesson.findMany({
+              where: { classId: cls.id },
+              include: {
+                subject: { select: { name: true } },
+                teacher: { select: { name: true, surname: true } },
+              },
+            });
+            return { ...cls, lessons };
+          })
+        );
+        // Fetch teaching lessons separately
+        const [teachingLessons, lessonCount] = await prisma.$transaction([
+          prisma.lesson.findMany({
+            where: { teacherId: userId! },
+            include: {
+              subject: { select: { name: true } },
+              class: { select: { name: true } },
+              teacher: { select: { name: true, surname: true } },
+            },
+            take: ITEM_PER_PAGE,
+            skip: ITEM_PER_PAGE * (p - 1),
+          }),
+          prisma.lesson.count({ where: { teacherId: userId! } }),
+        ]);
+
+        return (
+          <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
+            <h1 className="text-lg font-semibold mb-4">Jadwal Guru</h1>
+
+            {/* Supervised Classes */}
+            <div className="mb-8">
+              <h2 className="text-md font-semibold mb-2">
+                Jadwal Kelas yang Disupervisi
+              </h2>
+
+              {supervisedClassesWithLessons.length > 0 ? (
+                supervisedClassesWithLessons.map((cls) => (
+                  <div
+                    key={cls.id}
+                    className="p-4 rounded-md border mb-6 bg-gray-50"
+                  >
+                    <h3 className="font-semibold mb-3 text-lamaPurple">
+                      {cls.name}
+                    </h3>
+
+                    {cls.lessons.length > 0 ? (
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="bg-gray-200">
+                            <th className="p-2 text-left">Mata Pelajaran</th>
+                            <th className="p-2 text-left">Hari</th>
+                            <th className="p-2 text-left">Jam</th>
+                            <th className="p-2 text-left">Guru</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {cls.lessons.map((lesson) => (
+                            <tr key={lesson.id} className="border-t">
+                              <td className="p-2">
+                                {lesson.subject?.name || "-"}
+                              </td>
+                              <td className="p-2">{lesson.day}</td>
+                              <td className="p-2">
+                                {lesson.startTime.toLocaleTimeString("id-ID", {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}{" "}
+                                -{" "}
+                                {lesson.endTime.toLocaleTimeString("id-ID", {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                              </td>
+                              <td className="p-2">
+                                {lesson.teacher
+                                  ? `${lesson.teacher.name} ${lesson.teacher.surname}`
+                                  : "-"}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    ) : (
+                      <div className="text-gray-500 text-sm">
+                        Tidak ada jadwal ditemukan.
+                      </div>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <div className="text-gray-500 text-sm">
+                  Anda tidak mengawasi kelas manapun.
+                </div>
+              )}
+            </div>
+
+            {/* Teaching Lessons */}
+            <div className="mb-8">
+              <h2 className="text-md font-semibold mb-2">
+                Jadwal Mengajar Guru
+              </h2>
+              <Table
+                columns={columns}
+                renderRow={renderRow}
+                data={teachingLessons}
+              ></Table>
+              <Pagination page={p} count={lessonCount} />
+            </div>
+          </div>
+        );
       }
       break;
+    }
     case "student":
       query.class = {
         students: {
@@ -163,7 +294,11 @@ const LessonListPage = async ({
       query.class = {
         students: {
           some: {
-            parentId: userId!,
+            OR: [
+              { parentId: userId! },
+              { secondParentId: userId! },
+              { guardianId: userId! },
+            ],
           },
         },
       };

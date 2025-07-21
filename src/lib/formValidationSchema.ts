@@ -83,6 +83,11 @@ export const studentSchema = z.object({
     .optional()
     .or(z.literal("")),
   phone: z.string().min(1, { message: "Nomor telepon wajib diisi!" }),
+  noWa: z
+    .string({ message: " Nomor HP Calon Siswa wajib diisi!" })
+    .min(11)
+    .max(13)
+    .regex(/^\d+$/),
   address: z.string().min(1, { message: "Alamat wajib diisi!" }),
   religion: z.nativeEnum(Agama, {
     message: " Agama Siswa wajib diisi!",
@@ -574,3 +579,35 @@ export const ppdbSchema = z.object({
 });
 
 export type PpdbSchema = z.infer<typeof ppdbSchema>;
+
+export const attendanceSchema = z.object({
+  id: z.coerce.number().optional(),
+  meetingId: z.coerce
+    .number({ message: "Id pertemuan wajib di isi" })
+    .optional(),
+  lessonId: z.coerce
+    .number({ message: "Id pelajaran wajib di isi" })
+    .optional(),
+  startTime: z
+    .string()
+    .min(1, { message: "Waktu mulai wajib diisi!" })
+    .optional(), // dulu: z.coerce.date()
+  endTime: z
+    .string()
+    .min(1, { message: "Waktu selesai wajib diisi!" })
+    .optional(),
+  date: z.coerce.date({ message: "Tanggal wajib diisi!" }).optional(),
+  attendance: z
+    .record(
+      z.object({
+        status: z.enum(["HADIR", "SAKIT", "ABSEN"], {
+          required_error: "Status wajib diisi",
+        }),
+      })
+    )
+    .optional(),
+});
+export type AttendanceSchema = z.infer<typeof attendanceSchema>;
+
+export const attendanceStatusEnum = z.enum(["HADIR", "SAKIT", "ABSEN"]);
+export type AttendanceStatus = z.infer<typeof attendanceStatusEnum>;

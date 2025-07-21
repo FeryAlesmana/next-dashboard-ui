@@ -8,10 +8,7 @@ const AttendanceChartContainer = async () => {
   const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
 
   const lastMonday = new Date(today);
-
   lastMonday.setDate(today.getDate() - daysSinceMonday);
-
-  console.log(lastMonday);
 
   const resData = await prisma.attendance.findMany({
     where: {
@@ -21,50 +18,48 @@ const AttendanceChartContainer = async () => {
     },
     select: {
       date: true,
-      present: true,
+      status: true, // Enum-based status
     },
   });
 
   const daysOfWeek = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat"];
 
-  const attendanceMap: { [key: string]: { present: number; absent: number } } =
-    {
-      Senin: { present: 0, absent: 0 },
-      Selasa: { present: 0, absent: 0 },
-      Rabu: { present: 0, absent: 0 },
-      Kamis: { present: 0, absent: 0 },
-      Jumat: { present: 0, absent: 0 },
-    };
+  const attendanceMap: {
+    [key: string]: { HADIR: number; SAKIT: number; ABSEN: number };
+  } = {
+    Senin: { HADIR: 0, SAKIT: 0, ABSEN: 0 },
+    Selasa: { HADIR: 0, SAKIT: 0, ABSEN: 0 },
+    Rabu: { HADIR: 0, SAKIT: 0, ABSEN: 0 },
+    Kamis: { HADIR: 0, SAKIT: 0, ABSEN: 0 },
+    Jumat: { HADIR: 0, SAKIT: 0, ABSEN: 0 },
+  };
 
   resData.forEach((item) => {
     const itemDate = new Date(item.date);
+    const itemDayIndex = itemDate.getDay();
 
-    if (dayOfWeek >= 1 && dayOfWeek <= 5) {
-      const dayName = daysOfWeek[dayOfWeek - 1];
-
-      if (item.present) {
-        attendanceMap[dayName].present += 1;
-      } else {
-        attendanceMap[dayName].absent += 1;
+    if (itemDayIndex >= 1 && itemDayIndex <= 5) {
+      const dayName = daysOfWeek[itemDayIndex - 1];
+      if (attendanceMap[dayName][item.status] !== undefined) {
+        attendanceMap[dayName][item.status] += 1;
       }
     }
   });
 
-  //   console.log(attendanceMap);
-
   const data = daysOfWeek.map((day) => ({
     name: day,
-    present: attendanceMap[day].present,
-    absent: attendanceMap[day].absent,
+    hadir: attendanceMap[day].HADIR,
+    sakit: attendanceMap[day].SAKIT,
+    absen: attendanceMap[day].ABSEN,
   }));
 
   return (
     <div className="bg-white rounded-lg p-4 h-full">
       <div className="flex items-center justify-between">
         <h1 className="text-lg font-semibold">Kehadiran</h1>
-        <Image src="/moreDark.png" alt="" width={20} height={20}></Image>
+        <Image src="/moreDark.png" alt="" width={20} height={20} />
       </div>
-      <AttendanceChart data={data}/>
+      <AttendanceChart data={data} />
     </div>
   );
 };

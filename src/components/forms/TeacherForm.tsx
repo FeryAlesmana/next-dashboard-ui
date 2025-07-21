@@ -19,6 +19,7 @@ import { useFormState } from "react-dom";
 import { CldUploadWidget } from "next-cloudinary";
 import Select from "react-select";
 import { Day } from "@prisma/client";
+import UploadPhoto from "../UploadPhoto";
 
 const TeacherForm = ({
   type,
@@ -155,25 +156,10 @@ const TeacherForm = ({
       <span className="text-xs text-gray-400 font-medium">
         Informasi Personal
       </span>
-      <CldUploadWidget
-        uploadPreset="SMPI SERUA"
-        onSuccess={(result, { widget }) => {
-          setImg(result.info);
-          widget.close();
-        }}
-      >
-        {({ open }) => {
-          return (
-            <div
-              className="text-xs text-gray-400 flex items-center gap-2 cursor-pointer"
-              onClick={() => open()}
-            >
-              <Image src="/upload.png" alt="" width={28} height={28}></Image>
-              <span>Upload photo</span>
-            </div>
-          );
-        }}
-      </CldUploadWidget>
+     <UploadPhoto
+        imageUrl={img?.secure_url || data?.img}
+        onUpload={(url) => setImg({ secure_url: url })}
+      />
       <div className="flex justify-between flex-wrap gap-4">
         <InputField
           label="Nama depan"

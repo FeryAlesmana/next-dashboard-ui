@@ -31,7 +31,7 @@ const UploadPhoto = ({ imageUrl, onUpload }: UploadPreviewProps) => {
               />
               <button
                 type="button"
-                onClick={() => open()}
+                onClick={() => typeof open === "function" && open()}
                 className="text-blue-500 hover:underline text-sm"
               >
                 Ganti Foto
@@ -41,8 +41,8 @@ const UploadPhoto = ({ imageUrl, onUpload }: UploadPreviewProps) => {
 
           {!imageUrl && (
             <div
-              className="text-xs text-gray-400 flex items-center gap-2 cursor-pointer"
-              onClick={() => open()}
+              className="text-xs text-gray-400 flex items-center p-16 gap-2 cursor-pointer"
+              onClick={() => typeof open === "function" && open()}
             >
               <Image src="/upload.png" alt="" width={28} height={28} />
               <span>Upload photo</span>
