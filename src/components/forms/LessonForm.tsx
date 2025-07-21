@@ -93,11 +93,12 @@ const LessonForm = ({
       const [hour, minute] = timeStr.split(":").map(Number);
       const result = new Date(targetDate);
       result.setHours(hour, minute, 0, 0);
+
       return result;
     };
-    const formatTime = (date: Date): string => {
-      return date.toTimeString().slice(0, 16); 
-    };
+    // const formatTime = (date: Date): string => {
+    //   return date.toTimeString().slice(0, 16);
+    // };
     const payload = {
       ...data,
       startTime: toDateTime(data.startTime).toISOString(),
@@ -193,7 +194,7 @@ const LessonForm = ({
           name="startTime"
           defaultValue={
             data?.startTime
-              ? new Date(data.startTime).toISOString().slice(11, 16) // safely get "HH:MM"
+              ? new Date(data.startTime).toTimeString().slice(0, 5) // gets "HH:MM" in local time reliably
               : ""
           } // HH:MM
           register={register}
@@ -206,7 +207,7 @@ const LessonForm = ({
           name="endTime"
           defaultValue={
             data?.endTime
-              ? new Date(data.endTime).toISOString().slice(11, 16) // safely get "HH:MM"
+              ? new Date(data.endTime).toTimeString().slice(0, 5) // gets "HH:MM" in local time reliably
               : ""
           } // HH:MM
           register={register}

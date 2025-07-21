@@ -79,6 +79,7 @@ const LessonListPage = async ({
       <td>
         {" "}
         {item.startTime.toLocaleTimeString("id-ID", {
+          timeZone: "Asia/Jakarta",
           hour: "2-digit",
           minute: "2-digit",
           hour12: false,
@@ -87,6 +88,7 @@ const LessonListPage = async ({
       <td>
         {" "}
         {item.endTime.toLocaleTimeString("id-ID", {
+          timeZone: "Asia/Jakarta",
           hour: "2-digit",
           minute: "2-digit",
           hour12: false,

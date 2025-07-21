@@ -4,16 +4,22 @@ import Image from "next/image";
 
 const AttendanceChartContainer = async () => {
   const today = new Date();
-  const dayOfWeek = today.getDay();
-  const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-
   const lastMonday = new Date(today);
+  const dayOfWeek = today.getDay();
+  const daysSinceMonday = (dayOfWeek + 6) % 7; // 0 (Mon) - 6 (Sun)
   lastMonday.setDate(today.getDate() - daysSinceMonday);
+
+  lastMonday.setHours(0, 0, 0, 0);
 
   const resData = await prisma.attendance.findMany({
     where: {
       date: {
         gte: lastMonday,
+        lt: new Date(
+          today.getFullYear(),
+          today.getMonth(),
+          today.getDate() + 1
+        ), // exclusive upper bound to avoid future records
       },
     },
     select: {

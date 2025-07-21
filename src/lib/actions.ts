@@ -1645,45 +1645,92 @@ export const createMeeting = async (
   data: AttendanceSchema,
   lessonId?: number
 ) => {
-  // lessonId can be passed as third arg, or from data.lessonId
   const resolvedLessonId = lessonId ?? data.lessonId;
   if (!resolvedLessonId) {
     return { success: false, error: true, message: "Missing lessonId" };
   }
+
   try {
     await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    const lesson = await prisma.lesson.findUnique({
+      where: { id: resolvedLessonId },
+    });
+
+    if (!lesson) {
+      return { success: false, error: true, message: "Lesson not found" };
+    }
+
+    const dayMap: Record<string, number> = {
+      SENIN: 1,
+      SELASA: 2,
+      RABU: 3,
+      KAMIS: 4,
+      JUMAT: 5,
+    };
+
+    const lessonDayIndex = dayMap[lesson.day]; // 1-5 (Monday to Friday)
+    if (!lessonDayIndex) {
+      return { success: false, error: true, message: "Invalid lesson day" };
+    }
+
     const lastMeeting = await prisma.meeting.findFirst({
       where: { lessonId: resolvedLessonId },
       orderBy: { meetingNo: "desc" },
     });
+
     let newDate: Date;
     if (lastMeeting && lastMeeting.date) {
       newDate = new Date(lastMeeting.date);
-      newDate.setDate(newDate.getDate() + 7);
+      newDate.setDate(newDate.getDate() + 7); // Next week, same day
     } else {
+      const today = new Date();
+      const dayOfWeek = today.getDay(); // 0 (Sunday) - 6 (Saturday)
+
+      const daysUntilNextLessonDay =
+        (lessonDayIndex + 7 - (((dayOfWeek + 6) % 7) + 1)) % 7;
       newDate = new Date();
+      newDate.setDate(today.getDate() + daysUntilNextLessonDay);
+
+      newDate.setHours(0, 0, 0, 0);
     }
+
+    const startTime = new Date(newDate);
+    startTime.setHours(
+      lesson.startTime.getHours(),
+      lesson.startTime.getMinutes(),
+      0,
+      0
+    );
+
+    const endTime = new Date(newDate);
+    endTime.setHours(
+      lesson.endTime.getHours(),
+      lesson.endTime.getMinutes(),
+      0,
+      0
+    );
+
     const nextMeetingNo = (lastMeeting?.meetingNo ?? 0) + 1;
+
     await prisma.meeting.create({
       data: {
         lessonId: resolvedLessonId,
         meetingNo: nextMeetingNo,
         date: newDate,
-        startTime: newDate,
-        endTime: newDate,
+        startTime,
+        endTime,
       },
     });
+
     return { success: true, error: false };
   } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : typeof error === "string"
-        ? error
-        : "Unknown error";
-
-    console.error("updatePpdb error:", error);
-    return { success: false, error: true, message };
+    console.error("createMeeting error:", error);
+    return {
+      success: false,
+      error: true,
+      message: error instanceof Error ? error.message : "Unknown error",
+    };
   }
 };
 

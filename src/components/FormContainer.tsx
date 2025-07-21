@@ -314,6 +314,9 @@ const FormContainer = async ({
           select: {
             id: true,
             name: true,
+            day: true,
+            startTime: true,
+            endTime: true,
           },
         });
         // Only fetch students in the class of the meeting/lesson
