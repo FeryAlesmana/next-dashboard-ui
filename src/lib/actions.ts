@@ -33,6 +33,7 @@ export type CurrentState = {
   success: boolean;
   error: boolean;
   message?: string;
+  id?: string;
 };
 const client = await clerkClient();
 
@@ -229,7 +230,7 @@ export const updateTeacher = async (
 
       return { success: false, error: true, message: "Missing teacher ID" };
     }
-    let userId = data.id;
+    let user;
     try {
       const user = await client.users.updateUser(data.id, {
         username: data.username,
@@ -237,12 +238,32 @@ export const updateTeacher = async (
         firstName: data.name,
         lastName: data.surname,
       });
-      userId = user.id;
+      if (user) {
+        console.log("✅ User Sucessfully Updated:", user.id);
+      }
+      return { success: true, error: false };
     } catch (error) {
       console.warn(
-        "⚠️ Clerk returned no user info. User may already be deleted?"
+        "⚠️ Clerk returned no user info. Attempting to create user..."
       );
-      console.error();
+      // Create new Clerk user if update fails
+      user = await client.users.createUser({
+        username: data.username,
+        password: data.password !== "" ? data.password : undefined,
+        firstName: data.name,
+        lastName: data.surname,
+      });
+
+      if (user) {
+        console.log("✅ New User Created:", user.id);
+      } else {
+        console.error("❌ Failed to create Clerk user.");
+        return {
+          success: false,
+          error: true,
+          message: "Failed to create user in Clerk",
+        };
+      }
     }
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -251,8 +272,8 @@ export const updateTeacher = async (
         id: data.id,
       },
       data: {
-        ...(data.password !== "" && { password: data.password }),
-        id: userId,
+        // ...(data.password !== "" && { password: data.password }),
+        id: user?.id || data.id,
         username: data.username,
         name: data.name,
         surname: data.surname,
@@ -457,6 +478,7 @@ export const updateStudent = async (
     }
 
     let user;
+    let clerkUserId = data.id;
     try {
       user = await client.users.updateUser(data.id, {
         username: data.username,
@@ -466,10 +488,32 @@ export const updateStudent = async (
       });
       if (user) {
         console.log("✅ User Sucessfully Updated:", user.id);
+        clerkUserId = user.id;
       }
-      return { success: true, error: false };
     } catch (error) {
-      console.warn("⚠️ Clerk returned no user info. User maybe didnt exist?");
+      console.warn(
+        "⚠️ Clerk returned no user info. Attempting to create user..."
+      );
+      // Create new Clerk user if update fails
+      user = await client.users.createUser({
+        username: data.username,
+        password: data.password !== "" ? data.password : undefined,
+        firstName: data.name,
+        lastName: data.surname,
+      });
+
+      if (user) {
+        console.log("✅ New User Created:", user.id);
+        clerkUserId = user.id;
+      } else {
+        console.error("❌ Failed to create Clerk user.");
+        return {
+          success: false,
+          error: true,
+          message: "Failed to create user in Clerk",
+          id: clerkUserId,
+        };
+      }
     }
     await new Promise((resolve) => setTimeout(resolve, 1000));
     await prisma.student.update({
@@ -477,8 +521,7 @@ export const updateStudent = async (
         id: data.id,
       },
       data: {
-        ...(data.password !== "" && { password: data.password }),
-        id: user?.id || data.id,
+        id: clerkUserId,
         username: data.username,
         name: data.name,
         surname: data.surname,
@@ -511,6 +554,7 @@ export const updateStudent = async (
         nisn: data.nisn,
         npsn: data.npsn,
         no_ijz: data.no_ijz,
+        noWa: data.noWa,
         nik: data.nik,
         kps: data.kps || null,
         no_kps: data.no_kps || null,
@@ -532,7 +576,22 @@ export const updateStudent = async (
         dokumenKKKTP: data.dokumenKKKTP || null,
       },
     });
-    return { success: true, error: false };
+    let retries = 0;
+    const maxRetries = 10;
+    const delay = 300; // ms
+
+    while (retries < maxRetries) {
+      const student = await prisma.student.findUnique({
+        where: { id: user?.id || data.id },
+      });
+
+      if (student) break;
+
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      retries++;
+    }
+    
+    return { success: true, error: false, id: clerkUserId };
   } catch (error) {
     const message =
       error instanceof Error
@@ -542,9 +601,10 @@ export const updateStudent = async (
         : "Unknown error";
 
     console.error("updateStudent error:", error);
-    return { success: false, error: true, message };
+    return { success: false, error: true, message, id: data.id };
   }
 };
+
 export const deleteStudent = async (
   currentState: CurrentState,
   formData: FormData
@@ -1001,22 +1061,51 @@ export const updateParent = async (
     if (!data.id) {
       console.log(data.id + "Data.id");
 
-      return { success: false, error: true, message: "Missing Parent ID" };
+      return { success: false, error: true, message: "Missing teacher ID" };
+    }
+    let user;
+    try {
+      const user = await client.users.updateUser(data.id, {
+        username: data.username,
+        ...(data.password !== "" && { password: data.password }),
+        firstName: data.name,
+        lastName: data.surname,
+      });
+      if (user) {
+        console.log("✅ User Sucessfully Updated:", user.id);
+      }
+      return { success: true, error: false };
+    } catch (error) {
+      console.warn(
+        "⚠️ Clerk returned no user info. Attempting to create user..."
+      );
+      // Create new Clerk user if update fails
+      user = await client.users.createUser({
+        username: data.username,
+        password: data.password !== "" ? data.password : undefined,
+        firstName: data.name,
+        lastName: data.surname,
+      });
+
+      if (user) {
+        console.log("✅ New User Created:", user.id);
+      } else {
+        console.error("❌ Failed to create Clerk user.");
+        return {
+          success: false,
+          error: true,
+          message: "Failed to create user in Clerk",
+        };
+      }
     }
 
-    const user = await client.users.updateUser(data.id, {
-      username: data.username,
-      ...(data.password !== "" && { password: data.password }),
-      firstName: data.name,
-      lastName: data.surname,
-    });
     await new Promise((resolve) => setTimeout(resolve, 1000));
     await prisma.parent.update({
       where: {
         id: data.id,
       },
       data: {
-        ...(data.password !== "" && { password: data.password }),
+        // ...(data.password !== "" && { password: data.password }),
         id: user.id,
         username: data.username,
         name: data.name,
@@ -1042,6 +1131,7 @@ export const updateParent = async (
     return { success: false, error: true, message };
   }
 };
+
 export const deleteParent = async (
   currentState: CurrentState,
   formData: FormData

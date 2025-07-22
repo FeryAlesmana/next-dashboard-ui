@@ -88,37 +88,49 @@ const StudentForm = ({
     }
   };
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     if (!state.success && !state.error) return;
     setIsSubmitting(false);
   }, [state.success, state.error]);
 
-  const onSubmit = handleSubmit((data) => {
+  const onSubmit = handleSubmit(async (data) => {
     setIsSubmitting(true);
-    startTransition(() => {
-      formAction({
-        ...data,
-        img: img?.secure_url,
-        awards_date: data.awards_date ? new Date(data.awards_date) : null,
-        dokumenIjazah: dokumen.ijazah ?? "",
-        dokumenAkte: dokumen.akte ?? "",
-        dokumenKKKTP: dokumen.kk_ktp_sktm ?? "",
-      });
-    });
-  });
 
-  const router = useRouter();
+    const payload: StudentSchema = {
+      ...data,
+      img: img?.secure_url,
+      awards_date: data.awards_date ? new Date(data.awards_date) : null,
+      dokumenIjazah: dokumen.ijazah,
+      dokumenAkte: dokumen.akte,
+      dokumenKKKTP: dokumen.kk_ktp_sktm,
+    };
 
-  useEffect(() => {
-    if (state.success) {
+    let result;
+    if (type === "create") {
+      result = await createStudent(initialState, payload);
+    } else {
+      result = await updateStudent(initialState, payload);
+    }
+
+    setIsSubmitting(false);
+
+    if (result?.success) {
       toast(
         `Siswa telah berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`
       );
       setOpen(false);
-      router.refresh();
+
+      if (result.id && result.id !== payload.id) {
+        router.push(`/list/students/student/${result.id}`);
+      } else {
+        router.refresh();
+      }
+    } else if (result?.error) {
+      toast.error(result.message || "Terjadi kesalahan.");
     }
-  }, [state, type, setOpen, router]);
+  });
   const { grades, classes, parents } = relatedData;
 
   const parentOption = parents.map(
