@@ -1,12 +1,19 @@
-import { getCurrentUser } from "@/lib/utils";
+import { getCurrentUser, getProfileByClerkIdAndRole } from "@/lib/utils";
 import { UserButton, useUser } from "@clerk/nextjs";
 import { currentUser } from "@clerk/nextjs/server";
 import Image from "next/image";
 
-Image;
 const Navbar = async () => {
-  const { role } = await getCurrentUser();
-  const user = await currentUser();
+  const clerkUser = await currentUser();
+  const { role } = await getCurrentUser(); // assuming this returns role
+
+  if (!clerkUser) {
+    return null;
+  }
+
+  const profile = await getProfileByClerkIdAndRole(clerkUser.id, role);
+
+  const imageUrl = profile?.img || "/avatar.png";
   return (
     <div className="flex items-center justify-between p-4">
       {/* SEARCH BAR */}
@@ -31,14 +38,19 @@ const Navbar = async () => {
         </div>
         <div className="flex flex-col">
           <span className="text-xs leading-3 font-medium">
-            {user?.username}
+            {profile?.name || clerkUser.username}
           </span>
           <span className="text-[10px] text-gray-500 text-right">
             {role as string}
           </span>
         </div>
-        {/* <Image src="/avatar.png" alt="" width={36} height={36} className="rounded-full"></Image> */}
-        <UserButton />
+        <Image
+          src={imageUrl}
+          alt="User Avatar"
+          width={36}
+          height={36}
+          className="rounded-full object-cover"
+        />
       </div>
     </div>
   );

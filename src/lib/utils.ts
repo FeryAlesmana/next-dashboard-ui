@@ -1,11 +1,29 @@
 import { auth } from "@clerk/nextjs/server";
+import prisma from "./prisma";
 
 export const getCurrentUser = async () => {
   const { userId, sessionClaims, actor } = await auth();
   const role = (sessionClaims?.metadata as { role?: string })?.role;
   return { userId, role, actor };
 };
-
+export const getProfileByClerkIdAndRole = async (
+  clerkId: string,
+  role?: string
+) => {
+  if (role === "student") {
+    return await prisma.student.findUnique({
+      where: { id: clerkId },
+      select: { name: true, img: true },
+    });
+  } else if (role === "teacher") {
+    return await prisma.teacher.findUnique({
+      where: { id: clerkId },
+      select: { name: true, img: true },
+    });
+  } else {
+    return null;
+  }
+};
 const currentWorkWeek = () => {
   const today = new Date();
   const dayOfWeek = today.getDay();
@@ -114,7 +132,9 @@ export default function extractCloudinaryPublicId(url: string): string | null {
 }
 
 export async function normalizeSearchParams(
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }> | undefined
+  searchParams:
+    | Promise<{ [key: string]: string | string[] | undefined }>
+    | undefined
 ): Promise<{ [key: string]: string | undefined }> {
   const resolved = await searchParams;
   const normalized: { [key: string]: string | undefined } = {};

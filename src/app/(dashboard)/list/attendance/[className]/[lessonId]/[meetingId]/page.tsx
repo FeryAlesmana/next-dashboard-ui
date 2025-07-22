@@ -5,22 +5,25 @@ import { getCurrentUser } from "@/lib/utils";
 import { notFound } from "next/navigation";
 
 interface MeetingAttendancePageProps {
-  params: {
+  params: Promise<{
     className: string;
     lessonId: string;
     meetingId: string;
-  };
+  }>;
 }
 
 export default async function MeetingAttendancePage({
   params,
 }: MeetingAttendancePageProps) {
   const { userId, role } = await getCurrentUser();
-
-  const meetingId = Number(params.meetingId);
+  const { className, lessonId, meetingId } = await params;
+  if (!className || !lessonId || !meetingId) {
+    return notFound();
+  }
+  const idMeeting = Number(meetingId);
 
   const meeting = await prisma.meeting.findUnique({
-    where: { id: meetingId },
+    where: { id: idMeeting },
     include: {
       lesson: {
         include: { class: { include: { students: true } }, subject: true },
