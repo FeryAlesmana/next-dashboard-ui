@@ -252,6 +252,7 @@ export const updateTeacher = async (
         password: data.password !== "" ? data.password : undefined,
         firstName: data.name,
         lastName: data.surname,
+        publicMetadata: { role: "teacher" },
       });
 
       if (user) {
@@ -500,6 +501,7 @@ export const updateStudent = async (
         password: data.password !== "" ? data.password : undefined,
         firstName: data.name,
         lastName: data.surname,
+        publicMetadata: { role: "student" },
       });
 
       if (user) {
@@ -1085,6 +1087,7 @@ export const updateParent = async (
         password: data.password !== "" ? data.password : undefined,
         firstName: data.name,
         lastName: data.surname,
+        publicMetadata: { role: "parent" },
       });
 
       if (user) {
