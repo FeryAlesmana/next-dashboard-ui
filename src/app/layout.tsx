@@ -7,8 +7,8 @@ import { ToastContainer } from "react-toastify";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Aplikasi manajemen Sekolah SMP Islamiyah",
-  description: "Next.js School Management System",
+  title: "SMP Islamiyah",
+  description: "Sistem Informasi Sekolah",
 };
 
 export default function RootLayout({

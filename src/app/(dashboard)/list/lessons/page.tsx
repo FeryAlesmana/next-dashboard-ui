@@ -27,6 +27,7 @@ const LessonListPage = async ({
     {
       header: "ID Jadwal",
       accessor: "lessonId",
+      className: "hidden md:table-cell",
     },
     {
       header: "Mata Pelajaran",
@@ -35,14 +36,17 @@ const LessonListPage = async ({
     {
       header: "Kelas",
       accessor: "kelas",
+      className: "hidden md:table-cell",
     },
     {
       header: "Mulai",
       accessor: "startTime",
+      className: "hidden md:table-cell",
     },
     {
       header: "Berakhir",
       accessor: "endTime",
+      className: "hidden md:table-cell",
     },
     {
       header: "Hari",
@@ -71,12 +75,12 @@ const LessonListPage = async ({
       key={item.id}
       className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight"
     >
-      <td>{item?.id}</td>
+      <td className="hidden md:table-cell">{item?.id}</td>
       <td className="flex items-center p-4 gap-4">
         {item.subject?.name || "-"}
       </td>
-      <td>{item.class.name}</td>
-      <td>
+      <td className="hidden md:table-cell">{item.class.name}</td>
+      <td className="hidden md:table-cell">
         {" "}
         {item.startTime.toLocaleTimeString("id-ID", {
           timeZone: "Asia/Jakarta",
@@ -85,7 +89,7 @@ const LessonListPage = async ({
           hour12: false,
         })}
       </td>
-      <td>
+      <td className="hidden md:table-cell">
         {" "}
         {item.endTime.toLocaleTimeString("id-ID", {
           timeZone: "Asia/Jakarta",

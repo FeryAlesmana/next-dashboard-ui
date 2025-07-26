@@ -1,11 +1,13 @@
+"use client";
+import { SignOutButton, useUser } from "@clerk/nextjs";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { currentUser } from "@clerk/nextjs/server";
-import { SignOutButton, UserButton } from "@clerk/nextjs";
 
-const Menu = async () => {
-  const user = await currentUser();
-  const role = user?.publicMetadata.role as string;
+export default function Menu() {
+  const { user } = useUser();
+  const pathname = usePathname();
+  const role = user?.publicMetadata?.role as string | undefined;
   const userId = user?.id;
   const menuItems = [
     {
@@ -25,7 +27,7 @@ const Menu = async () => {
         },
         {
           icon: "/teacher.png",
-          label: "Teachers",
+          label: "Guru",
           href: "/list/teachers",
           visible: ["admin", "teacher"],
         },
@@ -37,25 +39,25 @@ const Menu = async () => {
         },
         {
           icon: "/student.png",
-          label: "Students",
+          label: "Murid",
           href: "/list/students",
           visible: ["admin", "teacher"],
         },
         {
           icon: "/parent.png",
-          label: "Parents",
+          label: "Orang Tua",
           href: "/list/parents",
           visible: ["admin", "teacher"],
         },
         {
           icon: "/subject.png",
-          label: "Subjects",
+          label: "Mata Pelajaran",
           href: "/list/subjects",
           visible: ["admin"],
         },
         {
           icon: "/class.png",
-          label: "Classes",
+          label: "Kelas",
           href: "/list/classes",
           visible: ["admin", "teacher"],
         },
@@ -67,7 +69,7 @@ const Menu = async () => {
         },
         {
           icon: "/exam.png",
-          label: "Exams",
+          label: "Ujian",
           href: "/list/exams",
           visible: ["admin", "teacher", "student", "parent"],
         },
@@ -114,7 +116,7 @@ const Menu = async () => {
       items: [
         {
           icon: "/profile.png",
-          label: "Profile",
+          label: "Profil",
           href: "",
           visible: ["admin", "teacher", "student", "parent"],
         },
@@ -140,6 +142,7 @@ const Menu = async () => {
       : role === "teacher"
       ? `/list/teachers/${userId}`
       : "/profile"; // fallback for other roles
+
   return (
     <div className="mt-4 text-sm">
       {menuItems.map((i) => (
@@ -148,15 +151,17 @@ const Menu = async () => {
             {i.title}
           </span>
           {i.items.map((item) => {
-            if (item.visible.includes(role)) {
+            if (typeof role === "string" && item.visible.includes(role)) {
               // Override profile href dynamically
-              const href = item.label === "Profile" ? profileHref : item.href;
+              const href = item.label === "Profil" ? profileHref : item.href;
+              const isActive =
+                href === "/" ? pathname === "/" : pathname?.startsWith(href);
               if (item.action === "logout") {
                 return (
                   <SignOutButton key={item.label}>
-                    <button className="flex items-center justify-center lg:justify-start gap-4 text-gray-500 py-2 rounded-md md:px-2 hover:bg-lamaSkyLight">
+                    <button className="flex lg:justify-start gap-4 text-gray-500 py-2 rounded-md md:px-2 hover:bg-lamaSkyLight">
                       <Image src={item.icon} alt="" width={20} height={20} />
-                      <span className="hidden lg:block">{item.label}</span>
+                      <span className="inline">{item.label}</span>
                     </button>
                   </SignOutButton>
                 );
@@ -165,10 +170,15 @@ const Menu = async () => {
                 <Link
                   href={href}
                   key={item.label}
-                  className="flex items-center justify-center lg:justify-start gap-4 text-gray-500 py-2 rounded-md md:px-2 hover:bg-lamaSkyLight"
+                  className={`flex lg:justify-start gap-4 py-2 rounded-md md:px-2 
+              ${
+                isActive
+                  ? "bg-lamaSkyLight font-medium text-lamaSky"
+                  : "text-gray-500 hover:bg-lamaSkyLight"
+              }`}
                 >
                   <Image src={item.icon} alt="" width={20} height={20}></Image>
-                  <span className="hidden lg:block">{item.label}</span>
+                  <span className="inline">{item.label}</span>
                 </Link>
               );
             }
@@ -177,6 +187,4 @@ const Menu = async () => {
       ))}
     </div>
   );
-};
-
-export default Menu;
+}

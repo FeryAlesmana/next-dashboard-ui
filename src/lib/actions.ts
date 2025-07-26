@@ -1790,7 +1790,7 @@ export const createMeeting = async (
 
     const startTime = new Date(newDate);
     startTime.setHours(
-      lesson.startTime.getHours(),
+      lesson.startTime.getHours()  + 7,
       lesson.startTime.getMinutes(),
       0,
       0
@@ -1798,7 +1798,7 @@ export const createMeeting = async (
 
     const endTime = new Date(newDate);
     endTime.setHours(
-      lesson.endTime.getHours(),
+      lesson.endTime.getHours()  + 7,
       lesson.endTime.getMinutes(),
       0,
       0
