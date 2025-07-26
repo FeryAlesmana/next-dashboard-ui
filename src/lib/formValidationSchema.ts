@@ -580,6 +580,76 @@ export const ppdbSchema = z.object({
 
 export type PpdbSchema = z.infer<typeof ppdbSchema>;
 
+export const fieldLabelMap: Record<string, string> = {
+  name: "Nama Calon Siswa",
+  surname: "Nama Panggilan",
+  birthday: "Tanggal Lahir",
+  birthPlace: "Tempat Lahir",
+  sex: "Jenis Kelamin",
+  religion: "Agama",
+  phone: "No Telepon",
+  asalSekolah: "Asal Sekolah",
+  npsn: "NPSN",
+  nisn: "NISN",
+  no_ijz: "No Seri Ijazah",
+  nik: "NIK",
+  address: "Alamat",
+  postcode: "Kode Pos",
+  rt: "RT",
+  rw: "RW",
+  kelurahan: "Kelurahan",
+  kecamatan: "Kecamatan",
+  kota: "Kota",
+  noWhatsapp: "No WhatsApp",
+  transportation: "Transportasi",
+  tempat_tinggal: "Tempat Tinggal",
+  email: "Email",
+  kps: "KPS",
+  no_kps: "No KPS",
+  height: "Tinggi Badan",
+  weight: "Berat Badan",
+  distance_from_home: "Jarak dari Rumah",
+  time_from_home: "Waktu Tempuh",
+  number_of_siblings: "Jumlah Saudara",
+  awards: "Nama Penghargaan",
+  awards_lvl: "Jenis Penghargaan",
+  awards_date: "Tanggal Penghargaan",
+  scholarship: "Nama Beasiswa",
+  scholarship_detail: "Sumber Beasiswa",
+  scholarship_date: "Tanggal Beasiswa",
+
+  // Ayah
+  namaAyah: "Nama Ayah",
+  tahunLahirAyah: "Tahun Lahir Ayah",
+  pekerjaanAyah: "Pekerjaan Ayah",
+  pendidikanAyah: "Pendidikan Ayah",
+  penghasilanAyah: "Penghasilan Ayah",
+  telpAyah: "Telepon Ayah",
+
+  // Ibu
+  namaIbu: "Nama Ibu",
+  tahunLahirIbu: "Tahun Lahir Ibu",
+  pekerjaanIbu: "Pekerjaan Ibu",
+  pendidikanIbu: "Pendidikan Ibu",
+  penghasilanIbu: "Penghasilan Ibu",
+  telpIbu: "Telepon Ibu",
+
+  // Wali
+  namaWali: "Nama Wali",
+  tahunLahirWali: "Tahun Lahir Wali",
+  pekerjaanWali: "Pekerjaan Wali",
+  pendidikanWali: "Pendidikan Wali",
+  penghasilanWali: "Penghasilan Wali",
+  telpWali: "Telepon Wali",
+
+  // Dokumen
+  dokumenIjazah: "Dokumen Ijazah",
+  dokumenAkte: "Dokumen Akta",
+  dokumenPasfoto: "Dokumen Pas Foto",
+  dokumenKKKTP: "Dokumen KK/KTP",
+};
+
+
 export const attendanceSchema = z.object({
   id: z.coerce.number().optional(),
   meetingId: z.coerce
@@ -611,3 +681,19 @@ export type AttendanceSchema = z.infer<typeof attendanceSchema>;
 
 export const attendanceStatusEnum = z.enum(["HADIR", "SAKIT", "ABSEN"]);
 export type AttendanceStatus = z.infer<typeof attendanceStatusEnum>;
+
+export const paymentLogSchema = z.object({
+  id: z.coerce.number().optional(),
+  // studentId: z.string().min(1, { message: "Nama murid wajib diisi!" }),
+  paymentType: z.enum(['TUITION', 'EXTRACURRICULAR', 'UNIFORM', 'BOOKS', 'OTHER']),
+  amount: z.number().min(1, 'Jumlah harus lebih dari 0'),
+  dueDate: z.string().min(1, 'Tenggat waktu wajib diisi'),
+  status: z.enum(['PENDING', 'PAID', 'OVERDUE', 'PARTIALLY_PAID']),
+  description: z.string().optional(),
+  paymentMethod: z.string().optional(),
+  receiptNumber: z.string().optional(),
+  recipientType: z.enum(['student', 'class', 'grade']),
+  recipientId: z.string().min(1, 'Penerima wajib dipilih'),
+});
+
+export type PaymentLogSchema = z.infer<typeof paymentLogSchema>;

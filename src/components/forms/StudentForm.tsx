@@ -225,7 +225,7 @@ const StudentForm = ({
             <option value="">Pilih</option>
             <option value="Islam">Islam</option>
             <option value="Kristen">Kristen</option>
-            <option value="Buddha">Budha</option>
+            <option value="Buddha">Buddha</option>
             <option value="Lainnya">Lainnya</option>
           </select>
           {errors.religion?.message && (

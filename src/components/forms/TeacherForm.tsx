@@ -49,10 +49,6 @@ const TeacherForm = ({
   console.log("✅ TeacherForm rendered");
 
   const [img, setImg] = useState<any>();
-  // const [state, formAction] = useActionState(
-  //   type === "create" ? createTeacher : updateTeacher,
-  //   initialState
-  // );
 
   const initialState: CurrentState = {
     success: false,
@@ -142,6 +138,7 @@ const TeacherForm = ({
           type="email"
           defaultValue={data?.email}
           register={register}
+          placeholder="email@example.com"
           error={errors?.email}
         ></InputField>
         <InputField
@@ -156,7 +153,7 @@ const TeacherForm = ({
       <span className="text-xs text-gray-400 font-medium">
         Informasi Personal
       </span>
-     <UploadPhoto
+      <UploadPhoto
         imageUrl={img?.secure_url || data?.img}
         onUpload={(url) => setImg({ secure_url: url })}
       />

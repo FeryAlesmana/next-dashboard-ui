@@ -9,6 +9,7 @@ import {
   deleteExam,
   deleteLesson,
   deleteParent,
+  deletePaymentLog,
   deletePpdb,
   deleteResult,
   deleteStudent,
@@ -45,6 +46,7 @@ const deleteActionMap = {
   event: deleteEvent,
   announcement: deleteAnnouncement,
   ppdb: deletePpdb,
+  paymentLog: deletePaymentLog,
 };
 
 const TeacherForm = dynamic(() => import("./forms/TeacherForm"), {
@@ -93,6 +95,9 @@ const AttendanceMeetingForm = dynamic(
   }
 );
 const MeetingForm = dynamic(() => import("./forms/MeetingForm"), {
+  loading: () => <h1>Loading...</h1>,
+});
+const PaymentForm = dynamic(() => import("./forms/PaymentForm"), {
   loading: () => <h1>Loading...</h1>,
 });
 
@@ -204,6 +209,14 @@ const forms: {
   ),
   attendance: (setOpen, type, data, relatedData) => (
     <AttendanceMeetingForm
+      type={type}
+      setOpen={setOpen}
+      data={data}
+      relatedData={relatedData}
+    />
+  ),
+  paymentLog: (setOpen, type, data, relatedData) => (
+    <PaymentForm
       type={type}
       setOpen={setOpen}
       data={data}
@@ -355,7 +368,7 @@ const FormModal = ({
             className={`bg-white p-4 rounded-md relative w-[90%] md:w-[70%] lg:w-[60%] xl:w-[50%] 2xl:w-[40%] ${
               type === "delete"
                 ? "w-[350px] h-auto"
-                : ["student", "ppdb", "teacher"].includes(table)
+                : ["student", "ppdb", "teacher", "paymentLog"].includes(table)
                 ? "w-[95%] h-[95%] md:w-[90%] lg:w-[85%] xl:w-[80%] 2xl:w-[75%] overflow-y-auto"
                 : "w-[90%] md:w-[70%] lg:w-[60%] xl:w-[50%] 2xl:w-[40%]"
             }`}

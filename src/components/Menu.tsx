@@ -118,7 +118,7 @@ export default function Menu() {
           icon: "/profile.png",
           label: "Profil",
           href: "",
-          visible: ["admin", "teacher", "student", "parent"],
+          visible: ["teacher", "student", "parent"],
         },
         {
           icon: "/setting.png",
@@ -141,7 +141,7 @@ export default function Menu() {
       ? `/list/students/${userId}`
       : role === "teacher"
       ? `/list/teachers/${userId}`
-      : "/profile"; // fallback for other roles
+      : `/${role}`; // fallback for other roles
 
   return (
     <div className="mt-4 text-sm">
@@ -173,7 +173,7 @@ export default function Menu() {
                   className={`flex lg:justify-start gap-4 py-2 rounded-md md:px-2 
               ${
                 isActive
-                  ? "bg-lamaSkyLight font-medium text-lamaSky"
+                  ? "bg-lamaSkyLight font-medium text-black"
                   : "text-gray-500 hover:bg-lamaSkyLight"
               }`}
                 >

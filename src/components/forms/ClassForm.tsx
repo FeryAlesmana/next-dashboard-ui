@@ -119,7 +119,7 @@ const ClassForm = ({
                 <option
                   value={teacher.id}
                   key={teacher.id}
-                  selected={data && teacher.id === data.supervisorId}
+                  // selected={data && teacher.id === data.supervisorId}
                 >
                   {teacher.name + " " + teacher.surname}
                 </option>
@@ -153,7 +153,7 @@ const ClassForm = ({
               <option
                 value={grade.id}
                 key={grade.id}
-                selected={data && grade.id === data.gradeId}
+                // selected={data && grade.id === data.gradeId}
               >
                 {grade.level}
               </option>

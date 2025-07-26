@@ -6,7 +6,10 @@ const prisma = new PrismaClient();
 export async function POST(req: Request) {
   const { email, otp } = await req.json();
   if (!email || !otp) {
-    return NextResponse.json({ success: false, error: "Email and OTP required" }, { status: 400 });
+    return NextResponse.json(
+      { success: false, error: "Email and OTP required" },
+      { status: 400 }
+    );
   }
 
   // Find OTP record
@@ -14,7 +17,7 @@ export async function POST(req: Request) {
     where: {
       email,
       code: otp,
-      expiresAt: { gte: new Date() }, // not expired
+      expiresAt: new Date(Date.now() + 1000 * 60 * 5), // 5 mins
     },
   });
 

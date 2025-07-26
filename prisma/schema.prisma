@@ -5,7 +5,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  // directUrl = env("DIRECT_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model Admin {
@@ -47,6 +47,8 @@ model Student {
   attendance      Attendance[]
   results         Result[]
   birthday        DateTime
+
+  paymentLogs PaymentLog[]
 }
 
 model Teacher {
@@ -193,6 +195,7 @@ model Grade {
 
   students Student[]
   classes  Class[]
+  paymentLogs PaymentLog[]
 }
 
 model Class {
@@ -208,6 +211,8 @@ model Class {
   grade         Grade?         @relation(fields: [gradeId], references: [id], onDelete: SetNull)
   Events        Event[]
   Announcements Announcement[]
+
+  paymentLogs PaymentLog[]
 }
 
 model Subject {
@@ -384,4 +389,51 @@ model EmailOtp {
   code      String
   expiresAt DateTime
   createdAt DateTime @default(now())
+}
+
+model PaymentLog {
+  id            Int          @id @default(autoincrement())
+  studentId     String
+  student       Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  amount        Float
+  paymentType   PaymentType
+  status        PaymentStatus
+  dueDate       DateTime
+  paidAt        DateTime?
+  description   String?      // e.g., "Tuition for Semester 1" or "Extracurricular Fee"
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  paymentMethod String?      // e.g., "Bank Transfer", "Cash", etc.
+  receiptNumber String?      @unique // Unique identifier for the payment receipt
+
+  classId  Int?
+  class    Class? @relation(fields: [classId], references: [id], onDelete: SetNull)
+  gradeId  Int?
+  grade    Grade? @relation(fields: [gradeId], references: [id], onDelete: SetNull)
+
+  paymentInstallments PaymentInstallment[]
+}
+
+enum PaymentType {
+  TUITION
+  EXTRACURRICULAR
+  UNIFORM
+  BOOKS
+  OTHER
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  OVERDUE
+  PARTIALLY_PAID
+}
+
+model PaymentInstallment {
+  id           Int        @id @default(autoincrement())
+  paymentLogId Int
+  paymentLog   PaymentLog @relation(fields: [paymentLogId], references: [id], onDelete: Cascade)
+  amount       Float
+  paidAt       DateTime?
+  createdAt    DateTime   @default(now())
 }

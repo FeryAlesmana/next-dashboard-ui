@@ -1,17 +1,28 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import FormModal from "./FormModal";
 
 export const EmailVerificationGate = () => {
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
-  const [step, setStep] = useState<"enterEmail" | "verifyOtp" | "done">("enterEmail");
+  const [step, setStep] = useState<"enterEmail" | "verifyOtp" | "done">(
+    "enterEmail"
+  );
   const [loading, setLoading] = useState(false);
   const [resent, setResent] = useState(false);
 
   const validateEmail = (email: string) => {
     return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
   };
+
+  const [cooldown, setCooldown] = useState(0);
+
+  useEffect(() => {
+    if (cooldown > 0) {
+      const timer = setTimeout(() => setCooldown(cooldown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [cooldown]);
 
   const sendOtp = async (isResend = false) => {
     if (!validateEmail(email)) {
@@ -28,7 +39,11 @@ export const EmailVerificationGate = () => {
       });
       if (!res.ok) throw new Error("Failed to send OTP");
       setStep("verifyOtp");
-      toast.success(isResend ? "OTP telah dikirim ulang ke email Anda." : "Kode OTP telah dikirim ke email Anda.");
+      toast.success(
+        isResend
+          ? "OTP telah dikirim ulang ke email Anda."
+          : "Kode OTP telah dikirim ke email Anda."
+      );
       if (isResend) setResent(true);
     } catch (err) {
       toast.error("Gagal mengirim OTP. Periksa email Anda dan coba lagi.");
@@ -78,10 +93,18 @@ export const EmailVerificationGate = () => {
             onChange={(e) => setEmail(e.target.value)}
           />
           <button
-            onClick={() => sendOtp(false)}
+            onClick={() => {
+              if (cooldown === 0) {
+                sendOtp(false);
+                setCooldown(60); // 60 seconds
+              } else {
+                toast.info(`Tunggu ${cooldown} detik sebelum mengirim ulang.`);
+              }
+            }}
             className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded"
+            disabled={cooldown > 0}
           >
-            Kirim OTP ke Email
+            {cooldown > 0 ? `Tunggu (${cooldown}s)` : "Kirim OTP ke Email"}
           </button>
         </>
       )}
@@ -101,13 +124,23 @@ export const EmailVerificationGate = () => {
             Verifikasi OTP
           </button>
           <button
-            onClick={() => sendOtp(true)}
-            className="bg-yellow-500 hover:bg-yellow-600 px-4 py-2 rounded ml-2"
+            onClick={() => {
+              if (cooldown === 0) {
+                sendOtp(true);
+                setCooldown(60); // 60 seconds
+              } else {
+                toast.info(`Tunggu ${cooldown} detik sebelum mengirim ulang.`);
+              }
+            }}
+            className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded ml-2"
+            disabled={cooldown > 0}
           >
-            Kirim Ulang OTP
+            {cooldown > 0 ? `Tunggu (${cooldown} detik)` : "Kirim Ulang OTP"}
           </button>
           {resent && (
-            <div className="text-sm text-yellow-700 mt-2">OTP telah dikirim ulang ke email Anda.</div>
+            <div className="text-sm text-yellow-700 mt-2">
+              OTP telah dikirim ulang ke email Anda.
+            </div>
           )}
         </>
       )}

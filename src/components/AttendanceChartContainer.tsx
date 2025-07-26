@@ -1,6 +1,7 @@
 import prisma from "@/lib/prisma";
 import AttendanceChart from "./AttendanceChart";
 import Image from "next/image";
+import Link from "next/link";
 
 const AttendanceChartContainer = async () => {
   const today = new Date();
@@ -63,7 +64,9 @@ const AttendanceChartContainer = async () => {
     <div className="bg-white rounded-lg p-4 h-full">
       <div className="flex items-center justify-between">
         <h1 className="text-lg font-semibold">Kehadiran</h1>
-        <Image src="/moreDark.png" alt="" width={20} height={20} />
+        <Link href="/list/lessons">
+          <Image src="/moreDark.png" alt="" width={20} height={20} />
+        </Link>
       </div>
       <AttendanceChart data={data} />
     </div>

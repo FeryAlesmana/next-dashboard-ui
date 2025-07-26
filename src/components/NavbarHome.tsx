@@ -132,14 +132,7 @@ const NavbarHome: React.FC = () => {
               >
                 Daftar
               </MobileNavLink>
-              <button
-                className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-blue-600 to-orange-500 text-white px-4 py-3 rounded-lg hover:shadow-md transition-all duration-300 mt-2"
-                onClick={() => router.push("/sign-in")}
-                  
-              >
-                <FaUser />
-                <span>Login</span>
-              </button>
+
               {isSignedIn ? (
                 <>
                   <button

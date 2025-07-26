@@ -10,7 +10,11 @@ import React, {
 import Select from "react-select";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { PpdbSchema, ppdbSchema } from "@/lib/formValidationSchema";
+import {
+  fieldLabelMap,
+  PpdbSchema,
+  ppdbSchema,
+} from "@/lib/formValidationSchema";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
 import { createPpdb, CurrentState, updatePpdb } from "@/lib/actions";
@@ -249,10 +253,14 @@ const FormulirPendaftaran = ({
     }
   }, [state, type, router, setOpen, setError]);
   // All possible field options for react-select
-  const fieldOptions = Object.keys(ppdbSchema.shape).map((key) => ({
-    value: key,
-    label: key,
-  }));
+  const fieldOptions = Object.keys(ppdbSchema.shape)
+    .filter(
+      (key) => !["id", "isvalid", "reason", "gradeId", "classId"].includes(key)
+    )
+    .map((key) => ({
+      value: key,
+      label: fieldLabelMap[key] || key,
+    }));
 
   // Send feedback email
   const sendFeedbackEmail = async (isValid: boolean) => {

@@ -26,8 +26,15 @@ export default function DashboardLayout({
           href="/"
           className="flex items-center justify-center gap-2 lg:justify-start mb-6"
         >
-          <Image src="/logo.png" alt="logo" width={32} height={32} />
-          <span className="hidden lg:block font-bold">SMP Islamiyah</span>
+          <Image
+            src="https://res.cloudinary.com/dbfascepc/image/upload/v1753534026/favicon_iqgit7.png"
+            alt="logo"
+            width={32}
+            height={32}
+          />
+          <span className=" lg:block font-bold text-lg">
+            SMP Islamiyah Serua
+          </span>
         </Link>
         <Menu />
       </div>

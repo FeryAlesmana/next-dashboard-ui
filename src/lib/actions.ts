@@ -17,6 +17,7 @@ import {
   ExamSchema,
   LessonSchema,
   ParentSchema,
+  PaymentLogSchema,
   PpdbSchema,
   ResultSchema,
   StudentSchema,
@@ -592,7 +593,7 @@ export const updateStudent = async (
       await new Promise((resolve) => setTimeout(resolve, delay));
       retries++;
     }
-    
+
     return { success: true, error: false, id: clerkUserId };
   } catch (error) {
     const message =
@@ -1790,7 +1791,7 @@ export const createMeeting = async (
 
     const startTime = new Date(newDate);
     startTime.setHours(
-      lesson.startTime.getHours()  + 7,
+      lesson.startTime.getHours(),
       lesson.startTime.getMinutes(),
       0,
       0
@@ -1798,7 +1799,7 @@ export const createMeeting = async (
 
     const endTime = new Date(newDate);
     endTime.setHours(
-      lesson.endTime.getHours()  + 7,
+      lesson.endTime.getHours(),
       lesson.endTime.getMinutes(),
       0,
       0
@@ -1884,6 +1885,132 @@ export const deleteAttendance = async (
     return { success: true, error: false };
   } catch (error) {
     console.log(error + " Di server action");
+    return { success: false, error: true };
+  }
+};
+
+// Ambil data siswa, kelas, dan angkatan
+
+// Buat tagihan
+export async function createPaymentLog(
+  prevState: CurrentState,
+  payload: PaymentLogSchema
+): Promise<CurrentState> {
+  const { role } = await getCurrentUser();
+  if (role !== "admin") {
+    return {
+      success: false,
+      error: true,
+      message: "Hanya admin yang dapat membuat tagihan.",
+    };
+  }
+
+  try {
+    const { recipientType, recipientId, ...paymentData } = payload;
+
+    let studentIds: string[] = [];
+    if (recipientType === "student") {
+      studentIds = [recipientId];
+    } else if (recipientType === "class") {
+      const classData = await prisma.class.findUnique({
+        where: { id: parseInt(recipientId) },
+        include: { students: { select: { id: true } } },
+      });
+      studentIds = classData?.students.map((s) => s.id) ?? [];
+    } else if (recipientType === "grade") {
+      const gradeData = await prisma.grade.findUnique({
+        where: { id: parseInt(recipientId) },
+        include: { students: { select: { id: true } } },
+      });
+      studentIds = gradeData?.students.map((s) => s.id) ?? [];
+    }
+
+    if (studentIds.length === 0) {
+      return {
+        success: false,
+        error: true,
+        message: "Tidak ada siswa yang dipilih untuk tagihan ini.",
+      };
+    }
+
+    await prisma.paymentLog.createMany({
+      data: studentIds.map((studentId) => ({
+        studentId,
+        amount: paymentData.amount,
+        paymentType: paymentData.paymentType,
+        status: paymentData.status,
+        dueDate: new Date(paymentData.dueDate),
+        description: paymentData.description || null,
+        paymentMethod: paymentData.paymentMethod || null,
+        receiptNumber: paymentData.receiptNumber || null,
+        classId: recipientType === "class" ? parseInt(recipientId) : null,
+        gradeId: recipientType === "grade" ? parseInt(recipientId) : null,
+      })),
+    });
+
+    return { success: true, error: false, message: "Tagihan berhasil dibuat." };
+  } catch (err) {
+    console.error(err);
+    return { success: false, error: true, message: "Gagal membuat tagihan." };
+  }
+}
+
+// Update tagihan
+export async function updatePaymentLog(
+  prevState: CurrentState,
+  data: PaymentLogSchema
+): Promise<CurrentState> {
+  const { role } = await getCurrentUser();
+  if (role !== "admin") {
+    return {
+      success: false,
+      error: true,
+      message: "Hanya admin yang dapat membuat tagihan.",
+    };
+  }
+
+  try {
+    const { recipientType, recipientId, ...paymentData } = data;
+
+    await prisma.paymentLog.update({
+      where: {
+        id: data.id,
+      },
+      data: {
+        amount: paymentData.amount,
+        paymentType: paymentData.paymentType,
+        status: paymentData.status,
+        dueDate: new Date(paymentData.dueDate),
+        description: paymentData.description || null,
+        paymentMethod: paymentData.paymentMethod || null,
+        receiptNumber: paymentData.receiptNumber || null,
+        classId: recipientType === "class" ? parseInt(recipientId) : null,
+        gradeId: recipientType === "grade" ? parseInt(recipientId) : null,
+      },
+    });
+
+    return { success: true, error: false, message: "Tagihan berhasil dibuat." };
+  } catch (err) {
+    console.error(err);
+    return { success: false, error: true, message: "Gagal membuat tagihan." };
+  }
+}
+
+export const deletePaymentLog = async (
+  currentState: CurrentState,
+  formData: FormData
+): Promise<CurrentState> => {
+  const id = formData.get("id") as string;
+  try {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await prisma.paymentLog.delete({
+      where: {
+        id: parseInt(id),
+      },
+    });
+    return { success: true, error: false };
+  } catch (error) {
+    console.log(error + " Di delete Payment server action");
     return { success: false, error: true };
   }
 };
