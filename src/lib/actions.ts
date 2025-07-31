@@ -16,6 +16,7 @@ import {
   EventSchema,
   ExamSchema,
   LessonSchema,
+  MstudentSchema,
   ParentSchema,
   PaymentLogSchema,
   PpdbSchema,
@@ -656,6 +657,105 @@ export const deleteStudent = async (
         : "Unknown error";
 
     console.error("Delete Student error: ", error);
+    return { success: false, error: true, message };
+  }
+};
+
+export async function updateManyStudents(
+  prevState: { success: boolean; error: boolean; message?: string },
+  payload: MstudentSchema
+) {
+  try {
+    // Get the gradeId from the selected class
+    const classData = await prisma.class.findUnique({
+      where: { id: parseInt(payload.classId) },
+      select: { gradeId: true },
+    });
+
+    if (!classData || !classData.gradeId) {
+      return {
+        success: false,
+        error: true,
+        message: "Kelas atau grade tidak ditemukan.",
+      };
+    }
+
+    // Update all selected students
+    await prisma.student.updateMany({
+      where: { id: { in: payload.ids } },
+      data: {
+        classId: parseInt(payload.classId),
+        gradeId: classData.gradeId,
+      },
+    });
+
+    return {
+      success: true,
+      error: false,
+      message: "Berhasil mengupdate siswa.",
+    };
+  } catch (err) {
+    console.error(err);
+    return {
+      success: false,
+      error: true,
+      message: "Gagal mengupdate siswa.",
+    };
+  }
+}
+
+export const deleteStudents = async (
+  currentState: CurrentState,
+  formData: FormData
+): Promise<CurrentState> => {
+  const ids = formData.getAll("ids") as string[];
+
+  if (!ids || ids.length === 0) {
+    return { success: false, error: true, message: "No student IDs provided." };
+  }
+
+  try {
+    for (const id of ids) {
+      try {
+        const student = await prisma.student.findUnique({ where: { id } });
+
+        if (student?.img) {
+          const publicId = extractCloudinaryPublicId(student.img);
+          if (publicId) {
+            await cloudinary.uploader.destroy(publicId);
+            console.log("Cloudinary image deleted:", publicId);
+          }
+        }
+
+        await prisma.student.delete({ where: { id } });
+
+        try {
+          const deletedUser = await client.users.deleteUser(id);
+          if (deletedUser) {
+            console.log("✅ Clerk user deleted:", deletedUser.id);
+          }
+        } catch {
+          console.warn(`⚠️ Clerk user ${id} not found or already deleted.`);
+        }
+      } catch (innerError) {
+        console.error(`❌ Failed to delete student ID ${id}:`, innerError);
+        // Optionally continue deleting others instead of failing all
+      }
+    }
+
+    return {
+      success: true,
+      error: false,
+      message: `Deleted ${ids.length} student(s) successfully.`,
+    };
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === "string"
+        ? error
+        : "Unknown error";
+
     return { success: false, error: true, message };
   }
 };
@@ -1754,6 +1854,13 @@ export const createMeeting = async (
     if (!lesson) {
       return { success: false, error: true, message: "Lesson not found" };
     }
+    if (!data.meetingCount) {
+      return {
+        success: false,
+        error: true,
+        message: "meeting count not found",
+      };
+    }
 
     const dayMap: Record<string, number> = {
       SENIN: 1,
@@ -1763,7 +1870,7 @@ export const createMeeting = async (
       JUMAT: 5,
     };
 
-    const lessonDayIndex = dayMap[lesson.day]; // 1-5 (Monday to Friday)
+    const lessonDayIndex = dayMap[lesson.day];
     if (!lessonDayIndex) {
       return { success: false, error: true, message: "Invalid lesson day" };
     }
@@ -1773,48 +1880,51 @@ export const createMeeting = async (
       orderBy: { meetingNo: "desc" },
     });
 
-    let newDate: Date;
-    if (lastMeeting && lastMeeting.date) {
-      newDate = new Date(lastMeeting.date);
-      newDate.setDate(newDate.getDate() + 7); // Next week, same day
-    } else {
-      const today = new Date();
-      const dayOfWeek = today.getDay(); // 0 (Sunday) - 6 (Saturday)
+    const today = new Date();
+    const dayOfWeek = today.getDay(); // 0 (Sunday) - 6 (Saturday)
+    const daysUntilNextLessonDay =
+      (lessonDayIndex + 7 - (((dayOfWeek + 6) % 7) + 1)) % 7;
 
-      const daysUntilNextLessonDay =
-        (lessonDayIndex + 7 - (((dayOfWeek + 6) % 7) + 1)) % 7;
-      newDate = new Date();
-      newDate.setDate(today.getDate() + daysUntilNextLessonDay);
+    const baseDate = new Date();
+    baseDate.setDate(today.getDate() + daysUntilNextLessonDay);
+    baseDate.setHours(0, 0, 0, 0);
 
-      newDate.setHours(0, 0, 0, 0);
-    }
+    const meetingCount = data.meetingCount ?? 1;
+    const meetingsData = [];
 
-    const startTime = new Date(newDate);
-    startTime.setHours(
-      lesson.startTime.getHours(),
-      lesson.startTime.getMinutes(),
-      0,
-      0
-    );
+    for (let i = 0; i < meetingCount; i++) {
+      const meetingNo = (lastMeeting?.meetingNo ?? 0) + i + 1;
 
-    const endTime = new Date(newDate);
-    endTime.setHours(
-      lesson.endTime.getHours(),
-      lesson.endTime.getMinutes(),
-      0,
-      0
-    );
+      const date = new Date(baseDate);
+      date.setDate(baseDate.getDate() + i * 7);
 
-    const nextMeetingNo = (lastMeeting?.meetingNo ?? 0) + 1;
+      const startTime = new Date(date);
+      startTime.setHours(
+        lesson.startTime.getHours(),
+        lesson.startTime.getMinutes(),
+        0,
+        0
+      );
 
-    await prisma.meeting.create({
-      data: {
+      const endTime = new Date(date);
+      endTime.setHours(
+        lesson.endTime.getHours(),
+        lesson.endTime.getMinutes(),
+        0,
+        0
+      );
+
+      meetingsData.push({
         lessonId: resolvedLessonId,
-        meetingNo: nextMeetingNo,
-        date: newDate,
+        meetingNo,
+        date,
         startTime,
         endTime,
-      },
+      });
+    }
+
+    await prisma.meeting.createMany({
+      data: meetingsData,
     });
 
     return { success: true, error: false };

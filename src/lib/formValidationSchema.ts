@@ -649,11 +649,15 @@ export const fieldLabelMap: Record<string, string> = {
   dokumenKKKTP: "Dokumen KK/KTP",
 };
 
-
 export const attendanceSchema = z.object({
   id: z.coerce.number().optional(),
   meetingId: z.coerce
     .number({ message: "Id pertemuan wajib di isi" })
+    .optional(),
+  meetingCount: z.coerce
+    .number({ message: "Banyak pertemuan wajib di isi" })
+    .min(1, { message: "Banyak pertemuan wajib di isi minimal 1" })
+    .max(30, { message: "Banyak pertemuan wajib di isi maximal 30" })
     .optional(),
   lessonId: z.coerce
     .number({ message: "Id pelajaran wajib di isi" })
@@ -685,15 +689,29 @@ export type AttendanceStatus = z.infer<typeof attendanceStatusEnum>;
 export const paymentLogSchema = z.object({
   id: z.coerce.number().optional(),
   // studentId: z.string().min(1, { message: "Nama murid wajib diisi!" }),
-  paymentType: z.enum(['TUITION', 'EXTRACURRICULAR', 'UNIFORM', 'BOOKS', 'OTHER']),
-  amount: z.number().min(1, 'Jumlah harus lebih dari 0'),
-  dueDate: z.string().min(1, 'Tenggat waktu wajib diisi'),
-  status: z.enum(['PENDING', 'PAID', 'OVERDUE', 'PARTIALLY_PAID']),
+  paymentType: z.enum([
+    "TUITION",
+    "EXTRACURRICULAR",
+    "UNIFORM",
+    "BOOKS",
+    "OTHER",
+  ]),
+  amount: z.number().min(1, "Jumlah harus lebih dari 0"),
+  dueDate: z.string().min(1, "Tenggat waktu wajib diisi"),
+  status: z.enum(["PENDING", "PAID", "OVERDUE", "PARTIALLY_PAID"]),
   description: z.string().optional(),
   paymentMethod: z.string().optional(),
   receiptNumber: z.string().optional(),
-  recipientType: z.enum(['student', 'class', 'grade']),
-  recipientId: z.string().min(1, 'Penerima wajib dipilih'),
+  recipientType: z.enum(["student", "class", "grade"]),
+  recipientId: z.string().min(1, "Penerima wajib dipilih"),
 });
 
 export type PaymentLogSchema = z.infer<typeof paymentLogSchema>;
+
+export const mstudentSchema = z.object({
+  ids: z.array(z.string().min(1)),
+  classId: z.string().min(1),
+  gradeId: z.string().min(1),
+});
+
+export type MstudentSchema = z.infer<typeof mstudentSchema>;

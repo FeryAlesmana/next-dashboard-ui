@@ -11,6 +11,9 @@ import TableSearch from "@/components/TableSearch";
 import Image from "next/image";
 import AttendanceMeetingCard from "@/components/AttendanceMeetingCard";
 import React from "react";
+import BigCalendarContainer from "@/components/BigCalendarContainer";
+import "react-big-calendar/lib/css/react-big-calendar.css";
+import ClientPageWrapper from "@/components/ClientWrapper";
 
 interface AttendanceDetailPageProps {
   params: Promise<{
@@ -26,7 +29,13 @@ export default async function AttendanceDetailPage({
 }: AttendanceDetailPageProps) {
   const { userId, role } = await getCurrentUser();
   const sp = await normalizeSearchParams(searchParams);
-  const { page, ...queryParams } = await sp;
+  const key = new URLSearchParams(
+    Object.entries(sp).reduce((acc, [k, v]) => {
+      if (v !== undefined) acc[k] = v;
+      return acc;
+    }, {} as Record<string, string>)
+  ).toString();
+  const { page, ...queryParams } = sp;
   const p = page ? parseInt(page) : 1;
   const columns = [
     {
@@ -171,7 +180,7 @@ export default async function AttendanceDetailPage({
     }
   }
 
-  const [data, count] = await prisma.$transaction([
+  const [data, count, classData] = await prisma.$transaction([
     prisma.meeting.findMany({
       orderBy: {
         meetingNo: "asc",
@@ -186,43 +195,60 @@ export default async function AttendanceDetailPage({
       skip: ITEM_PER_PAGE * (p - 1),
     }),
     prisma.meeting.count({ where: meetingWhere }),
+    prisma.class.findUnique({
+      where: { name: className },
+      select: { id: true },
+    }),
   ]);
-
   return (
-    <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
-      {/* TOP BAR */}
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-lg font-semibold">
-          Daftar Pertemuan - {lesson?.subject?.name ?? "-"} (
-          {lesson?.class?.name ?? "-"})
-        </h1>
-        <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-          <TableSearch />
-          <div className="flex items-center gap-4 self-end">
-            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
-              <Image src="/filter.png" alt="" width={14} height={14} />
-            </button>
-            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
-              <Image src="/sort.png" alt="" width={14} height={14} />
-            </button>
-            {(role === "admin" || role === "teacher") && (
-              <FormContainer
-                table="attendance"
-                type="create"
-                lessonId={idLesson!}
-              ></FormContainer>
+    <ClientPageWrapper key={key} role={role!}>
+      <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
+        {/* TOP BAR */}
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-lg font-semibold">
+            <span className="hidden md:inline">Daftar Pertemuan - </span>
+            {lesson?.subject?.name ?? "-"} ({lesson?.class?.name ?? "-"})
+          </h1>
+
+          <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
+            <TableSearch />
+            <div className="flex items-center gap-4 self-end">
+              <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
+                <Image src="/filter.png" alt="" width={14} height={14} />
+              </button>
+              <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
+                <Image src="/sort.png" alt="" width={14} height={14} />
+              </button>
+              {(role === "admin" || role === "teacher") && (
+                <FormContainer
+                  table="attendance"
+                  type="create"
+                  lessonId={idLesson!}
+                ></FormContainer>
+              )}
+            </div>
+          </div>
+        </div>
+        {/* TABLE LIST */}
+        <div>
+          <Table columns={columns} renderRow={renderRow} data={data} />
+        </div>
+        {/* PAGINATION */}
+        <div>
+          <Pagination page={p} count={count} />
+        </div>
+      </div>
+      {/* Calendar */}
+      <div className="w-full overflow-x-auto">
+        <div className="min-w-[823px]">
+          <div className="h-full bg-white p-4 rounded-md">
+            <h1 className="text-xl font-semibold">Jadwal ({className})</h1>
+            {classData?.id && (
+              <BigCalendarContainer type="classId" id={classData.id} />
             )}
           </div>
         </div>
       </div>
-      {/* TABLE LIST */}
-      <div>
-        <Table columns={columns} renderRow={renderRow} data={data} />
-      </div>
-      {/* PAGINATION */}
-      <div>
-        <Pagination page={p} count={count} />
-      </div>
-    </div>
+    </ClientPageWrapper>
   );
 }

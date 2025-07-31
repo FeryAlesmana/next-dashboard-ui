@@ -1,3 +1,4 @@
+import ClientPageWrapper from "@/components/ClientWrapper";
 import FormContainer from "@/components/FormContainer";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
@@ -17,7 +18,13 @@ const AnnouncementListPage = async ({
 }) => {
   const { role, userId } = await getCurrentUser();
   const sp = await normalizeSearchParams(searchParams);
-  const { page, ...queryParams } = await sp;
+  const key = new URLSearchParams(
+    Object.entries(sp).reduce((acc, [k, v]) => {
+      if (v !== undefined) acc[k] = v;
+      return acc;
+    }, {} as Record<string, string>)
+  ).toString();
+  const { page, ...queryParams } = sp;
   const p = page ? parseInt(page) : 1;
 
   const columns = [
@@ -118,36 +125,41 @@ const AnnouncementListPage = async ({
   ]);
 
   return (
-    <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
-      {/* TOP */}
-      <div className="flex items-center justify-between">
-        <h1 className="hidden md:block text-lg font-semibold">
-          Semua Pemberitahuan
-        </h1>
-        <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-          <TableSearch></TableSearch>
-          <div className="flex items-center gap-4 self-end">
-            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
-              <Image src="/filter.png" alt="" width={14} height={14}></Image>
-            </button>
-            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
-              <Image src="/sort.png" alt="" width={14} height={14}></Image>
-            </button>
-            {role === "admin" && (
-              <FormContainer table="announcement" type="create"></FormContainer>
-            )}
+    <ClientPageWrapper key={key} role={role!}>
+      <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
+        {/* TOP */}
+        <div className="flex items-center justify-between">
+          <h1 className="hidden md:block text-lg font-semibold">
+            Semua Pemberitahuan
+          </h1>
+          <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
+            <TableSearch></TableSearch>
+            <div className="flex items-center gap-4 self-end">
+              <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
+                <Image src="/filter.png" alt="" width={14} height={14}></Image>
+              </button>
+              <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
+                <Image src="/sort.png" alt="" width={14} height={14}></Image>
+              </button>
+              {role === "admin" && (
+                <FormContainer
+                  table="announcement"
+                  type="create"
+                ></FormContainer>
+              )}
+            </div>
           </div>
         </div>
+        {/* LIST */}
+        <div className="">
+          <Table columns={columns} renderRow={renderRow} data={data}></Table>
+        </div>
+        {/* PAGINATION*/}
+        <div className="">
+          <Pagination page={p} count={count}></Pagination>
+        </div>
       </div>
-      {/* LIST */}
-      <div className="">
-        <Table columns={columns} renderRow={renderRow} data={data}></Table>
-      </div>
-      {/* PAGINATION*/}
-      <div className="">
-        <Pagination page={p} count={count}></Pagination>
-      </div>
-    </div>
+    </ClientPageWrapper>
   );
 };
 

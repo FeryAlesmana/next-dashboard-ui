@@ -1,3 +1,4 @@
+import ClientPageWrapper from "@/components/ClientWrapper";
 import FormContainer from "@/components/FormContainer";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
@@ -16,8 +17,14 @@ const ClassListPage = async ({
 }: {
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) => {
-  const sp = normalizeSearchParams(searchParams);
-  const { page, ...queryParams } = await sp;
+  const sp = await normalizeSearchParams(searchParams);
+  const { page, ...queryParams } = sp;
+  const key = new URLSearchParams(
+    Object.entries(sp).reduce((acc, [k, v]) => {
+      if (v !== undefined) acc[k] = v;
+      return acc;
+    }, {} as Record<string, string>)
+  ).toString();
   const p = page ? parseInt(page) : 1;
 
   const { role } = await getCurrentUser();
@@ -112,6 +119,8 @@ const ClassListPage = async ({
     prisma.class.count({ where: query }),
   ]);
   return (
+    <ClientPageWrapper key={key} role={role!}>
+      
     <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
       {/* TOP */}
       <div className="flex items-center justify-between">
@@ -140,6 +149,7 @@ const ClassListPage = async ({
         <Pagination page={p} count={count}></Pagination>
       </div>
     </div>
+    </ClientPageWrapper>
   );
 };
 

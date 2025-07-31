@@ -18,9 +18,10 @@ export type FormContainerProps = {
     | "announcement"
     | "ppdb"
     | "paymentLog";
-  type: "create" | "update" | "delete";
+  type: "create" | "update" | "delete" |"deleteMany" | "updateMany";
   data?: any;
   id?: number | string;
+  ids?: string[]; // For bulk delete
   lessonId?: string; // For attendance form
   prefilEmail?: string;
 };
@@ -35,6 +36,7 @@ const FormContainer = async ({
   const { userId, role } = await getCurrentUser();
   let relatedData = {};
   console.log(data, " data in form container");
+  console.log(id, " id in form container");
 
   if (type !== "delete") {
     switch (table) {

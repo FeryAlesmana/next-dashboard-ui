@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  CurrentState,
   deleteAnnouncement,
   deleteAssignment,
   deleteAttendance,
@@ -13,6 +14,7 @@ import {
   deletePpdb,
   deleteResult,
   deleteStudent,
+  deleteStudents,
   deleteSubject,
   deleteTeacher,
 } from "@/lib/actions";
@@ -29,15 +31,17 @@ import {
 import { toast } from "react-toastify";
 import { FormContainerProps } from "./FormContainer";
 import { role } from "@/lib/data";
+import DeleteManyForm from "./forms/DeleteMany";
+import UpdateManyStudentsForm from "./forms/UpdateManyStudents";
 // import StudentForm from "./forms/StudentForm";
 // import TeacherForm from "./forms/TeacherForm";
 
 const deleteActionMap = {
-  subject: deleteSubject,
-  class: deleteClass,
-  teacher: deleteTeacher,
   student: deleteStudent,
+  teacher: deleteTeacher,
   parent: deleteParent,
+  class: deleteClass,
+  subject: deleteSubject,
   lesson: deleteLesson,
   exam: deleteExam,
   assignment: deleteAssignment,
@@ -47,6 +51,40 @@ const deleteActionMap = {
   announcement: deleteAnnouncement,
   ppdb: deletePpdb,
   paymentLog: deletePaymentLog,
+};
+
+const singleDeleteMap = {
+  student: deleteStudent,
+  teacher: deleteTeacher,
+  parent: deleteParent,
+  class: deleteClass,
+  subject: deleteSubject,
+  lesson: deleteLesson,
+  exam: deleteExam,
+  assignment: deleteAssignment,
+  result: deleteResult,
+  attendance: deleteAttendance,
+  event: deleteEvent,
+  announcement: deleteAnnouncement,
+  ppdb: deletePpdb,
+  paymentLog: deletePaymentLog,
+};
+
+const bulkDeleteMap = {
+  student: deleteStudents,
+  teacher: deleteStudents,
+  parent: deleteStudents,
+  class: deleteStudents,
+  subject: deleteStudents,
+  lesson: deleteStudents,
+  exam: deleteStudents,
+  assignment: deleteStudents,
+  result: deleteStudents,
+  attendance: deleteStudents,
+  event: deleteStudents,
+  announcement: deleteStudents,
+  ppdb: deleteStudents,
+  paymentLog: deleteStudents,
 };
 
 const TeacherForm = dynamic(() => import("./forms/TeacherForm"), {
@@ -229,6 +267,7 @@ const FormModal = ({
   type,
   data,
   id,
+  ids,
   lessonId,
   relatedData,
   prefilEmail,
@@ -243,8 +282,39 @@ const FormModal = ({
 
   const [open, setOpen] = useState(false);
 
+  const universalDeleteHandler = async (
+    prevState: CurrentState,
+    formData: FormData
+  ): Promise<CurrentState> => {
+    const table = formData.get("table") as keyof typeof deleteActionMap;
+    const rawIds = formData.getAll("ids");
+    const ids = rawIds as string[];
+
+    console.log(ids, " ids in delete handler");
+    console.log(table, " table in delete handler");
+
+    if (!table || !Array.isArray(ids)) {
+      return { success: false, error: true, message: "Invalid data" };
+    }
+
+    const deleteFn =
+      ids.length > 1 ? bulkDeleteMap[table] : singleDeleteMap[table];
+
+    if (!deleteFn) {
+      return { success: false, error: true, message: "Unknown table type" };
+    }
+
+    if (ids.length === 1) {
+      // ✅ Inject id manually into formData for single delete function
+      formData.set("id", ids[0]);
+    }
+
+    // Pass both args if deleteFn expects two
+    return await deleteFn(prevState, formData);
+  };
+
   const Form = () => {
-    const [state, formAction] = useActionState(deleteActionMap[table], {
+    const [state, formAction] = useActionState(universalDeleteHandler, {
       success: false,
       error: false,
     });
@@ -258,17 +328,22 @@ const FormModal = ({
         router.refresh();
       }
     }, [state, router]);
+    console.log(id, " id in form Modal");
 
     return type === "delete" && id ? (
       <form action={formAction} className="p4 flex flex-col gap-4">
-        <input type="text | number" name="id" value={id} hidden readOnly />
+        <input type="hidden" name="table" value={table} />
+        <input type="hidden" name="ids" value={id} />
+
         <span className="text-center font-medium">
           Data akan terhapus. Apakah anda yakin?
         </span>
         <button className="bg-red-700 text-white py-2 px-4 rounded-md border-none w-max self-center">
-          Delete
+          Hapus
         </button>
       </form>
+    ) : type === "deleteMany" && Array.isArray(ids) ? (
+      <DeleteManyForm table={table} ids={ids} formAction={formAction} />
     ) : type === "create" || type === "update" ? (
       forms[table](setOpen, type, data, relatedData)
     ) : (
@@ -354,19 +429,66 @@ const FormModal = ({
     );
   }
 
+  if (table === "student" && type === "updateMany") {
+    return (
+      <>
+        <div className="">
+          <button
+            onClick={() => setOpen(true)}
+            className="flex items-center justify-center rounded-full hover:bg-lamaYellow transition w-7 h-7"
+          >
+            <Image src="/updateDark.png" alt="Edit" width={16} height={16} />
+          </button>
+        </div>
+        {open && (
+          <div className="w-screen h-screen absolute left-0 top-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">
+            <div className="bg-white p-4 rounded-md relative w-[95%] h-[95%] md:w-[90%] lg:w-[85%] xl:w-[80%] 2xl:w-[75%] overflow-y-auto">
+              <UpdateManyStudentsForm
+                ids={ids}
+                setOpen={setOpen}
+                table={table}
+                data={data}
+                relatedData={relatedData}
+              />
+              <div
+                className="absolute top-4 right-4 cursor-pointer"
+                onClick={() => setOpen(false)}
+              >
+                <Image src="/close.png" width={14} height={14} alt="Tutup" />
+              </div>
+            </div>
+          </div>
+        )}
+      </>
+    );
+  }
+
   return (
     <>
       <button
-        className={`${size} flex items-center justify-center rounded-full ${bgColor}`}
+        className={`
+    ${size} flex items-center justify-center rounded-full transition
+    ${
+      type === "deleteMany"
+        ? " text-white hover:bg-purple-300 shadow-sm"
+        : bgColor
+    }
+  `}
         onClick={() => setOpen(true)}
       >
-        <Image src={`/${type}.png`} alt="" width={15} height={16}></Image>
+        <Image
+          src={`/${type === "deleteMany" ? "deleteDark" : type}.png`}
+          alt=""
+          width={15}
+          height={16}
+        />
       </button>
+
       {open && (
         <div className="w-screen h-screen absolute left-0 top-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">
           <div
             className={`bg-white p-4 rounded-md relative w-[90%] md:w-[70%] lg:w-[60%] xl:w-[50%] 2xl:w-[40%] ${
-              type === "delete"
+              type === "delete" || type === "deleteMany"
                 ? "w-[350px] h-auto"
                 : ["student", "ppdb", "teacher", "paymentLog"].includes(table)
                 ? "w-[95%] h-[95%] md:w-[90%] lg:w-[85%] xl:w-[80%] 2xl:w-[75%] overflow-y-auto"

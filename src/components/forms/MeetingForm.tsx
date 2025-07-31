@@ -88,7 +88,7 @@ const MeetingForm = ({
   return (
     <form action="" onSubmit={onSubmit}>
       <h1 className="text-xl font-semibold">Tambah Pertemuan Baru</h1>
-      <div className="flex justify-between flex-wrap gap-4">
+      <div className="flex justify-between flex-wrap gap-4 p-4">
         <InputField
           label="lessonId"
           name="lessonId"
@@ -97,6 +97,15 @@ const MeetingForm = ({
           register={register}
           error={errors?.lessonId}
           hidden
+        ></InputField>
+        <InputField
+          label="Banyak Pertemuan"
+          name="meetingCount"
+          type="number"
+          defaultValue={data?.meetingCount}
+          register={register}
+          placeholder="Angka 1-30"
+          error={errors?.meetingCount}
         ></InputField>
       </div>
       {(state.error || Object.keys(errors).length > 0) && (

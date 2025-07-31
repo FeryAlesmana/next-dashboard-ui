@@ -41,6 +41,7 @@ const AttendanceMeetingForm = ({
   const {
     register,
     reset,
+    setValue,
     handleSubmit,
     formState: { errors },
   } = useForm<AttendanceSchema>({
@@ -131,18 +132,22 @@ const AttendanceMeetingForm = ({
         Presensi Pertemuan-{data?.meetingId}
       </h1>
       {currentLesson && (
-        <div className="mb-4 text-lg font-semibold text-blue-600">
-          {`Presensi untuk Pelajaran: ${currentLesson.name}`}
+        <div className="text-lg font-medium text-gray-700">
+          {`Pelajaran: ${currentLesson.name}`}
         </div>
       )}
       <div className="grid gap-4">
+        {students.length > 0 && students[0].class?.name && (
+          <div className="text-lg font-medium text-gray-700">
+            Kelas: {students[0].class.name}
+          </div>
+        )}
         <div className="overflow-x-auto">
           <table className="min-w-full border border-gray-300">
             <thead>
               <tr className="bg-gray-100">
                 <th className="border px-4 py-2">No.</th>
                 <th className="border px-4 py-2">Nama Siswa</th>
-                <th className="border px-4 py-2">Kelas</th>
                 <th className="border px-4 py-2">Status Kehadiran</th>
               </tr>
             </thead>
@@ -151,9 +156,9 @@ const AttendanceMeetingForm = ({
                 <tr key={student.id} className="odd:bg-white even:bg-gray-50">
                   <td className="border px-4 py-2 text-center">{index + 1}</td>
                   <td className="border px-4 py-2">{student.name}</td>
-                  <td className="border px-4 py-2 text-center">
+                  {/* <td className="border px-4 py-2 text-center">
                     {student.class?.name ?? "-"}
-                  </td>
+                  </td> */}
                   <td className="border px-4 py-2">
                     <div className="flex justify-center gap-4">
                       {statuses.map((status) => (
@@ -178,6 +183,17 @@ const AttendanceMeetingForm = ({
           </table>
         </div>
       </div>
+      <button
+        type="button"
+        className="px-4 py-2 bg-green-600 text-white rounded"
+        onClick={() => {
+          students.forEach((s) =>
+            setValue(`attendance.${s.id}.status`, "HADIR")
+          );
+        }}
+      >
+        Set Semua ke Hadir
+      </button>
 
       <button
         type="submit"

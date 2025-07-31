@@ -3,12 +3,16 @@ import { SignOutButton, useUser } from "@clerk/nextjs";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import MenuSkeleton from "./MenuSkeleton";
 
 export default function Menu() {
-  const { user } = useUser();
+  const { user, isLoaded } = useUser();
   const pathname = usePathname();
   const role = user?.publicMetadata?.role as string | undefined;
   const userId = user?.id;
+
+
+   if (!isLoaded) return <MenuSkeleton />;
   const menuItems = [
     {
       title: "MENU",
@@ -97,12 +101,12 @@ export default function Menu() {
           href: "/list/events",
           visible: ["admin", "teacher", "student", "parent"],
         },
-        {
-          icon: "/message.png",
-          label: "Pesan",
-          href: "/list/messages",
-          visible: ["admin", "teacher", "student", "parent"],
-        },
+        // {
+        //   icon: "/message.png",
+        //   label: "Pesan",
+        //   href: "/list/messages",
+        //   visible: ["admin", "teacher", "student", "parent"],
+        // },
         {
           icon: "/announcement.png",
           label: "Pemberitahuan",

@@ -17,10 +17,11 @@ export default function DashboardLayout({
       {/* LEFT SIDEBAR */}
       <div
         className={`fixed z-30 top-0 left-0 h-full bg-white shadow-lg transition-transform duration-300 ease-in-out
-        ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
-        lg:translate-x-0 lg:static w-1/2 lg:w-[16%] xl:w-[14%]
- p-4 gap-4 overflow-y-auto text-base lg:text-[13px]
-  direction-rtl scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100`}
+  ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
+  lg:translate-x-0 lg:static w-1/2 lg:w-[16%] xl:w-[14%]
+  p-4 gap-4 overflow-y-auto text-base lg:text-[13px]
+  direction-rtl scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100
+  min-w-[200px]`} // <-- add this
       >
         <Link
           href="/"

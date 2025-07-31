@@ -1,3 +1,6 @@
+import ClientPageWrapper from "@/components/ClientWrapper";
+import FilterSortBar from "@/components/FilterSortBar";
+import FilterSortToggle from "@/components/FilterSortToggle";
 import FormContainer from "@/components/FormContainer";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
@@ -5,7 +8,7 @@ import TableSearch from "@/components/TableSearch";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/setting";
 import { getCurrentUser, normalizeSearchParams } from "@/lib/utils";
-import { Class, Lesson, Prisma, Subject, Teacher } from "@prisma/client";
+import { Day, Prisma } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -18,8 +21,15 @@ const LessonListPage = async ({
 }: {
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) => {
-  const sp = normalizeSearchParams(searchParams);
-  const { page, ...queryParams } = await sp;
+  const sp = await normalizeSearchParams(searchParams);
+  const { page, ...queryParams } = sp;
+  const key = new URLSearchParams(
+    Object.entries(sp).reduce((acc, [k, v]) => {
+      if (v !== undefined) acc[k] = v;
+      return acc;
+    }, {} as Record<string, string>)
+  ).toString();
+
   const p = page ? parseInt(page) : 1;
 
   const { role, userId } = await getCurrentUser();
@@ -53,7 +63,7 @@ const LessonListPage = async ({
       accessor: "Day",
     },
     {
-      header: "Teacher",
+      header: "Guru",
       accessor: "teacher",
       className: "hidden md:table-cell",
     },
@@ -70,6 +80,7 @@ const LessonListPage = async ({
         ]
       : []),
   ];
+
   const renderRow = (item: any) => (
     <tr
       key={item.id}
@@ -133,10 +144,11 @@ const LessonListPage = async ({
   );
 
   const query: Prisma.LessonWhereInput = {};
+  let orderBy: Prisma.LessonOrderByWithRelationInput = {};
 
   if (queryParams) {
     for (const [key, value] of Object.entries(queryParams)) {
-      if (value !== undefined)
+      if (value !== undefined && value !== "")
         switch (key) {
           case "teacherId":
             query.teacherId = value.trim();
@@ -146,11 +158,44 @@ const LessonListPage = async ({
           case "classId":
             query.classId = parseInt(value);
             break;
+          case "gradeId":
+            query.class = {
+              is: {
+                gradeId: parseInt(value),
+              },
+            };
+            break;
+
+          case "day":
+            if (Object.values(Day).includes(value as Day)) {
+              query.day = value as Day;
+            }
+            break;
           case "search":
             query.OR = [
               { subject: { name: { contains: value, mode: "insensitive" } } },
               { teacher: { name: { contains: value, mode: "insensitive" } } },
+              { class: { name: { contains: value, mode: "insensitive" } } },
             ];
+            break;
+          case "sort":
+            switch (value) {
+              case "az":
+                orderBy = { subject: { name: "asc" } };
+                break;
+              case "za":
+                orderBy = { subject: { name: "desc" } };
+                break;
+              case "id_asc":
+                orderBy = { id: "asc" };
+                break;
+              case "id_desc":
+                orderBy = { id: "desc" };
+                break;
+              case "day":
+                orderBy = { day: "asc" }; // or "desc" if preferred
+                break;
+            }
             break;
           default:
             break;
@@ -190,7 +235,7 @@ const LessonListPage = async ({
             where: { teacherId: userId! },
             include: {
               subject: { select: { name: true } },
-              class: { select: { name: true } },
+              class: { select: { name: true, gradeId: true } },
               teacher: { select: { name: true, surname: true } },
             },
             take: ITEM_PER_PAGE,
@@ -316,9 +361,10 @@ const LessonListPage = async ({
   const [data, count] = await prisma.$transaction([
     prisma.lesson.findMany({
       where: query,
+      orderBy,
       include: {
         subject: { select: { name: true } },
-        class: { select: { name: true } },
+        class: { select: { name: true, gradeId: true } },
         teacher: { select: { name: true, surname: true } },
       },
       take: ITEM_PER_PAGE,
@@ -328,36 +374,78 @@ const LessonListPage = async ({
   ]);
 
   return (
-    <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
-      {/* TOP */}
-      <div className="flex items-center justify-between">
-        <h1 className="hidden md:block text-lg font-semibold">Jadwal {}</h1>
-        <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-          <TableSearch></TableSearch>
-          <div className="flex items-center gap-4 self-end">
-            <Link href={`/list/lessons?teacherId=${userId!}`}>
+    <ClientPageWrapper key={key} role={role!}>
+      <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
+        {/* TOP */}
+        <div className="flex items-center justify-between">
+          <h1 className="hidden md:block text-lg font-semibold">Jadwal {}</h1>
+          <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
+            <TableSearch></TableSearch>
+            <div className="flex items-center gap-4 self-end">
+              {/* <Link href={`/list/lessons?teacherId=${userId!}`}>
+                <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
+                  <Image src="/filter.png" alt="" width={14} height={14} />
+                </button>
+              </Link>
               <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
-                <Image src="/filter.png" alt="" width={14} height={14} />
-              </button>
-            </Link>
-            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
-              <Image src="/sort.png" alt="" width={14} height={14}></Image>
-            </button>
-            {role === "admin" && (
-              <FormContainer table="lesson" type="create"></FormContainer>
-            )}
+                <Image src="/sort.png" alt="" width={14} height={14}></Image>
+              </button> */}
+              <FilterSortToggle
+                filterFields={[
+                  {
+                    name: "classId",
+                    label: "Kelas",
+                    options: [
+                      { label: "1A", value: "1" },
+                      { label: "1B", value: "2" },
+                    ],
+                  },
+                  {
+                    name: "gradeId",
+                    label: "Tingkat",
+                    options: [
+                      { label: "1", value: 1 },
+                      { label: "2", value: 2 },
+                      { label: "3", value: 3 },
+                    ],
+                  },
+                  {
+                    name: "day",
+                    label: "Hari",
+                    options: [
+                      { label: "Senin", value: "SENIN" },
+                      { label: "Selasa", value: "SELASA" },
+                      { label: "Rabu", value: "RABU" },
+                      { label: "Kamis", value: "KAMIS" },
+                      { label: "Jumat", value: "JUMAT" },
+                      // Add more as needed
+                    ],
+                  },
+                ]}
+                sortOptions={[
+                  { label: "A-Z", value: "az" },
+                  { label: "Z-A", value: "za" },
+                  { label: "ID Asc", value: "id_asc" },
+                  { label: "ID Desc", value: "id_desc" },
+                  { label: "Day", value: "day" }, // Only for this page
+                ]}
+              />
+              {role === "admin" && (
+                <FormContainer table="lesson" type="create"></FormContainer>
+              )}
+            </div>
           </div>
         </div>
+        {/* LIST */}
+        <div className="">
+          <Table columns={columns} renderRow={renderRow} data={data}></Table>
+        </div>
+        {/* PAGINATION*/}
+        <div className="">
+          <Pagination page={p} count={count}></Pagination>
+        </div>
       </div>
-      {/* LIST */}
-      <div className="">
-        <Table columns={columns} renderRow={renderRow} data={data}></Table>
-      </div>
-      {/* PAGINATION*/}
-      <div className="">
-        <Pagination page={p} count={count}></Pagination>
-      </div>
-    </div>
+    </ClientPageWrapper>
   );
 };
 

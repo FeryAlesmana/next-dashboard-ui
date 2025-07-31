@@ -16,10 +16,8 @@ import {
 import { createStudent, CurrentState, updateStudent } from "@/lib/actions";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
-import { CldUploadWidget } from "next-cloudinary";
 import Select from "react-select";
 import { cloudinaryUpload } from "@/lib/upload/cloudinaryUpload";
-import { Preview } from "../preview";
 import UploadPhoto from "../UploadPhoto";
 
 const StudentForm = ({

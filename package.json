@@ -16,6 +16,7 @@
     "@prisma/client": "^6.12.0",
     "@types/react-big-calendar": "^1.16.2",
     "cloudinary": "^2.7.0",
+    "framer-motion": "^12.23.12",
     "moment": "^2.30.1",
     "next": "^15.3.5",
     "next-cloudinary": "^6.16.0",
