@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import SemesterSelect from "./SemesterSelect";
+import StudentParentTableSkeleton from "./StudentParentTableSkeleton";
 
 type Semester = {
   label: string;
@@ -87,7 +88,9 @@ export default function StudentPaymentView({
       </div>
 
       {loading ? (
-        <div className="text-center text-gray-400">Memuat data...</div>
+        <div className="text-center text-gray-400">
+          <StudentParentTableSkeleton />
+        </div>
       ) : payments.length === 0 ? (
         <div className="text-center text-gray-500">
           Tidak ada tagihan untuk semester ini.

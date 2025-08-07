@@ -79,48 +79,6 @@ const SingleResultPage = async ({
     }
   >();
 
-  // results.forEach((result) => {
-  //   const source = result.exam ?? result.assignment;
-  //   const lesson = source?.lesson;
-
-  //   if (!lesson) return;
-
-  //   const key = `${lesson.subject?.id}-${lesson.teacher?.id}`;
-
-  //   if (!groupedResults.has(key)) {
-  //     groupedResults.set(key, {
-  //       subjectName: lesson.subject?.name ?? "-",
-  //       teacherName: `${lesson.teacher?.name ?? ""} ${
-  //         lesson.teacher?.surname ?? ""
-  //       }`,
-  //       tugas: 0,
-  //       uts: 0,
-  //       uas: 0,
-  //       avg: 0,
-  //     });
-  //   }
-
-  //   const entry = groupedResults.get(key)!;
-
-  //   // Assign scores based on type
-  //   switch (result.resultType) {
-  //     case "TUGAS_HARIAN":
-  //     case "PEKERJAAN_RUMAH":
-  //       entry.tugas = result.score ?? 0;
-  //       break;
-  //     case "UJIAN_TENGAH_SEMESTER":
-  //       entry.uts = result.score ?? 0;
-  //       break;
-  //     case "UJIAN_AKHIR_SEMESTER":
-  //       entry.uas = result.score ?? 0;
-  //       break;
-  //   }
-
-  //   // Calculate average (include all 3 types)
-  //   entry.avg = parseFloat(
-  //     ((entry.tugas + entry.uts + entry.uas) / 3).toFixed(2)
-  //   );
-  // });
   const avgList: number[] = [];
   return (
     <div className="p-6 max-w-6xl mx-auto">

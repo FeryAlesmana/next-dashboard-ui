@@ -1,5 +1,7 @@
-// components/SemesterSelect.tsx
+'use client';
 import Select from "react-select";
+import { useEffect, useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 type SemesterOption = {
   label: string;
@@ -20,6 +22,7 @@ export default function SemesterSelect({
   onChange,
   placeholder = "Pilih Semester...",
 }: SemesterSelectProps) {
+  
   return (
     <Select
       options={semesters}
