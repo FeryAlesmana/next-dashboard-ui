@@ -8,7 +8,7 @@ import Image from "next/image";
 
 const ITEM_PER_PAGE = 10;
 
-type LessonWithRelations = Lesson & {
+export type LessonWithRelations = Lesson & {
   subject: Subject | null;
   class: Class | null;
   teacher?: { name: string } | null;

@@ -16,7 +16,10 @@ import {
   EventSchema,
   ExamSchema,
   LessonSchema,
+  MpaymentLogSchema,
   MstudentSchema,
+  mteacherSchema,
+  MteacherSchema,
   ParentSchema,
   PaymentLogSchema,
   PpdbSchema,
@@ -316,6 +319,55 @@ export const updateTeacher = async (
     return { success: false, error: true, message };
   }
 };
+
+export async function updateManyTeachers(
+  prevState: { success: boolean; error: boolean; message?: string },
+  data: MteacherSchema
+): Promise<CurrentState> {
+  try {
+    const parsed = mteacherSchema.safeParse(data);
+
+    if (!parsed.success) {
+      return {
+        success: false,
+        error: true,
+        message: "Validasi gagal. Mohon isi semua data dengan benar.",
+      };
+    }
+
+    const { ids, subjects = [], lessons = [] } = parsed.data;
+
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await Promise.all(
+      ids.map((id: string) =>
+        prisma.teacher.update({
+          where: { id },
+          data: {
+            subjects: {
+              set: subjects.map((subjectId) => ({ id: subjectId })),
+            },
+            lessons: {
+              set: lessons.map((lessonId) => ({ id: lessonId })),
+            },
+          },
+        })
+      )
+    );
+    return {
+      success: true,
+      error: false,
+      message: "Berhasil memperbarui guru.",
+    };
+  } catch (error: any) {
+    console.error("UpdateManyTeacher error:", error);
+    return {
+      success: false,
+      error: true,
+      message: "Terjadi kesalahan saat memperbarui data.",
+    };
+  }
+}
+
 export const deleteTeacher = async (
   currentState: CurrentState,
   formData: FormData
@@ -783,6 +835,7 @@ export const createExam = async (
         startTime: data.startTime,
         endTime: data.endTime,
         lessonId: data.lessonId,
+        exType: data.exTypes,
       },
     });
     return { success: true, error: false };
@@ -818,6 +871,7 @@ export const updateExam = async (
         startTime: data.startTime,
         endTime: data.endTime,
         lessonId: data.lessonId,
+        exType: data.exTypes,
       },
     });
     return { success: true, error: false };
@@ -1022,11 +1076,12 @@ export const createAssignment = async (
         startDate: new Date(),
         dueDate: data.dueDate,
         lessonId: data.lessonId,
+        assType: data.assTypes,
       },
     });
     return { success: true, error: false };
   } catch (error) {
-    console.error("Create Ujian error: ", error);
+    console.error("Create Tugas error: ", error);
     return { success: false, error: true };
   }
 };
@@ -1057,6 +1112,7 @@ export const updateAssignment = async (
         startDate: new Date(),
         dueDate: new Date(data.dueDate),
         lessonId: data.lessonId,
+        assType: data.assTypes,
       },
     });
     return { success: true, error: false };
@@ -1378,6 +1434,7 @@ export const createResult = async (
           assignmentId: data.assignmentId,
           examId: null,
         }),
+        resultType: data.resultType,
       },
     });
     return { success: true, error: false };
@@ -1407,6 +1464,7 @@ export const updateResult = async (
           assignmentId: data.assignmentId,
           examId: null,
         }),
+        resultType: data.resultType,
       },
     });
     return { success: true, error: false };
@@ -2019,6 +2077,7 @@ export async function createPaymentLog(
     const { recipientType, recipientId, ...paymentData } = payload;
 
     let studentIds: string[] = [];
+
     if (recipientType === "student") {
       studentIds = [recipientId];
     } else if (recipientType === "class") {
@@ -2043,9 +2102,20 @@ export async function createPaymentLog(
       };
     }
 
+    // ✅ Fetch classId and gradeId for each student
+    const studentData = await prisma.student.findMany({
+      where: { id: { in: studentIds } },
+      select: {
+        id: true,
+        classId: true,
+        gradeId: true,
+      },
+    });
+
+    // ✅ Create payment logs with both classId and gradeId from the student itself
     await prisma.paymentLog.createMany({
-      data: studentIds.map((studentId) => ({
-        studentId,
+      data: studentData.map((student) => ({
+        studentId: student.id,
         amount: paymentData.amount,
         paymentType: paymentData.paymentType,
         status: paymentData.status,
@@ -2053,8 +2123,8 @@ export async function createPaymentLog(
         description: paymentData.description || null,
         paymentMethod: paymentData.paymentMethod || null,
         receiptNumber: paymentData.receiptNumber || null,
-        classId: recipientType === "class" ? parseInt(recipientId) : null,
-        gradeId: recipientType === "grade" ? parseInt(recipientId) : null,
+        classId: student.classId,
+        gradeId: student.gradeId,
       })),
     });
 
@@ -2082,6 +2152,27 @@ export async function updatePaymentLog(
   try {
     const { recipientType, recipientId, ...paymentData } = data;
 
+    let classId: number | null = null;
+    let gradeId: number | null = null;
+
+    if (recipientType === "class") {
+      const classData = await prisma.class.findUnique({
+        where: { id: parseInt(recipientId) },
+        include: { grade: true },
+      });
+      classId = classData?.id ?? null;
+      gradeId = classData?.gradeId ?? null;
+    } else if (recipientType === "grade") {
+      gradeId = parseInt(recipientId);
+    } else if (recipientType === "student") {
+      const student = await prisma.student.findUnique({
+        where: { id: recipientId },
+        select: { classId: true, gradeId: true },
+      });
+      classId = student?.classId ?? null;
+      gradeId = student?.gradeId ?? null;
+    }
+
     await prisma.paymentLog.update({
       where: {
         id: data.id,
@@ -2094,15 +2185,93 @@ export async function updatePaymentLog(
         description: paymentData.description || null,
         paymentMethod: paymentData.paymentMethod || null,
         receiptNumber: paymentData.receiptNumber || null,
-        classId: recipientType === "class" ? parseInt(recipientId) : null,
-        gradeId: recipientType === "grade" ? parseInt(recipientId) : null,
+        classId,
+        gradeId,
       },
     });
 
-    return { success: true, error: false, message: "Tagihan berhasil dibuat." };
+    return {
+      success: true,
+      error: false,
+      message: "Tagihan berhasil diperbarui.",
+    };
   } catch (err) {
     console.error(err);
-    return { success: false, error: true, message: "Gagal membuat tagihan." };
+    return {
+      success: false,
+      error: true,
+      message: "Gagal memperbarui tagihan.",
+    };
+  }
+}
+
+export async function updatePaymentLogs(
+  prevState: CurrentState,
+  data: MpaymentLogSchema
+): Promise<CurrentState> {
+  const { role } = await getCurrentUser();
+  if (role !== "admin") {
+    return {
+      success: false,
+      error: true,
+      message: "Hanya admin yang dapat mengubah tagihan.",
+    };
+  }
+  console.log(data.ids, "Ids in actions");
+  try {
+    const { recipientType, recipientId, ids, ...paymentData } = data;
+
+    let classId: number | null = null;
+    let gradeId: number | null = null;
+
+    if (recipientType === "class") {
+      const classData = await prisma.class.findUnique({
+        where: { id: parseInt(recipientId) },
+        include: { grade: true },
+      });
+      classId = classData?.id ?? null;
+      gradeId = classData?.gradeId ?? null;
+    } else if (recipientType === "grade") {
+      gradeId = parseInt(recipientId);
+    } else if (recipientType === "student") {
+      const student = await prisma.student.findUnique({
+        where: { id: recipientId },
+        select: { classId: true, gradeId: true },
+      });
+      classId = student?.classId ?? null;
+      gradeId = student?.gradeId ?? null;
+    }
+    const selectedIdsAsNumbers = ids.map((id) => id); // or Number(id)
+
+    await prisma.paymentLog.updateMany({
+      where: {
+        id: { in: selectedIdsAsNumbers },
+      },
+      data: {
+        amount: paymentData.amount,
+        paymentType: paymentData.paymentType,
+        status: paymentData.status,
+        dueDate: new Date(paymentData.dueDate),
+        description: paymentData.description || null,
+        paymentMethod: paymentData.paymentMethod || null,
+        receiptNumber: paymentData.receiptNumber || null,
+        classId,
+        gradeId,
+      },
+    });
+
+    return {
+      success: true,
+      error: false,
+      message: "Tagihan berhasil diperbarui.",
+    };
+  } catch (err) {
+    console.error(err);
+    return {
+      success: false,
+      error: true,
+      message: "Gagal memperbarui tagihan.",
+    };
   }
 }
 
@@ -2122,5 +2291,43 @@ export const deletePaymentLog = async (
   } catch (error) {
     console.log(error + " Di delete Payment server action");
     return { success: false, error: true };
+  }
+};
+
+export const deletePaymentLogs = async (
+  currentState: CurrentState,
+  formData: FormData
+): Promise<CurrentState> => {
+  const ids = formData.getAll("ids") as string[];
+
+  if (!ids || ids.length === 0) {
+    return { success: false, error: true, message: "No student IDs provided." };
+  }
+
+  try {
+    for (const id of ids) {
+      const idAsNumber = parseInt(id);
+      try {
+        await prisma.paymentLog.delete({ where: { id: idAsNumber } });
+      } catch (innerError) {
+        console.error(`❌ Failed to delete Payment Log ID ${id}:`, innerError);
+        // Optionally continue deleting others instead of failing all
+      }
+    }
+
+    return {
+      success: true,
+      error: false,
+      message: `Deleted ${ids.length} Payment(s) successfully.`,
+    };
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === "string"
+        ? error
+        : "Unknown error";
+
+    return { success: false, error: true, message };
   }
 };

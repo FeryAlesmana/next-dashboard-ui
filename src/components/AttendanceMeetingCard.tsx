@@ -2,6 +2,7 @@ import React from "react";
 
 export default function AttendanceMeetingCard({
   meeting,
+  student,
   attendance,
 }: {
   meeting?: {
@@ -10,6 +11,7 @@ export default function AttendanceMeetingCard({
     startTime: Date;
     endTime: Date;
   };
+  student?: { name: string };
   attendance?: {
     status: "HADIR" | "SAKIT" | "ABSEN";
     date?: Date | null;
@@ -43,10 +45,8 @@ export default function AttendanceMeetingCard({
       )}
 
       <div className="flex flex-col md:flex-row md:justify-between md:items-center text-sm text-gray-600">
-        <div>
-          Status presensi: {getStatusLabel(attendance?.status)}
-        </div>
-
+        {student && <div className="text-black">{student.name || "-"}</div>}
+        <div>Status presensi: {getStatusLabel(attendance?.status)}</div>
         <div>
           Tanggal presensi:{" "}
           {attendance?.date ? attendance.date.toLocaleDateString() : "-"}

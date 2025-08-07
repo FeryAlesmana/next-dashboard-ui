@@ -65,11 +65,56 @@ export default async function AttendanceDetailPage({
         ]
       : []),
   ];
+
+  let parentChildrenIds: string[] = []; // Declare outside
+
+  if (role === "parent") {
+    const parent = await prisma.parent.findUnique({
+      where: { id: userId! },
+      include: {
+        students: true,
+        secondaryStudents: true,
+        guardianStudents: true,
+      },
+    });
+
+    const allChildren = [
+      ...(parent?.students ?? []),
+      ...(parent?.secondaryStudents ?? []),
+      ...(parent?.guardianStudents ?? []),
+    ];
+
+    if (!parent || allChildren.length === 0) return notFound();
+
+    parentChildrenIds = allChildren.map((s) => s.id); // Set the value
+  }
+
   const { className, lessonId } = await params;
   const renderRow = (item: any) => {
     const studentAttendance = item.attendances.find(
       (att: any) => att.studentId === userId
     );
+    const classStudentIds =
+      item.lesson.class?.students?.map((s: any) => s.id) || [];
+    console.log("attendances:", JSON.stringify(item, null, 2));
+
+    const relevantStudentIds = parentChildrenIds.filter((id) =>
+      classStudentIds.includes(id)
+    );
+    const parentChildrenAttendances = relevantStudentIds.map((studentId) => {
+      const attendance = item.attendances.find(
+        (att: any) => att.student?.id === studentId
+      );
+
+      const student = item.lesson.class.students.find(
+        (s: any) => s.id === studentId
+      );
+
+      return {
+        student,
+        attendance,
+      };
+    });
 
     return (
       <React.Fragment key={item.id}>
@@ -129,7 +174,7 @@ export default async function AttendanceDetailPage({
                 attendance={
                   studentAttendance
                     ? {
-                        status: studentAttendance.status, // Instead of present: boolean
+                        status: studentAttendance.status,
                         date: studentAttendance.date,
                       }
                     : undefined
@@ -138,6 +183,27 @@ export default async function AttendanceDetailPage({
             </td>
           </tr>
         )}
+
+        {/* Parent rows */}
+        {role === "parent" &&
+          parentChildrenAttendances.length > 0 &&
+          parentChildrenAttendances.map(({ student, attendance }) => (
+            <tr key={student.id} className="bg-gray-50">
+              <td colSpan={5} className="p-2">
+                <AttendanceMeetingCard
+                  student={{ name: student?.name || "Tidak diketahui" }}
+                  attendance={
+                    attendance
+                      ? {
+                          status: attendance.status,
+                          date: attendance.date,
+                        }
+                      : undefined
+                  }
+                />
+              </td>
+            </tr>
+          ))}
       </React.Fragment>
     );
   };
@@ -190,6 +256,15 @@ export default async function AttendanceDetailPage({
         attendances: {
           include: { student: true },
         },
+        lesson: {
+          include: {
+            class: {
+              include: {
+                students: true,
+              },
+            },
+          },
+        },
       },
       take: ITEM_PER_PAGE,
       skip: ITEM_PER_PAGE * (p - 1),
@@ -200,6 +275,7 @@ export default async function AttendanceDetailPage({
       select: { id: true },
     }),
   ]);
+
   return (
     <ClientPageWrapper key={key} role={role!}>
       <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
@@ -219,7 +295,7 @@ export default async function AttendanceDetailPage({
               <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
                 <Image src="/sort.png" alt="" width={14} height={14} />
               </button>
-              {(role === "admin" || role === "teacher") && (
+              {role === "admin" && (
                 <FormContainer
                   table="attendance"
                   type="create"

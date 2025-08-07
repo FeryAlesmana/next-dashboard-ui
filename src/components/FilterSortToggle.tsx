@@ -52,7 +52,7 @@ export default function FilterSortToggle({
       </div>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-max z-50 bg-white rounded-lg shadow-lg p-4">
+        <div className="absolute right-0 mt-2 w-max z-50 bg-white rounded-lg shadow-lg p-4 ">
           <FilterSortBar
             filterFields={filterFields}
             sortOptions={sortOptions}

@@ -6,32 +6,114 @@ import React, {
   startTransition,
   useActionState,
   useEffect,
+  useMemo,
   useState,
 } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "react-toastify";
-import { paymentLogSchema, PaymentLogSchema } from "@/lib/formValidationSchema";
 import {
-  createPaymentLog,
-  CurrentState,
-  updatePaymentLog,
-} from "@/lib/actions";
+  mPaymentLogSchema,
+  MpaymentLogSchema,
+} from "@/lib/formValidationSchema";
+import { CurrentState, updatePaymentLogs } from "@/lib/actions";
+import { PaymentStatus } from "@prisma/client";
 
 const FORM_KEY = "payment_log_draft_form";
 
 export default function CreatePaymentLogPage({
+  ids,
+  table,
   data,
-  type,
   relatedData,
   setOpen,
 }: {
+  ids?: number[];
+  table: string;
   setOpen: Dispatch<SetStateAction<boolean>>;
   data?: any;
-  type: "create" | "update";
   relatedData: any;
 }) {
+  // Extract selected items
+
+  type PaymentFormDefaults = {
+    paymentType?: "TUITION" | "EXTRACURRICULAR" | "UNIFORM" | "BOOKS" | "OTHER";
+    amount?: number;
+    dueDate?: string;
+    status?: "PENDING" | "PAID" | "OVERDUE" | "PARTIALLY_PAID";
+    recipientType?: "student" | "class" | "grade";
+    recipientId?: string;
+  };
+  type PaymentItem = {
+    id: number;
+    studentId: string;
+    amount: number;
+    paymentType: "TUITION" | "EXTRACURRICULAR" | "UNIFORM" | "BOOKS" | "OTHER";
+    status: "PENDING" | "PAID" | "OVERDUE" | "PARTIALLY_PAID";
+    dueDate: string;
+    classId: number;
+    gradeId: number;
+    // others are optional for this context
+  };
+
+  // If at least one selected item has a common classId or gradeId or paymentType,
+  // use the values from the first one.
+  // let defaultValues: PaymentFormDefaults = {
+  //   paymentType: "TUITION",
+  //   amount: undefined,
+  //   dueDate: undefined,
+  //   status: "PENDING",
+  // };
+  const selectedPayments = useMemo(() => {
+    return data?.filter((item: PaymentItem) => ids?.includes(item.id)) || [];
+  }, [data, ids]);
+
+  console.log(selectedPayments, "Selected Payment");
+
+  const defaultValues: PaymentFormDefaults = useMemo(() => {
+    if (selectedPayments.length === 0) return {};
+
+    const first = selectedPayments[0];
+
+    const hasSameClass = selectedPayments.every(
+      (p: PaymentItem) => p.classId === first.classId
+    );
+    const hasSameGrade = selectedPayments.every(
+      (p: PaymentItem) => p.gradeId === first.gradeId
+    );
+    const hasSamePaymentType = selectedPayments.every(
+      (p: PaymentItem) => p.paymentType === first.paymentType
+    );
+
+    let recipientType: "student" | "class" | "grade" | undefined;
+    let recipientId: string | undefined;
+
+    if (selectedPayments.length === 1) {
+      recipientType = "student";
+      recipientId = selectedPayments[0].studentId;
+    } else if (hasSameClass) {
+      recipientType = "class";
+      recipientId = first.classId;
+    } else if (hasSameGrade) {
+      recipientType = "grade";
+      recipientId = first.gradeId;
+    }
+
+    if (hasSameClass || hasSameGrade || hasSamePaymentType) {
+      return {
+        paymentType: first.paymentType as MpaymentLogSchema["paymentType"],
+        amount: first.amount,
+        dueDate: new Date(first.dueDate).toISOString().split("T")[0],
+        status: first.status as MpaymentLogSchema["status"],
+        recipientType,
+        recipientId,
+      };
+    }
+
+    return {};
+  }, [selectedPayments]);
+
   const router = useRouter();
   const {
     register,
@@ -40,33 +122,20 @@ export default function CreatePaymentLogPage({
     setValue,
     watch,
     formState: { errors },
-  } = useForm<PaymentLogSchema>({
-    resolver: zodResolver(paymentLogSchema),
+  } = useForm<MpaymentLogSchema>({
+    resolver: zodResolver(mPaymentLogSchema),
     defaultValues: {
-      paymentType: "TUITION",
-      amount: 0,
-      dueDate: "",
-      status: "PENDING",
-      description: "",
-      paymentMethod: "",
-      receiptNumber: "",
-      recipientType: "student",
-      recipientId: "",
+      ids,
+      recipientType: defaultValues.recipientType,
+      recipientId: defaultValues.recipientId,
     },
   });
 
-  const createPaymentLogHandler = async (
+  const updatePaymentLogsHandler = async (
     prevState: CurrentState,
-    payload: PaymentLogSchema
+    payload: MpaymentLogSchema
   ): Promise<CurrentState> => {
-    return await createPaymentLog(prevState, payload);
-  };
-
-  const updatePaymentLogHandler = async (
-    prevState: CurrentState,
-    payload: PaymentLogSchema
-  ): Promise<CurrentState> => {
-    return await updatePaymentLog(prevState, payload);
+    return await updatePaymentLogs(prevState, payload);
   };
 
   const initialState: CurrentState = {
@@ -75,78 +144,58 @@ export default function CreatePaymentLogPage({
     message: "",
   };
   const [state, formAction] = useActionState(
-    type === "create" ? createPaymentLogHandler : updatePaymentLogHandler,
+    updatePaymentLogsHandler,
     initialState
   );
 
   const watchedValues = watch();
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Simpan draft ke localStorage
   useEffect(() => {
-    const timeout = setTimeout(() => {
-      localStorage.setItem(FORM_KEY, JSON.stringify(watchedValues));
-    }, 500);
-
-    return () => clearTimeout(timeout);
-  }, [watchedValues]);
-
-  // Muat draft dari localStorage atau data untuk update
-  useEffect(() => {
-    const saved = localStorage.getItem(FORM_KEY);
-    if (saved) {
-      const values = JSON.parse(saved);
-      for (const key in values) {
-        setValue(key as keyof PaymentLogSchema, values[key]);
-      }
-    }
-
-    if (type === "update" && data) {
+    if (Object.keys(defaultValues).length > 0) {
       reset({
-        paymentType: data.paymentType ?? "TUITION",
-        amount: data.amount ?? 0,
-        dueDate: data.dueDate
-          ? new Date(data.dueDate).toISOString().split("T")[0]
-          : "",
-        status: data.status ?? "PENDING",
-        description: data.description ?? "",
-        paymentMethod: data.paymentMethod ?? "",
-        receiptNumber: data.receiptNumber ?? "",
-        recipientType: data.studentId
-          ? "student"
-          : data.classId
-          ? "class"
-          : "grade",
-        recipientId: data.studentId ?? data.classId ?? data.gradeId ?? "",
+        ids: ids || [],
+        ...defaultValues,
       });
     }
-  }, [setValue, reset, data, type]);
+  }, [reset, ids, defaultValues]);
+
+  useEffect(() => {
+    if (state.success) {
+      toast(`Tagihan berhasil di Edit!`);
+      setOpen(false);
+      router.refresh();
+    } else {
+      setIsSubmitting(false);
+    }
+  }, [state, setOpen, router]);
+  //   useEffect(() => {
+  //     if (ids && ids.length > 0) {
+  //       setValue("ids", ids);
+  //     }
+  //   }, [ids, setValue]);
 
   // Muat data siswa, kelas, dan angkatan
-  const {
-    classData = [],
-    studentData = [],
-    gradeData = [],
-  } = relatedData ?? [];
+  const { classData = [], studentData = [] } = relatedData ?? [];
 
-  console.log(relatedData, "Isi relatedData");
-  console.log(data, "Isi data");
+  console.log(ids, "Isi ids");
 
   type Grade = { id: number; level: number };
   type ClassWithGrade = { grade?: Grade };
-  // const gradeData: Grade[] =
-  //   (classData as ClassWithGrade[])
-  //     ?.filter((c): c is { grade: Grade } => !!c.grade && !!c.grade.id)
-  //     .map((c) => ({
-  //       id: c.grade.id,
-  //       level: c.grade.level,
-  //     }))
-  //     .filter(
-  //       (grade, index, self) =>
-  //         self.findIndex((g) => g.id === grade.id) === index
-  //     ) || [];
-  console.log(gradeData, "data tingkat");
-  console.log(classData, "data kelas");
+  const gradeData: Grade[] =
+    (classData as ClassWithGrade[])
+      ?.filter((c): c is { grade: Grade } => !!c.grade && !!c.grade.id)
+      .map((c) => ({
+        id: c.grade.id,
+        level: c.grade.level,
+      }))
+      .filter(
+        (grade, index, self) =>
+          self.findIndex((g) => g.id === grade.id) === index
+      ) || [];
+
+  if (!ids || ids.length === 0) {
+    return <span>Tidak ada data yang dipilih.</span>;
+  }
 
   const onSubmit = handleSubmit((data) => {
     setIsSubmitting(true);
@@ -156,26 +205,31 @@ export default function CreatePaymentLogPage({
     });
   });
 
-  useEffect(() => {
-    if (state.success) {
-      toast(`Tagihan berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`);
-      setOpen(false);
-      router.refresh();
-    }
-  }, [state, type, setOpen, router]);
+  console.log(defaultValues, " defaultvalues in form");
 
   return (
     <div className="max-w-4xl mx-auto p-4">
       <div className="border border-gray-300 rounded-lg p-6 shadow-sm bg-white space-y-6 text-black">
         <h1 className="text-lg font-semibold text-center">
-          {type === "create" ? "Buat Tagihan Baru" : "Edit Tagihan"}
+          Edit Banyak Tagihan
         </h1>
         <form onSubmit={onSubmit} className="space-y-4">
+          <input type="hidden" name="table" value={table} />
+          {ids?.map((id, index) => (
+            <input
+              key={id}
+              type="hidden"
+              value={id}
+              {...register(`ids.${index}` as const)}
+            />
+          ))}
+          <span className="text-center font-medium">
+            {ids.length} Pembayaran akan diperbarui.
+          </span>
           <div>
             <label className="block mb-1 font-medium">Jenis Pembayaran</label>
             <select
               {...register("paymentType")}
-              defaultValue={data?.paymentType || "TUITION"}
               className="w-full border rounded px-3 py-2"
             >
               <option value="TUITION">SPP</option>
@@ -328,10 +382,7 @@ export default function CreatePaymentLogPage({
             )}
           </div>
 
-          {data?.id && (
-            <input hidden type="number" {...register("id")} value={data.id} />
-          )}
-          {errors.id && <p className="text-red-600">{errors.id.message}</p>}
+          {errors.ids && <p className="text-red-600">{errors.ids.message}</p>}
 
           <div className="text-center pt-4">
             <button
@@ -342,11 +393,7 @@ export default function CreatePaymentLogPage({
               {isSubmitting && (
                 <span className="animate-spin inline-block w-5 h-5 border-2 border-white border-t-blue-400 rounded-full mr-2"></span>
               )}
-              {isSubmitting
-                ? "Memproses..."
-                : type === "create"
-                ? "Buat Tagihan"
-                : "Update Tagihan"}
+              {isSubmitting ? "Memproses..." : "Update Tagihan"}
             </button>
             <button
               type="button"
@@ -356,6 +403,16 @@ export default function CreatePaymentLogPage({
               Batal
             </button>
           </div>
+          {(state.error || Object.keys(errors).length > 0) && (
+            <span className="text-red-500">
+              Terjadi Kesalahan! {state.message ?? ""}
+              <pre>
+                {Object.entries(errors)
+                  .map(([key, val]) => `${key}: ${val?.message}`)
+                  .join("\n")}
+              </pre>
+            </span>
+          )}
         </form>
       </div>
     </div>

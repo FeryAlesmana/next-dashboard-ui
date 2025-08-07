@@ -11,6 +11,7 @@ import {
   deleteLesson,
   deleteParent,
   deletePaymentLog,
+  deletePaymentLogs,
   deletePpdb,
   deleteResult,
   deleteStudent,
@@ -33,6 +34,8 @@ import { FormContainerProps } from "./FormContainer";
 import { role } from "@/lib/data";
 import DeleteManyForm from "./forms/DeleteMany";
 import UpdateManyStudentsForm from "./forms/UpdateManyStudents";
+import UpdateManyPaymentsForm from "./forms/UpdateManyPaymentForm";
+import UpdateManyTeacherForm from "./forms/UpdateManyTeacher";
 // import StudentForm from "./forms/StudentForm";
 // import TeacherForm from "./forms/TeacherForm";
 
@@ -84,7 +87,7 @@ const bulkDeleteMap = {
   event: deleteStudents,
   announcement: deleteStudents,
   ppdb: deleteStudents,
-  paymentLog: deleteStudents,
+  paymentLog: deletePaymentLogs,
 };
 
 const TeacherForm = dynamic(() => import("./forms/TeacherForm"), {
@@ -343,7 +346,11 @@ const FormModal = ({
         </button>
       </form>
     ) : type === "deleteMany" && Array.isArray(ids) ? (
-      <DeleteManyForm table={table} ids={ids} formAction={formAction} />
+      <DeleteManyForm
+        table={table}
+        ids={ids as string[]}
+        formAction={formAction}
+      />
     ) : type === "create" || type === "update" ? (
       forms[table](setOpen, type, data, relatedData)
     ) : (
@@ -444,7 +451,73 @@ const FormModal = ({
           <div className="w-screen h-screen absolute left-0 top-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">
             <div className="bg-white p-4 rounded-md relative w-[95%] h-[95%] md:w-[90%] lg:w-[85%] xl:w-[80%] 2xl:w-[75%] overflow-y-auto">
               <UpdateManyStudentsForm
-                ids={ids}
+                ids={ids as string[]}
+                setOpen={setOpen}
+                table={table}
+                data={data}
+                relatedData={relatedData}
+              />
+              <div
+                className="absolute top-4 right-4 cursor-pointer"
+                onClick={() => setOpen(false)}
+              >
+                <Image src="/close.png" width={14} height={14} alt="Tutup" />
+              </div>
+            </div>
+          </div>
+        )}
+      </>
+    );
+  }
+  if (table === "teacher" && type === "updateMany") {
+    return (
+      <>
+        <div className="">
+          <button
+            onClick={() => setOpen(true)}
+            className="flex items-center justify-center rounded-full hover:bg-lamaYellow transition w-7 h-7"
+          >
+            <Image src="/updateDark.png" alt="Edit" width={16} height={16} />
+          </button>
+        </div>
+        {open && (
+          <div className="w-screen h-screen absolute left-0 top-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">
+            <div className="bg-white p-4 rounded-md relative w-[95%] h-[95%] md:w-[90%] lg:w-[85%] xl:w-[80%] 2xl:w-[75%] overflow-y-auto">
+              <UpdateManyTeacherForm
+                ids={ids as string[]}
+                setOpen={setOpen}
+                table={table}
+                data={data}
+                relatedData={relatedData}
+              />
+              <div
+                className="absolute top-4 right-4 cursor-pointer"
+                onClick={() => setOpen(false)}
+              >
+                <Image src="/close.png" width={14} height={14} alt="Tutup" />
+              </div>
+            </div>
+          </div>
+        )}
+      </>
+    );
+  }
+  if (table === "paymentLog" && type === "updateMany") {
+    return (
+      <>
+        <div className="">
+          <button
+            onClick={() => setOpen(true)}
+            className="flex items-center justify-center rounded-full hover:bg-lamaYellow transition w-7 h-7"
+          >
+            <Image src="/updateDark.png" alt="Edit" width={16} height={16} />
+          </button>
+        </div>
+        {open && (
+          <div className="w-screen h-screen absolute left-0 top-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">
+            <div className="bg-white p-4 rounded-md relative w-[95%] h-[95%] md:w-[90%] lg:w-[85%] xl:w-[80%] 2xl:w-[75%] overflow-y-auto">
+              <UpdateManyPaymentsForm
+                ids={ids as number[]}
                 setOpen={setOpen}
                 table={table}
                 data={data}

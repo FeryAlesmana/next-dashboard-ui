@@ -6,22 +6,75 @@ export const getCurrentUser = async () => {
   const role = (sessionClaims?.metadata as { role?: string })?.role;
   return { userId, role, actor };
 };
+
+const SEMESTERS = [
+  {
+    label: "Ganjil 2024/2025",
+    start: new Date("2024-07-01"),
+    end: new Date("2024-12-31"),
+  },
+  {
+    label: "Genap 2024/2025",
+    start: new Date("2025-01-01"),
+    end: new Date("2025-06-30"),
+  },
+  {
+    label: "Ganjil 2023/2024",
+    start: new Date("2023-07-01"),
+    end: new Date("2023-12-31"),
+  },
+  {
+    label: "Genap 2023/2024",
+    start: new Date("2024-01-01"),
+    end: new Date("2024-06-30"),
+  },
+  // ... add more past semesters
+];
+
+// export function getAvailableSemesters(gradeLevel: number): typeof SEMESTERS {
+//   if (gradeLevel < 1 || gradeLevel > 3) return [];
+
+//   const now = new Date();
+//   const currentYear = now.getFullYear();
+
+//   const allowedYears = [];
+//   for (let i = 0; i < gradeLevel; i++) {
+//     allowedYears.push(currentYear - i);
+//   }
+
+//   return SEMESTERS.filter((s) => {
+//     const startYear = s.start.getFullYear();
+//     const endYear = s.end.getFullYear();
+//     return allowedYears.includes(startYear) || allowedYears.includes(endYear);
+//   });
+// }
+
 export const getProfileByClerkIdAndRole = async (
   clerkId: string,
   role?: string
 ) => {
-  if (role === "student") {
-    return await prisma.student.findUnique({
-      where: { id: clerkId },
-      select: { name: true, img: true },
-    });
-  } else if (role === "teacher") {
-    return await prisma.teacher.findUnique({
-      where: { id: clerkId },
-      select: { name: true, img: true },
-    });
-  } else {
-    return null;
+  switch (role) {
+    case "student":
+      return await prisma.student.findUnique({
+        where: { id: clerkId },
+        select: { name: true, img: true },
+      });
+    case "teacher":
+      return await prisma.teacher.findUnique({
+        where: { id: clerkId },
+        select: { name: true, img: true },
+      });
+    case "parent":
+      const parent = await prisma.parent.findUnique({
+        where: { id: clerkId },
+        select: { name: true },
+      });
+      return {
+        name: parent?.name ?? "Orang Tua",
+        img: undefined, // fallback will be handled by caller
+      };
+    default:
+      return null;
   }
 };
 const currentWorkWeek = () => {

@@ -193,8 +193,8 @@ model Grade {
   id    Int @id @default(autoincrement())
   level Int @unique
 
-  students Student[]
-  classes  Class[]
+  students    Student[]
+  classes     Class[]
   paymentLogs PaymentLog[]
 }
 
@@ -250,6 +250,13 @@ model Exam {
   lessonId Int?
   lesson   Lesson?  @relation(fields: [lessonId], references: [id], onDelete: SetNull)
   results  Result[]
+  exType   exTypes?
+}
+
+enum exTypes {
+  UJIAN_HARIAN
+  UJIAN_TENGAH_SEMESTER
+  UJIAN_AKHIR_SEMESTER
 }
 
 model Assignment {
@@ -259,8 +266,15 @@ model Assignment {
   dueDate   DateTime
 
   lessonId Int?
-  lesson   Lesson?  @relation(fields: [lessonId], references: [id], onDelete: SetNull)
+  lesson   Lesson?   @relation(fields: [lessonId], references: [id], onDelete: SetNull)
   results  Result[]
+  assType  assTypes?
+}
+
+enum assTypes {
+  PEKERJAAN_RUMAH
+  TUGAS_AKHIR
+  TUGAS_HARIAN
 }
 
 model Result {
@@ -273,6 +287,16 @@ model Result {
   assignment   Assignment? @relation(fields: [assignmentId], references: [id], onDelete: SetNull)
   studentId    String?
   student      Student?    @relation(fields: [studentId], references: [id], onDelete: SetNull)
+  resultType   resTypes?
+}
+
+enum resTypes {
+  TUGAS_HARIAN
+  TUGAS_AKHIR
+  PEKERJAAN_RUMAH
+  UJIAN_HARIAN
+  UJIAN_TENGAH_SEMESTER
+  UJIAN_AKHIR_SEMESTER
 }
 
 model Attendance {
@@ -392,24 +416,24 @@ model EmailOtp {
 }
 
 model PaymentLog {
-  id            Int          @id @default(autoincrement())
+  id            Int           @id @default(autoincrement())
   studentId     String
-  student       Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  student       Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
   amount        Float
   paymentType   PaymentType
   status        PaymentStatus
   dueDate       DateTime
   paidAt        DateTime?
-  description   String?      // e.g., "Tuition for Semester 1" or "Extracurricular Fee"
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-  paymentMethod String?      // e.g., "Bank Transfer", "Cash", etc.
-  receiptNumber String?      @unique // Unique identifier for the payment receipt
+  description   String? // e.g., "Tuition for Semester 1" or "Extracurricular Fee"
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  paymentMethod String? // e.g., "Bank Transfer", "Cash", etc.
+  receiptNumber String?       @unique // Unique identifier for the payment receipt
 
-  classId  Int?
-  class    Class? @relation(fields: [classId], references: [id], onDelete: SetNull)
-  gradeId  Int?
-  grade    Grade? @relation(fields: [gradeId], references: [id], onDelete: SetNull)
+  classId Int?
+  class   Class? @relation(fields: [classId], references: [id], onDelete: SetNull)
+  gradeId Int?
+  grade   Grade? @relation(fields: [gradeId], references: [id], onDelete: SetNull)
 
   paymentInstallments PaymentInstallment[]
 }

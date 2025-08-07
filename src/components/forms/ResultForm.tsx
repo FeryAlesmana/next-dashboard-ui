@@ -15,6 +15,7 @@ import Select from "react-select";
 import { createResult, CurrentState, updateResult } from "@/lib/actions";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
+import { resTypes } from "@prisma/client";
 
 const ResultForm = ({
   setOpen,
@@ -97,16 +98,38 @@ const ResultForm = ({
       label: `${student.name} ${student.surname}`,
     })
   );
-  const ExamOption = exams.map((exam: { id: number; title: string }) => ({
-    value: exam.id,
-    label: `${exam.title}`,
-  }));
-  const AssignmentOption = assignments.map(
-    (assignment: { id: number; title: string }) => ({
-      value: assignment.id,
-      label: `${assignment.title}`,
-    })
+  const studentClassMap = Object.fromEntries(
+    students.map((s: any) => [s.id, s.classId])
   );
+
+  // 2. Track selected student
+  const [selectedStudentId, setSelectedStudentId] = useState<string>(
+    data?.studentId || ""
+  );
+
+  // 3. Get current classId
+  const selectedClassId = studentClassMap[selectedStudentId];
+
+  // 4. Filter exams/assignments based on classId
+  const filteredExams = exams.filter(
+    (exam: any) => exam.lesson?.classId === selectedClassId
+  );
+
+  const filteredAssignments = assignments.filter(
+    (assignment: any) => assignment.lesson?.classId === selectedClassId
+  );
+
+  // 5. Convert to dropdown options
+  const ExamOption = filteredExams.map((exam: any) => ({
+    value: exam.id,
+    label: exam.title,
+  }));
+
+  const AssignmentOption = filteredAssignments.map((assignment: any) => ({
+    value: assignment.id,
+    label: assignment.title,
+  }));
+
   console.log(JSON.stringify(data) + "<= sended data");
 
   return (
@@ -139,15 +162,13 @@ const ResultForm = ({
                   className="text-sm"
                   classNamePrefix="select"
                   placeholder="Cari Siswa..."
-                  onChange={(selectedOption) =>
-                    field.onChange(selectedOption?.value)
-                  }
-                  value={
-                    studentOption.find(
-                      (opt: { value: string; label: string }) =>
-                        opt.value === field.value
-                    ) || null
-                  }
+                  value={studentOption.find(
+                    (option: any) => option.value === field.value
+                  )}
+                  onChange={(selectedOption) => {
+                    setSelectedStudentId(selectedOption?.value); // update class context
+                    field.onChange(selectedOption?.value); // update form value
+                  }}
                 />
               );
             }}
@@ -252,6 +273,70 @@ const ResultForm = ({
             )}
           </div>
         )}
+
+        {selectedType.length > 0 && (
+          <div className="flex flex-col gap-2 w-full md:w-1/4">
+            <label className="text-xs text-gray-400">Tipe Nilai</label>
+
+            <Controller
+              name="resultType"
+              control={control}
+              defaultValue={data?.resultType || ""}
+              render={({ field }) => {
+                const examTypes = [
+                  "UJIAN_HARIAN",
+                  "UJIAN_TENGAH_SEMESTER",
+                  "UJIAN_AKHIR_SEMESTER",
+                ];
+
+                const assignmentTypes = [
+                  "TUGAS_HARIAN",
+                  "TUGAS_AKHIR",
+                  "PEKERJAAN_RUMAH",
+                ];
+
+                const resultOption = Object.entries(resTypes)
+                  .filter(([key]) => {
+                    if (selectedType === "Ujian")
+                      return examTypes.includes(key);
+                    if (selectedType === "Tugas")
+                      return assignmentTypes.includes(key);
+                    return true;
+                  })
+                  .map(([key, value]) => ({
+                    label: key
+                      .replace(/_/g, " ")
+                      .toLowerCase()
+                      .replace(/\b\w/g, (c) => c.toUpperCase()),
+                    value,
+                  }));
+
+                return (
+                  <Select
+                    {...field}
+                    options={resultOption}
+                    className="text-sm"
+                    classNamePrefix="select"
+                    placeholder="Cari Tipe..."
+                    onChange={(selectedOption) =>
+                      field.onChange(selectedOption?.value)
+                    }
+                    value={
+                      resultOption.find((opt) => opt.value === field.value) ||
+                      null
+                    }
+                  />
+                );
+              }}
+            />
+
+            {errors.resultType?.message && (
+              <p className="text-xs text-red-400">
+                {errors.resultType.message.toString()}
+              </p>
+            )}
+          </div>
+        )}
       </div>
       {data && (
         <InputField
@@ -300,8 +385,6 @@ const ResultForm = ({
             : "Update dan Simpan"}
         </button>
       </div>
-
-
     </form>
   );
 };

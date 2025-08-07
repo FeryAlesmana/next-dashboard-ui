@@ -1,9 +1,7 @@
 "use client";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
+import { Controller, useForm } from "react-hook-form";
 import InputField from "../InputField";
-import Image from "next/image";
 import {
   Dispatch,
   SetStateAction,
@@ -24,6 +22,7 @@ import {
 } from "@/lib/actions";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
+import Select from "react-select";
 
 const AssignmentForm = ({
   setOpen,
@@ -39,6 +38,7 @@ const AssignmentForm = ({
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
   } = useForm<AssignmentSchema>({
     resolver: zodResolver(assignmentSchema),
@@ -95,14 +95,40 @@ const AssignmentForm = ({
 
   const { lessons, kelas2 } = relatedData;
 
+  const lessonOption = lessons.map(
+    (lesson: {
+      id: number;
+      name: string;
+      subject: { name: string };
+      class: { name: string };
+    }) => ({
+      value: lesson.id,
+      label: `${lesson.name} - ${lesson.subject?.name ?? " "} - ${
+        lesson.class?.name ?? " "
+      }`,
+    })
+  );
+
   const formatDateForInput = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toISOString().slice(0, 16); // returns "YYYY-MM-DDTHH:MM"
+
+    // Convert to Asia/Jakarta time
+    const jakartaDate = new Date(
+      date.toLocaleString("en-US", { timeZone: "Asia/Jakarta" })
+    );
+
+    const year = jakartaDate.getFullYear();
+    const month = String(jakartaDate.getMonth() + 1).padStart(2, "0");
+    const day = String(jakartaDate.getDate()).padStart(2, "0");
+    const hours = String(jakartaDate.getHours()).padStart(2, "0");
+    const minutes = String(jakartaDate.getMinutes()).padStart(2, "0");
+
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
   return (
     <form action="" className="flex flex-col gap-8" onSubmit={onSubmit}>
-      <h1 className="text-xl font-semibold">Tambah Pemberitahuan Baru</h1>
+      <h1 className="text-xl font-semibold">Tambah Tugas Baru</h1>
       <span className="text-xs text-gray-400 font-medium">
         Informasi Autentikasi
       </span>
@@ -115,50 +141,59 @@ const AssignmentForm = ({
           error={errors?.title}
         ></InputField>
         <div className="flex flex-col gap-2 w-full md:w-1/4">
-          <label className="text-xs text-gray-400">Pelajaran</label>
+          <label className="text-xs text-gray-400">Tipe Tugas</label>
           <select
             className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
-            {...register("lessonId")}
-            defaultValue={data?.lessonId}
+            {...register("assTypes")}
+            defaultValue={data?.assTypes}
           >
-            {lessons.map((lesson: { id: number; name: string }) => (
-              <option value={lesson.id} key={lesson.id}>
-                {lesson.name}
-              </option>
-            ))}
+            <option value="">Pilih Tipe Tugas</option>
+            <option value="TUGAS_HARIAN">Tugas Harian</option>
+            <option value="PEKERJAAN_RUMAH">Pekerjaan Rumah(PR)</option>
+            <option value="TUGAS_AKHIR">Tugas Akhir</option>
           </select>
+          {errors.assTypes?.message && (
+            <p className="text-xs text-red-400">
+              {errors.assTypes.message.toString()}
+            </p>
+          )}
+        </div>
+        <div className="flex flex-col gap-2 w-full md:w-1/4">
+          <label className="text-xs text-gray-400">Jadwal</label>
+
+          <Controller
+            name="lessonId"
+            control={control}
+            defaultValue={data?.lessonId || ""}
+            render={({ field }) => {
+              return (
+                <Select
+                  {...field}
+                  options={lessonOption}
+                  className="text-sm"
+                  classNamePrefix="select"
+                  placeholder="Cari Jadwal..."
+                  onChange={(selectedOption) =>
+                    field.onChange(selectedOption?.value)
+                  }
+                  value={
+                    lessonOption.find(
+                      (opt: { value: number; label: string }) =>
+                        opt.value === field.value
+                    ) || null
+                  }
+                />
+              );
+            }}
+          />
+
           {errors.lessonId?.message && (
             <p className="text-xs text-red-400">
               {errors.lessonId.message.toString()}
             </p>
           )}
         </div>
-        {/* <InputField
-          label="Guru"
-          name="teacher"
-          defaultValue={data?.teacher}
-          register={register}
-          error={errors?.teacher}
-        ></InputField> */}
-        <div className="flex flex-col gap-2 w-full md:w-1/4">
-          <label className="text-xs text-gray-400">Kelas</label>
-          <select
-            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
-            {...register("classId")}
-            defaultValue={data?.classId}
-          >
-            {kelas2.map((kelas: { id: number; name: string }) => (
-              <option value={kelas.id} key={kelas.id}>
-                {kelas.name}
-              </option>
-            ))}
-          </select>
-          {errors.classId?.message && (
-            <p className="text-xs text-red-400">
-              {errors.classId.message.toString()}
-            </p>
-          )}
-        </div>
+
         <InputField
           label="Deadline"
           name="dueDate"

@@ -1,18 +1,17 @@
 "use client";
 import { useState } from "react";
-import StudentTableClient from "./StudentTableClient";
 import Table from "@/components/Table";
+import PaymentTableClient from "./PaymentTableClient";
 import BulkActions from "./BulkActions";
-// import UpdateManyStudentForm from "./UpdateManyStudentForm";
-// import DeleteManyModal from "./DeleteManyModal";
+import TeacherTableClient from "./TeacherTableClient";
 
-export default function StudentListClient({
+export default function TeacherListClient({
   columns,
-  students,
+  data,
   role,
   relatedData,
 }: {
-  students: any[];
+  data: any[];
   relatedData?: any;
   role: string;
   columns: { header: string; accessor: string; className?: string }[];
@@ -29,9 +28,9 @@ export default function StudentListClient({
     <div className="space-y-4 mt-3">
       <BulkActions
         selectedIds={selected}
-        table="student"
+        table="teacher"
         onReset={() => setSelected([])}
-        data={students}
+        data={data}
         relatedData={relatedData}
       />
 
@@ -41,19 +40,19 @@ export default function StudentListClient({
             <td className="px-4 py-2">
               <input
                 type="checkbox"
-                checked={selected.length === students.length}
+                checked={selected.length === data.length}
                 onChange={(e) =>
-                  setSelected(e.target.checked ? students.map((s) => s.id) : [])
+                  setSelected(e.target.checked ? data.map((s) => s.id) : [])
                 }
               />
             </td>
           )}
           {/* other headers */}
         </tr>
-        {students.map((student) => (
-          <StudentTableClient
-            key={student.id}
-            student={student}
+        {data.map((data) => (
+          <TeacherTableClient
+            key={data.id}
+            data={data}
             role={role}
             selected={selected}
             onToggle={toggleSelection}

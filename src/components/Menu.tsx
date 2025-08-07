@@ -11,8 +11,7 @@ export default function Menu() {
   const role = user?.publicMetadata?.role as string | undefined;
   const userId = user?.id;
 
-
-   if (!isLoaded) return <MenuSkeleton />;
+  if (!isLoaded) return <MenuSkeleton />;
   const menuItems = [
     {
       title: "MENU",
@@ -89,12 +88,12 @@ export default function Menu() {
           href: "/list/results",
           visible: ["admin", "teacher", "student", "parent"],
         },
-        // {
-        //   icon: "/attendance.png",
-        //   label: "Kehadiran",
-        //   href: "/list/attendance",
-        //   visible: ["admin", "teacher", "student", "parent"],
-        // },
+        {
+          icon: "/finance.png",
+          label: "Pembayaran",
+          href: "/list/payment",
+          visible: ["admin", "teacher", "student", "parent"],
+        },
         {
           icon: "/calendar.png",
           label: "Events",
@@ -122,7 +121,7 @@ export default function Menu() {
           icon: "/profile.png",
           label: "Profil",
           href: "",
-          visible: ["teacher", "student", "parent"],
+          visible: ["teacher", "student"],
         },
         {
           icon: "/setting.png",

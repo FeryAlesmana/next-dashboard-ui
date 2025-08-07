@@ -6,8 +6,9 @@ import TableSearch from "@/components/TableSearch";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/setting";
 import { getCurrentUser, normalizeSearchParams } from "@/lib/utils";
-import { Prisma } from "@prisma/client";
+import { Prisma, resTypes } from "@prisma/client";
 import Image from "next/image";
+import Link from "next/link";
 
 const ResultListPage = async ({
   searchParams,
@@ -27,7 +28,9 @@ const ResultListPage = async ({
 
   const columns = [
     { header: "Pelajaran", accessor: "subject" },
-    { header: "Murid", accessor: "student" },
+    ...(role === "admin" || role === "teacher"
+      ? [{ header: "Murid", accessor: "Student" }]
+      : []),
     { header: "Nilai", accessor: "score" },
     { header: "Guru", accessor: "teacher", className: "hidden md:table-cell" },
     { header: "Kelas", accessor: "class" },
@@ -36,7 +39,14 @@ const ResultListPage = async ({
       ? [{ header: "Aksi", accessor: "action" }]
       : []),
   ];
-
+  const resultTypelabel = {
+    UJIAN_HARIAN: "Ujian Harian",
+    UJIAN_TENGAH_SEMESTER: "Ujian Tengah Semester",
+    UJIAN_AKHIR_SEMESTER: "Ujian Akhir Semester",
+    PEKERJAAN_RUMAH: "Pekerjaan Rumah",
+    TUGAS_AKHIR: "Tugas Akhir",
+    TUGAS_HARIAN: "Tugas Harian",
+  } as const;
   const renderRow = (item: any) => (
     <tr
       key={item.id}
@@ -47,7 +57,9 @@ const ResultListPage = async ({
       <td className="hidden md:table-cell">{item.score}</td>
       <td className="hidden md:table-cell">{item.teacher}</td>
       <td className="hidden md:table-cell">{item.class}</td>
-      <td className="hidden md:table-cell">{item.selectedType}</td>
+      <td className="hidden md:table-cell">
+        {item?.resultType ? resultTypelabel[item?.resultType as resTypes] : "-"}
+      </td>
       <td>
         <div className="flex items-center gap-2">
           {(role === "admin" || role === "teacher") && (
@@ -81,7 +93,7 @@ const ResultListPage = async ({
         }
     }
   }
-
+  let students: any[] = [];
   //ROLE CONDITIONS
   switch (role) {
     case "admin":
@@ -95,15 +107,258 @@ const ResultListPage = async ({
     case "student":
       query.studentId = userId!;
       break;
-    case "parent":
-      query.student = {
-        OR: [
-          { parentId: userId! },
-          { secondParentId: userId! },
-          { guardianId: userId! },
-        ],
-      };
-      break;
+    case "parent": {
+      const children = await prisma.student.findMany({
+        where: {
+          OR: [
+            { parentId: userId! },
+            { secondParentId: userId! },
+            { guardianId: userId! },
+          ],
+        },
+        select: { name: true, id: true },
+      });
+
+      const studentIds = children.map((child) => child.id);
+
+      if (studentIds.length === 0) {
+        return (
+          <div className="p-8 text-center text-gray-500">
+            Tidak ada data hasil ujian atau tugas anak Anda.
+          </div>
+        );
+      }
+
+      const results = await prisma.result.findMany({
+        where: { studentId: { in: studentIds } },
+        include: {
+          student: { select: { name: true, surname: true, id: true } },
+          exam: {
+            include: {
+              lesson: {
+                select: {
+                  class: { select: { name: true } },
+                  teacher: { select: { name: true, surname: true } },
+                  subject: true,
+                },
+              },
+            },
+          },
+          assignment: {
+            include: {
+              lesson: {
+                select: {
+                  class: { select: { name: true } },
+                  teacher: { select: { name: true, surname: true } },
+                  subject: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      const groupedByStudent = children.map((child) => {
+        const childResults = results.filter((r) => r.studentId === child.id);
+
+        const mappedResults = childResults
+          .map((item) => {
+            const source = item.exam ?? item.assignment;
+            const lesson = source?.lesson;
+
+            if (!source || !lesson) return null;
+
+            return {
+              id: item.id,
+              title: source.title,
+              subject: lesson.subject?.name || "-",
+              teacher: lesson.teacher
+                ? `${lesson.teacher.name} ${lesson.teacher.surname}`
+                : "-",
+              class: lesson.class?.name || "-",
+              score: item.score,
+              type: item.exam ? "Ujian" : "Tugas",
+              resultType: item.resultType ?? null, // ✅ ADD THIS LINE
+            };
+          })
+          .filter(Boolean);
+
+        return {
+          id: child.id,
+          name: child.name,
+          results: mappedResults,
+        };
+      });
+
+      return (
+        <div className="w-full mx-auto p-6">
+          <h1 className="text-2xl font-bold mb-6">Hasil Ujian & Tugas Anak</h1>
+
+          {groupedByStudent.length === 0 ? (
+            <div className="text-center text-gray-500">
+              Tidak ada hasil ujian atau tugas.
+            </div>
+          ) : (
+            groupedByStudent.map((student, index) => (
+              <div
+                key={student.id}
+                className={`mb-12 p-2 rounded-sm border-l-4 ${
+                  index % 2 === 0 ? "border-l-orange-300" : "border-l-blue-300"
+                }`}
+              >
+                <div className="flex flex-row justify-between">
+                  <h2 className="text-xl font-semibold mb-4">{student.name}</h2>
+                  <Link
+                    href={`/list/results/${student.id}`}
+                    className="text-right"
+                  >
+                    <Image src="/moreDark.png" alt="" width={20} height={20} />
+                  </Link>
+                </div>
+
+                <div className="space-y-8">
+                  {/* Tugas Section */}
+                  <div className="mb-6 bg-gray-200 rounded-md p-2">
+                    <h3 className="text-xl font-bold mb-4 p-2 w-fit border-l-2 border-orange-300">
+                      Tugas
+                    </h3>
+                    {student.results.filter((r) => r?.type === "Tugas")
+                      .length === 0 ? (
+                      <div className="text-gray-500 text-center p-2">
+                        Belum ada hasil tugas dari {student.name}.
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto border rounded-lg">
+                        <table className="min-w-full divide-y divide-gray-200 text-sm">
+                          <thead className="bg-gray-100">
+                            <tr>
+                              {columns.map((col) => (
+                                <th
+                                  key={col.accessor}
+                                  className={`px-4 py-3 font-semibold text-center ${
+                                    col.className ?? ""
+                                  }`}
+                                >
+                                  {col.header}
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody className="bg-white divide-y divide-gray-100 text-center">
+                            {student.results
+                              .filter((r) => r?.type === "Tugas")
+                              .map((res) => (
+                                <tr
+                                  key={res?.id}
+                                  className="even:bg-slate-50 hover:bg-lamaPurpleLight"
+                                >
+                                  <td className="p-4">{res?.subject}</td>
+                                  <td className="p-4">{res?.score ?? "-"}</td>
+                                  <td className="p-4 hidden md:table-cell">
+                                    {res?.teacher}
+                                  </td>
+                                  <td className="p-4">{res?.class}</td>
+                                  <td className="p-4 hidden md:table-cell">
+                                    {res?.resultType
+                                      ? resultTypelabel[
+                                          res?.resultType as resTypes
+                                        ]
+                                      : "-"}
+                                  </td>
+                                </tr>
+                              ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Ujian Section */}
+                  <div className="mb-6 bg-gray-200 rounded-md p-2 slate-600">
+                    <div className="text-xl font-bold mb-4 p-2 w-fit border-l-2 border-blue-400">
+                      Ujian{" "}
+                    </div>
+
+                    {[
+                      "UJIAN_HARIAN",
+                      "UJIAN_TENGAH_SEMESTER",
+                      "UJIAN_AKHIR_SEMESTER",
+                    ].map((resType) => {
+                      const examResults = student.results.filter(
+                        (r) => r?.type === "Ujian" && r?.resultType === resType
+                      );
+
+                      // Format the enum to readable label
+                      const readableLabel = resType
+                        .replace("UJIAN_", "")
+                        .split("_")
+                        .map(
+                          (word) => word.charAt(0) + word.slice(1).toLowerCase()
+                        )
+                        .join(" ");
+
+                      return (
+                        <div key={resType} className="mb-4 ml-4">
+                          <h3 className="text-lg font-medium mb-2">
+                            {readableLabel}
+                          </h3>
+                          {examResults.length === 0 ? (
+                            <div className="text-gray-500 text-center p-2">
+                              Belum ada hasil ujian{" "}
+                              {readableLabel.toLowerCase()} dari {student.name}.
+                            </div>
+                          ) : (
+                            <div className="overflow-x-auto border rounded-lg">
+                              <table className="min-w-full divide-y divide-gray-200 text-sm">
+                                <thead className="bg-gray-100">
+                                  <tr>
+                                    {columns
+                                      .filter((col) => col.accessor !== "type") // 👈 exclude the "type" column
+                                      .map((col) => (
+                                        <th
+                                          key={col.accessor}
+                                          className={`px-4 py-3 font-semibold text-center ${
+                                            col.className ?? ""
+                                          }`}
+                                        >
+                                          {col.header}
+                                        </th>
+                                      ))}
+                                  </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-gray-100 text-center">
+                                  {examResults.map((res) => (
+                                    <tr
+                                      key={res?.id}
+                                      className="even:bg-slate-50 hover:bg-lamaPurpleLight"
+                                    >
+                                      <td className="p-4">{res?.subject}</td>
+                                      <td className="p-4">
+                                        {res?.score ?? "-"}
+                                      </td>
+                                      <td className="p-4 hidden md:table-cell">
+                                        {res?.teacher}
+                                      </td>
+                                      <td className="p-4">{res?.class}</td>
+                                      {/* <td className="p-4">{res?.type}</td> */}
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      );
+    }
+
     default:
       break;
   }
@@ -167,6 +422,7 @@ const ResultListPage = async ({
         selectedType: isExam ? "Ujian" : "Tugas",
         examId: item.examId || undefined,
         assignmentId: item.assignmentId || undefined,
+        resultType: item.resultType || "",
       };
     })
     .filter(Boolean);

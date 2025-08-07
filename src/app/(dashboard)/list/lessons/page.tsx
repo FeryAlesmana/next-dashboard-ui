@@ -11,6 +11,7 @@ import { getCurrentUser, normalizeSearchParams } from "@/lib/utils";
 import { Day, Prisma } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
+import { LessonWithRelations } from "../attendance/page";
 
 // type LessonList = Lesson & { subject: Subject } & { class: Class } & {
 //   teacher: Teacher;
@@ -205,6 +206,8 @@ const LessonListPage = async ({
   // ROLE CONDITION
 
   const hasTeacherIdParam = query.teacherId !== undefined;
+  let lessons: LessonWithRelations[] = [];
+  let students: any[] = [];
   switch (role) {
     case "admin":
       break;
@@ -341,24 +344,157 @@ const LessonListPage = async ({
         },
       };
       break;
-    case "parent":
-      query.class = {
-        students: {
-          some: {
-            OR: [
-              { parentId: userId! },
-              { secondParentId: userId! },
-              { guardianId: userId! },
-            ],
-          },
+    case "parent": {
+      const children = await prisma.student.findMany({
+        where: {
+          OR: [
+            { parentId: userId! },
+            { secondParentId: userId! },
+            { guardianId: userId! },
+          ],
         },
-      };
-      break;
+        select: { classId: true, name: true, id: true },
+      });
+
+      const classIds = children
+        .map((child) => child.classId)
+        .filter((id): id is number => id !== null && id !== undefined);
+
+      if (classIds.length === 0) {
+        return (
+          <div className="p-8 text-center text-gray-500">
+            Tidak ada data kelas anak Anda.
+          </div>
+        );
+      }
+
+      query.classId = { in: classIds };
+
+      const studentsWithLessons = await Promise.all(
+        children.map(async (child) => {
+          const lessons = child.classId
+            ? await prisma.lesson.findMany({
+                where: { classId: child.classId },
+                include: {
+                  subject: true,
+                  class: true,
+                  teacher: { select: { name: true, surname: true } },
+                },
+              })
+            : [];
+
+          return { id: child.id, name: child.name, lessons };
+        })
+      );
+
+      students = studentsWithLessons;
+      const parentLessons = studentsWithLessons.flatMap((student) =>
+        student.lessons.map((lesson) => ({
+          ...lesson,
+          studentName: student.name, // optional if you want to display child name
+        }))
+      );
+
+      return (
+        <div className="w-full mx-auto p-6">
+          <h1 className="text-2xl font-bold mb-6">Jadwal Anak</h1>
+
+          {studentsWithLessons.length === 0 ? (
+            <div className="text-center text-gray-500">
+              Tidak ada jadwal tersedia untuk anak Anda.
+            </div>
+          ) : (
+            studentsWithLessons.map((student) => (
+              <div key={student.id} className="mb-12">
+                <h2 className="text-xl font-semibold mb-4">{student.name}</h2>
+
+                {student.lessons.length === 0 ? (
+                  <div className="text-center text-gray-500">
+                    Tidak ada jadwal untuk {student.name}.
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto border rounded-lg">
+                    <table className="min-w-full divide-y divide-gray-200 text-sm">
+                      <thead className="bg-gray-100">
+                        <tr>
+                          {columns.map((col) => (
+                            <th
+                              key={col.accessor}
+                              className={`px-4 py-3 font-semibold text-center ${
+                                col.className ?? ""
+                              }`}
+                            >
+                              {col.header}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-100 text-center">
+                        {student.lessons.map((item) => (
+                          <tr
+                            key={item.id}
+                            className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight"
+                          >
+                            <td className="hidden md:table-cell">{item?.id}</td>
+                            <td className="flex items-center p-4 gap-4">
+                              {item.subject?.name || "-"}
+                            </td>
+                            <td className="hidden md:table-cell">
+                              {item.class?.name}
+                            </td>
+                            <td className="hidden md:table-cell">
+                              {item.startTime?.toLocaleTimeString("id-ID", {
+                                timeZone: "Asia/Jakarta",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                hour12: false,
+                              })}
+                            </td>
+                            <td className="hidden md:table-cell">
+                              {item.endTime?.toLocaleTimeString("id-ID", {
+                                timeZone: "Asia/Jakarta",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                hour12: false,
+                              })}
+                            </td>
+                            <td>{item.day}</td>
+                            <td className="hidden md:table-cell">
+                              {item.teacherId
+                                ? `${item.teacher?.name} ${item.teacher?.surname}`
+                                : "Tidak ada guru"}
+                            </td>
+                            <td>
+                              <Link
+                                href={`/list/attendance/${item.class?.name}/${item.id}`}
+                              >
+                                <button className="w-7 h-7 items-center justify-center rounded-full">
+                                  <Image
+                                    src="/moreDark.png"
+                                    alt=""
+                                    width={16}
+                                    height={16}
+                                  />
+                                </button>
+                              </Link>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      );
+    }
     default:
       break;
   }
 
-  const [data, count] = await prisma.$transaction([
+  const [data, count, classesData] = await prisma.$transaction([
     prisma.lesson.findMany({
       where: query,
       orderBy,
@@ -371,6 +507,9 @@ const LessonListPage = async ({
       skip: ITEM_PER_PAGE * (p - 1),
     }),
     prisma.lesson.count({ where: query }),
+    prisma.class.findMany({
+      include: { grade: true, _count: { select: { students: true } } },
+    }),
   ]);
 
   return (
@@ -382,32 +521,33 @@ const LessonListPage = async ({
           <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
             <TableSearch></TableSearch>
             <div className="flex items-center gap-4 self-end">
-              {/* <Link href={`/list/lessons?teacherId=${userId!}`}>
-                <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
-                  <Image src="/filter.png" alt="" width={14} height={14} />
-                </button>
-              </Link>
-              <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
-                <Image src="/sort.png" alt="" width={14} height={14}></Image>
-              </button> */}
               <FilterSortToggle
                 filterFields={[
                   {
                     name: "classId",
                     label: "Kelas",
-                    options: [
-                      { label: "1A", value: "1" },
-                      { label: "1B", value: "2" },
-                    ],
+                    options: classesData.map((cls) => ({
+                      label: cls.name,
+                      value: cls.id.toString(),
+                    })),
                   },
                   {
                     name: "gradeId",
                     label: "Tingkat",
-                    options: [
-                      { label: "1", value: 1 },
-                      { label: "2", value: 2 },
-                      { label: "3", value: 3 },
-                    ],
+                    options: Array.from(
+                      new Set(
+                        classesData
+                          .map((cls) => cls.grade?.level)
+                          .filter(
+                            (level): level is number => level !== undefined
+                          )
+                      )
+                    )
+                      .sort((a, b) => a - b)
+                      .map((level) => ({
+                        label: level.toString(),
+                        value: level,
+                      })),
                   },
                   {
                     name: "day",

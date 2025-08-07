@@ -123,5 +123,61 @@ export default async function MeetingAttendancePage({
     );
   }
 
+  // if (role === "parent") {
+  //   const children = await prisma.student.findMany({
+  //     where: {
+  //       OR: [
+  //         { parentId: userId! },
+  //         { secondParentId: userId! },
+  //         { guardianId: userId! },
+  //       ],
+  //     },
+  //   });
+
+  //   if (!children.length) {
+  //     return (
+  //       <div className="p-6 text-center text-gray-500">
+  //         Anda belum terdaftar sebagai wali dari siswa manapun.
+  //       </div>
+  //     );
+  //   }
+
+  //   const childrenIds = children.map((c) => c.id);
+  //   const relevantAttendances = meeting.attendances.filter((att) =>
+  //     childrenIds.includes(att.studentId!)
+  //   );
+
+  //   return (
+  //     <div className="p-6 space-y-6">
+  //       <h1 className="text-2xl font-bold mb-4">
+  //         Presensi Anak - Pertemuan {meeting.meetingNo}
+  //       </h1>
+
+  //       {children.map((child) => {
+  //         const att = relevantAttendances.find((a) => a.studentId === child.id);
+
+  //         return (
+  //           <div key={child.id} className="border rounded-lg p-4">
+  //             <div className="font-semibold text-lg mb-2">
+  //               {child.name} (ID: {child.id})
+  //             </div>
+  //             <AttendanceMeetingCard
+  //               meeting={{
+  //                 meetingNo: meeting.meetingNo,
+  //                 date: meeting.date,
+  //                 startTime: meeting.startTime,
+  //                 endTime: meeting.endTime,
+  //               }}
+  //               attendance={
+  //                 att ? { status: att.status, date: att.date } : undefined
+  //               }
+  //             />
+  //           </div>
+  //         );
+  //       })}
+  //     </div>
+  //   );
+  // }
+
   return <div className="p-8 text-center text-red-500">Akses ditolak.</div>;
 }

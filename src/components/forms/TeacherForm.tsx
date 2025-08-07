@@ -15,8 +15,6 @@ import { teacherSchema, TeacherSchema } from "@/lib/formValidationSchema";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { createTeacher, CurrentState, updateTeacher } from "@/lib/actions";
-import { useFormState } from "react-dom";
-import { CldUploadWidget } from "next-cloudinary";
 import Select from "react-select";
 import { Day } from "@prisma/client";
 import UploadPhoto from "../UploadPhoto";

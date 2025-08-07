@@ -101,7 +101,7 @@ const UpdateManyStudentsForm = ({
       <span className="text-center font-medium">
         {ids.length} siswa akan diperbarui. Silakan pilih kelas baru:
       </span>
-      <div className="grid grid-cols-2 gap-4 max-h-[500px] overflow-y-auto">
+      <div className="grid grid-cols-2 gap-4 max-h-[500px] overflow-y-auto p-4 border rounded-xl shadow-inner bg-gray-50">
         {data
           .filter((student: { id: string }) => ids.includes(student.id))
           .map(
@@ -130,42 +130,43 @@ const UpdateManyStudentsForm = ({
             )
           )}
       </div>
+      <div className="flex flex-row gap-2 w-full justify-evenly mt-10">
+        <div className="flex flex-col gap-2 w-full md:w-1/4">
+          <label className="text-xs text-gray-400">Tingkat</label>
+          <select
+            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
+            {...register("gradeId")}
+          >
+            <option value="">Pilih Tingkat</option>
+            {grades.map((grade: { id: number; level: number }) => (
+              <option value={grade.id} key={grade.id}>
+                {grade.level}
+              </option>
+            ))}
+          </select>
+          {errors.gradeId?.message && (
+            <p className="text-xs text-red-400">{errors.gradeId.message}</p>
+          )}
+        </div>
 
-      <div className="flex flex-col gap-2 w-full md:w-1/4">
-        <label className="text-xs text-gray-400">Tingkat</label>
-        <select
-          className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
-          {...register("gradeId")}
-        >
-          <option value="">Pilih Tingkat</option>
-          {grades.map((grade: { id: number; level: number }) => (
-            <option value={grade.id} key={grade.id}>
-              {grade.level}
-            </option>
-          ))}
-        </select>
-        {errors.gradeId?.message && (
-          <p className="text-xs text-red-400">{errors.gradeId.message}</p>
-        )}
-      </div>
-
-      <div className="flex flex-col gap-2 w-full md:w-1/4">
-        <label className="text-xs text-gray-400">Kelas</label>
-        <select
-          className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
-          {...register("classId")}
-        >
-          <option value="">Pilih Kelas</option>
-          {classes.map((kelas: any) => (
-            <option value={kelas.id} key={kelas.id}>
-              {kelas.name} - {kelas._count?.students ?? 0}/{kelas.capacity}{" "}
-              Kapasitas
-            </option>
-          ))}
-        </select>
-        {errors.classId?.message && (
-          <p className="text-xs text-red-400">{errors.classId.message}</p>
-        )}
+        <div className="flex flex-col gap-2 w-full md:w-1/4">
+          <label className="text-xs text-gray-400">Kelas</label>
+          <select
+            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
+            {...register("classId")}
+          >
+            <option value="">Pilih Kelas</option>
+            {classes.map((kelas: any) => (
+              <option value={kelas.id} key={kelas.id}>
+                {kelas.name} - {kelas._count?.students ?? 0}/{kelas.capacity}{" "}
+                Kapasitas
+              </option>
+            ))}
+          </select>
+          {errors.classId?.message && (
+            <p className="text-xs text-red-400">{errors.classId.message}</p>
+          )}
+        </div>
       </div>
 
       <button

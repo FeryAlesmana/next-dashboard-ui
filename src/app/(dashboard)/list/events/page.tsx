@@ -141,7 +141,17 @@ const EventListPage = async ({
   const roleConditions = {
     teacher: { lessons: { some: { teacherId: userId! } } },
     student: { students: { some: { id: userId! } } },
-    parent: { students: { some: { parentId: userId! } } },
+    parent: {
+      students: {
+        some: {
+          OR: [
+            { parentId: userId! },
+            { secondParentId: userId! },
+            { guardianId: userId! },
+          ],
+        },
+      },
+    },
   };
 
   if (role !== "admin") {

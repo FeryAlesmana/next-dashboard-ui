@@ -1,6 +1,6 @@
 "use client";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import InputField from "../InputField";
 import {
@@ -15,6 +15,7 @@ import { examSchema, ExamSchema } from "@/lib/formValidationSchema";
 import { createExam, CurrentState, updateExam } from "@/lib/actions";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
+import Select from "react-select";
 
 const ExamForm = ({
   setOpen,
@@ -30,6 +31,7 @@ const ExamForm = ({
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
   } = useForm<ExamSchema>({
     resolver: zodResolver(examSchema),
@@ -87,8 +89,34 @@ const ExamForm = ({
   const { lessons } = relatedData;
   const formatDateForInput = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toISOString().slice(0, 16); // returns "YYYY-MM-DDTHH:MM"
+
+    // Convert to Asia/Jakarta time
+    const jakartaDate = new Date(
+      date.toLocaleString("en-US", { timeZone: "Asia/Jakarta" })
+    );
+
+    const year = jakartaDate.getFullYear();
+    const month = String(jakartaDate.getMonth() + 1).padStart(2, "0");
+    const day = String(jakartaDate.getDate()).padStart(2, "0");
+    const hours = String(jakartaDate.getHours()).padStart(2, "0");
+    const minutes = String(jakartaDate.getMinutes()).padStart(2, "0");
+
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
+
+  const lessonOption = lessons.map(
+    (lesson: {
+      id: number;
+      name: string;
+      subject: { name: string };
+      class: { name: string };
+    }) => ({
+      value: lesson.id,
+      label: `${lesson.name} - ${lesson.subject?.name ?? "-"} - ${
+        lesson.class?.name ?? "-"
+      }`,
+    })
+  );
 
   return (
     <form action="" className="flex flex-col gap-8" onSubmit={onSubmit}>
@@ -123,21 +151,55 @@ const ExamForm = ({
           type="datetime-local"
         ></InputField>
         <div className="flex flex-col gap-2 w-full md:w-1/4">
-          <label className="text-xs text-gray-400">Pelajaran</label>
-          <select
-            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
-            {...register("lessonId")}
-            defaultValue={data?.lessonId}
-          >
-            {lessons.map((lesson: { id: number; name: string }) => (
-              <option value={lesson.id} key={lesson.id}>
-                {lesson.name}
-              </option>
-            ))}
-          </select>
+          <label className="text-xs text-gray-400">Jadwal</label>
+
+          <Controller
+            name="lessonId"
+            control={control}
+            defaultValue={data?.lessonId || ""}
+            render={({ field }) => {
+              return (
+                <Select
+                  {...field}
+                  options={lessonOption}
+                  className="text-sm"
+                  classNamePrefix="select"
+                  placeholder="Cari Jadwal..."
+                  onChange={(selectedOption) =>
+                    field.onChange(selectedOption?.value)
+                  }
+                  value={
+                    lessonOption.find(
+                      (opt: { value: number; label: string }) =>
+                        opt.value === field.value
+                    ) || null
+                  }
+                />
+              );
+            }}
+          />
+
           {errors.lessonId?.message && (
             <p className="text-xs text-red-400">
               {errors.lessonId.message.toString()}
+            </p>
+          )}
+        </div>
+        <div className="flex flex-col gap-2 w-full md:w-1/4">
+          <label className="text-xs text-gray-400">Tipe Ujian</label>
+          <select
+            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
+            {...register("exTypes")}
+            defaultValue={data?.exTypes}
+          >
+            <option value="">Pilih Tipe Ujian</option>
+            <option value="UJIAN_HARIAN">Ujian Harian</option>
+            <option value="UJIAN_TENGAH_SEMESTER">Ujian Tengah Semester</option>
+            <option value="UJIAN_AKHIR_SEMESTER">Ujian Akhir Semester</option>
+          </select>
+          {errors.exTypes?.message && (
+            <p className="text-xs text-red-400">
+              {errors.exTypes.message.toString()}
             </p>
           )}
         </div>
@@ -152,6 +214,7 @@ const ExamForm = ({
           />
         )}
       </div>
+
       {(state.error || Object.keys(errors).length > 0) && (
         <span className="text-red-500">
           Terjadi Kesalahan! {state.message ?? ""}

@@ -1,8 +1,10 @@
 import ClientPageWrapper from "@/components/ClientWrapper";
+import FilterSortToggle from "@/components/FilterSortToggle";
 import FormContainer from "@/components/FormContainer";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
+import TeacherListClient from "@/components/TeacherListClient";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/setting";
 import { getCurrentUser, normalizeSearchParams } from "@/lib/utils";
@@ -25,36 +27,45 @@ const TeacherListPage = async ({
       return acc;
     }, {} as Record<string, string>)
   ).toString();
-  const { page, ...queryParams } = sp;
+  const { page, limit, ...queryParams } = sp;
   const p = page ? parseInt(page) : 1;
+  const perPage = limit === "all" ? undefined : parseInt(limit ?? "10");
   const columns = [
+    ...(role === "admin"
+      ? [
+          {
+            header: "Select",
+            accessor: "checkbox",
+          },
+        ]
+      : []),
     {
-      header: "Info",
+      header: "Nama Guru dan Email Guru ",
       accessor: "info",
     },
     {
-      header: "Teacher ID",
-      accessor: "ID Guru",
+      header: "ID Guru",
+      accessor: "teacherId",
       className: "hidden md:table-cell",
     },
     {
-      header: "Subjects",
-      accessor: "Pelajaran",
+      header: "Pelajaran",
+      accessor: "subjects",
       className: "hidden md:table-cell",
     },
     {
-      header: "Class",
-      accessor: "Kelas",
+      header: "Kelas",
+      accessor: "class",
       className: "hidden md:table-cell",
     },
     {
-      header: "Phone",
-      accessor: "No. Tlp",
+      header: "No. Tlp",
+      accessor: "phone",
       className: "hidden md:table-cell",
     },
     {
-      header: "Addres",
-      accessor: "Alamat",
+      header: "Alamat",
+      accessor: "address",
       className: "hidden md:table-cell",
     },
     ...(role === "admin"
@@ -116,10 +127,11 @@ const TeacherListPage = async ({
   );
 
   const query: Prisma.TeacherWhereInput = {};
+  let orderBy: Prisma.TeacherOrderByWithRelationInput | undefined;
 
   if (queryParams) {
     for (const [key, value] of Object.entries(queryParams)) {
-      if (value !== undefined)
+      if (value !== undefined && value !== "")
         switch (key) {
           case "classId":
             {
@@ -131,26 +143,67 @@ const TeacherListPage = async ({
             }
             break;
           case "search":
-            query.name = { contains: value, mode: "insensitive" };
+            query.OR = [
+              { name: { contains: value, mode: "insensitive" } },
+              { id: { contains: value, mode: "insensitive" } },
+              { phone: { contains: value, mode: "insensitive" } },
+            ];
+            break;
+          case "subjectId":
+            query.subjects = {
+              some: { id: parseInt(value) },
+            };
+            break;
+          case "sort":
+            switch (value) {
+              case "az":
+                orderBy = { name: "asc" };
+                break;
+              case "za":
+                orderBy = { name: "desc" };
+                break;
+              case "id_asc":
+                orderBy = { id: "asc" };
+                break;
+              case "id_desc":
+                orderBy = { id: "desc" };
+                break;
+            }
+            break;
           default:
             break;
         }
     }
   }
 
-  const [data, count] = await prisma.$transaction([
+  const [data, count, subjects, lessons] = await prisma.$transaction([
     prisma.teacher.findMany({
       where: query,
+      orderBy,
       include: {
-        subjects: true,
+        subjects: { select: { id: true, name: true } },
         classes: true,
       },
-      take: ITEM_PER_PAGE,
-      skip: ITEM_PER_PAGE * (p - 1),
+      take: perPage,
+      skip: perPage ? perPage * (p - 1) : undefined,
     }),
     prisma.teacher.count({ where: query }),
+    prisma.subject.findMany({
+      select: {
+        id: true,
+        name: true,
+      },
+    }),
+    prisma.lesson.findMany({
+      select: {
+        id: true,
+        name: true,
+        day: true,
+      },
+    }),
   ]);
-
+  let relatedData = {};
+  relatedData = { subjects: subjects, lessons: lessons };
   // console.log(data);
 
   return (
@@ -164,12 +217,38 @@ const TeacherListPage = async ({
           <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
             <TableSearch></TableSearch>
             <div className="flex items-center gap-4 self-end">
-              <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
-                <Image src="/filter.png" alt="" width={14} height={14}></Image>
-              </button>
-              <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
-                <Image src="/sort.png" alt="" width={14} height={14}></Image>
-              </button>
+              <FilterSortToggle
+                filterFields={[
+                  // {
+                  //   name: "classId",
+                  //   label: "Kelas",
+                  //   options: classesData.map((cls) => ({
+                  //     label: cls.name,
+                  //     value: cls.id.toString(),
+                  //   })),
+                  // },
+                  {
+                    name: "subjectId",
+                    label: "Mata Pelajaran",
+                    options: Array.from(
+                      new Map(
+                        data
+                          .flatMap((teacher) => teacher.subjects)
+                          .map((subject) => [
+                            subject.id,
+                            { label: subject.name, value: subject.id },
+                          ])
+                      ).values()
+                    ).sort((a, b) => a.label.localeCompare(b.label)),
+                  },
+                ]}
+                sortOptions={[
+                  { label: "A-Z", value: "az" },
+                  { label: "Z-A", value: "za" },
+                  { label: "ID Asc", value: "id_asc" },
+                  { label: "ID Desc", value: "id_desc" },
+                ]}
+              />
               {role === "admin" && (
                 // <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
                 //   <Image src="/plus.png" alt="" width={14} height={14}></Image>
@@ -181,7 +260,13 @@ const TeacherListPage = async ({
         </div>
         {/* LIST */}
         <div className="">
-          <Table columns={columns} renderRow={renderRow} data={data}></Table>
+          {/* <Table columns={columns} renderRow={renderRow} data={data}></Table> */}
+          <TeacherListClient
+            data={data}
+            role={role!}
+            columns={columns}
+            relatedData={relatedData}
+          />
         </div>
         {/* PAGINATION*/}
         <div className="">

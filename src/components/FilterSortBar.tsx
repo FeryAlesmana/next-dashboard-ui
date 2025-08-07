@@ -55,7 +55,7 @@ const FilterSortBar = ({
     <div
       className={`transition-all duration-300 ease-in-out overflow-hidden ${className}`}
     >
-      <div className="flex flex-wrap gap-2 items-center mb-4">
+      <div className="flex flex-col lg:flex-row flex-wrap gap-2 items-start lg:items-center justify-start mb-4">
         {filterFields.map((field) => (
           <select
             key={field.name}

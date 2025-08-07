@@ -147,6 +147,7 @@ const StudentsListPage = async ({
               {
                 student_details: {
                   nisn: { contains: value, mode: "insensitive" },
+                  noWa: { contains: value, mode: "insensitive" },
                 },
               },
             ];

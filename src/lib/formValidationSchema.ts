@@ -1,4 +1,14 @@
-import { Agama, Awards, Degree, KPS, TTinggal, UserSex } from "@prisma/client";
+import {
+  Agama,
+  assTypes,
+  Awards,
+  Degree,
+  exTypes,
+  KPS,
+  resTypes,
+  TTinggal,
+  UserSex,
+} from "@prisma/client";
 import { isValid, z } from "zod";
 
 export const subjectSchema = z.object({
@@ -188,6 +198,7 @@ export const examSchema = z.object({
   startTime: z.coerce.date({ message: "Waktu mulai Ujian harus diisi" }),
   endTime: z.coerce.date({ message: "Waktu selesai Ujian wajib diisi!" }),
   lessonId: z.coerce.number({ message: "Id pelajaran wajib di isi" }),
+  exTypes: z.nativeEnum(exTypes, { message: "Tipe Ujian wajib di isi" }),
 });
 
 export type ExamSchema = z.infer<typeof examSchema>;
@@ -215,10 +226,14 @@ export type AnnouncementSchema = z.infer<typeof announcementSchema>;
 
 export const assignmentSchema = z.object({
   id: z.coerce.number().optional(),
-  title: z.string().min(4, { message: "Event wajib diisi!" }),
-  classId: z.coerce.number({ message: "Id kelas wajib diisi!" }),
-  dueDate: z.coerce.date({ message: "deadline wajib diisi!" }),
-  lessonId: z.coerce.number({ message: "Id pelajaran wajib di isi" }),
+  title: z.string().min(4, { message: "Judul wajib diisi!" }),
+  dueDate: z.coerce
+    .date({ message: "Deadline wajib diisi!" })
+    .refine((date) => date > new Date(), {
+      message: "Deadline harus setelah hari ini!",
+    }),
+  lessonId: z.coerce.number({ message: "Id pelajaran wajib diisi!" }),
+  assTypes: z.nativeEnum(assTypes, { message: "Tipe Tugas wajib diisi!" }),
 });
 
 export type AssignmentSchema = z.infer<typeof assignmentSchema>;
@@ -282,6 +297,9 @@ export const resultSchema = z.object({
     .nullable(),
   selectedType: z.enum(["Ujian", "Tugas", ""], {
     message: "Tipe Hasil wajib diisi!",
+  }),
+  resultType: z.nativeEnum(resTypes, {
+    message: "Tipe Nilai murid wajib diisi!",
   }),
 });
 
@@ -708,6 +726,27 @@ export const paymentLogSchema = z.object({
 
 export type PaymentLogSchema = z.infer<typeof paymentLogSchema>;
 
+export const mPaymentLogSchema = z.object({
+  ids: z.array(z.number().min(1)),
+  paymentType: z.enum([
+    "TUITION",
+    "EXTRACURRICULAR",
+    "UNIFORM",
+    "BOOKS",
+    "OTHER",
+  ]),
+  amount: z.number().min(1, "Jumlah harus lebih dari 0"),
+  dueDate: z.string().min(1, "Tenggat waktu wajib diisi"),
+  status: z.enum(["PENDING", "PAID", "OVERDUE", "PARTIALLY_PAID"]),
+  description: z.string().optional(),
+  paymentMethod: z.string().optional(),
+  receiptNumber: z.string().optional(),
+  recipientType: z.enum(["student", "class", "grade"]),
+  recipientId: z.string().min(1, "Penerima wajib dipilih"),
+});
+
+export type MpaymentLogSchema = z.infer<typeof mPaymentLogSchema>;
+
 export const mstudentSchema = z.object({
   ids: z.array(z.string().min(1)),
   classId: z.string().min(1),
@@ -715,3 +754,11 @@ export const mstudentSchema = z.object({
 });
 
 export type MstudentSchema = z.infer<typeof mstudentSchema>;
+
+export const mteacherSchema = z.object({
+  ids: z.array(z.string().min(1)),
+  subjects: z.array(z.number().min(1, { message: "Pelajaran wajib diisi!" })),
+  lessons: z.array(z.number().min(1, { message: "Jadwal wajib diisi!" })),
+});
+
+export type MteacherSchema = z.infer<typeof mteacherSchema>;

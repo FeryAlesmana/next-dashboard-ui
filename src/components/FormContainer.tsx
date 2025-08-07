@@ -18,10 +18,10 @@ export type FormContainerProps = {
     | "announcement"
     | "ppdb"
     | "paymentLog";
-  type: "create" | "update" | "delete" |"deleteMany" | "updateMany";
+  type: "create" | "update" | "delete" | "deleteMany" | "updateMany";
   data?: any;
   id?: number | string;
-  ids?: string[]; // For bulk delete
+  ids?: string[] | number[]; // For bulk delete
   lessonId?: string; // For attendance form
   prefilEmail?: string;
 };
@@ -135,6 +135,8 @@ const FormContainer = async ({
           select: {
             id: true,
             name: true,
+            subject: { select: { name: true } },
+            class: { select: { name: true } },
           },
         });
 
@@ -203,6 +205,8 @@ const FormContainer = async ({
           select: {
             id: true,
             name: true,
+            subject: { select: { name: true } },
+            class: { select: { name: true } },
           },
         });
         let kelasId: number[] = [];
@@ -264,18 +268,31 @@ const FormContainer = async ({
             id: true,
             name: true,
             surname: true,
+            classId: true,
           },
         });
         const studentExam = await prisma.exam.findMany({
+          where: {
+            results: {
+              none: {},
+            },
+          },
           select: {
             id: true,
             title: true,
+            lesson: { select: { classId: true } },
           },
         });
         const studentAssignment = await prisma.assignment.findMany({
+          where: {
+            results: {
+              none: {},
+            },
+          },
           select: {
             id: true,
             title: true,
+            lesson: { select: { classId: true } },
           },
         });
 

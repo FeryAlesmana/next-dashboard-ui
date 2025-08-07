@@ -10,7 +10,7 @@ export default function BulkActions({
   data,
   relatedData,
 }: {
-  selectedIds: string[];
+  selectedIds: string[] | number[];
   table:
     | "teacher"
     | "student"

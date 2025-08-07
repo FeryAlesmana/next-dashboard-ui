@@ -2,6 +2,8 @@ import Announcements from "@/components/Announcements";
 import BigCalendarContainer from "@/components/BigCalendarContainer";
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/utils";
+import Image from "next/image";
+import Link from "next/link";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 
 const ParentPage = async () => {
@@ -23,9 +25,20 @@ const ParentPage = async () => {
         {students.map((student) => (
           <div className="" key={student.id}>
             <div className="h-full bg-white p-4 rounded-md">
-              <h1 className="text-xl font-semibold">
-                Jadwal {student.name + " " + student.surname}
-              </h1>
+              <div className="flex flex-row justify-between">
+                <h2 className="text-xl font-semibold mb-4">
+                  Jadwal {student.name}
+                </h2>
+                <Link href={`/list/students/${student.id}`}>
+                  <Image
+                    src="/moreDark.png"
+                    alt=""
+                    width={35}
+                    height={35}
+                    className="text-right hover:bg-lamaPurple rounded-full p-2 "
+                  />
+                </Link>
+              </div>
               <BigCalendarContainer type="classId" id={student.classId!} />
             </div>
           </div>

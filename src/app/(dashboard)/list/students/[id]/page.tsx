@@ -12,6 +12,7 @@ import EmailCopy from "@/components/EmailCopy";
 import { Suspense } from "react";
 import StudentAttendanceCard from "@/components/StudentAttendanceCard";
 import FormContainer from "@/components/FormContainer";
+import ForbiddenPage from "@/components/Forbidden";
 
 const SingleStudentPage = async ({
   params,
@@ -22,8 +23,13 @@ const SingleStudentPage = async ({
   const { userId, role } = await getCurrentUser();
 
   // Block users from viewing others' profiles unless they are admin
-  if (role !== "admin" && userId !== id) {
-    return notFound();
+  if (!role) {
+    return notFound(); // Block completely unknown users
+  }
+
+  // ✅ If the role is 'student' but trying to access another student's page
+  if (role === "student" && id !== userId) {
+    return <ForbiddenPage />; // Prevent access
   }
   const student:
     | (Student & {
@@ -204,7 +210,7 @@ const SingleStudentPage = async ({
             </Link>
             <Link
               className="p-3 rounded-md bg-lamaYellowLight"
-              href={`/list/results?studentId=${student.id}`}
+              href={`/list/results/${student.id}`}
             >
               Hasil
             </Link>
