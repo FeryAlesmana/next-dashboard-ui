@@ -7,7 +7,11 @@ import TableSearch from "@/components/TableSearch";
 import TeacherListClient from "@/components/TeacherListClient";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/setting";
-import { getCurrentUser, normalizeSearchParams } from "@/lib/utils";
+import {
+  decryptPassword,
+  getCurrentUser,
+  normalizeSearchParams,
+} from "@/lib/utils";
 import { Class, Prisma, Subject, Teacher } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
@@ -176,35 +180,49 @@ const TeacherListPage = async ({
     }
   }
 
-  const [data, count, subjects, lessons] = await prisma.$transaction([
-    prisma.teacher.findMany({
-      where: query,
-      orderBy,
-      include: {
-        subjects: { select: { id: true, name: true } },
-        classes: true,
-      },
-      take: perPage,
-      skip: perPage ? perPage * (p - 1) : undefined,
-    }),
-    prisma.teacher.count({ where: query }),
-    prisma.subject.findMany({
-      select: {
-        id: true,
-        name: true,
-      },
-    }),
-    prisma.lesson.findMany({
-      select: {
-        id: true,
-        name: true,
-        day: true,
-      },
-    }),
-  ]);
+  const [teachers, count, subjects, lessons, classes] =
+    await prisma.$transaction([
+      prisma.teacher.findMany({
+        where: query,
+        orderBy,
+        include: {
+          subjects: { select: { id: true, name: true } },
+          classes: true,
+          lessons: true,
+        },
+        take: perPage,
+        skip: perPage ? perPage * (p - 1) : undefined,
+      }),
+      prisma.teacher.count({ where: query }),
+      prisma.subject.findMany({
+        select: {
+          id: true,
+          name: true,
+        },
+      }),
+      prisma.lesson.findMany({
+        select: {
+          id: true,
+          name: true,
+          day: true,
+        },
+      }),
+      prisma.class.findMany({
+        select: {
+          id: true,
+          name: true,
+        },
+      }),
+    ]);
   let relatedData = {};
-  relatedData = { subjects: subjects, lessons: lessons };
+  relatedData = { subjects: subjects, lessons: lessons, classes: classes };
   // console.log(data);
+
+  const data = teachers.map((teacher) => ({
+    ...teacher,
+    password: decryptPassword(teacher.password),
+  }));
+  // console.log(data, "data in teacher");
 
   return (
     <ClientPageWrapper key={key} role={role!}>

@@ -133,13 +133,13 @@ const ResultListPage = async ({
       const results = await prisma.result.findMany({
         where: { studentId: { in: studentIds } },
         include: {
-          student: { select: { name: true, surname: true, id: true } },
+          student: { select: { name: true, namalengkap: true, id: true } },
           exam: {
             include: {
               lesson: {
                 select: {
                   class: { select: { name: true } },
-                  teacher: { select: { name: true, surname: true } },
+                  teacher: { select: { name: true, namalengkap: true } },
                   subject: true,
                 },
               },
@@ -150,7 +150,7 @@ const ResultListPage = async ({
               lesson: {
                 select: {
                   class: { select: { name: true } },
-                  teacher: { select: { name: true, surname: true } },
+                  teacher: { select: { name: true, namalengkap: true } },
                   subject: true,
                 },
               },
@@ -174,7 +174,7 @@ const ResultListPage = async ({
               title: source.title,
               subject: lesson.subject?.name || "-",
               teacher: lesson.teacher
-                ? `${lesson.teacher.name} ${lesson.teacher.surname}`
+                ? `${lesson.teacher.name} ${lesson.teacher.namalengkap}`
                 : "-",
               class: lesson.class?.name || "-",
               score: item.score,
@@ -209,13 +209,13 @@ const ResultListPage = async ({
     prisma.result.findMany({
       where: query,
       include: {
-        student: { select: { name: true, surname: true } },
+        student: { select: { name: true, namalengkap: true } },
         exam: {
           include: {
             lesson: {
               select: {
                 class: { select: { name: true } },
-                teacher: { select: { name: true, surname: true } },
+                teacher: { select: { name: true, namalengkap: true } },
                 subject: true,
               },
             },
@@ -226,7 +226,7 @@ const ResultListPage = async ({
             lesson: {
               select: {
                 class: { select: { name: true } },
-                teacher: { select: { name: true, surname: true } },
+                teacher: { select: { name: true, namalengkap: true } },
                 subject: true,
               },
             },
@@ -254,10 +254,10 @@ const ResultListPage = async ({
         subject: lesson.subject?.name || "-",
         studentId: item.studentId || "",
         student: item.student
-          ? `${item.student.name} ${item.student.surname}`
+          ? `${item.student.name} ${item.student.namalengkap}`
           : "-",
         teacher: lesson.teacher
-          ? `${lesson.teacher.name} ${lesson.teacher.surname}`
+          ? `${lesson.teacher.name} ${lesson.teacher.namalengkap}`
           : "-",
         score: item.score,
         class: lesson.class?.name || "-",

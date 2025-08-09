@@ -33,8 +33,9 @@ export default function DashboardLayout({
             width={32}
             height={32}
           />
-          <span className=" lg:block font-bold text-lg">
-            SMP Islamiyah Serua
+          <span className="font-bold text-lg">
+            <span className="hidden lg:inline">SMP Islamiyah Serua</span>
+            <span className="inline lg:hidden">SMPI Serua</span>
           </span>
         </Link>
         <Menu />

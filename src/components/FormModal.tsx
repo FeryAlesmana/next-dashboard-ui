@@ -10,6 +10,7 @@ import {
   deleteExam,
   deleteLesson,
   deleteParent,
+  deleteParents,
   deletePaymentLog,
   deletePaymentLogs,
   deletePpdb,
@@ -18,6 +19,7 @@ import {
   deleteStudents,
   deleteSubject,
   deleteTeacher,
+  deleteTeachers,
 } from "@/lib/actions";
 import dynamic from "next/dynamic";
 import Image from "next/image";
@@ -36,6 +38,7 @@ import DeleteManyForm from "./forms/DeleteMany";
 import UpdateManyStudentsForm from "./forms/UpdateManyStudents";
 import UpdateManyPaymentsForm from "./forms/UpdateManyPaymentForm";
 import UpdateManyTeacherForm from "./forms/UpdateManyTeacher";
+import UpdateManyParentForm from "./forms/UpdateManyParents";
 // import StudentForm from "./forms/StudentForm";
 // import TeacherForm from "./forms/TeacherForm";
 
@@ -75,8 +78,8 @@ const singleDeleteMap = {
 
 const bulkDeleteMap = {
   student: deleteStudents,
-  teacher: deleteStudents,
-  parent: deleteStudents,
+  teacher: deleteTeachers,
+  parent: deleteParents,
   class: deleteStudents,
   subject: deleteStudents,
   lesson: deleteStudents,
@@ -331,7 +334,7 @@ const FormModal = ({
         router.refresh();
       }
     }, [state, router]);
-    console.log(id, " id in form Modal");
+    console.log(relatedData, " relatedData in form Modal");
 
     return type === "delete" && id ? (
       <form action={formAction} className="p4 flex flex-col gap-4">
@@ -484,6 +487,39 @@ const FormModal = ({
           <div className="w-screen h-screen absolute left-0 top-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">
             <div className="bg-white p-4 rounded-md relative w-[95%] h-[95%] md:w-[90%] lg:w-[85%] xl:w-[80%] 2xl:w-[75%] overflow-y-auto">
               <UpdateManyTeacherForm
+                ids={ids as string[]}
+                setOpen={setOpen}
+                table={table}
+                data={data}
+                relatedData={relatedData}
+              />
+              <div
+                className="absolute top-4 right-4 cursor-pointer"
+                onClick={() => setOpen(false)}
+              >
+                <Image src="/close.png" width={14} height={14} alt="Tutup" />
+              </div>
+            </div>
+          </div>
+        )}
+      </>
+    );
+  }
+  if (table === "parent" && type === "updateMany") {
+    return (
+      <>
+        <div className="">
+          <button
+            onClick={() => setOpen(true)}
+            className="flex items-center justify-center rounded-full hover:bg-lamaYellow transition w-7 h-7"
+          >
+            <Image src="/updateDark.png" alt="Edit" width={16} height={16} />
+          </button>
+        </div>
+        {open && (
+          <div className="w-screen h-screen absolute left-0 top-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">
+            <div className="bg-white p-4 rounded-md relative w-[95%] h-[95%] md:w-[90%] lg:w-[85%] xl:w-[80%] 2xl:w-[75%] overflow-y-auto">
+              <UpdateManyParentForm
                 ids={ids as string[]}
                 setOpen={setOpen}
                 table={table}

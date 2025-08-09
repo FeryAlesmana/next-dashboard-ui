@@ -1,4 +1,4 @@
-import { FieldError } from "react-hook-form";
+import { FieldError, FieldErrorsImpl, Merge } from "react-hook-form";
 
 type InputFieldProps = {
   label: string;
@@ -6,10 +6,25 @@ type InputFieldProps = {
   register: any;
   name: string;
   defaultValue?: string;
-  error?: FieldError;
+  error?: FieldError | Merge<FieldError, FieldErrorsImpl<any>> | undefined;
   hidden?: boolean;
   placeholder?: string;
   inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
+  table?:
+    | "teacher"
+    | "student"
+    | "parent"
+    | "subject"
+    | "class"
+    | "lesson"
+    | "exam"
+    | "assignment"
+    | "result"
+    | "attendance"
+    | "event"
+    | "announcement"
+    | "ppdb"
+    | "paymentLog";
 };
 
 const InputField = ({
@@ -22,9 +37,16 @@ const InputField = ({
   placeholder,
   inputProps,
   hidden,
+  table,
 }: InputFieldProps) => {
   return (
-    <div className={hidden ? "hidden" : "flex flex-col gap-2 w-full md:w-1/4"}>
+    <div
+      className={`flex flex-col gap-2 w-full ${
+        table !== "student" && table !== "parent" && table !== "teacher"
+          ? "md:w-1/4"
+          : ""
+      } ${hidden ? "hidden" : ""}`}
+    >
       <label className="text-xs text-gray-400">{label}</label>
       {type === "textarea" ? (
         <textarea

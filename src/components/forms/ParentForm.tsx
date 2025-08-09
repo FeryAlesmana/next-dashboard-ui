@@ -2,7 +2,14 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import InputField from "../InputField";
-import { parentSchema, ParentSchema } from "@/lib/formValidationSchema";
+import {
+  CreateparentSchema,
+  createParentSchema,
+  parentSchema,
+  ParentSchema,
+  UpdateparentSchema,
+  updateParentSchema,
+} from "@/lib/formValidationSchema";
 import {
   Dispatch,
   SetStateAction,
@@ -15,6 +22,7 @@ import { useRouter } from "next/navigation";
 import { createParent, CurrentState, updateParent } from "@/lib/actions";
 import { toast } from "react-toastify";
 import Select from "react-select";
+import z from "zod";
 
 const ParentForm = ({
   setOpen,
@@ -27,24 +35,36 @@ const ParentForm = ({
   data?: any;
   relatedData?: any;
 }) => {
+  // const allStudents = [
+  //   ...(data?.students || []),
+  //   ...(data?.secondaryStudents || []),
+  //   ...(data?.guardianStudents || []),
+  // ];
+  // // Build default IDs
+  // const defaultIds = allStudents.map((student) => student.id);
+  const schema = type === "create" ? createParentSchema : updateParentSchema;
   const {
     register,
     handleSubmit,
     control,
+    watch,
+    reset,
     formState: { errors },
-  } = useForm<ParentSchema>({
-    resolver: zodResolver(parentSchema),
+  } = useForm<
+    typeof schema extends z.ZodTypeAny ? z.infer<typeof schema> : never
+  >({
+    resolver: zodResolver(schema),
   });
   const createParentHandler = async (
     prevState: CurrentState,
-    payload: ParentSchema
+    payload: CreateparentSchema
   ): Promise<CurrentState> => {
     return await createParent(prevState, payload);
   };
 
   const updateParentHandler = async (
     prevState: CurrentState,
-    payload: ParentSchema
+    payload: UpdateparentSchema
   ): Promise<CurrentState> => {
     return await updateParent(prevState, payload);
   };
@@ -58,6 +78,7 @@ const ParentForm = ({
     }
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const selectedSex = watch("sex");
 
   useEffect(() => {
     if (!state.success && !state.error) return;
@@ -75,6 +96,20 @@ const ParentForm = ({
   const router = useRouter();
 
   useEffect(() => {
+    if (type === "update" && data?.students) {
+      const mergedStudentIds = [
+        ...(data.students?.map((s: { id: string }) => s.id) || []),
+        ...(data.secondaryStudents?.map((s: { id: string }) => s.id) || []),
+        ...(data.guardianStudents?.map((s: { id: string }) => s.id) || []),
+      ];
+      reset({
+        ...data,
+        birthday: data?.birthday
+          ? new Date(data.birthday).toISOString().split("T")[0]
+          : "",
+        students: mergedStudentIds,
+      });
+    }
     if (state.success) {
       toast(
         `Orang tua telah berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`
@@ -82,47 +117,73 @@ const ParentForm = ({
       setOpen(false);
       router.refresh();
     }
-  }, [state, type, setOpen, router]);
+  }, [state, type, setOpen, router, data, reset]);
 
   const { students = [] } = relatedData ?? {};
 
   const studentOptions = students.map(
-    (student: { id: string; name: string; surname: string }) => ({
+    (student: { id: string; name: string; namalengkap: string }) => ({
       value: student.id,
-      label: `${student.name} ${student.surname}`,
+      label: `${student.name} ${student.namalengkap}`,
     })
   );
+  const [showPassword, setShowPassword] = useState(false);
 
+  console.log(data, "data di Parent Form");
+
+  // Build the actual option objects for default value
   return (
     <form action="" className="flex flex-col gap-8" onSubmit={onSubmit}>
-      <h1 className="text-xl font-semibold">Tambah Orang tua Baru</h1>
+      <h1 className="text-xl font-semibold">
+        {type === "create" ? "Tambah Wali Murid baru" : "Edit Wali Murid"}
+      </h1>
       <span className="text-xs text-gray-400 font-medium">
         Informasi Autentikasi
       </span>
-      <div className="flex justify-between flex-wrap gap-4">
-        <InputField
-          label="Username"
-          name="username"
-          defaultValue={data?.username}
-          register={register}
-          error={errors?.username}
-        ></InputField>
-        <InputField
-          label="Email"
-          name="email"
-          type="email"
-          defaultValue={data?.email}
-          register={register}
-          error={errors?.email}
-        ></InputField>
-        <InputField
-          label="Password"
-          name="password"
-          type="password"
-          defaultValue={data?.password}
-          register={register}
-          error={errors?.password}
-        ></InputField>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
+        <div>
+          <InputField
+            label="Username"
+            name="username"
+            defaultValue={data?.username}
+            register={register}
+            error={errors?.username}
+            table="parent"
+          />
+        </div>
+
+        <div>
+          <InputField
+            label="Email"
+            name="email"
+            type="email"
+            defaultValue={data?.email}
+            register={register}
+            placeholder="email@example.com"
+            error={errors?.email}
+            table="parent"
+          />
+        </div>
+
+        <div>
+          <InputField
+            label="Password"
+            name="password"
+            type={showPassword ? "text" : "password"}
+            defaultValue={data?.password}
+            register={register}
+            error={errors?.password}
+            table="parent"
+          />
+          <label className="flex items-center gap-2 mt-1 text-xs">
+            <input
+              type="checkbox"
+              checked={showPassword}
+              onChange={() => setShowPassword((prev) => !prev)}
+            />
+            Show password
+          </label>
+        </div>
       </div>
       <span className="text-xs text-gray-400 font-medium">
         Informasi Personal
@@ -137,10 +198,17 @@ const ParentForm = ({
         ></InputField>
         <InputField
           label="Nama Belakang"
-          name="surname"
-          defaultValue={data?.surname}
+          name="namalengkap"
+          defaultValue={data?.namalengkap}
           register={register}
-          error={errors?.surname}
+          error={errors?.namalengkap}
+        ></InputField>
+        <InputField
+          label="Birthday"
+          name="birthday"
+          type="date"
+          register={register}
+          error={errors?.birthday}
         ></InputField>
         <InputField
           label="No. Telepon"
@@ -186,6 +254,25 @@ const ParentForm = ({
             </p>
           )}
         </div>
+        {/* Wali Murid */}
+        <div className="flex flex-col gap-2 w-full md:w-1/4">
+          <label className="text-xs text-gray-400">Wali Murid</label>
+          <select
+            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
+            {...register("waliMurid")}
+            defaultValue={data?.waliMurid}
+          >
+            <option value="">Pilih Wali</option>
+            {selectedSex !== "FEMALE" && <option value="AYAH">Ayah</option>}
+            {selectedSex !== "MALE" && <option value="IBU">Ibu</option>}
+            <option value="WALI">Wali</option>
+          </select>
+          {errors.waliMurid?.message && (
+            <p className="text-xs text-red-400">
+              {errors.waliMurid.message.toString()}
+            </p>
+          )}
+        </div>
         <div className="flex flex-col gap-2 w-full md:w-1/4">
           <label className="text-xs text-gray-400">Pendidikan</label>
           <select
@@ -219,9 +306,8 @@ const ParentForm = ({
               data?.students?.map((student: { id: string }) => student.id) || []
             }
             render={({ field }) => {
-              const selectedValues = studentOptions.filter(
-                (opt: { value: string; label: string }) =>
-                  field.value?.includes(opt.value)
+              const selectedValues = studentOptions.filter((opt: any) =>
+                field.value?.includes(opt.value)
               );
 
               return (

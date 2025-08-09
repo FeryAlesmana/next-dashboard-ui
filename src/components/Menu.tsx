@@ -48,7 +48,7 @@ export default function Menu() {
         },
         {
           icon: "/parent.png",
-          label: "Orang Tua",
+          label: "Wali Murid",
           href: "/list/parents",
           visible: ["admin", "teacher"],
         },

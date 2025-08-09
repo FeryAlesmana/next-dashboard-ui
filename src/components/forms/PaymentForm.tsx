@@ -297,9 +297,9 @@ export default function CreatePaymentLogPage({
               <option value="">Pilih Penerima</option>
               {watchedValues.recipientType === "student" &&
                 studentData.map(
-                  (student: { id: string; name: string; surname: string }) => (
+                  (student: { id: string; name: string; namalengkap: string }) => (
                     <option key={student.id} value={student.id}>
-                      {student.name} {student.surname}
+                      {student.name} {student.namalengkap}
                     </option>
                   )
                 )}

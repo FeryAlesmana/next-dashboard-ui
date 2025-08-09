@@ -169,7 +169,7 @@ const PaymentLogListPage = async ({
         select: {
           id: true,
           name: true,
-          surname: true,
+          namalengkap: true,
           class: {
             select: { name: true, grade: { select: { level: true } } },
           },
@@ -206,7 +206,7 @@ const PaymentLogListPage = async ({
         select: {
           id: true,
           name: true,
-          surname: true,
+          namalengkap: true,
           class: {
             select: { name: true, grade: { select: { level: true } } },
           },
@@ -273,7 +273,7 @@ const PaymentLogListPage = async ({
               ...(query.student ?? {}),
               OR: [
                 { name: { contains: value, mode: "insensitive" } },
-                { surname: { contains: value, mode: "insensitive" } },
+                { namalengkap: { contains: value, mode: "insensitive" } },
                 {
                   student_details: {
                     nisn: {
@@ -326,7 +326,7 @@ const PaymentLogListPage = async ({
         student: {
           select: {
             name: true,
-            surname: true,
+            namalengkap: true,
             class: {
               select: {
                 name: true,
@@ -350,7 +350,7 @@ const PaymentLogListPage = async ({
       select: {
         id: true,
         name: true,
-        surname: true,
+        namalengkap: true,
       },
     }),
   ]);

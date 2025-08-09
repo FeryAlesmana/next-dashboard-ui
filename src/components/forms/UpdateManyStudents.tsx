@@ -46,9 +46,9 @@ const UpdateManyStudentsForm = ({
 
   type Grade = { id: number; level: number };
   type ClassWithGrade = { grade?: Grade };
-
+  const { classes = [] } = relatedData || [];
   const grades: Grade[] =
-    (relatedData as ClassWithGrade[])
+    (classes as ClassWithGrade[])
       ?.filter((c): c is { grade: Grade } => !!c.grade && !!c.grade.id)
       .map((c) => ({
         id: c.grade.id,
@@ -59,7 +59,6 @@ const UpdateManyStudentsForm = ({
           self.findIndex((g) => g.id === grade.id) === index
       ) || [];
 
-  const classes = relatedData || [];
   console.log(classes, "isi Kelas Kelas");
 
   const initialState = { success: false, error: false, message: "" };

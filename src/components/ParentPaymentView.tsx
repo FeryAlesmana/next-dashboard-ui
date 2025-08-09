@@ -142,7 +142,7 @@ export default function ParentPaymentView({
           <div key={studentId} className="mb-12">
             <div className="flex justify-between items-center mb-2">
               <h2 className="text-xl font-semibold">
-                {student?.name || "Murid"} {student?.surname || ""}
+                {student?.name || "Murid"} {student?.namalengkap || ""}
               </h2>
               <SemesterSelect
                 semesters={semesters}

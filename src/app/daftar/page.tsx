@@ -87,7 +87,7 @@ export default function PPDBPage() {
         {selectedMethod === "offline" && (
           <div className="mt-8 text-center">
             <a
-              href="/files/formulir-ppdb.pdf"
+              href="/files/FORMULIR-PENERIMAAN-MAHASISWA-BARU-TAHUN-2023.pdf"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-block bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-full shadow-lg"

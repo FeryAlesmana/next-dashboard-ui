@@ -5,6 +5,7 @@ import {
   Degree,
   exTypes,
   KPS,
+  parents,
   resTypes,
   TTinggal,
   UserSex,
@@ -42,7 +43,7 @@ export const teacherSchema = z.object({
     .or(z.literal(""))
     .optional(),
   name: z.string().min(1, { message: "Nama depan wajib diisi!" }),
-  surname: z.string().min(1, { message: "Nama belakang wajib diisi!" }),
+  namalengkap: z.string().min(1, { message: "Nama belakang wajib diisi!" }),
   email: z
     .string()
     .email({ message: "Email anda Tidak valid!" })
@@ -72,6 +73,24 @@ export const teacherSchema = z.object({
     .optional(),
 });
 export type TeacherSchema = z.infer<typeof teacherSchema>;
+export const createTeacherSchema = teacherSchema.extend({
+  password: z.string().min(8, {
+    message: "Password harus mempunyai 8 karakter!",
+  }),
+});
+
+export type CreateteacherSchema = z.infer<typeof createTeacherSchema>;
+
+// For update — password is optional or empty string
+export const updateTeacherSchema = teacherSchema.extend({
+  password: z
+    .string()
+    .min(8, { message: "Password harus mempunyai 8 karakter!" })
+    .or(z.literal(""))
+    .optional(),
+});
+
+export type UpdateteacherSchema = z.infer<typeof updateTeacherSchema>;
 
 export const studentSchema = z.object({
   id: z.string().optional(),
@@ -80,13 +99,8 @@ export const studentSchema = z.object({
     .string()
     .min(3, { message: "Username harus lebih dari 3 karakter!" })
     .max(20, { message: "Username harus kurang dari 20 karakter!" }),
-  password: z
-    .string()
-    .min(8, { message: "Password harus mempunyai 8 karakter!" })
-    .or(z.literal(""))
-    .optional(),
   name: z.string().min(1, { message: "Nama depan wajib diisi!" }),
-  surname: z.string().min(1, { message: "Nama belakang wajib diisi!" }),
+  namalengkap: z.string().min(1, { message: "Nama belakang wajib diisi!" }),
   email: z
     .string()
     .email({ message: "Email anda Tidak valid!" })
@@ -192,6 +206,25 @@ export const studentSchema = z.object({
 });
 export type StudentSchema = z.infer<typeof studentSchema>;
 
+export const createStudentSchema = studentSchema.extend({
+  password: z.string().min(8, {
+    message: "Password harus mempunyai 8 karakter!",
+  }),
+});
+
+export type CreatestudentSchema = z.infer<typeof createStudentSchema>;
+
+// For update — password is optional or empty string
+export const updateStudentSchema = studentSchema.extend({
+  password: z
+    .string()
+    .min(8, { message: "Password harus mempunyai 8 karakter!" })
+    .or(z.literal(""))
+    .optional(),
+});
+
+export type UpdatestudentSchema = z.infer<typeof updateStudentSchema>;
+
 export const examSchema = z.object({
   id: z.coerce.number().optional(),
   title: z.string().min(2, { message: "Nama Ujian wajib diisi!" }),
@@ -251,10 +284,12 @@ export const parentSchema = z.object({
     .optional(),
   email: z.string().email({ message: "Email anda Tidak valid!" }),
   name: z.string().min(1, { message: "Nama depan wajib diisi!" }),
-  surname: z.string().min(1, { message: "Nama belakang wajib diisi!" }),
+  namalengkap: z.string().min(1, { message: "Nama belakang wajib diisi!" }),
   sex: z.nativeEnum(UserSex, {
     message: " Jenis Kelamin Calon Siswa wajib diisi!",
   }),
+  waliMurid: z.nativeEnum(parents, { message: "Wali murid wajib diisi" }),
+
   phone: z.string().min(1, { message: "Nomor telepon wajib diisi!" }),
   birthday: z.coerce.date({ message: "Tanggal lahir Ortu wajib disii!" }),
   job: z.string().min(1, { message: "Pekerjaan Ortu wajib diisi!" }),
@@ -267,6 +302,25 @@ export const parentSchema = z.object({
 });
 
 export type ParentSchema = z.infer<typeof parentSchema>;
+
+export const createParentSchema = parentSchema.extend({
+  password: z.string().min(8, {
+    message: "Password harus mempunyai 8 karakter!",
+  }),
+});
+
+export type CreateparentSchema = z.infer<typeof createParentSchema>;
+
+// For update — password is optional or empty string
+export const updateParentSchema = parentSchema.extend({
+  password: z
+    .string()
+    .min(8, { message: "Password harus mempunyai 8 karakter!" })
+    .or(z.literal(""))
+    .optional(),
+});
+
+export type UpdateparentSchema = z.infer<typeof updateParentSchema>;
 
 export const lessonSchema = z.object({
   id: z.coerce.number().optional(),
@@ -310,7 +364,7 @@ export const ppdbSchema = z.object({
   name: z.string({
     message: " nama Calon Siswa wajib diisi!",
   }),
-  surname: z
+  namalengkap: z
     .string({
       message: " nama Calon Siswa wajib diisi!",
     })
@@ -600,7 +654,7 @@ export type PpdbSchema = z.infer<typeof ppdbSchema>;
 
 export const fieldLabelMap: Record<string, string> = {
   name: "Nama Calon Siswa",
-  surname: "Nama Panggilan",
+  namalengkap: "Nama Panggilan",
   birthday: "Tanggal Lahir",
   birthPlace: "Tempat Lahir",
   sex: "Jenis Kelamin",
@@ -762,3 +816,10 @@ export const mteacherSchema = z.object({
 });
 
 export type MteacherSchema = z.infer<typeof mteacherSchema>;
+export const mparentSchema = z.object({
+  ids: z.array(z.string().min(1)),
+  students: z.array(z.string().min(1, { message: "Siswa wajib diisi!" })),
+  address: z.string().min(1, { message: "Alamat wajib diisi!" }),
+});
+
+export type MparentSchema = z.infer<typeof mparentSchema>;

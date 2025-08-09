@@ -113,7 +113,7 @@ const LessonListPage = async ({
       <td>{item.day}</td>
       <td className="hidden md:table-cell">
         {item.teacher
-          ? `${item.teacher.name} ${item.teacher.surname}`
+          ? `${item.teacher.name} ${item.teacher.namalengkap}`
           : "Tidak ada guru"}
       </td>
       <td>
@@ -226,7 +226,7 @@ const LessonListPage = async ({
               where: { classId: cls.id },
               include: {
                 subject: { select: { name: true } },
-                teacher: { select: { name: true, surname: true } },
+                teacher: { select: { name: true, namalengkap: true } },
               },
             });
             return { ...cls, lessons };
@@ -239,7 +239,7 @@ const LessonListPage = async ({
             include: {
               subject: { select: { name: true } },
               class: { select: { name: true, gradeId: true } },
-              teacher: { select: { name: true, surname: true } },
+              teacher: { select: { name: true, namalengkap: true } },
             },
             take: ITEM_PER_PAGE,
             skip: ITEM_PER_PAGE * (p - 1),
@@ -297,7 +297,7 @@ const LessonListPage = async ({
                               </td>
                               <td className="p-2">
                                 {lesson.teacher
-                                  ? `${lesson.teacher.name} ${lesson.teacher.surname}`
+                                  ? `${lesson.teacher.name} ${lesson.teacher.namalengkap}`
                                   : "-"}
                               </td>
                             </tr>
@@ -378,7 +378,7 @@ const LessonListPage = async ({
                 include: {
                   subject: true,
                   class: true,
-                  teacher: { select: { name: true, surname: true } },
+                  teacher: { select: { name: true, namalengkap: true } },
                 },
               })
             : [];
@@ -461,7 +461,7 @@ const LessonListPage = async ({
                             <td>{item.day}</td>
                             <td className="hidden md:table-cell">
                               {item.teacherId
-                                ? `${item.teacher?.name} ${item.teacher?.surname}`
+                                ? `${item.teacher?.name} ${item.teacher?.namalengkap}`
                                 : "Tidak ada guru"}
                             </td>
                             <td>
@@ -501,7 +501,7 @@ const LessonListPage = async ({
       include: {
         subject: { select: { name: true } },
         class: { select: { name: true, gradeId: true } },
-        teacher: { select: { name: true, surname: true } },
+        teacher: { select: { name: true, namalengkap: true } },
       },
       take: ITEM_PER_PAGE,
       skip: ITEM_PER_PAGE * (p - 1),

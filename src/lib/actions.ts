@@ -28,11 +28,21 @@ import {
   SubjectSchema,
   TeacherSchema,
   teacherSchema,
+  createStudentSchema,
+  CreatestudentSchema,
+  UpdatestudentSchema,
+  CreateparentSchema,
+  UpdateparentSchema,
+  CreateteacherSchema,
+  UpdateteacherSchema,
+  MparentSchema,
+  mparentSchema,
 } from "./formValidationSchema";
 import prisma from "./prisma";
 import { clerkClient } from "@clerk/nextjs/server";
 import extractCloudinaryPublicId, { getCurrentUser } from "./utils";
-import { Degree, Prisma } from "@prisma/client";
+import { Degree, parents, Prisma } from "@prisma/client";
+import { encryptPassword } from "./utils";
 
 export type CurrentState = {
   success: boolean;
@@ -159,14 +169,14 @@ export const deleteClass = async (
 };
 export const createTeacher = async (
   currentState: CurrentState,
-  data: TeacherSchema
+  data: CreateteacherSchema
 ) => {
   try {
     const user = await client.users.createUser({
       username: data.username,
-      password: data.password,
+      password: encryptPassword(data.password!),
       firstName: data.name,
-      lastName: data.surname,
+      lastName: data.namalengkap,
       publicMetadata: { role: "teacher" },
     });
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -174,8 +184,9 @@ export const createTeacher = async (
       data: {
         id: user.id,
         username: data.username,
+        password: encryptPassword(data.password!),
         name: data.name,
-        surname: data.surname,
+        namalengkap: data.namalengkap,
         email: data.email,
         phone: data.phone,
         address: data.address,
@@ -227,7 +238,7 @@ export const createTeacher = async (
 
 export const updateTeacher = async (
   currentState: CurrentState,
-  data: TeacherSchema
+  data: UpdateteacherSchema
 ) => {
   try {
     if (!data.id) {
@@ -239,14 +250,15 @@ export const updateTeacher = async (
     try {
       const user = await client.users.updateUser(data.id, {
         username: data.username,
-        ...(data.password !== "" && { password: data.password }),
+        ...(data.password !== "" && {
+          password: encryptPassword(data.password!),
+        }),
         firstName: data.name,
-        lastName: data.surname,
+        lastName: data.namalengkap,
       });
       if (user) {
         console.log("✅ User Sucessfully Updated:", user.id);
       }
-      return { success: true, error: false };
     } catch (error) {
       console.warn(
         "⚠️ Clerk returned no user info. Attempting to create user..."
@@ -254,9 +266,10 @@ export const updateTeacher = async (
       // Create new Clerk user if update fails
       user = await client.users.createUser({
         username: data.username,
-        password: data.password !== "" ? data.password : undefined,
+        password:
+          data.password !== "" ? encryptPassword(data.password!) : undefined,
         firstName: data.name,
-        lastName: data.surname,
+        lastName: data.namalengkap,
         publicMetadata: { role: "teacher" },
       });
 
@@ -278,15 +291,17 @@ export const updateTeacher = async (
         id: data.id,
       },
       data: {
-        // ...(data.password !== "" && { password: data.password }),
         id: user?.id || data.id,
         username: data.username,
+        ...(data.password !== "" && {
+          password: encryptPassword(data.password!),
+        }),
         name: data.name,
-        surname: data.surname,
+        namalengkap: data.namalengkap,
         email: data.email || null,
         phone: data.phone,
         address: data.address,
-        ...(data.img && { img: data.img }),
+        img: data.img ?? null, // <-- Always set explicitly
         sex: data.sex,
         birthday: data.birthday,
         subjects: {
@@ -418,10 +433,65 @@ export const deleteTeacher = async (
     return { success: false, error: true, message };
   }
 };
+export const deleteTeachers = async (
+  currentState: CurrentState,
+  formData: FormData
+): Promise<CurrentState> => {
+  const ids = formData.getAll("ids") as string[];
+
+  if (!ids || ids.length === 0) {
+    return { success: false, error: true, message: "No student IDs provided." };
+  }
+
+  try {
+    for (const id of ids) {
+      try {
+        const teacher = await prisma.teacher.findUnique({ where: { id } });
+
+        if (teacher?.img) {
+          const publicId = extractCloudinaryPublicId(teacher.img);
+          if (publicId) {
+            await cloudinary.uploader.destroy(publicId);
+            console.log("Cloudinary image deleted:", publicId);
+          }
+        }
+
+        await prisma.teacher.delete({ where: { id } });
+
+        try {
+          const deletedUser = await client.users.deleteUser(id);
+          if (deletedUser) {
+            console.log("✅ Clerk user deleted:", deletedUser.id);
+          }
+        } catch {
+          console.warn(`⚠️ Clerk user ${id} not found or already deleted.`);
+        }
+      } catch (innerError) {
+        console.error(`❌ Failed to delete teacher ID = ${id}:`, innerError);
+        // Optionally continue deleting others instead of failing all
+      }
+    }
+
+    return {
+      success: true,
+      error: false,
+      message: `Deleted ${ids.length} Payment(s) successfully.`,
+    };
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === "string"
+        ? error
+        : "Unknown error";
+
+    return { success: false, error: true, message };
+  }
+};
 
 export const createStudent = async (
   currentState: CurrentState,
-  data: StudentSchema
+  data: CreatestudentSchema
 ) => {
   const classItem = await prisma.class.findUnique({
     where: { id: data.classId },
@@ -440,9 +510,9 @@ export const createStudent = async (
   try {
     const user = await client.users.createUser({
       username: data.username,
-      password: data.password,
+      password: encryptPassword(data.password),
       firstName: data.name,
-      lastName: data.surname,
+      lastName: data.namalengkap,
       publicMetadata: { role: "student" },
     });
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -450,8 +520,9 @@ export const createStudent = async (
       data: {
         id: user.id,
         username: data.username,
+        password: encryptPassword(data.password),
         name: data.name,
-        surname: data.surname,
+        namalengkap: data.namalengkap,
         email: data.email,
         phone: data.phone,
         address: data.address,
@@ -523,7 +594,7 @@ export const createStudent = async (
 
 export const updateStudent = async (
   currentState: CurrentState,
-  data: StudentSchema
+  data: UpdatestudentSchema
 ) => {
   try {
     if (!data.id) {
@@ -537,9 +608,11 @@ export const updateStudent = async (
     try {
       user = await client.users.updateUser(data.id, {
         username: data.username,
-        ...(data.password !== "" && { password: data.password }),
+        ...(data.password !== "" && {
+          password: encryptPassword(data.password!),
+        }),
         firstName: data.name,
-        lastName: data.surname,
+        lastName: data.namalengkap,
       });
       if (user) {
         console.log("✅ User Sucessfully Updated:", user.id);
@@ -552,9 +625,10 @@ export const updateStudent = async (
       // Create new Clerk user if update fails
       user = await client.users.createUser({
         username: data.username,
-        password: data.password !== "" ? data.password : undefined,
+        password:
+          data.password !== "" ? encryptPassword(data.password!) : undefined,
         firstName: data.name,
-        lastName: data.surname,
+        lastName: data.namalengkap,
         publicMetadata: { role: "student" },
       });
 
@@ -579,8 +653,11 @@ export const updateStudent = async (
       data: {
         id: clerkUserId,
         username: data.username,
+        ...(data.password !== "" && {
+          password: encryptPassword(data.password!),
+        }),
         name: data.name,
-        surname: data.surname,
+        namalengkap: data.namalengkap,
         email: data.email || null,
         phone: data.phone,
         address: data.address,
@@ -1153,14 +1230,14 @@ export const deleteAssignment = async (
 
 export const createParent = async (
   currentState: CurrentState,
-  data: ParentSchema
+  data: CreateparentSchema
 ) => {
   try {
     const user = await client.users.createUser({
       username: data.username,
-      password: data.password,
+      password: encryptPassword(data.password),
       firstName: data.name,
-      lastName: data.surname,
+      lastName: data.namalengkap,
       publicMetadata: { role: "parent" },
     });
     if (user) {
@@ -1170,24 +1247,54 @@ export const createParent = async (
         "⚠️ Clerk returned no user info. User may already be created?"
       );
     }
+
+    let studentField;
+
+    switch (data.waliMurid) {
+      case "AYAH":
+        studentField = {
+          students: {
+            connect: data.students.map((studentId) => ({ id: studentId })),
+          },
+        };
+        break;
+      case "IBU":
+        studentField = {
+          secondaryStudents: {
+            connect: data.students.map((studentId) => ({ id: studentId })),
+          },
+        };
+        break;
+      case "WALI":
+        studentField = {
+          guardianStudents: {
+            connect: data.students.map((studentId) => ({ id: studentId })),
+          },
+        };
+        break;
+
+      default:
+        studentField = {};
+        break;
+    }
     await new Promise((resolve) => setTimeout(resolve, 1000));
     await prisma.parent.create({
       data: {
         id: user.id,
         username: data.username,
+        password: encryptPassword(data.password),
         name: data.name,
-        surname: data.surname,
+        namalengkap: data.namalengkap,
         email: data.email,
         sex: data.sex,
+        waliMurid: data.waliMurid,
         birthday: data.birthday,
         job: data.job,
         income: data.income,
         degree: data.degree,
         phone: data.phone,
         address: data.address,
-        students: {
-          connect: data.students.map((studentId) => ({ id: studentId })),
-        },
+        ...studentField,
       },
     });
     return { success: true, error: false };
@@ -1214,7 +1321,7 @@ export const createParent = async (
 
 export const updateParent = async (
   currentState: CurrentState,
-  data: ParentSchema
+  data: UpdateparentSchema
 ) => {
   try {
     if (!data.id) {
@@ -1226,9 +1333,11 @@ export const updateParent = async (
     try {
       const user = await client.users.updateUser(data.id, {
         username: data.username,
-        ...(data.password !== "" && { password: data.password }),
+        ...(data.password !== "" && {
+          password: encryptPassword(data.password!),
+        }),
         firstName: data.name,
-        lastName: data.surname,
+        lastName: data.namalengkap,
       });
       if (user) {
         console.log("✅ User Sucessfully Updated:", user.id);
@@ -1241,9 +1350,10 @@ export const updateParent = async (
       // Create new Clerk user if update fails
       user = await client.users.createUser({
         username: data.username,
-        password: data.password !== "" ? data.password : undefined,
+        password:
+          data.password !== "" ? encryptPassword(data.password!) : undefined,
         firstName: data.name,
-        lastName: data.surname,
+        lastName: data.namalengkap,
         publicMetadata: { role: "parent" },
       });
 
@@ -1258,24 +1368,55 @@ export const updateParent = async (
         };
       }
     }
+    let studentField;
 
+    switch (data.waliMurid) {
+      case "AYAH":
+        studentField = {
+          students: {
+            set: data.students.map((studentId) => ({ id: studentId })),
+          },
+        };
+        break;
+      case "IBU":
+        studentField = {
+          secondaryStudents: {
+            set: data.students.map((studentId) => ({ id: studentId })),
+          },
+        };
+        break;
+      case "WALI":
+        studentField = {
+          guardianStudents: {
+            set: data.students.map((studentId) => ({ id: studentId })),
+          },
+        };
+        break;
+
+      default:
+        studentField = {};
+        break;
+    }
     await new Promise((resolve) => setTimeout(resolve, 1000));
     await prisma.parent.update({
       where: {
         id: data.id,
       },
       data: {
-        // ...(data.password !== "" && { password: data.password }),
         id: user.id,
         username: data.username,
+        ...(data.password !== "" && {
+          password: encryptPassword(data.password!),
+        }),
         name: data.name,
-        surname: data.surname,
+        namalengkap: data.namalengkap,
+        birthday: data.birthday,
         email: data.email,
         phone: data.phone,
         address: data.address,
-        students: {
-          set: data.students.map((studentId) => ({ id: studentId })),
-        },
+        waliMurid: data.waliMurid,
+        sex: data.sex,
+        ...studentField,
       },
     });
     return { success: true, error: false };
@@ -1291,6 +1432,87 @@ export const updateParent = async (
     return { success: false, error: true, message };
   }
 };
+
+export async function updateManyParents(
+  prevState: { success: boolean; error: boolean; message?: string },
+  data: MparentSchema
+): Promise<CurrentState> {
+  try {
+    const parsed = mparentSchema.safeParse(data);
+
+    if (!parsed.success) {
+      return {
+        success: false,
+        error: true,
+        message: "Validasi gagal. Mohon isi semua data dengan benar.",
+      };
+    }
+
+    const { ids, students = [], address } = parsed.data;
+
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    await Promise.all(
+      ids.map(async (id: string) => {
+        // Find the waliMurid type for this parent
+        const parent = await prisma.parent.findUnique({
+          where: { id },
+          select: { waliMurid: true },
+        });
+
+        if (!parent) return;
+
+        // Decide which relation to update
+        let studentField: Record<string, any> = {};
+        switch (parent.waliMurid) {
+          case "AYAH":
+            studentField = {
+              students: {
+                set: students.map((sid) => ({ id: sid })),
+              },
+            };
+            break;
+          case "IBU":
+            studentField = {
+              secondaryStudents: {
+                set: students.map((sid) => ({ id: sid })),
+              },
+            };
+            break;
+          case "WALI":
+            studentField = {
+              guardianStudents: {
+                set: students.map((sid) => ({ id: sid })),
+              },
+            };
+            break;
+        }
+
+        // Perform the update
+        return prisma.parent.update({
+          where: { id },
+          data: {
+            address,
+            ...studentField,
+          },
+        });
+      })
+    );
+
+    return {
+      success: true,
+      error: false,
+      message: "Berhasil memperbarui wali murid.",
+    };
+  } catch (error: any) {
+    console.error("UpdateManyParent error:", error);
+    return {
+      success: false,
+      error: true,
+      message: "Terjadi kesalahan saat memperbarui data.",
+    };
+  }
+}
 
 export const deleteParent = async (
   currentState: CurrentState,
@@ -1336,6 +1558,51 @@ export const deleteParent = async (
         : "Unknown error";
 
     console.error("Delete Parent error: ", error);
+    return { success: false, error: true, message };
+  }
+};
+export const deleteParents = async (
+  currentState: CurrentState,
+  formData: FormData
+): Promise<CurrentState> => {
+  const ids = formData.getAll("ids") as string[];
+
+  if (!ids || ids.length === 0) {
+    return { success: false, error: true, message: "No student IDs provided." };
+  }
+
+  try {
+    for (const id of ids) {
+      try {
+        await prisma.parent.delete({ where: { id } });
+
+        try {
+          const deletedUser = await client.users.deleteUser(id);
+          if (deletedUser) {
+            console.log("✅ Clerk user deleted:", deletedUser.id);
+          }
+        } catch {
+          console.warn(`⚠️ Clerk user ${id} not found or already deleted.`);
+        }
+      } catch (innerError) {
+        console.error(`❌ Failed to delete parent ID = ${id}:`, innerError);
+        // Optionally continue deleting others instead of failing all
+      }
+    }
+
+    return {
+      success: true,
+      error: false,
+      message: `Deleted ${ids.length} Payment(s) successfully.`,
+    };
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === "string"
+        ? error
+        : "Unknown error";
+
     return { success: false, error: true, message };
   }
 };
@@ -1512,7 +1779,7 @@ export const createPpdb = async (
       data: {
         id: data.id ? data.id : undefined,
         name: data.name,
-        surname: data.name,
+        namalengkap: data.name,
         email: data.email,
         phone: data.phone,
         address: data.address,
@@ -1637,7 +1904,7 @@ export const updatePpdb = async (
       },
       data: {
         name: data.name,
-        surname: data.name,
+        namalengkap: data.name,
         email: data.email,
         phone: data.phone,
         address: data.address,
@@ -1717,9 +1984,9 @@ export const updatePpdb = async (
         id: undefined,
         sdId: "", // You may want to generate or fetch this value
         username: data.nisn + "_student",
-        password: `${data.nisn}@Sm2024!`, // Or generate a random password
+        password: encryptPassword(data.nisn), // Or generate a random password
         name: data.name,
-        surname: data.surname ?? "",
+        namalengkap: data.namalengkap ?? "",
         email: data.email,
         phone: data.phone,
         noWa: data.noWhatsapp,
@@ -1785,16 +2052,17 @@ export const updatePpdb = async (
         const ayahPayload = {
           id: undefined,
           username: data.nik + "_ayah",
-          password: `${data.nik}@Sm2024!`,
+          password: `${encryptPassword(data.nik)}@ayah`,
           email: `${data.nik}_ayah@parent.local`,
           name: data.namaAyah,
-          surname: "",
+          namalengkap: "",
           phone: data.telpAyah ?? "",
           birthday: data.tahunLahirAyah
             ? new Date(data.tahunLahirAyah)
             : new Date(1970, 0, 1),
           job: data.pekerjaanAyah ?? "",
           degree: toDegree(data.pendidikanAyah),
+          waliMurid: "AYAH" as parents,
           income:
             typeof data.penghasilanAyah === "number" ? data.penghasilanAyah : 0,
           address: data.address,
@@ -1808,10 +2076,10 @@ export const updatePpdb = async (
         const ibuPayload = {
           id: undefined,
           username: data.nik + "_ibu",
-          password: `${data.nik}@Sm2024!`,
+          password: `${encryptPassword(data.nik)}@ibu`,
           email: `${data.nik}_ibu@parent.local`,
           name: data.namaIbu,
-          surname: "",
+          namalengkap: "",
           phone: data.telpIbu ?? "",
           birthday: data.tahunLahirIbu
             ? new Date(data.tahunLahirIbu)
@@ -1822,6 +2090,7 @@ export const updatePpdb = async (
             typeof data.penghasilanIbu === "number" ? data.penghasilanIbu : 0,
           address: data.address,
           sex: "FEMALE" as "MALE" | "FEMALE",
+          waliMurid: "IBU" as parents,
           students: [studentId!],
         };
         await createParent({ success: false, error: false }, ibuPayload);
@@ -1831,10 +2100,10 @@ export const updatePpdb = async (
         const waliPayload = {
           id: undefined,
           username: data.nik + "_wali",
-          password: `${data.nik}@Sm2024!`,
+          password: `${encryptPassword(data.nik)}@wali`,
           email: `${data.nik}_wali@parent.local`,
           name: data.namaWali,
-          surname: "",
+          namalengkap: "",
           phone: data.telpWali ?? "",
           birthday: data.tahunLahirWali
             ? new Date(data.tahunLahirWali)
@@ -1845,6 +2114,7 @@ export const updatePpdb = async (
             typeof data.penghasilanWali === "number" ? data.penghasilanWali : 0,
           address: data.address,
           sex: "MALE" as "MALE" | "FEMALE",
+          waliMurid: "WALI" as parents,
           students: [studentId!],
         };
         await createParent({ success: false, error: false }, waliPayload);

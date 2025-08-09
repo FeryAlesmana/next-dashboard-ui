@@ -9,7 +9,7 @@ import prisma from "@/lib/prisma";
 import { Class, Teacher } from "@prisma/client";
 import { notFound } from "next/navigation";
 import FormContainer from "@/components/FormContainer";
-import { getCurrentUser } from "@/lib/utils";
+import { decryptPassword, getCurrentUser } from "@/lib/utils";
 import EmailCopy from "@/components/EmailCopy";
 
 const SingleTeacherPage = async ({
@@ -49,6 +49,11 @@ const SingleTeacherPage = async ({
   if (!teacher) {
     return notFound();
   }
+
+  let teacherWithDecryptedPassword = {
+    ...teacher,
+    password: teacher.password ? decryptPassword(teacher.password) : "",
+  };
   return (
     <div className="p-4 flex gap-4 flex-col xl:flex-row flex-1">
       {/* LEFT */}
@@ -69,13 +74,13 @@ const SingleTeacherPage = async ({
             <div className="w-2/3 flex flex-col justify-between gap-4">
               <div className="flex items-center gap-4">
                 <h1 className="text-xl font-semibold">
-                  {teacher.name + " " + teacher.surname}
+                  {teacher.name + " " + teacher.namalengkap}
                 </h1>
                 {role === "admin" && (
                   <FormContainer
                     table="teacher"
                     type="update"
-                    data={teacher}
+                    data={teacherWithDecryptedPassword}
                   ></FormContainer>
                 )}
               </div>

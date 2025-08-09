@@ -11,25 +11,27 @@ datasource db {
 model Admin {
   id       String @id
   username String @unique
+  password String @unique
 }
 
 model Student {
-  id        String   @id
-  username  String   @unique
-  name      String
-  surname   String
-  email     String?  @unique
-  phone     String?  @unique
-  address   String
-  rw        String
-  rt        String
-  kelurahan String
-  kecamatan String
-  kota      String
-  img       String?
-  religion  Agama
-  sex       UserSex
-  createdAt DateTime @default(now())
+  id          String   @id
+  username    String   @unique
+  password    String   @unique
+  name        String
+  namalengkap String
+  email       String?  @unique
+  phone       String?  @unique
+  address     String
+  rw          String
+  rt          String
+  kelurahan   String
+  kecamatan   String
+  kota        String
+  img         String?
+  religion    Agama
+  sex         UserSex
+  createdAt   DateTime @default(now())
 
   parentId       String?
   secondParentId String?
@@ -52,34 +54,36 @@ model Student {
 }
 
 model Teacher {
-  id        String    @id
-  username  String    @unique
-  name      String
-  surname   String
-  email     String?   @unique
-  phone     String    @unique
-  address   String
-  rw        String
-  rt        String
-  kelurahan String
-  kecamatan String
-  kota      String
-  religion  Agama
-  img       String?
-  sex       UserSex
-  createdAt DateTime  @default(now())
-  subjects  Subject[]
-  lessons   Lesson[]
-  classes   Class[]
-  birthday  DateTime
+  id          String    @id
+  username    String    @unique
+  password    String    @unique
+  name        String
+  namalengkap String
+  email       String?   @unique
+  phone       String    @unique
+  address     String
+  rw          String
+  rt          String
+  kelurahan   String
+  kecamatan   String
+  kota        String
+  religion    Agama
+  img         String?
+  sex         UserSex
+  createdAt   DateTime  @default(now())
+  subjects    Subject[]
+  lessons     Lesson[]
+  classes     Class[]
+  birthday    DateTime
 }
 
 model Parent {
   id                String    @id
   username          String    @unique
+  password          String    @unique
   name              String
   sex               UserSex
-  surname           String
+  namalengkap       String
   birthday          DateTime
   email             String?   @unique
   phone             String    @unique
@@ -88,9 +92,16 @@ model Parent {
   income            Int
   degree            Degree
   createdAt         DateTime  @default(now())
+  waliMurid         parents?
   students          Student[]
   secondaryStudents Student[] @relation("SecondParent")
   guardianStudents  Student[] @relation("Guardian")
+}
+
+enum parents {
+  AYAH
+  IBU
+  WALI
 }
 
 model student_details {
@@ -128,7 +139,7 @@ model student_details {
 model PPDB {
   id                 Int       @id @default(autoincrement())
   name               String
-  surname            String
+  namalengkap        String
   birthPlace         String
   birthday           DateTime
   sex                UserSex

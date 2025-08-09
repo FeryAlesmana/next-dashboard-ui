@@ -19,6 +19,7 @@ import {
 } from "@/lib/formValidationSchema";
 import { CurrentState, updatePaymentLogs } from "@/lib/actions";
 import { PaymentStatus } from "@prisma/client";
+import ConfirmDialog from "../ConfirmDialog";
 
 const FORM_KEY = "payment_log_draft_form";
 
@@ -150,6 +151,7 @@ export default function CreatePaymentLogPage({
 
   const watchedValues = watch();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   useEffect(() => {
     if (Object.keys(defaultValues).length > 0) {
       reset({
@@ -197,13 +199,17 @@ export default function CreatePaymentLogPage({
     return <span>Tidak ada data yang dipilih.</span>;
   }
 
-  const onSubmit = handleSubmit((data) => {
+  const handleSubmitForm = handleSubmit((data) => {
     setIsSubmitting(true);
-
+    setShowConfirm(false);
     startTransition(() => {
       formAction(data);
     });
   });
+  const onSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setShowConfirm(true); // Show modal before submit
+  };
 
   console.log(defaultValues, " defaultvalues in form");
 
@@ -351,9 +357,13 @@ export default function CreatePaymentLogPage({
               <option value="">Pilih Penerima</option>
               {watchedValues.recipientType === "student" &&
                 studentData.map(
-                  (student: { id: string; name: string; surname: string }) => (
+                  (student: {
+                    id: string;
+                    name: string;
+                    namalengkap: string;
+                  }) => (
                     <option key={student.id} value={student.id}>
-                      {student.name} {student.surname}
+                      {student.name} {student.namalengkap}
                     </option>
                   )
                 )}
@@ -414,6 +424,13 @@ export default function CreatePaymentLogPage({
             </span>
           )}
         </form>
+        {showConfirm && (
+          <ConfirmDialog
+            message="Ubah Pembayaran?"
+            onConfirm={handleSubmitForm}
+            onCancel={() => setShowConfirm(false)}
+          />
+        )}
       </div>
     </div>
   );

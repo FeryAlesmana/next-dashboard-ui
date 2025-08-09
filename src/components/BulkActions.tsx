@@ -32,6 +32,8 @@ export default function BulkActions({
 }) {
   if (selectedIds.length === 0) return null;
 
+  console.log(selectedIds, "ids in baction");
+
   return (
     <AnimatePresence>
       {selectedIds.length > 0 && (
@@ -50,13 +52,24 @@ export default function BulkActions({
           </div>
           <div className="flex items-center gap-2">
             <FormModal type="deleteMany" table={table} ids={selectedIds} />
-            <FormModal
-              type="updateMany"
-              table={table}
-              ids={selectedIds}
-              data={data}
-              relatedData={relatedData}
-            />
+            {/* Show Update or UpdateMany based on count */}
+            {selectedIds.length === 1 ? (
+              <FormModal
+                type="update"
+                table={table}
+                id={selectedIds[0]} // pass single id
+                data={data.find((item: any) => item.id === selectedIds[0])}
+                relatedData={relatedData}
+              />
+            ) : (
+              <FormModal
+                type="updateMany"
+                table={table}
+                ids={selectedIds}
+                data={data}
+                relatedData={relatedData}
+              />
+            )}
             <button
               onClick={onReset}
               className="flex items-center justify-center rounded-full hover:bg-gray-300 transition w-7 h-7"

@@ -80,7 +80,7 @@ const FormulirPendaftaran = ({
       reset({
         id: data.id,
         name: data.name ?? "",
-        surname: data.surname ?? "",
+        namalengkap: data.namalengkap ?? "",
         birthPlace: data.birthPlace ?? "",
         birthday: data.birthday
           ? new Date(data.birthday).toISOString().split("T")[0]

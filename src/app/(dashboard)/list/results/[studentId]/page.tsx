@@ -90,7 +90,7 @@ const SingleResultPage = async ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-700">
           <p>
             <span className="font-semibold">Nama Murid:</span> {student.name}{" "}
-            {student.surname}
+            {student.namalengkap}
           </p>
           <p>
             <span className="font-semibold">NISN:</span>{" "}
@@ -106,7 +106,9 @@ const SingleResultPage = async ({
         <table className="min-w-full text-sm">
           <thead className="bg-purple-100 text-gray-800">
             <tr>
-              <th className="p-3 text-left border-b border-gray-300">No</th>
+              <th className="p-3 text-left border-b border-gray-300 hidden md:table-cell">
+                No
+              </th>
               <th className="p-3 text-left border-b border-gray-300">
                 Mata Pelajaran
               </th>
@@ -146,12 +148,14 @@ const SingleResultPage = async ({
                     index % 2 === 0 ? "bg-gray-50" : "bg-white"
                   } hover:bg-purple-50 transition-colors duration-150`}
                 >
-                  <td className="p-3 border-b border-gray-200">{index + 1}</td>
+                  <td className="p-3 border-b border-gray-200 hidden md:table-cell">
+                    {index + 1}
+                  </td>
                   <td className="p-3 border-b border-gray-200">
                     {lesson.subject?.name}
                   </td>
                   <td className="p-3 border-b border-gray-200 hidden md:table-cell">
-                    {lesson.teacher?.name} {lesson.teacher?.surname}
+                    {lesson.teacher?.name} {lesson.teacher?.namalengkap}
                   </td>
                   <td className="p-3 border-b border-gray-200 text-center">
                     {tugas}
@@ -172,12 +176,30 @@ const SingleResultPage = async ({
               );
             })}
             {avgList.length > 0 && (
-              <tr className=" font-bold">
+              <tr className="font-bold hidden md:table-row">
                 <td
-                  className="p-3 border-t border-gray-300 text-center"
                   colSpan={6}
+                  className="p-3 border-t border-gray-300 text-center"
                 >
                   Rata-Rata Nilai Keseluruhan
+                </td>
+                <td className="p-3 border-t border-gray-300 text-center">
+                  {Math.round(
+                    avgList.reduce((acc, curr) => acc + curr, 0) /
+                      avgList.length
+                  )}
+                </td>
+              </tr>
+            )}
+
+            {/* Mobile version (below md) */}
+            {avgList.length > 0 && (
+              <tr className="font-bold md:hidden">
+                <td
+                  colSpan={5}
+                  className="p-3 border-t border-gray-300 text-center"
+                >
+                  Rata-Rata
                 </td>
                 <td className="p-3 border-t border-gray-300 text-center">
                   {Math.round(

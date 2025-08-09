@@ -4,7 +4,14 @@ import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import InputField from "../InputField";
 import Image from "next/image";
-import { studentSchema, StudentSchema } from "@/lib/formValidationSchema";
+import {
+  CreatestudentSchema,
+  createStudentSchema,
+  studentSchema,
+  StudentSchema,
+  UpdatestudentSchema,
+  updateStudentSchema,
+} from "@/lib/formValidationSchema";
 import {
   Dispatch,
   SetStateAction,
@@ -31,13 +38,19 @@ const StudentForm = ({
   setOpen: Dispatch<SetStateAction<boolean>>;
   relatedData: any;
 }) => {
+  const schema = type === "create" ? createStudentSchema : updateStudentSchema;
   const {
     register,
     handleSubmit,
     control,
     formState: { errors },
-  } = useForm<StudentSchema>({
-    resolver: zodResolver(studentSchema),
+  } = useForm<
+    typeof schema extends z.ZodTypeAny ? z.infer<typeof schema> : never
+  >({
+    resolver: zodResolver(schema),
+    // defaultValues: {
+    //   password: "",
+    // },
   });
 
   const [img, setImg] = useState<any>();
@@ -48,14 +61,14 @@ const StudentForm = ({
   }>({});
   const createStudentHandler = async (
     prevState: CurrentState,
-    payload: StudentSchema
+    payload: CreatestudentSchema
   ): Promise<CurrentState> => {
     return await createStudent(prevState, payload);
   };
 
   const updateStudentHandler = async (
     prevState: CurrentState,
-    payload: StudentSchema
+    payload: UpdatestudentSchema
   ): Promise<CurrentState> => {
     return await updateStudent(prevState, payload);
   };
@@ -96,7 +109,7 @@ const StudentForm = ({
   const onSubmit = handleSubmit(async (data) => {
     setIsSubmitting(true);
 
-    const payload: StudentSchema = {
+    const payload: any = {
       ...data,
       img: img?.secure_url,
       awards_date: data.awards_date ? new Date(data.awards_date) : null,
@@ -131,12 +144,16 @@ const StudentForm = ({
   });
   const { grades, classes, parents } = relatedData;
 
+  //  console.log(data, "data in studentForm");
+
   const parentOption = parents.map(
-    (parent: { id: string; name: string; surname: string }) => ({
+    (parent: { id: string; name: string; namalengkap: string }) => ({
       value: parent.id,
-      label: `${parent.name} ${parent.surname}`,
+      label: `${parent.name} ${parent.namalengkap}`,
     })
   );
+  const [showPassword, setShowPassword] = useState(false);
+
   return (
     <form action="" className="flex flex-col gap-8" onSubmit={onSubmit}>
       <h1 className="text-xl font-semibold">
@@ -145,30 +162,50 @@ const StudentForm = ({
       <span className="text-xs text-gray-400 font-medium">
         Informasi Autentikasi
       </span>
-      <div className="flex justify-between flex-wrap gap-4">
-        <InputField
-          label="Username"
-          name="username"
-          defaultValue={data?.username}
-          register={register}
-          error={errors?.username}
-        ></InputField>
-        <InputField
-          label="Email"
-          name="email"
-          type="email"
-          defaultValue={data?.email}
-          register={register}
-          error={errors?.email}
-        ></InputField>
-        <InputField
-          label="Password"
-          name="password"
-          type="password"
-          defaultValue={data?.password}
-          register={register}
-          error={errors?.password}
-        ></InputField>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
+        <div>
+          <InputField
+            label="Username"
+            name="username"
+            defaultValue={data?.username}
+            register={register}
+            error={errors?.username}
+            table="student"
+          />
+        </div>
+
+        <div>
+          <InputField
+            label="Email"
+            name="email"
+            type="email"
+            defaultValue={data?.email}
+            register={register}
+            placeholder="email@example.com"
+            error={errors?.email}
+            table="student"
+          />
+        </div>
+
+        <div>
+          <InputField
+            label="Password"
+            name="password"
+            type={showPassword ? "text" : "password"}
+            defaultValue={data?.password}
+            register={register}
+            error={errors?.password}
+            table="student"
+          />
+          <label className="flex items-center gap-2 mt-1 text-xs">
+            <input
+              type="checkbox"
+              checked={showPassword}
+              onChange={() => setShowPassword((prev) => !prev)}
+            />
+            Show password
+          </label>
+        </div>
       </div>
       <span className="text-xs text-gray-400 font-medium">
         Informasi Personal
@@ -187,10 +224,10 @@ const StudentForm = ({
         ></InputField>
         <InputField
           label="Nama Belakang"
-          name="surname"
-          defaultValue={data?.surname}
+          name="namalengkap"
+          defaultValue={data?.namalengkap}
           register={register}
-          error={errors?.surname}
+          error={errors?.namalengkap}
         ></InputField>
         <InputField
           label="No. Telepon"
@@ -351,7 +388,9 @@ const StudentForm = ({
             <option value="Pesantren">Pesantren</option>
           </select>
           {errors.tempat_tinggal && (
-            <p className="text-red-600">{errors.tempat_tinggal.message}</p>
+            <p className="text-red-600">
+              {errors.tempat_tinggal.message?.toString()}
+            </p>
           )}
         </div>
         <InputField
@@ -426,7 +465,9 @@ const StudentForm = ({
             <option value="internasional">Internasional</option>
           </select>
           {errors.awards_lvl && (
-            <p className="text-red-600">{errors.awards_lvl.message}</p>
+            <p className="text-red-600">
+              {errors.awards_lvl.message?.toString()}
+            </p>
           )}
         </div>
         <InputField

@@ -1,6 +1,34 @@
 import { auth } from "@clerk/nextjs/server";
 import prisma from "./prisma";
 
+import crypto from "crypto";
+
+const ALGORITHM = "aes-256-cbc";
+const SECRET_KEY = crypto
+  .createHash("sha256")
+  .update(process.env.PASSWORD_SECRET!)
+  .digest();
+const IV_LENGTH = 16;
+
+// Encrypt password
+export function encryptPassword(password: string) {
+  const iv = crypto.randomBytes(IV_LENGTH);
+  const cipher = crypto.createCipheriv(ALGORITHM, SECRET_KEY, iv);
+  let encrypted = cipher.update(password, "utf8", "hex");
+  encrypted += cipher.final("hex");
+  return `${iv.toString("hex")}:${encrypted}`;
+}
+
+// Decrypt password
+export function decryptPassword(encrypted: string) {
+  const [ivHex, encryptedText] = encrypted.split(":");
+  const iv = Buffer.from(ivHex, "hex");
+  const decipher = crypto.createDecipheriv(ALGORITHM, SECRET_KEY, iv);
+  let decrypted = decipher.update(encryptedText, "hex", "utf8");
+  decrypted += decipher.final("utf8");
+  return decrypted;
+}
+
 export const getCurrentUser = async () => {
   const { userId, sessionClaims, actor } = await auth();
   const role = (sessionClaims?.metadata as { role?: string })?.role;

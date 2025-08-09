@@ -8,7 +8,26 @@ import {
   Awards,
   Degree,
 } from "@prisma/client";
+
+import crypto from "crypto";
 const prisma = new PrismaClient();
+
+const ALGORITHM = "aes-256-cbc";
+const SECRET_KEY = crypto
+  .createHash("sha256")
+  .update(process.env.PASSWORD_SECRET!)
+  .digest();
+const IV_LENGTH = 16;
+
+// Encrypt password
+export function encryptPassword(password: string) {
+  const iv = crypto.randomBytes(IV_LENGTH);
+  const cipher = crypto.createCipheriv(ALGORITHM, SECRET_KEY, iv);
+  let encrypted = cipher.update(password, "utf8", "hex");
+  encrypted += cipher.final("hex");
+  return `${iv.toString("hex")}:${encrypted}`;
+}
+
 const grades = [];
 async function main() {
   // ADMIN
@@ -16,12 +35,14 @@ async function main() {
     data: {
       id: "admin1",
       username: "admin1",
+      password: encryptPassword("admin123"), // plain password
     },
   });
   await prisma.admin.create({
     data: {
       id: "admin2",
       username: "admin2",
+      password: encryptPassword("admin456"),
     },
   });
 
@@ -72,8 +93,9 @@ async function main() {
       data: {
         id: `teacher${i}`,
         username: `teacher${i}`,
+        password: encryptPassword(`teacherPass${i}`),
         name: `TName${i}`,
-        surname: `TSurname ${i}`,
+        namalengkap: `Tnamalengkap ${i}`,
         email: `teacher${i}@example.com`,
         phone: `123-456-789${i}`,
         address: `Address${i}`,
@@ -124,8 +146,9 @@ async function main() {
       data: {
         id: `parentId${i}`,
         username: `parentId${i}`,
+        password: encryptPassword(`parenttPass${i}`),
         name: `PName ${i}`,
-        surname: `PSurname ${i}`,
+        namalengkap: `Pnamalengkap ${i}`,
         sex: i % 2 === 0 ? UserSex.MALE : UserSex.FEMALE,
         email: `parent${i}@example.com`,
         phone: `123-456-789${i}`,
@@ -167,8 +190,9 @@ async function main() {
       data: {
         id: `student${i}`,
         username: `student${i}`,
+        password: encryptPassword(`studentPass${i}`),
         name: `SName${i}`,
-        surname: `SSurname ${i}`,
+        namalengkap: `Snamalengkap ${i}`,
         email: `student${i}@example.com`,
         phone: `987-654-321${i}`,
         address: `Address${i}`,
@@ -330,7 +354,7 @@ async function main() {
 const ppdbDummyData = [
   {
     name: "Budi",
-    surname: "Santoso",
+    namalengkap: "Santoso",
     birthday: new Date("2015-05-10T00:00:00.000Z"),
     birthPlace: "Jakarta",
     sex: "MALE" as UserSex,
@@ -394,7 +418,7 @@ const ppdbDummyData = [
   },
   {
     name: "Ani",
-    surname: "Wijaya",
+    namalengkap: "Wijaya",
     birthday: new Date("2015-08-15T00:00:00.000Z"),
     birthPlace: "Bandung",
     sex: "FEMALE" as UserSex,
@@ -432,19 +456,19 @@ const ppdbDummyData = [
     namaAyah: "Bambang Wijaya",
     tahunLahirAyah: new Date("1978-03-03T00:00:00.000Z"),
     pekerjaanAyah: "Wiraswasta",
-    pendidikanAyah: "SMA"  as Degree,
+    pendidikanAyah: "SMA" as Degree,
     penghasilanAyah: 4000000,
     telpAyah: "081234567894",
     namaIbu: "Dewi Lestari",
     tahunLahirIbu: new Date("1980-04-04T00:00:00.000Z"),
     pekerjaanIbu: "Guru",
-    pendidikanIbu: "S1"  as Degree,
+    pendidikanIbu: "S1" as Degree,
     penghasilanIbu: 3500000,
     telpIbu: "081234567895",
     namaWali: "",
     tahunLahirWali: null,
     pekerjaanWali: "",
-    pendidikanWali: "SMA"  as Degree,
+    pendidikanWali: "SMA" as Degree,
     penghasilanWali: 0,
     telpWali: "",
     dokumenIjazah: "",
@@ -458,7 +482,7 @@ const ppdbDummyData = [
   },
   {
     name: "Joko",
-    surname: "Susilo",
+    namalengkap: "Susilo",
     birthday: new Date("2015-12-20T00:00:00.000Z"),
     birthPlace: "Surabaya",
     sex: "MALE" as UserSex,
@@ -502,7 +526,7 @@ const ppdbDummyData = [
     namaIbu: "Sri Wahyuni",
     tahunLahirIbu: new Date("1977-06-06T00:00:00.000Z"),
     pekerjaanIbu: "Pedagang",
-    pendidikanIbu: "SMA"  as Degree,
+    pendidikanIbu: "SMA" as Degree,
     penghasilanIbu: 2000000,
     telpIbu: "081234567898",
     namaWali: "",

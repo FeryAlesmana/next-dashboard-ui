@@ -84,7 +84,7 @@ const ExamListPage = async ({
       <td>{item.lesson.class.name}</td>
       <td className="hidden md:table-cell">
         {item.lesson.teacher
-          ? `${item.lesson.teacher.name} ${item.lesson.teacher.surname}`
+          ? `${item.lesson.teacher.name} ${item.lesson.teacher.namalengkap}`
           : "Tidak ada guru"}
       </td>
       <td className="hidden md:table-cell">
@@ -224,7 +224,7 @@ const ExamListPage = async ({
               exams: true,
               subject: true,
               class: true,
-              teacher: { select: { name: true, surname: true } },
+              teacher: { select: { name: true, namalengkap: true } },
             },
           });
 
@@ -234,7 +234,7 @@ const ExamListPage = async ({
               subjectName: lesson.subject?.name || "-",
               className: lesson.class?.name || "-",
               teacherName: lesson.teacher
-                ? `${lesson.teacher.name} ${lesson.teacher.surname}`
+                ? `${lesson.teacher.name} ${lesson.teacher.namalengkap}`
                 : "Tidak ada guru",
               startTime: exam.startTime,
               endTime: exam.endTime,
@@ -343,7 +343,7 @@ const ExamListPage = async ({
         lesson: {
           select: {
             subject: { select: { name: true } },
-            teacher: { select: { name: true, surname: true } },
+            teacher: { select: { name: true, namalengkap: true } },
             class: { select: { name: true } },
           },
         },

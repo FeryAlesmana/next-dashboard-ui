@@ -86,7 +86,7 @@ export default async function LessonListContainer({
               where: { classId: cls.id },
               include: {
                 subject: { select: { name: true } },
-                teacher: { select: { name: true, surname: true } },
+                teacher: { select: { name: true, namalengkap: true } },
               },
             });
             return { ...cls, lessons };
@@ -99,7 +99,7 @@ export default async function LessonListContainer({
             include: {
               subject: { select: { name: true } },
               class: { select: { name: true, gradeId: true } },
-              teacher: { select: { name: true, surname: true } },
+              teacher: { select: { name: true, namalengkap: true } },
             },
             take: ITEM_PER_PAGE,
             skip: ITEM_PER_PAGE * (p - 1),
@@ -115,7 +115,7 @@ export default async function LessonListContainer({
       include: {
         subject: { select: { name: true } },
         class: { select: { name: true, gradeId: true } },
-        teacher: { select: { name: true, surname: true } },
+        teacher: { select: { name: true, namalengkap: true } },
       },
       take: ITEM_PER_PAGE,
       skip: ITEM_PER_PAGE * (p - 1),

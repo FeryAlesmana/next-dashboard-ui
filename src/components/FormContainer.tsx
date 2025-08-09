@@ -35,8 +35,8 @@ const FormContainer = async ({
 }: FormContainerProps) => {
   const { userId, role } = await getCurrentUser();
   let relatedData = {};
-  console.log(data, " data in form container");
-  console.log(id, " id in form container");
+  // console.log(data, " data in form container");
+  // console.log(id, " id in form container");
 
   if (type !== "delete") {
     switch (table) {
@@ -45,7 +45,7 @@ const FormContainer = async ({
           select: {
             id: true,
             name: true,
-            surname: true,
+            namalengkap: true,
           },
         });
         relatedData = { teachers: subjectTeachers };
@@ -55,7 +55,7 @@ const FormContainer = async ({
           select: {
             id: true,
             name: true,
-            surname: true,
+            namalengkap: true,
           },
         });
         relatedData = { students: parentStudents };
@@ -71,7 +71,7 @@ const FormContainer = async ({
           select: {
             id: true,
             name: true,
-            surname: true,
+            namalengkap: true,
           },
         });
         relatedData = { teachers: classTeacher, grades: classGrades };
@@ -117,7 +117,7 @@ const FormContainer = async ({
           select: {
             id: true,
             name: true,
-            surname: true,
+            namalengkap: true,
           },
         });
 
@@ -252,7 +252,7 @@ const FormContainer = async ({
           select: {
             id: true,
             name: true,
-            surname: true,
+            namalengkap: true,
           },
         });
 
@@ -267,7 +267,7 @@ const FormContainer = async ({
           select: {
             id: true,
             name: true,
-            surname: true,
+            namalengkap: true,
             classId: true,
           },
         });
@@ -316,7 +316,7 @@ const FormContainer = async ({
           select: {
             id: true,
             name: true,
-            surname: true,
+            namalengkap: true,
           },
         });
 
@@ -355,7 +355,7 @@ const FormContainer = async ({
               select: {
                 id: true,
                 name: true,
-                surname: true,
+                namalengkap: true,
                 class: {
                   select: {
                     name: true,
@@ -375,7 +375,7 @@ const FormContainer = async ({
           select: {
             id: true,
             name: true,
-            surname: true,
+            namalengkap: true,
           },
         });
         const classData = await prisma.class.findMany({

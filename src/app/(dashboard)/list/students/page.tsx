@@ -8,7 +8,11 @@ import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/setting";
-import { getCurrentUser, normalizeSearchParams } from "@/lib/utils";
+import {
+  decryptPassword,
+  getCurrentUser,
+  normalizeSearchParams,
+} from "@/lib/utils";
 import { Class, Prisma, Student } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
@@ -185,7 +189,7 @@ const StudentsListPage = async ({
     }
   }
 
-  const [data, count, classesData] = await prisma.$transaction([
+  const [students, count, classes, parents] = await prisma.$transaction([
     prisma.student.findMany({
       where: query,
       orderBy,
@@ -201,7 +205,30 @@ const StudentsListPage = async ({
     prisma.class.findMany({
       include: { grade: true, _count: { select: { students: true } } },
     }),
+    prisma.parent.findMany({
+      select: {
+        id: true,
+        name: true,
+        namalengkap: true,
+      },
+    }),
   ]);
+  const data = students.map((student) => ({
+    ...student,
+    password: decryptPassword(student.password),
+  }));
+
+  // console.log(data, "data in student");
+
+  let relatedData = {};
+
+  const grades = Array.from(
+    new Map(classes.map((c) => [c.grade?.id, c.grade])).values()
+  );
+
+  // console.log(grades, "Tingkat di studentList");
+
+  relatedData = { classes: classes, parents: parents, grades: grades };
 
   return (
     <ClientPageWrapper key={key} role={role!}>
@@ -219,7 +246,7 @@ const StudentsListPage = async ({
                   {
                     name: "classId",
                     label: "Kelas",
-                    options: classesData.map((cls) => ({
+                    options: classes.map((cls) => ({
                       label: cls.name,
                       value: cls.id.toString(),
                     })),
@@ -229,7 +256,7 @@ const StudentsListPage = async ({
                     label: "Tingkat",
                     options: Array.from(
                       new Set(
-                        classesData
+                        classes
                           .map((cls) => cls.grade?.level)
                           .filter(
                             (level): level is number => level !== undefined
@@ -270,7 +297,7 @@ const StudentsListPage = async ({
             students={data}
             role={role!}
             columns={columns}
-            relatedData={classesData}
+            relatedData={relatedData}
           />
         </div>
         {/* PAGINATION*/}
