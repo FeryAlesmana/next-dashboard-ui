@@ -59,39 +59,29 @@ const SEMESTERS = [
   // ... add more past semesters
 ];
 
-// export function getAvailableSemesters(gradeLevel: number): typeof SEMESTERS {
-//   if (gradeLevel < 1 || gradeLevel > 3) return [];
-
-//   const now = new Date();
-//   const currentYear = now.getFullYear();
-
-//   const allowedYears = [];
-//   for (let i = 0; i < gradeLevel; i++) {
-//     allowedYears.push(currentYear - i);
-//   }
-
-//   return SEMESTERS.filter((s) => {
-//     const startYear = s.start.getFullYear();
-//     const endYear = s.end.getFullYear();
-//     return allowedYears.includes(startYear) || allowedYears.includes(endYear);
-//   });
-// }
-
 export const getProfileByClerkIdAndRole = async (
   clerkId: string,
   role?: string
 ) => {
+  const defaultImg = "/avatar.png";
+
   switch (role) {
     case "student":
-      return await prisma.student.findUnique({
-        where: { id: clerkId },
-        select: { name: true, img: true },
-      });
+      return (
+        (await prisma.student.findUnique({
+          where: { id: clerkId },
+          select: { name: true, img: true },
+        })) ?? { name: "Siswa", img: defaultImg }
+      );
+
     case "teacher":
-      return await prisma.teacher.findUnique({
-        where: { id: clerkId },
-        select: { name: true, img: true },
-      });
+      return (
+        (await prisma.teacher.findUnique({
+          where: { id: clerkId },
+          select: { name: true, img: true },
+        })) ?? { name: "Guru", img: defaultImg }
+      );
+
     case "parent":
       const parent = await prisma.parent.findUnique({
         where: { id: clerkId },
@@ -99,12 +89,14 @@ export const getProfileByClerkIdAndRole = async (
       });
       return {
         name: parent?.name ?? "Orang Tua",
-        img: undefined, // fallback will be handled by caller
+        img: defaultImg,
       };
+
     default:
-      return null;
+      return { name: "Admin", img: defaultImg };
   }
 };
+
 const currentWorkWeek = () => {
   const today = new Date();
   const dayOfWeek = today.getDay();
