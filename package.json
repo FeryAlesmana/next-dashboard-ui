@@ -1,0 +1,58 @@
+{
+  "name": "smpi-school-management-app",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "npx prisma generate && next build",
+    "postinstall": "prisma generate",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@clerk/elements": "^0.23.32",
+    "@clerk/nextjs": "^6.22.0",
+    "@hookform/resolvers": "^5.0.1",
+    "@prisma/client": "^6.13.0",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/react-big-calendar": "^1.16.2",
+    "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.2",
+    "cloudinary": "^2.7.0",
+    "dotenv": "^17.2.1",
+    "framer-motion": "^12.23.12",
+    "moment": "^2.30.1",
+    "next": "^15.3.5",
+    "next-cloudinary": "^6.16.0",
+    "nodemailer": "^7.0.5",
+    "prisma": "^6.11.1",
+    "react": "^18",
+    "react-big-calendar": "^1.18.0",
+    "react-calendar": "^5.1.0",
+    "react-dom": "^18",
+    "react-hook-form": "^7.56.4",
+    "react-icon": "^1.0.0",
+    "react-icons": "^5.5.0",
+    "react-select": "^5.10.1",
+    "react-toastify": "^11.0.5",
+    "recharts": "^2.15.3",
+    "ts-node": "^10.9.2",
+    "zod": "^3.25.46"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/dotenv": "^6.1.1",
+    "@types/node": "^20",
+    "@types/nodemailer": "^6.4.17",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "eslint": "^8",
+    "eslint-config-next": "14.2.5",
+    "postcss": "^8",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5"
+  },
+  "prisma": {
+    "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
+  }
+}

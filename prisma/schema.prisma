@@ -1,0 +1,474 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  // directUrl = env("DIRECT_URL")
+}
+
+model Admin {
+  id       String @id
+  username String @unique
+  password String @unique
+}
+
+model Student {
+  id          String   @id
+  username    String   @unique
+  password    String   @unique
+  name        String
+  namalengkap String
+  email       String?  @unique
+  phone       String?  @unique
+  address     String
+  rw          String
+  rt          String
+  kelurahan   String
+  kecamatan   String
+  kota        String
+  img         String?
+  religion    Agama
+  sex         UserSex
+  createdAt   DateTime @default(now())
+
+  parentId       String?
+  secondParentId String?
+  guardianId     String?
+
+  parent       Parent? @relation(fields: [parentId], references: [id], onDelete: SetNull)
+  secondParent Parent? @relation("SecondParent", fields: [secondParentId], references: [id], onDelete: SetNull)
+  guardian     Parent? @relation("Guardian", fields: [guardianId], references: [id], onDelete: SetNull)
+
+  classId         Int?
+  class           Class?           @relation(fields: [classId], references: [id], onDelete: SetNull)
+  gradeId         Int?
+  grade           Grade?           @relation(fields: [gradeId], references: [id], onDelete: SetNull)
+  student_details student_details?
+  attendance      Attendance[]
+  results         Result[]
+  birthday        DateTime
+
+  paymentLogs PaymentLog[]
+}
+
+model Teacher {
+  id          String    @id
+  username    String    @unique
+  password    String    @unique
+  name        String
+  namalengkap String
+  email       String?   @unique
+  phone       String    @unique
+  address     String
+  rw          String
+  rt          String
+  kelurahan   String
+  kecamatan   String
+  kota        String
+  religion    Agama
+  img         String?
+  sex         UserSex
+  createdAt   DateTime  @default(now())
+  subjects    Subject[]
+  lessons     Lesson[]
+  classes     Class[]
+  birthday    DateTime
+}
+
+model Parent {
+  id                String    @id
+  username          String    @unique
+  password          String    @unique
+  name              String
+  sex               UserSex
+  namalengkap       String
+  birthday          DateTime
+  email             String?   @unique
+  phone             String    @unique
+  address           String
+  job               String
+  income            Int
+  degree            Degree
+  createdAt         DateTime  @default(now())
+  waliMurid         parents?
+  students          Student[]
+  secondaryStudents Student[] @relation("SecondParent")
+  guardianStudents  Student[] @relation("Guardian")
+}
+
+enum parents {
+  AYAH
+  IBU
+  WALI
+}
+
+model student_details {
+  id                 Int       @id @default(autoincrement())
+  studentId          String    @unique
+  student            Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  asalSekolah        String
+  birthPlace         String
+  noWa               String?
+  nisn               String    @unique
+  npsn               String    @unique
+  no_ijz             String    @unique
+  nik                String    @unique
+  kps                KPS?
+  no_kps             String?   @unique
+  height             Int
+  weight             Int
+  transportation     String
+  tempat_tinggal     TTinggal
+  distance_from_home Int
+  time_from_home     Int //in minutes 
+  number_of_siblings Int
+  postcode           Int
+  awards             String?
+  awards_lvl         Awards?
+  awards_date        DateTime?
+  scholarship        String?
+  scholarship_detail String?
+  dokumenIjazah      String?
+  dokumenAkte        String?
+  dokumenPasfoto     String?
+  dokumenKKKTP       String?
+}
+
+model PPDB {
+  id                 Int       @id @default(autoincrement())
+  name               String
+  namalengkap        String
+  birthPlace         String
+  birthday           DateTime
+  sex                UserSex
+  religion           Agama
+  asalSekolah        String
+  npsn               String    @unique
+  nisn               String    @unique
+  no_ijz             String    @unique
+  nik                String    @unique
+  address            String
+  rw                 String
+  rt                 String
+  kelurahan          String
+  kecamatan          String
+  kota               String
+  postcode           Int
+  phone              String?   @unique
+  noWa               String?
+  transportation     String
+  tempat_tinggal     TTinggal
+  kps                KPS?
+  no_kps             String?   @unique
+  email              String?   @unique
+  height             Int
+  weight             Int
+  distance_from_home Int
+  time_from_home     Int //in minutes 
+  number_of_siblings Int
+  namaAyah           String?
+  tahunLahirAyah     DateTime?
+  pekerjaanAyah      String?
+  pendidikanAyah     Degree?
+  penghasilanAyah    Int?
+  telpAyah           String?
+  namaIbu            String?
+  tahunLahirIbu      DateTime?
+  pekerjaanIbu       String?
+  pendidikanIbu      Degree?
+  penghasilanIbu     Int?
+  telpIbu            String?
+  namaWali           String?
+  tahunLahirWali     DateTime?
+  pekerjaanWali      String?
+  pendidikanWali     Degree?
+  penghasilanWali    Int?
+  telpWali           String?
+  awards             String?
+  awards_lvl         Awards?
+  awards_date        DateTime?
+  scholarship        String?
+  scholarship_detail String?
+  scholarship_date   DateTime?
+  isvalid            Boolean
+  dokumenIjazah      String?
+  dokumenAkte        String?
+  dokumenPasfoto     String?
+  dokumenKKKTP       String?
+  createdAt          DateTime  @default(now())
+}
+
+model Grade {
+  id    Int @id @default(autoincrement())
+  level Int @unique
+
+  students    Student[]
+  classes     Class[]
+  paymentLogs PaymentLog[]
+}
+
+model Class {
+  id       Int    @id @default(autoincrement())
+  name     String @unique
+  capacity Int
+
+  supervisorId  String?
+  supervisor    Teacher?       @relation(fields: [supervisorId], references: [id], onDelete: SetNull)
+  lessons       Lesson[]
+  students      Student[]
+  gradeId       Int?
+  grade         Grade?         @relation(fields: [gradeId], references: [id], onDelete: SetNull)
+  Events        Event[]
+  Announcements Announcement[]
+
+  paymentLogs PaymentLog[]
+}
+
+model Subject {
+  id       Int       @id @default(autoincrement())
+  name     String    @unique
+  teachers Teacher[]
+  lessons  Lesson[]
+}
+
+model Lesson {
+  id        Int      @id @default(autoincrement())
+  name      String
+  day       Day
+  startTime DateTime
+  endTime   DateTime
+
+  subjectId   Int?
+  subject     Subject?     @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  classId     Int?
+  class       Class?       @relation(fields: [classId], references: [id], onDelete: SetNull)
+  teacherId   String?
+  teacher     Teacher?     @relation(fields: [teacherId], references: [id], onDelete: SetNull)
+  exams       Exam[]
+  assignments Assignment[]
+  attendance  Attendance[]
+  meetings    Meeting[]
+}
+
+model Exam {
+  id        Int      @id @default(autoincrement())
+  title     String
+  startTime DateTime
+  endTime   DateTime
+
+  lessonId Int?
+  lesson   Lesson?  @relation(fields: [lessonId], references: [id], onDelete: SetNull)
+  results  Result[]
+  exType   exTypes?
+}
+
+enum exTypes {
+  UJIAN_HARIAN
+  UJIAN_TENGAH_SEMESTER
+  UJIAN_AKHIR_SEMESTER
+}
+
+model Assignment {
+  id        Int      @id @default(autoincrement())
+  title     String
+  startDate DateTime
+  dueDate   DateTime
+
+  lessonId Int?
+  lesson   Lesson?   @relation(fields: [lessonId], references: [id], onDelete: SetNull)
+  results  Result[]
+  assType  assTypes?
+}
+
+enum assTypes {
+  PEKERJAAN_RUMAH
+  TUGAS_AKHIR
+  TUGAS_HARIAN
+}
+
+model Result {
+  id    Int @id @default(autoincrement())
+  score Int
+
+  examId       Int?
+  exam         Exam?       @relation(fields: [examId], references: [id], onDelete: SetNull)
+  assignmentId Int?
+  assignment   Assignment? @relation(fields: [assignmentId], references: [id], onDelete: SetNull)
+  studentId    String?
+  student      Student?    @relation(fields: [studentId], references: [id], onDelete: SetNull)
+  resultType   resTypes?
+}
+
+enum resTypes {
+  TUGAS_HARIAN
+  TUGAS_AKHIR
+  PEKERJAAN_RUMAH
+  UJIAN_HARIAN
+  UJIAN_TENGAH_SEMESTER
+  UJIAN_AKHIR_SEMESTER
+}
+
+model Attendance {
+  id        Int              @id @default(autoincrement())
+  date      DateTime
+  present   Boolean
+  status    AttendanceStatus @default(HADIR)
+  studentId String?
+  student   Student?         @relation(fields: [studentId], references: [id], onDelete: SetNull)
+  lessonId  Int?
+  lesson    Lesson?          @relation(fields: [lessonId], references: [id], onDelete: SetNull)
+  meetingId Int?
+  meeting   Meeting?         @relation(fields: [meetingId], references: [id], onDelete: SetNull)
+
+  @@unique([studentId, meetingId])
+}
+
+enum AttendanceStatus {
+  HADIR
+  SAKIT
+  ABSEN
+}
+
+model Meeting {
+  id          Int          @id @default(autoincrement())
+  lessonId    Int
+  lesson      Lesson       @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  meetingNo   Int // Tatap muka pertemuan-1, 2, ...
+  date        DateTime
+  startTime   DateTime
+  endTime     DateTime
+  attendances Attendance[]
+}
+
+model Event {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  startTime   DateTime
+  endTime     DateTime
+
+  classId Int?
+  class   Class? @relation(fields: [classId], references: [id], onDelete: SetNull)
+}
+
+model Announcement {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  date        DateTime
+
+  classId Int?
+  class   Class? @relation(fields: [classId], references: [id], onDelete: SetNull)
+}
+
+enum UserSex {
+  MALE
+  FEMALE
+}
+
+enum KPS {
+  KIP
+  KIS
+  KKS
+}
+
+enum TTinggal {
+  Orang_Tua
+  Wali
+  Kost
+  Asrama
+  Panti_asuhan
+  Pesantren
+}
+
+enum Awards {
+  kecamatan
+  kota
+  kabupaten
+  provinsi
+  nasional
+  internasional
+}
+
+enum Degree {
+  TIDAK_ADA
+  SD
+  SMP
+  SMA
+  D3
+  S1
+  S2
+  S3
+}
+
+enum Agama {
+  Islam
+  Kristen
+  Buddha
+  Lainnya
+}
+
+enum Day {
+  SENIN
+  SELASA
+  RABU
+  KAMIS
+  JUMAT
+}
+
+model EmailOtp {
+  id        Int      @id @default(autoincrement())
+  email     String
+  code      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model PaymentLog {
+  id            Int           @id @default(autoincrement())
+  studentId     String
+  student       Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  amount        Float
+  paymentType   PaymentType
+  status        PaymentStatus
+  dueDate       DateTime
+  paidAt        DateTime?
+  description   String? // e.g., "Tuition for Semester 1" or "Extracurricular Fee"
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  paymentMethod String? // e.g., "Bank Transfer", "Cash", etc.
+  receiptNumber String?       @unique // Unique identifier for the payment receipt
+
+  classId Int?
+  class   Class? @relation(fields: [classId], references: [id], onDelete: SetNull)
+  gradeId Int?
+  grade   Grade? @relation(fields: [gradeId], references: [id], onDelete: SetNull)
+
+  paymentInstallments PaymentInstallment[]
+}
+
+enum PaymentType {
+  TUITION
+  EXTRACURRICULAR
+  UNIFORM
+  BOOKS
+  OTHER
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  OVERDUE
+  PARTIALLY_PAID
+}
+
+model PaymentInstallment {
+  id           Int        @id @default(autoincrement())
+  paymentLogId Int
+  paymentLog   PaymentLog @relation(fields: [paymentLogId], references: [id], onDelete: Cascade)
+  amount       Float
+  paidAt       DateTime?
+  createdAt    DateTime   @default(now())
+}
