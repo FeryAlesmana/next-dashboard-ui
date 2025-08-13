@@ -20,15 +20,10 @@ import {
   MstudentSchema,
   mteacherSchema,
   MteacherSchema,
-  ParentSchema,
   PaymentLogSchema,
   PpdbSchema,
   ResultSchema,
-  StudentSchema,
   SubjectSchema,
-  TeacherSchema,
-  teacherSchema,
-  createStudentSchema,
   CreatestudentSchema,
   UpdatestudentSchema,
   CreateparentSchema,
@@ -37,6 +32,7 @@ import {
   UpdateteacherSchema,
   MparentSchema,
   mparentSchema,
+  MresultSchema,
 } from "./formValidationSchema";
 import prisma from "./prisma";
 import { clerkClient } from "@clerk/nextjs/server";
@@ -504,6 +500,8 @@ export const createStudent = async (
     },
   });
 
+  console.log(data, "Data in createStudent");
+
   if (classItem && classItem.capacity === classItem._count.students) {
     return { success: false, error: true };
   }
@@ -515,6 +513,13 @@ export const createStudent = async (
       lastName: data.namalengkap,
       publicMetadata: { role: "student" },
     });
+    console.log("Trying to createUser");
+
+    // if (!user || !user.id) {
+    //   return { success: false, error: true, message: "Failed to create user" };
+    // }
+
+    console.log(user.id, "userId in createStudent");
     await new Promise((resolve) => setTimeout(resolve, 1000));
     await prisma.student.create({
       data: {
@@ -574,6 +579,10 @@ export const createStudent = async (
     });
     return { success: true, error: false, id: user.id };
   } catch (error: any) {
+    console.error("Create student failed:", error);
+    if (error?.errors) {
+      console.error("Clerk errors:", JSON.stringify(error.errors, null, 2));
+    }
     let message = "Unknown error";
     // Handle Clerk API errors properly
 
@@ -1297,7 +1306,7 @@ export const createParent = async (
         ...studentField,
       },
     });
-    return { success: true, error: false };
+    return { success: true, error: false, id: user.id };
   } catch (error: any) {
     console.log(error + " Di server action");
 
@@ -1769,6 +1778,55 @@ export const deleteResult = async (
   }
 };
 
+export const updateResults = async (
+  currentState: CurrentState,
+  data: MresultSchema // your bulk update schema including `ids: number[]`
+) => {
+  try {
+    const { ids, score, resultType, selectedType, examId, assignmentId } = data;
+
+    if (!ids || ids.length === 0) {
+      throw new Error("No result IDs provided for update");
+    }
+
+    // Prepare common data to update based on selectedType
+    const updateData: any = {
+      score,
+      resultType,
+    };
+
+    if (selectedType === "Ujian") {
+      updateData.examId = examId;
+      updateData.assignmentId = null;
+    } else if (selectedType === "Tugas") {
+      updateData.assignmentId = assignmentId;
+      updateData.examId = null;
+    }
+
+    // Prisma does not have a native "updateMany" that sets different values per record,
+    // but here all records get the same data.
+
+    await prisma.result.updateMany({
+      where: {
+        id: { in: ids },
+      },
+      data: updateData,
+    });
+
+    return { success: true, error: false };
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === "string"
+        ? error
+        : "Unknown error";
+
+    console.error("updateManyResults error: ", error);
+    return { success: false, error: true, message };
+  }
+};
+
 export const createPpdb = async (
   currentState: CurrentState,
   data: PpdbSchema
@@ -1981,10 +2039,9 @@ export const updatePpdb = async (
     if (data.isvalid === true) {
       // Prepare StudentSchema payload
       const studentPayload = {
-        id: undefined,
         sdId: "", // You may want to generate or fetch this value
-        username: data.nisn + "_student",
-        password: encryptPassword(data.nisn), // Or generate a random password
+        username: data.name + "_student",
+        password: data.nisn, // Or generate a random password
         name: data.name,
         namalengkap: data.namalengkap ?? "",
         email: data.email,
@@ -1997,7 +2054,7 @@ export const updatePpdb = async (
         kecamatan: data.kecamatan,
         kota: data.kota,
         religion: data.religion,
-        img: null,
+        img: data.dokumenPasfoto ?? null,
         birthday: new Date(data.birthday),
         birthPlace: data.birthPlace,
         sex: data.sex,
@@ -2033,6 +2090,7 @@ export const updatePpdb = async (
         { success: false, error: false },
         studentPayload
       );
+      let parentIdToAssign: string | null = null;
       const studentId = studentResult?.id;
       function toDegree(val: any): Degree {
         const allowed = [
@@ -2047,12 +2105,21 @@ export const updatePpdb = async (
         ];
         return allowed.includes(val) ? val : "TIDAK_ADA";
       }
+      if (!studentId) {
+        throw new Error("Student ID not found — cannot link parent.");
+      }
+      // if (studentId) {
+      //   await prisma.student.update({
+      //     where: { id: studentId! },
+      //     data: { parentId: parentIdToAssign },
+      //   });
+      // }
       // Create Ayah parent if name exists
       if (data.namaAyah) {
         const ayahPayload = {
           id: undefined,
           username: data.nik + "_ayah",
-          password: `${encryptPassword(data.nik)}@ayah`,
+          password: `${data.nik}@ayah`,
           email: `${data.nik}_ayah@parent.local`,
           name: data.namaAyah,
           namalengkap: "",
@@ -2069,14 +2136,21 @@ export const updatePpdb = async (
           sex: "MALE" as "MALE" | "FEMALE",
           students: [studentId!],
         };
-        await createParent({ success: false, error: false }, ayahPayload);
+        const ayahResult = await createParent(
+          { success: false, error: false },
+          ayahPayload
+        );
+
+        if (!parentIdToAssign && ayahResult?.id) {
+          parentIdToAssign = ayahResult.id;
+        }
       }
       // Create Ibu parent if name exists
       if (data.namaIbu) {
         const ibuPayload = {
           id: undefined,
           username: data.nik + "_ibu",
-          password: `${encryptPassword(data.nik)}@ibu`,
+          password: `${data.nik}@ibu`,
           email: `${data.nik}_ibu@parent.local`,
           name: data.namaIbu,
           namalengkap: "",
@@ -2093,14 +2167,21 @@ export const updatePpdb = async (
           waliMurid: "IBU" as parents,
           students: [studentId!],
         };
-        await createParent({ success: false, error: false }, ibuPayload);
+        const ibuResult = await createParent(
+          { success: false, error: false },
+          ibuPayload
+        );
+
+        if (!parentIdToAssign && ibuResult?.id) {
+          parentIdToAssign = ibuResult.id;
+        }
       }
       // Create Wali parent if name exists
       if (data.namaWali) {
         const waliPayload = {
           id: undefined,
           username: data.nik + "_wali",
-          password: `${encryptPassword(data.nik)}@wali`,
+          password: `${data.nik}@wali`,
           email: `${data.nik}_wali@parent.local`,
           name: data.namaWali,
           namalengkap: "",
@@ -2117,7 +2198,20 @@ export const updatePpdb = async (
           waliMurid: "WALI" as parents,
           students: [studentId!],
         };
-        await createParent({ success: false, error: false }, waliPayload);
+        const waliResult = await createParent(
+          { success: false, error: false },
+          waliPayload
+        );
+
+        if (!parentIdToAssign && waliResult?.id) {
+          parentIdToAssign = waliResult.id;
+        }
+      }
+      if (parentIdToAssign) {
+        await prisma.student.update({
+          where: { id: studentId! },
+          data: { parentId: parentIdToAssign },
+        });
       }
     }
 

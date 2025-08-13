@@ -98,7 +98,7 @@ export const studentSchema = z.object({
   username: z
     .string()
     .min(3, { message: "Username harus lebih dari 3 karakter!" })
-    .max(20, { message: "Username harus kurang dari 20 karakter!" }),
+    .max(64, { message: "Username harus kurang dari 64 karakter!" }),
   name: z.string().min(1, { message: "Nama depan wajib diisi!" }),
   namalengkap: z.string().min(1, { message: "Nama belakang wajib diisi!" }),
   email: z
@@ -147,12 +147,14 @@ export const studentSchema = z.object({
     .nativeEnum(KPS, {
       message: " KPS Siswa wajib diisi!",
     })
+    .or(z.literal(""))
     .optional()
     .nullable(),
   no_kps: z
     .string({ message: " No KPS Siswa wajib diisi!" })
     // .length(16)
     // .regex(/^\d+$/)
+    .or(z.literal(""))
     .optional()
     .nullable(),
   height: z.coerce
@@ -174,22 +176,27 @@ export const studentSchema = z.object({
     .min(0),
   awards: z
     .string({ message: " Nama Penghargaan Siswa wajib diisi!" })
+    .or(z.literal(""))
     .optional()
     .nullable(),
   awards_lvl: z
     .nativeEnum(Awards, { message: " Jenis Penghargaan Siswa wajib diisi!" })
+    .or(z.literal(""))
     .optional()
     .nullable(),
   awards_date: z.coerce
     .date({ message: " Tanggal penghargaan Siswa wajib diisi!" })
+    .or(z.literal(""))
     .nullable(),
 
   scholarship: z
     .string({ message: " Nama beasiswa Siswa wajib diisi!" })
+    .or(z.literal(""))
     .optional()
     .nullable(),
   scholarship_detail: z
     .string({ message: " Sumber Beasiswa Siswa wajib diisi!" })
+    .or(z.literal(""))
     .optional()
     .nullable(),
   dokumenIjazah: z.string().optional().nullable(),
@@ -340,7 +347,10 @@ export type LessonSchema = z.infer<typeof lessonSchema>;
 export const resultSchema = z.object({
   id: z.coerce.number().optional(),
   studentId: z.string().min(1, { message: "Nama murid wajib diisi!" }),
-  score: z.coerce.number().min(1, { message: "Nilai murid wajib diisi!" }),
+  score: z.coerce
+    .number()
+    .min(1, { message: "Nilai murid wajib diisi!" })
+    .max(100, { message: "Maksimal 100!" }),
   examId: z.coerce
     .number({ message: "Id Ujian wajib diisi!" })
     .optional()
@@ -823,3 +833,26 @@ export const mparentSchema = z.object({
 });
 
 export type MparentSchema = z.infer<typeof mparentSchema>;
+export const mresultSchema = z.object({
+  ids: z.array(z.number().min(1)),
+  score: z.coerce
+    .number()
+    .min(1, { message: "Nilai murid wajib diisi!" })
+    .max(100, { message: "Maksimal 100!" }),
+  examId: z.coerce
+    .number({ message: "Id Ujian wajib diisi!" })
+    .optional()
+    .nullable(),
+  assignmentId: z.coerce
+    .number({ message: "Id Tugas wajib diisi!" })
+    .optional()
+    .nullable(),
+  selectedType: z.enum(["Ujian", "Tugas", ""], {
+    message: "Tipe Hasil wajib diisi!",
+  }),
+  resultType: z.nativeEnum(resTypes, {
+    message: "Tipe Nilai murid wajib diisi!",
+  }),
+});
+
+export type MresultSchema = z.infer<typeof mresultSchema>;

@@ -59,20 +59,20 @@ const InputField = ({
       ) : (
         <input
           type={type}
-          {...register(name)}
+          {...register(name, {
+            min:
+              type === "number"
+                ? { value: 0, message: "Value cannot be negative" }
+                : undefined,
+          })}
           placeholder={placeholder}
           className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
           {...inputProps}
           defaultValue={defaultValue}
+          min={type === "number" ? 0 : undefined}
         />
       )}
-      {/* <input
-        type={type}
-        {...register(name)}
-        className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
-        {...inputProps}
-        defaultValue={defaultValue}
-      /> */}
+
       {error?.message && (
         <p className="text-xs text-red-400">{error?.message.toString()}</p>
       )}

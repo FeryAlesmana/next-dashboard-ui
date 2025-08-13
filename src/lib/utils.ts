@@ -35,6 +35,55 @@ export const getCurrentUser = async () => {
   return { userId, role, actor };
 };
 
+// This runs when loading data for UPDATE form
+export const getUpdateFormData = async (resultId: number) => {
+  const currentResult = await prisma.result.findUnique({
+    where: { id: resultId },
+    select: {
+      examId: true,
+      assignmentId: true,
+      studentId: true,
+    },
+  });
+
+  const [students, exams, assignments, classes] = await prisma.$transaction([
+    prisma.student.findMany({
+      /* ... your select ... */
+    }),
+    prisma.exam.findMany({
+      where: {
+        OR: [
+          { results: { none: {} } },
+          { id: currentResult?.examId ?? -1 }, // include linked exam
+        ],
+      },
+      select: {
+        id: true,
+        title: true,
+        lesson: { select: { classId: true } },
+      },
+    }),
+    prisma.assignment.findMany({
+      where: {
+        OR: [
+          { results: { none: {} } },
+          { id: currentResult?.assignmentId ?? -1 }, // include linked assignment
+        ],
+      },
+      select: {
+        id: true,
+        title: true,
+        lesson: { select: { classId: true } },
+      },
+    }),
+    prisma.class.findMany({
+      select: { id: true, name: true, gradeId: true },
+    }),
+  ]);
+
+  return { students, exams, assignments, classes, currentResult };
+};
+
 const SEMESTERS = [
   {
     label: "Ganjil 2024/2025",

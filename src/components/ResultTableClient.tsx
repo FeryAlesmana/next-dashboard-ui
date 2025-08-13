@@ -1,7 +1,8 @@
 "use client";
+import { resTypes } from "@prisma/client";
 import FormModal from "./FormModal";
 
-export default function ParentTableClient({
+export default function ResultTableClient({
   data,
   role,
   selected,
@@ -14,6 +15,14 @@ export default function ParentTableClient({
   relatedData: any;
   onToggle: (id: string) => void;
 }) {
+  const resultTypelabel = {
+    UJIAN_HARIAN: "Ujian Harian",
+    UJIAN_TENGAH_SEMESTER: "Ujian Tengah Semester",
+    UJIAN_AKHIR_SEMESTER: "Ujian Akhir Semester",
+    PEKERJAAN_RUMAH: "Pekerjaan Rumah",
+    TUGAS_AKHIR: "Tugas Akhir",
+    TUGAS_HARIAN: "Tugas Harian",
+  } as const;
   return (
     <>
       <tr className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight">
@@ -27,43 +36,29 @@ export default function ParentTableClient({
           </td>
         )}
 
-        <td className="flex items-center p-4 gap-4">
-          <div className="flex flex-col">
-            <h3 className="font-semibold">{data.name}</h3>
-            <p className="text-xs text-gray-500">{data?.email}</p>
-          </div>
-        </td>
-        <td className="hidden md:table-cell">{data.waliMurid || "-"}</td>
+        <td className="p-4">{data?.subject || "-"}</td>
+        <td>{data.student}</td>
+        <td className="hidden md:table-cell">{data.score}</td>
+        <td className="hidden md:table-cell">{data.teacher}</td>
+        <td className="hidden md:table-cell">{data.class}</td>
         <td className="hidden md:table-cell">
-          {[
-            ...data.students,
-            ...data.secondaryStudents,
-            ...data.guardianStudents,
-          ].length > 0
-            ? [
-                ...data.students,
-                ...data.secondaryStudents,
-                ...data.guardianStudents,
-              ]
-                .map((student: any) => student.name)
-                .join(", ")
+          {data?.selectedType}{"-"}
+          {data?.resultType
+            ? resultTypelabel[data?.resultType as resTypes]
             : "-"}
         </td>
-
-        <td className="hidden md:table-cell">{data.phone}</td>
-        <td className="hidden md:table-cell">{data.address}</td>
         <td>
           <div className="flex items-center gap-2">
             {role === "admin" && (
               <>
                 <FormModal
-                  table="parent"
+                  table="result"
                   type="update"
                   data={data}
                   relatedData={relatedData}
                 ></FormModal>
                 <FormModal
-                  table="parent"
+                  table="result"
                   type="delete"
                   id={data.id}
                 ></FormModal>

@@ -59,6 +59,9 @@ const StudentForm = ({
     akte?: string;
     kk_ktp_sktm?: string;
   }>({});
+  const [uploadingField, setUploadingField] = useState<
+    keyof typeof dokumen | null
+  >(null);
   const createStudentHandler = async (
     prevState: CurrentState,
     payload: CreatestudentSchema
@@ -89,6 +92,8 @@ const StudentForm = ({
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    setUploadingField(name);
 
     try {
       const uploadedUrl = await cloudinaryUpload(file, "ppdb");
@@ -539,14 +544,42 @@ const StudentForm = ({
           </label>
 
           {/* Upload input (only shown if no file yet) */}
-          {!dokumen.ijazah && !data?.student_details?.dokumenIjazah && (
-            <input
-              type="file"
-              accept=".jpg,.jpeg,.png,.pdf"
-              onChange={(e) => handleFileUpload(e, "ijazah")}
-              className="block w-full text-sm text-white file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-600 file:text-white"
-            />
-          )}
+          {!dokumen.ijazah &&
+            !data?.student_details?.dokumenIjazah &&
+            (uploadingField === "ijazah" ? (
+              <div className="flex items-center justify-center w-full h-10">
+                <svg
+                  className="animate-spin h-6 w-6 text-blue-500"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                  />
+                </svg>
+                <span className="ml-2 text-sm text-gray-300">
+                  Mengunggah...
+                </span>
+              </div>
+            ) : (
+              <input
+                type="file"
+                accept=".jpg,.jpeg,.png,.pdf"
+                onChange={(e) => handleFileUpload(e, "ijazah")}
+                className="block w-full text-sm text-white file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-600 file:text-white"
+              />
+            ))}
 
           {/* Show preview if file exists in local state */}
           {dokumen.ijazah && (
@@ -601,14 +634,42 @@ const StudentForm = ({
           </label>
 
           {/* Upload input (only shown if no file yet) */}
-          {!dokumen.akte && !data?.student_details?.dokumenAkte && (
-            <input
-              type="file"
-              accept=".jpg,.jpeg,.png,.pdf"
-              onChange={(e) => handleFileUpload(e, "akte")}
-              className="block w-full text-sm text-white file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-600 file:text-white"
-            />
-          )}
+          {!dokumen.akte &&
+            !data?.student_details?.dokumenAkte &&
+            (uploadingField === "akte" ? (
+              <div className="flex items-center justify-center w-full h-10">
+                <svg
+                  className="animate-spin h-6 w-6 text-blue-500"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                  />
+                </svg>
+                <span className="ml-2 text-sm text-gray-300">
+                  Mengunggah...
+                </span>
+              </div>
+            ) : (
+              <input
+                type="file"
+                accept=".jpg,.jpeg,.png,.pdf"
+                onChange={(e) => handleFileUpload(e, "akte")}
+                className="block w-full text-sm text-white file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-600 file:text-white"
+              />
+            ))}
 
           {/* Show preview if file exists in local state */}
           {dokumen.akte && (
@@ -663,14 +724,42 @@ const StudentForm = ({
           </label>
 
           {/* Upload input (only shown if no file yet) */}
-          {!dokumen.kk_ktp_sktm && !data?.student_details?.dokumenKKKTP && (
-            <input
-              type="file"
-              accept=".jpg,.jpeg,.png,.pdf"
-              onChange={(e) => handleFileUpload(e, "kk_ktp_sktm")}
-              className="block w-full text-sm text-white file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-600 file:text-white"
-            />
-          )}
+          {!dokumen.kk_ktp_sktm &&
+            !data?.student_details?.dokumenKKKTP &&
+            (uploadingField === "kk_ktp_sktm" ? (
+              <div className="flex items-center justify-center w-full h-10">
+                <svg
+                  className="animate-spin h-6 w-6 text-blue-500"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                  />
+                </svg>
+                <span className="ml-2 text-sm text-gray-300">
+                  Mengunggah...
+                </span>
+              </div>
+            ) : (
+              <input
+                type="file"
+                accept=".jpg,.jpeg,.png,.pdf"
+                onChange={(e) => handleFileUpload(e, "kk_ktp_sktm")}
+                className="block w-full text-sm text-white file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-600 file:text-white"
+              />
+            ))}
 
           {/* Show preview if file exists in local state */}
           {dokumen.kk_ktp_sktm && (

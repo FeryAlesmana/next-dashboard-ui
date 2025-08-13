@@ -186,13 +186,16 @@ const FormulirPendaftaran = ({
     type === "create" ? createPpdbHandler : updatePpdbHandler,
     initialState
   );
+  const [uploadingField, setUploadingField] = useState<
+    keyof typeof dokumen | null
+  >(null);
   const handleFileUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
     name: keyof typeof dokumen
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
+    setUploadingField(name); // show spinner for this field
     try {
       const uploadedUrl = await cloudinaryUpload(file, "ppdb");
 
@@ -1064,14 +1067,42 @@ const FormulirPendaftaran = ({
               <label className="font-medium">Fotokopi Ijazah / STTB</label>
 
               {/* Upload input (only shown if no file yet) */}
-              {!dokumen.ijazah && !data?.dokumenIjazah && (
-                <input
-                  type="file"
-                  accept=".jpg,.jpeg,.png,.pdf"
-                  onChange={(e) => handleFileUpload(e, "ijazah")}
-                  className="block w-full text-sm text-white file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-600 file:text-white"
-                />
-              )}
+              {!dokumen.ijazah &&
+                !data?.dokumenIjazah &&
+                (uploadingField === "ijazah" ? (
+                  <div className="flex items-center justify-center w-full h-10">
+                    <svg
+                      className="animate-spin h-6 w-6 text-blue-500"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                      />
+                    </svg>
+                    <span className="ml-2 text-sm text-gray-300">
+                      Mengunggah...
+                    </span>
+                  </div>
+                ) : (
+                  <input
+                    type="file"
+                    accept=".jpg,.jpeg,.png,.pdf"
+                    onChange={(e) => handleFileUpload(e, "ijazah")}
+                    className="block w-full text-sm text-white file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-600 file:text-white"
+                  />
+                ))}
 
               {/* Show preview if file exists in local state */}
               {dokumen.ijazah && (
@@ -1123,14 +1154,42 @@ const FormulirPendaftaran = ({
               <label className="font-medium">Fotokopi Akte Kelahiran</label>
 
               {/* Upload input (only shown if no file yet) */}
-              {!dokumen.akte && !data?.dokumenAkte && (
-                <input
-                  type="file"
-                  accept=".jpg,.jpeg,.png,.pdf"
-                  onChange={(e) => handleFileUpload(e, "akte")}
-                  className="block w-full text-sm text-white file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-600 file:text-white"
-                />
-              )}
+              {!dokumen.akte &&
+                !data?.dokumenAkte &&
+                (uploadingField === "akte" ? (
+                  <div className="flex items-center justify-center w-full h-10">
+                    <svg
+                      className="animate-spin h-6 w-6 text-blue-500"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                      />
+                    </svg>
+                    <span className="ml-2 text-sm text-gray-300">
+                      Mengunggah...
+                    </span>
+                  </div>
+                ) : (
+                  <input
+                    type="file"
+                    accept=".jpg,.jpeg,.png,.pdf"
+                    onChange={(e) => handleFileUpload(e, "akte")}
+                    className="block w-full text-sm text-white file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-600 file:text-white"
+                  />
+                ))}
 
               {/* Show preview if file exists in local state */}
               {dokumen.akte && (
@@ -1184,14 +1243,42 @@ const FormulirPendaftaran = ({
               </label>
 
               {/* Upload input (only shown if no file yet) */}
-              {!dokumen.kk_ktp_sktm && !data?.dokumenKKKTP && (
-                <input
-                  type="file"
-                  accept=".jpg,.jpeg,.png,.pdf"
-                  onChange={(e) => handleFileUpload(e, "kk_ktp_sktm")}
-                  className="block w-full text-sm text-white file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-600 file:text-white"
-                />
-              )}
+              {!dokumen.kk_ktp_sktm &&
+                !data?.dokumenKKKTP &&
+                (uploadingField === "kk_ktp_sktm" ? (
+                  <div className="flex items-center justify-center w-full h-10">
+                    <svg
+                      className="animate-spin h-6 w-6 text-blue-500"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                      />
+                    </svg>
+                    <span className="ml-2 text-sm text-gray-300">
+                      Mengunggah...
+                    </span>
+                  </div>
+                ) : (
+                  <input
+                    type="file"
+                    accept=".jpg,.jpeg,.png,.pdf"
+                    onChange={(e) => handleFileUpload(e, "kk_ktp_sktm")}
+                    className="block w-full text-sm text-white file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-600 file:text-white"
+                  />
+                ))}
 
               {/* Show preview if file exists in local state */}
               {dokumen.kk_ktp_sktm && (
@@ -1246,19 +1333,47 @@ const FormulirPendaftaran = ({
               )}
             </div>
             <div className="flex flex-col gap-2">
-              <label className="font-medium ">Foto Siswa</label>
+              <label className="font-medium">Foto Siswa</label>
 
-              {/* Upload input (only shown if no file yet) */}
-              {!dokumen.pasfoto && !data?.dokumenPasfoto && (
-                <input
-                  type="file"
-                  accept=".jpg,.jpeg,.png,.pdf"
-                  onChange={(e) => handleFileUpload(e, "pasfoto")}
-                  className="block w-full text-sm text-white file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-600 file:text-white"
-                />
-              )}
+              {/* Upload input */}
+              {!dokumen.pasfoto &&
+                !data?.dokumenPasfoto &&
+                (uploadingField === "pasfoto" ? (
+                  <div className="flex items-center justify-center w-full h-10">
+                    <svg
+                      className="animate-spin h-6 w-6 text-blue-500"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                      />
+                    </svg>
+                    <span className="ml-2 text-sm text-gray-300">
+                      Mengunggah...
+                    </span>
+                  </div>
+                ) : (
+                  <input
+                    type="file"
+                    accept=".jpg,.jpeg,.png,.pdf"
+                    onChange={(e) => handleFileUpload(e, "pasfoto")}
+                    className="block w-full text-sm text-white file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-600 file:text-white"
+                  />
+                ))}
 
-              {/* Show preview if file exists in local state */}
+              {/* Local preview */}
               {dokumen.pasfoto && (
                 <div className="flex items-center justify-between bg-white/10 p-2 rounded shadow">
                   <a
@@ -1281,11 +1396,11 @@ const FormulirPendaftaran = ({
                 </div>
               )}
 
-              {/* Show preview if file exists in DB but not in local state */}
+              {/* DB preview */}
               {!dokumen.pasfoto && data?.dokumenPasfoto && (
                 <div className="flex items-center justify-between bg-white/10 p-2 rounded shadow">
                   <a
-                    href={data?.dokumenKKKTP}
+                    href={data?.dokumenPasfoto}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-blue-400 underline truncate"

@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import Perfomance from "@/components/Perfomance";
 import BigCalendarContainer from "@/components/BigCalendarContainer";
-import { getCurrentUser } from "@/lib/utils";
+import { decryptPassword, getCurrentUser } from "@/lib/utils";
 import { Class, Student, student_details } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
@@ -49,6 +49,12 @@ const SingleStudentPage = async ({
       student_details: true,
     },
   });
+
+  let studentWithDecryptedPassword = {
+    ...student,
+    password: student?.password ? decryptPassword(student.password) : "",
+  };
+
   if (!student) {
     return notFound();
   }
@@ -79,7 +85,7 @@ const SingleStudentPage = async ({
                   <FormContainer
                     table="student"
                     type="update"
-                    data={student}
+                    data={studentWithDecryptedPassword}
                   ></FormContainer>
                 )}
               </div>

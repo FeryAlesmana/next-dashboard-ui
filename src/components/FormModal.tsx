@@ -39,6 +39,7 @@ import UpdateManyStudentsForm from "./forms/UpdateManyStudents";
 import UpdateManyPaymentsForm from "./forms/UpdateManyPaymentForm";
 import UpdateManyTeacherForm from "./forms/UpdateManyTeacher";
 import UpdateManyParentForm from "./forms/UpdateManyParents";
+import UpdateManyResultsForm from "./forms/UpdateManyResultsForm";
 // import StudentForm from "./forms/StudentForm";
 // import TeacherForm from "./forms/TeacherForm";
 
@@ -439,137 +440,226 @@ const FormModal = ({
     );
   }
 
-  if (table === "student" && type === "updateMany") {
-    return (
-      <>
-        <div className="">
-          <button
-            onClick={() => setOpen(true)}
-            className="flex items-center justify-center rounded-full hover:bg-lamaYellow transition w-7 h-7"
-          >
-            <Image src="/updateDark.png" alt="Edit" width={16} height={16} />
-          </button>
-        </div>
-        {open && (
-          <div className="w-screen h-screen absolute left-0 top-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">
-            <div className="bg-white p-4 rounded-md relative w-[95%] h-[95%] md:w-[90%] lg:w-[85%] xl:w-[80%] 2xl:w-[75%] overflow-y-auto">
-              <UpdateManyStudentsForm
-                ids={ids as string[]}
-                setOpen={setOpen}
-                table={table}
-                data={data}
-                relatedData={relatedData}
-              />
-              <div
-                className="absolute top-4 right-4 cursor-pointer"
-                onClick={() => setOpen(false)}
+  if (type === "updateMany") {
+    switch (table) {
+      case "student": {
+        return (
+          <>
+            <div className="">
+              <button
+                onClick={() => setOpen(true)}
+                className="flex items-center justify-center rounded-full hover:bg-lamaYellow transition w-7 h-7"
               >
-                <Image src="/close.png" width={14} height={14} alt="Tutup" />
-              </div>
+                <Image
+                  src="/updateDark.png"
+                  alt="Edit"
+                  width={16}
+                  height={16}
+                />
+              </button>
             </div>
-          </div>
-        )}
-      </>
-    );
-  }
-  if (table === "teacher" && type === "updateMany") {
-    return (
-      <>
-        <div className="">
-          <button
-            onClick={() => setOpen(true)}
-            className="flex items-center justify-center rounded-full hover:bg-lamaYellow transition w-7 h-7"
-          >
-            <Image src="/updateDark.png" alt="Edit" width={16} height={16} />
-          </button>
-        </div>
-        {open && (
-          <div className="w-screen h-screen absolute left-0 top-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">
-            <div className="bg-white p-4 rounded-md relative w-[95%] h-[95%] md:w-[90%] lg:w-[85%] xl:w-[80%] 2xl:w-[75%] overflow-y-auto">
-              <UpdateManyTeacherForm
-                ids={ids as string[]}
-                setOpen={setOpen}
-                table={table}
-                data={data}
-                relatedData={relatedData}
-              />
-              <div
-                className="absolute top-4 right-4 cursor-pointer"
-                onClick={() => setOpen(false)}
+            {open && (
+              <div className="w-screen h-screen absolute left-0 top-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">
+                <div className="bg-white p-4 rounded-md relative w-[95%] h-[95%] md:w-[90%] lg:w-[85%] xl:w-[80%] 2xl:w-[75%] overflow-y-auto">
+                  <UpdateManyStudentsForm
+                    ids={ids as string[]}
+                    setOpen={setOpen}
+                    table={table}
+                    data={data}
+                    relatedData={relatedData}
+                  />
+                  <div
+                    className="absolute top-4 right-4 cursor-pointer"
+                    onClick={() => setOpen(false)}
+                  >
+                    <Image
+                      src="/close.png"
+                      width={14}
+                      height={14}
+                      alt="Tutup"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
+        );
+      }
+      case "teacher": {
+        return (
+          <>
+            <div className="">
+              <button
+                onClick={() => setOpen(true)}
+                className="flex items-center justify-center rounded-full hover:bg-lamaYellow transition w-7 h-7"
               >
-                <Image src="/close.png" width={14} height={14} alt="Tutup" />
-              </div>
+                <Image
+                  src="/updateDark.png"
+                  alt="Edit"
+                  width={16}
+                  height={16}
+                />
+              </button>
             </div>
-          </div>
-        )}
-      </>
-    );
-  }
-  if (table === "parent" && type === "updateMany") {
-    return (
-      <>
-        <div className="">
-          <button
-            onClick={() => setOpen(true)}
-            className="flex items-center justify-center rounded-full hover:bg-lamaYellow transition w-7 h-7"
-          >
-            <Image src="/updateDark.png" alt="Edit" width={16} height={16} />
-          </button>
-        </div>
-        {open && (
-          <div className="w-screen h-screen absolute left-0 top-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">
-            <div className="bg-white p-4 rounded-md relative w-[95%] h-[95%] md:w-[90%] lg:w-[85%] xl:w-[80%] 2xl:w-[75%] overflow-y-auto">
-              <UpdateManyParentForm
-                ids={ids as string[]}
-                setOpen={setOpen}
-                table={table}
-                data={data}
-                relatedData={relatedData}
-              />
-              <div
-                className="absolute top-4 right-4 cursor-pointer"
-                onClick={() => setOpen(false)}
+            {open && (
+              <div className="w-screen h-screen absolute left-0 top-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">
+                <div className="bg-white p-4 rounded-md relative w-[95%] h-[95%] md:w-[90%] lg:w-[85%] xl:w-[80%] 2xl:w-[75%] overflow-y-auto">
+                  <UpdateManyTeacherForm
+                    ids={ids as string[]}
+                    setOpen={setOpen}
+                    table={table}
+                    data={data}
+                    relatedData={relatedData}
+                  />
+                  <div
+                    className="absolute top-4 right-4 cursor-pointer"
+                    onClick={() => setOpen(false)}
+                  >
+                    <Image
+                      src="/close.png"
+                      width={14}
+                      height={14}
+                      alt="Tutup"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
+        );
+      }
+      case "parent": {
+        return (
+          <>
+            <div className="">
+              <button
+                onClick={() => setOpen(true)}
+                className="flex items-center justify-center rounded-full hover:bg-lamaYellow transition w-7 h-7"
               >
-                <Image src="/close.png" width={14} height={14} alt="Tutup" />
-              </div>
+                <Image
+                  src="/updateDark.png"
+                  alt="Edit"
+                  width={16}
+                  height={16}
+                />
+              </button>
             </div>
-          </div>
-        )}
-      </>
-    );
-  }
-  if (table === "paymentLog" && type === "updateMany") {
-    return (
-      <>
-        <div className="">
-          <button
-            onClick={() => setOpen(true)}
-            className="flex items-center justify-center rounded-full hover:bg-lamaYellow transition w-7 h-7"
-          >
-            <Image src="/updateDark.png" alt="Edit" width={16} height={16} />
-          </button>
-        </div>
-        {open && (
-          <div className="w-screen h-screen absolute left-0 top-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">
-            <div className="bg-white p-4 rounded-md relative w-[95%] h-[95%] md:w-[90%] lg:w-[85%] xl:w-[80%] 2xl:w-[75%] overflow-y-auto">
-              <UpdateManyPaymentsForm
-                ids={ids as number[]}
-                setOpen={setOpen}
-                table={table}
-                data={data}
-                relatedData={relatedData}
-              />
-              <div
-                className="absolute top-4 right-4 cursor-pointer"
-                onClick={() => setOpen(false)}
+            {open && (
+              <div className="w-screen h-screen absolute left-0 top-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">
+                <div className="bg-white p-4 rounded-md relative w-[95%] h-[95%] md:w-[90%] lg:w-[85%] xl:w-[80%] 2xl:w-[75%] overflow-y-auto">
+                  <UpdateManyParentForm
+                    ids={ids as string[]}
+                    setOpen={setOpen}
+                    table={table}
+                    data={data}
+                    relatedData={relatedData}
+                  />
+                  <div
+                    className="absolute top-4 right-4 cursor-pointer"
+                    onClick={() => setOpen(false)}
+                  >
+                    <Image
+                      src="/close.png"
+                      width={14}
+                      height={14}
+                      alt="Tutup"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
+        );
+      }
+      case "paymentLog": {
+        return (
+          <>
+            <div className="">
+              <button
+                onClick={() => setOpen(true)}
+                className="flex items-center justify-center rounded-full hover:bg-lamaYellow transition w-7 h-7"
               >
-                <Image src="/close.png" width={14} height={14} alt="Tutup" />
-              </div>
+                <Image
+                  src="/updateDark.png"
+                  alt="Edit"
+                  width={16}
+                  height={16}
+                />
+              </button>
             </div>
-          </div>
-        )}
-      </>
-    );
+            {open && (
+              <div className="w-screen h-screen absolute left-0 top-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">
+                <div className="bg-white p-4 rounded-md relative w-[95%] h-[95%] md:w-[90%] lg:w-[85%] xl:w-[80%] 2xl:w-[75%] overflow-y-auto">
+                  <UpdateManyPaymentsForm
+                    ids={ids as number[]}
+                    setOpen={setOpen}
+                    table={table}
+                    data={data}
+                    relatedData={relatedData}
+                  />
+                  <div
+                    className="absolute top-4 right-4 cursor-pointer"
+                    onClick={() => setOpen(false)}
+                  >
+                    <Image
+                      src="/close.png"
+                      width={14}
+                      height={14}
+                      alt="Tutup"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
+        );
+      }
+      case "result":
+        return (
+          <>
+            <div className="">
+              <button
+                onClick={() => setOpen(true)}
+                className="flex items-center justify-center rounded-full hover:bg-lamaYellow transition w-7 h-7"
+              >
+                <Image
+                  src="/updateDark.png"
+                  alt="Edit"
+                  width={16}
+                  height={16}
+                />
+              </button>
+            </div>
+            {open && (
+              <div className="w-screen h-screen absolute left-0 top-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">
+                <div className="bg-white p-4 rounded-md relative w-[95%] h-[95%] md:w-[90%] lg:w-[85%] xl:w-[80%] 2xl:w-[75%] overflow-y-auto">
+                  <UpdateManyResultsForm
+                    ids={ids as number[]}
+                    setOpen={setOpen}
+                    table={table}
+                    data={data}
+                    relatedData={relatedData}
+                  />
+                  <div
+                    className="absolute top-4 right-4 cursor-pointer"
+                    onClick={() => setOpen(false)}
+                  >
+                    <Image
+                      src="/close.png"
+                      width={14}
+                      height={14}
+                      alt="Tutup"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
+        );
+      default:
+        "Form tidak ditemukan!";
+        break;
+    }
   }
 
   return (

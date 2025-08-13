@@ -1,15 +1,13 @@
 import ClientPageWrapper from "@/components/ClientWrapper";
+import FilterSortToggle from "@/components/FilterSortToggle";
 import FormContainer from "@/components/FormContainer";
 import Pagination from "@/components/Pagination";
 import ParentResultView from "@/components/ParentResultView";
-import Table from "@/components/Table";
+import ResultListClient from "@/components/ResultListClient";
 import TableSearch from "@/components/TableSearch";
 import prisma from "@/lib/prisma";
-import { ITEM_PER_PAGE } from "@/lib/setting";
 import { getCurrentUser, normalizeSearchParams } from "@/lib/utils";
 import { Prisma, resTypes } from "@prisma/client";
-import Image from "next/image";
-import Link from "next/link";
 
 const ResultListPage = async ({
   searchParams,
@@ -24,10 +22,19 @@ const ResultListPage = async ({
       return acc;
     }, {} as Record<string, string>)
   ).toString();
-  const { page, ...queryParams } = sp;
+  const { page, limit, ...queryParams } = sp;
   const p = page ? parseInt(page) : 1;
+  const perPage = limit === "all" ? undefined : parseInt(limit ?? "10");
 
   const columns = [
+    ...(role === "admin"
+      ? [
+          {
+            header: "Select",
+            accessor: "checkbox",
+          },
+        ]
+      : []),
     { header: "Pelajaran", accessor: "subject" },
     ...(role === "admin" || role === "teacher"
       ? [{ header: "Murid", accessor: "Student" }]
@@ -75,10 +82,11 @@ const ResultListPage = async ({
   );
 
   const query: Prisma.ResultWhereInput = {};
+  let orderBy: Prisma.ResultOrderByWithRelationInput | undefined;
 
   if (queryParams) {
     for (const [key, value] of Object.entries(queryParams)) {
-      if (value !== undefined)
+      if (value !== undefined && value !== "")
         switch (key) {
           case "studentId":
             query.studentId = value;
@@ -86,15 +94,48 @@ const ResultListPage = async ({
           case "search":
             query.OR = [
               { exam: { title: { contains: value, mode: "insensitive" } } },
+              {
+                assignment: { title: { contains: value, mode: "insensitive" } },
+              },
               { student: { name: { contains: value, mode: "insensitive" } } },
             ];
+            break;
+          case "classId":
+            query.OR = [
+              { exam: { lesson: { classId: parseInt(value) } } },
+              { assignment: { lesson: { classId: parseInt(value) } } },
+            ];
+            break;
+          case "gradeId":
+            query.OR = [
+              { exam: { lesson: { class: { gradeId: parseInt(value) } } } },
+              {
+                assignment: { lesson: { class: { gradeId: parseInt(value) } } },
+              },
+            ];
+            break;
+
+          case "sort":
+            switch (value) {
+              case "az":
+                orderBy = { student: { name: "asc" } };
+                break;
+              case "za":
+                orderBy = { student: { name: "desc" } };
+                break;
+              case "id_asc":
+                orderBy = { id: "asc" };
+                break;
+              case "id_desc":
+                orderBy = { id: "desc" };
+                break;
+            }
             break;
           default:
             break;
         }
     }
   }
-  let students: any[] = [];
   //ROLE CONDITIONS
   switch (role) {
     case "admin":
@@ -205,39 +246,80 @@ const ResultListPage = async ({
       break;
   }
 
-  const [dataRes, count] = await prisma.$transaction([
-    prisma.result.findMany({
-      where: query,
-      include: {
-        student: { select: { name: true, namalengkap: true } },
-        exam: {
-          include: {
-            lesson: {
-              select: {
-                class: { select: { name: true } },
-                teacher: { select: { name: true, namalengkap: true } },
-                subject: true,
+  const [dataRes, count, studentData, exams, assignments, classes] =
+    await prisma.$transaction([
+      prisma.result.findMany({
+        where: query,
+        include: {
+          student: { select: { name: true, namalengkap: true } },
+          exam: {
+            include: {
+              lesson: {
+                select: {
+                  class: { select: { name: true, gradeId: true } },
+                  teacher: { select: { name: true, namalengkap: true } },
+                  subject: true,
+                },
+              },
+            },
+          },
+          assignment: {
+            include: {
+              lesson: {
+                select: {
+                  class: { select: { name: true, gradeId: true } },
+                  teacher: { select: { name: true, namalengkap: true } },
+                  subject: true,
+                },
               },
             },
           },
         },
-        assignment: {
-          include: {
-            lesson: {
-              select: {
-                class: { select: { name: true } },
-                teacher: { select: { name: true, namalengkap: true } },
-                subject: true,
-              },
-            },
-          },
+        take: perPage,
+        skip: perPage ? perPage * (p - 1) : undefined,
+      }),
+      prisma.result.count({ where: query }),
+      prisma.student.findMany({
+        select: {
+          id: true,
+          name: true,
+          namalengkap: true,
+          classId: true,
         },
-      },
-      take: ITEM_PER_PAGE,
-      skip: ITEM_PER_PAGE * (p - 1),
-    }),
-    prisma.result.count({ where: query }),
-  ]);
+      }),
+      prisma.exam.findMany({
+        select: {
+          id: true,
+          title: true,
+          lesson: { select: { classId: true } },
+        },
+      }),
+      prisma.assignment.findMany({
+        select: {
+          id: true,
+          title: true,
+          lesson: { select: { classId: true } },
+        },
+      }),
+      prisma.class.findMany({
+        select: {
+          id: true,
+          name: true,
+          gradeId: true,
+        },
+      }),
+    ]);
+
+  let relatedData = {};
+
+  relatedData = {
+    students: studentData,
+    exams: exams,
+    assignments: assignments,
+  };
+  const gradesSet = new Set<number>();
+  classes.forEach((cls) => gradesSet.add(cls.gradeId!));
+  const grades = Array.from(gradesSet).sort((a, b) => a - b);
 
   const data = dataRes
     .map((item) => {
@@ -277,12 +359,32 @@ const ResultListPage = async ({
           <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
             <TableSearch></TableSearch>
             <div className="flex items-center gap-4 self-end">
-              <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
-                <Image src="/filter.png" alt="" width={14} height={14}></Image>
-              </button>
-              <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
-                <Image src="/sort.png" alt="" width={14} height={14}></Image>
-              </button>
+              <FilterSortToggle
+                filterFields={[
+                  {
+                    name: "classId",
+                    label: "Kelas",
+                    options: classes.map((cls) => ({
+                      label: cls?.name ?? "Unknown Class",
+                      value: cls?.id?.toString() ?? "",
+                    })),
+                  },
+                  {
+                    name: "gradeId",
+                    label: "Tingkat",
+                    options: grades.map((level) => ({
+                      label: level.toString(),
+                      value: level,
+                    })),
+                  },
+                ]}
+                sortOptions={[
+                  { label: "A-Z", value: "az" },
+                  { label: "Z-A", value: "za" },
+                  { label: "ID Asc", value: "id_asc" },
+                  { label: "ID Desc", value: "id_desc" },
+                ]}
+              />
               {(role === "admin" || role === "teacher") && (
                 <FormContainer table="result" type="create"></FormContainer>
               )}
@@ -291,7 +393,13 @@ const ResultListPage = async ({
         </div>
         {/* LIST */}
         <div className="">
-          <Table columns={columns} renderRow={renderRow} data={data}></Table>
+          {/* <Table columns={columns} renderRow={renderRow} data={data}></Table> */}
+          <ResultListClient
+            columns={columns}
+            data={data}
+            role={role!}
+            relatedData={relatedData}
+          />
         </div>
         {/* PAGINATION*/}
         <div className="">

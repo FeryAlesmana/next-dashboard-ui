@@ -130,11 +130,11 @@ const ResultForm = ({
     label: assignment.title,
   }));
 
-  console.log(JSON.stringify(data) + "<= sended data");
-
   return (
     <form action="" className="flex flex-col gap-8" onSubmit={onSubmit}>
-      <h1 className="text-xl font-semibold">Tambah Nilai Baru</h1>
+      <h1 className="text-xl font-semibold">
+        {type === "create" ? "Tambah Nilai Baru" : "Edit Nilai"}
+      </h1>
       <span className="text-xs text-gray-400 font-medium">Informasi Nilai</span>
       <div className="flex justify-between flex-wrap gap-10 m-4 mb-8">
         <InputField
@@ -144,6 +144,7 @@ const ResultForm = ({
           defaultValue={data?.score}
           register={register}
           error={errors?.score}
+          placeholder="0 - 100"
         />
 
         {/* Student select */}

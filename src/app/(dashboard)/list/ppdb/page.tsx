@@ -2,6 +2,7 @@ import ClientPageWrapper from "@/components/ClientWrapper";
 import FormContainer from "@/components/FormContainer";
 import FormModal from "@/components/FormModal";
 import Pagination from "@/components/Pagination";
+import PpdbListClient from "@/components/PpdbListClient";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
 import prisma from "@/lib/prisma";
@@ -108,18 +109,32 @@ const PpdbPage = async ({
     }
   }
 
-  const [data, count] = await prisma.$transaction([
-    prisma.pPDB.findMany({
-      orderBy: {
-        createdAt: "desc",
-      },
-      where: query,
-      take: ITEM_PER_PAGE,
-      skip: ITEM_PER_PAGE * (p - 1),
-    }),
-    prisma.pPDB.count({ where: query }),
-  ]);
-
+  const [data, count, newStudentGrades, newStudentClasses] =
+    await prisma.$transaction([
+      prisma.pPDB.findMany({
+        orderBy: {
+          createdAt: "desc",
+        },
+        where: query,
+        take: ITEM_PER_PAGE,
+        skip: ITEM_PER_PAGE * (p - 1),
+      }),
+      prisma.pPDB.count({ where: query }),
+      prisma.grade.findMany({
+        select: {
+          id: true,
+          level: true,
+        },
+      }),
+      prisma.class.findMany({
+        include: { _count: { select: { students: true } } },
+      }),
+    ]);
+  let relatedData = {};
+  relatedData = {
+    grades: newStudentGrades,
+    classes: newStudentClasses,
+  };
   return (
     <ClientPageWrapper key={key} role={role!}>
       <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
@@ -145,7 +160,13 @@ const PpdbPage = async ({
         </div>
         {/* LIST */}
         <div className="">
-          <Table columns={columns} renderRow={renderRow} data={data}></Table>
+          {/* <Table columns={columns} renderRow={renderRow} data={data}></Table> */}
+          <PpdbListClient
+            columns={columns}
+            data={data}
+            role={role!}
+            relatedData={relatedData}
+          />
         </div>
         {/* PAGINATION*/}
         <div className="">
