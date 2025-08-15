@@ -1,4 +1,7 @@
+import ParentExamView from "@/components/client/ParentExamView";
 import ClientPageWrapper from "@/components/ClientWrapper";
+import ExamListClient from "@/components/client/ExamListClient";
+import FilterSortToggle from "@/components/FilterSortToggle";
 import FormContainer from "@/components/FormContainer";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
@@ -31,6 +34,14 @@ const ExamListPage = async ({
 
   const { role, userId } = await getCurrentUser();
   const columns = [
+    ...(role === "admin"
+      ? [
+          {
+            header: "Select",
+            accessor: "checkbox",
+          },
+        ]
+      : []),
     {
       header: "Mata Pelajaran",
       accessor: "Nama",
@@ -248,95 +259,12 @@ const ExamListPage = async ({
 
       students = studentsWithExams;
 
-      return (
-        <div className="w-full mx-auto p-6">
-          <h1 className="text-2xl font-bold mb-6">Ujian Anak</h1>
-
-          {studentsWithExams.length === 0 ? (
-            <div className="text-center text-gray-500">
-              Belum ada Ujian tersedia untuk anak Anda.
-            </div>
-          ) : (
-            studentsWithExams.map((student) => (
-              <div key={student.id} className="mb-12">
-                <h2 className="text-xl font-semibold mb-4">{student.name}</h2>
-
-                {student.exams.length === 0 ? (
-                  <div className="text-center text-gray-500">
-                    Belum ada Ujian untuk {student.name}.
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto border rounded-lg">
-                    <table className="min-w-full divide-y divide-gray-200 text-sm">
-                      <thead className="bg-gray-100">
-                        <tr>
-                          {columns.map((col) => (
-                            <th
-                              key={col.accessor}
-                              className={`px-4 py-3 font-semibold text-center ${
-                                col.className ?? ""
-                              }`}
-                            >
-                              {col.header}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-100 text-center">
-                        {student.exams.map((item) => (
-                          <tr
-                            key={item.id}
-                            className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight"
-                          >
-                            {/* <td>{item.id}</td> */}
-                            <td className="p-4">{item.subjectName}</td>
-                            <td className="hidden md:table-cell">
-                              {item.className}
-                            </td>
-                            <td className="hidden md:table-cell">
-                              {item.teacherName}
-                            </td>
-                            <td className="hidden md:table-cell">
-                              {item.startTime.toLocaleTimeString("id-ID", {
-                                timeZone: "Asia/Jakarta",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                                hour12: false,
-                                day: "numeric",
-                                month: "numeric",
-                                year: "numeric",
-                              })}
-                            </td>
-                            <td className="hidden md:table-cell">
-                              {item.endTime.toLocaleTimeString("id-ID", {
-                                timeZone: "Asia/Jakarta",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                                hour12: false,
-                                day: "numeric",
-                                month: "numeric",
-                                year: "numeric",
-                              })}
-                            </td>
-                            <td className="hidden md:table-cell">
-                              {item.exTypes ? examTypeLabel[item.exTypes] : "-"}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
-            ))
-          )}
-        </div>
-      );
+      return <ParentExamView students={students} columns={columns} />;
     default:
       break;
   }
 
-  const [data, count] = await prisma.$transaction([
+  const [data, count, examLessons, classes] = await prisma.$transaction([
     prisma.exam.findMany({
       where: query,
       include: {
@@ -352,7 +280,28 @@ const ExamListPage = async ({
       skip: ITEM_PER_PAGE * (p - 1),
     }),
     prisma.exam.count({ where: query }),
+    prisma.lesson.findMany({
+      where: {
+        ...(role === "teacher" ? { teacherId: userId! } : {}),
+      },
+      select: {
+        id: true,
+        name: true,
+        subject: { select: { name: true } },
+        class: { select: { name: true } },
+      },
+    }),
+    prisma.class.findMany({
+      select: {
+        id: true,
+        name: true,
+        grade: { select: { level: true } },
+      },
+    }),
   ]);
+  let relatedData = {};
+  relatedData = { lessons: examLessons };
+
   return (
     <ClientPageWrapper key={key} role={role!}>
       <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
@@ -362,12 +311,42 @@ const ExamListPage = async ({
           <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
             <TableSearch></TableSearch>
             <div className="flex items-center gap-4 self-end">
-              <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
-                <Image src="/filter.png" alt="" width={14} height={14}></Image>
-              </button>
-              <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
-                <Image src="/sort.png" alt="" width={14} height={14}></Image>
-              </button>
+              <FilterSortToggle
+                filterFields={[
+                  {
+                    name: "classId",
+                    label: "Kelas",
+                    options: classes.map((cls) => ({
+                      label: cls?.name ?? "Unknown Class",
+                      value: cls?.id?.toString() ?? "",
+                    })),
+                  },
+                  {
+                    name: "gradeId",
+                    label: "Tingkat",
+                    options: Array.from(
+                      new Set(
+                        classes
+                          .map((cls) => cls.grade?.level)
+                          .filter(
+                            (level): level is number => level !== undefined
+                          )
+                      )
+                    )
+                      .sort((a, b) => a - b)
+                      .map((level) => ({
+                        label: level.toString(),
+                        value: level,
+                      })),
+                  },
+                ]}
+                sortOptions={[
+                  { label: "A-Z", value: "az" },
+                  { label: "Z-A", value: "za" },
+                  { label: "ID Asc", value: "id_asc" },
+                  { label: "ID Desc", value: "id_desc" },
+                ]}
+              />
               {(role === "admin" || role === "teacher") && (
                 <FormContainer table="exam" type="create"></FormContainer>
               )}
@@ -376,7 +355,13 @@ const ExamListPage = async ({
         </div>
         {/* LIST */}
         <div className="">
-          <Table columns={columns} renderRow={renderRow} data={data}></Table>
+          {/* <Table columns={columns} renderRow={renderRow} data={data}></Table> */}
+          <ExamListClient
+            data={data}
+            role={role!}
+            columns={columns}
+            relatedData={relatedData}
+          />
         </div>
         {/* PAGINATION*/}
         <div className="">

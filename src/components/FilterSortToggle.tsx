@@ -7,7 +7,7 @@ import FilterSortBar from "./FilterSortBar";
 type FilterField = {
   label: string;
   name: string;
-  options: { label: string; value: string | number }[];
+  options: { label: string; value: string | number}[];
 };
 
 interface FilterSortToggleProps {

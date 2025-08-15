@@ -108,8 +108,8 @@ export const studentSchema = z.object({
     .or(z.literal("")),
   phone: z.string().min(1, { message: "Nomor telepon wajib diisi!" }),
   noWa: z
-    .string({ message: " Nomor HP Calon Siswa wajib diisi!" })
-    .min(11)
+    .string({ message: " Nomor HP Siswa wajib diisi!" })
+    .min(10, { message: " Nomor HP Siswa minimal 10 karakter!" })
     .max(13)
     .regex(/^\d+$/),
   address: z.string().min(1, { message: "Alamat wajib diisi!" }),
@@ -238,15 +238,15 @@ export const examSchema = z.object({
   startTime: z.coerce.date({ message: "Waktu mulai Ujian harus diisi" }),
   endTime: z.coerce.date({ message: "Waktu selesai Ujian wajib diisi!" }),
   lessonId: z.coerce.number({ message: "Id pelajaran wajib di isi" }),
-  exTypes: z.nativeEnum(exTypes, { message: "Tipe Ujian wajib di isi" }),
+  exType: z.nativeEnum(exTypes, { message: "Tipe Ujian wajib di isi" }),
 });
 
 export type ExamSchema = z.infer<typeof examSchema>;
 
 export const eventSchema = z.object({
   id: z.coerce.number().optional(),
-  title: z.string().min(4, { message: "Event wajib diisi!" }),
-  description: z.string().min(10, { message: "Deskripsi wajib diisi!" }),
+  title: z.string().min(4, { message: "Event wajib diisi minimal 4 karakter!" }),
+  description: z.string().min(10, { message: "Deskripsi wajib diisi minimal 10 karakter!" }),
   startTime: z.coerce.date({ message: "Waktu mulai event wajib diisi!" }),
   endTime: z.coerce.date({ message: "Waktu ahir event wajib diisi!" }),
   classId: z.coerce.number({ message: "Id kelas wajib di isi" }),
@@ -443,7 +443,7 @@ export const ppdbSchema = z.object({
 
   noWhatsapp: z
     .string({ message: " Nomor HP Calon Siswa wajib diisi!" })
-    .min(11)
+    .min(10, { message: " Nomor HP Calon Siswa minimal 10 karakter!" })
     .max(13)
     .regex(/^\d+$/),
   transportation: z
@@ -856,3 +856,48 @@ export const mresultSchema = z.object({
 });
 
 export type MresultSchema = z.infer<typeof mresultSchema>;
+export const massignmentSchema = z.object({
+  ids: z.array(z.number().min(1)),
+  title: z
+    .string()
+    .min(4, { message: "Judul wajib diisi!" })
+    .or(z.literal(""))
+    .optional(),
+  dueDate: z.coerce
+    .date({ message: "Deadline wajib diisi!" })
+    .refine((date) => date > new Date(), {
+      message: "Deadline harus setelah hari ini!",
+    })
+    .or(z.literal(""))
+    .optional(),
+  assType: z
+    .nativeEnum(assTypes, {
+      message: "Tipe Tugas murid wajib diisi!",
+    })
+    .or(z.literal(""))
+    .optional(),
+});
+
+export type MassignmentSchema = z.infer<typeof massignmentSchema>;
+export const mexamSchema = z.object({
+  ids: z.array(z.number().min(1)),
+  title: z
+    .string()
+    .min(2, { message: "Nama Ujian wajib diisi!" })
+    .or(z.literal(""))
+    .optional(),
+  startTime: z.coerce
+    .date({ message: "Waktu mulai Ujian harus diisi" })
+    .or(z.literal(""))
+    .optional(),
+  endTime: z.coerce
+    .date({ message: "Waktu selesai Ujian wajib diisi!" })
+    .or(z.literal(""))
+    .optional(),
+  exType: z
+    .nativeEnum(exTypes, { message: "Tipe Ujian wajib di isi" })
+    .or(z.literal(""))
+    .optional(),
+});
+
+export type MexamSchema = z.infer<typeof mexamSchema>;

@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import SemesterSelect from "./SemesterSelect";
-import StudentParentTableSkeleton from "./StudentParentTableSkeleton";
+import SemesterSelect from "../SemesterSelect";
+import StudentParentTableSkeleton from "../StudentParentTableSkeleton";
 
 type Semester = {
   label: string;

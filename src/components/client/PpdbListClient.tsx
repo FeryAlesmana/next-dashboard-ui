@@ -1,11 +1,10 @@
 "use client";
 import { useState } from "react";
 import Table from "@/components/Table";
-import PaymentTableClient from "./PaymentTableClient";
-import BulkActions from "./BulkActions";
-import TeacherTableClient from "./TeacherTableClient";
+import BulkActions from "../BulkActions";
+import PpdbTableClient from "./PpdbTableClient";
 
-export default function TeacherListClient({
+export default function PpdbListClient({
   columns,
   data,
   role,
@@ -28,7 +27,7 @@ export default function TeacherListClient({
     <div className="space-y-4 mt-3">
       <BulkActions
         selectedIds={selected}
-        table="teacher"
+        table="ppdb"
         onReset={() => setSelected([])}
         data={data}
         relatedData={relatedData}
@@ -50,12 +49,13 @@ export default function TeacherListClient({
           {/* other headers */}
         </tr>
         {data.map((data) => (
-          <TeacherTableClient
+          <PpdbTableClient
             key={data.id}
             data={data}
             role={role}
             selected={selected}
             onToggle={toggleSelection}
+            relatedData={relatedData}
           />
         ))}
       </Table>

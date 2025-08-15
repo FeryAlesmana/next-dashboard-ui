@@ -33,6 +33,8 @@ import {
   MparentSchema,
   mparentSchema,
   MresultSchema,
+  MassignmentSchema,
+  MexamSchema,
 } from "./formValidationSchema";
 import prisma from "./prisma";
 import { clerkClient } from "@clerk/nextjs/server";
@@ -921,7 +923,7 @@ export const createExam = async (
         startTime: data.startTime,
         endTime: data.endTime,
         lessonId: data.lessonId,
-        exType: data.exTypes,
+        exType: data.exType,
       },
     });
     return { success: true, error: false };
@@ -957,7 +959,7 @@ export const updateExam = async (
         startTime: data.startTime,
         endTime: data.endTime,
         lessonId: data.lessonId,
-        exType: data.exTypes,
+        exType: data.exType,
       },
     });
     return { success: true, error: false };
@@ -970,6 +972,53 @@ export const updateExam = async (
         : "Unknown error";
 
     console.error("update Ujian error: ", error);
+    return { success: false, error: true, message };
+  }
+};
+
+export const updateExams = async (
+  currentState: CurrentState,
+  data: MexamSchema // your bulk update schema including `ids: number[]`
+) => {
+  try {
+    const { ids, startTime, endTime, exType, title } = data;
+
+    if (!ids || ids.length === 0) {
+      throw new Error("No result IDs provided for update");
+    }
+    //Only Update if there is at least one field to update
+    const updateData: any = {
+      ...(title !== "" && {
+        title: title,
+      }),
+      ...(startTime !== "" && {
+        startTime: startTime,
+      }),
+      ...(endTime !== "" && {
+        endTime: endTime,
+      }),
+      ...(exType !== "" && {
+        exType: exType,
+      }),
+    };
+
+    await prisma.exam.updateMany({
+      where: {
+        id: { in: ids },
+      },
+      data: updateData,
+    });
+
+    return { success: true, error: false };
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === "string"
+        ? error
+        : "Unknown error";
+
+    console.error("updateExams error: ", error);
     return { success: false, error: true, message };
   }
 };
@@ -1016,6 +1065,45 @@ export const createEvent = async (
     return { success: false, error: true };
   }
 };
+
+export const deleteExams = async (
+  currentState: CurrentState,
+  formData: FormData
+): Promise<CurrentState> => {
+  const ids = formData.getAll("ids") as string[];
+
+  if (!ids || ids.length === 0) {
+    return { success: false, error: true, message: "No student IDs provided." };
+  }
+
+  try {
+    for (const id of ids) {
+      const idAsNumber = parseInt(id);
+      try {
+        await prisma.exam.delete({ where: { id: idAsNumber } });
+      } catch (innerError) {
+        console.error(`❌ Failed to delete Exam ID ${id}:`, innerError);
+        // Optionally continue deleting others instead of failing all
+      }
+    }
+
+    return {
+      success: true,
+      error: false,
+      message: `Deleted ${ids.length} Exam(s) successfully.`,
+    };
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === "string"
+        ? error
+        : "Unknown error";
+
+    return { success: false, error: true, message };
+  }
+};
+
 
 export const updateEvent = async (
   currentState: CurrentState,
@@ -1215,6 +1303,50 @@ export const updateAssignment = async (
   }
 };
 
+export const updateAssignments = async (
+  currentState: CurrentState,
+  data: MassignmentSchema // your bulk update schema including `ids: number[]`
+) => {
+  try {
+    const { ids, dueDate, assType, title } = data;
+
+    if (!ids || ids.length === 0) {
+      throw new Error("No result IDs provided for update");
+    }
+    //Only Update if there is at least one field to update
+    const updateData: any = {
+      ...(title !== "" && {
+        title: title,
+      }),
+      ...(dueDate !== "" && {
+        dueDate: dueDate,
+      }),
+      ...(assType !== "" && {
+        assType: assType,
+      }),
+    };
+
+    await prisma.assignment.updateMany({
+      where: {
+        id: { in: ids },
+      },
+      data: updateData,
+    });
+
+    return { success: true, error: false };
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === "string"
+        ? error
+        : "Unknown error";
+
+    console.error("updateAssignments error: ", error);
+    return { success: false, error: true, message };
+  }
+};
+
 export const deleteAssignment = async (
   currentState: CurrentState,
   formData: FormData
@@ -1234,6 +1366,44 @@ export const deleteAssignment = async (
   } catch (error) {
     console.log(error + " Di server action");
     return { success: false, error: true };
+  }
+};
+
+export const deleteAssignments = async (
+  currentState: CurrentState,
+  formData: FormData
+): Promise<CurrentState> => {
+  const ids = formData.getAll("ids") as string[];
+
+  if (!ids || ids.length === 0) {
+    return { success: false, error: true, message: "No student IDs provided." };
+  }
+
+  try {
+    for (const id of ids) {
+      const idAsNumber = parseInt(id);
+      try {
+        await prisma.assignment.delete({ where: { id: idAsNumber } });
+      } catch (innerError) {
+        console.error(`❌ Failed to delete Assignment ID ${id}:`, innerError);
+        // Optionally continue deleting others instead of failing all
+      }
+    }
+
+    return {
+      success: true,
+      error: false,
+      message: `Deleted ${ids.length} Assignment(s) successfully.`,
+    };
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === "string"
+        ? error
+        : "Unknown error";
+
+    return { success: false, error: true, message };
   }
 };
 
@@ -1775,6 +1945,44 @@ export const deleteResult = async (
   } catch (error) {
     console.log(error + " Di server action");
     return { success: false, error: true };
+  }
+};
+
+export const deleteResults = async (
+  currentState: CurrentState,
+  formData: FormData
+): Promise<CurrentState> => {
+  const ids = formData.getAll("ids") as string[];
+
+  if (!ids || ids.length === 0) {
+    return { success: false, error: true, message: "No student IDs provided." };
+  }
+
+  try {
+    for (const id of ids) {
+      const idAsNumber = parseInt(id);
+      try {
+        await prisma.result.delete({ where: { id: idAsNumber } });
+      } catch (innerError) {
+        console.error(`❌ Failed to delete Result ID ${id}:`, innerError);
+        // Optionally continue deleting others instead of failing all
+      }
+    }
+
+    return {
+      success: true,
+      error: false,
+      message: `Deleted ${ids.length} Result(s) successfully.`,
+    };
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === "string"
+        ? error
+        : "Unknown error";
+
+    return { success: false, error: true, message };
   }
 };
 

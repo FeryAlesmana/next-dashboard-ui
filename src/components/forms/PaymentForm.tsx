@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "react-toastify";
+import ConfirmDialog from "../ConfirmDialog";
 import { paymentLogSchema, PaymentLogSchema } from "@/lib/formValidationSchema";
 import {
   createPaymentLog,
@@ -39,7 +40,9 @@ export default function CreatePaymentLogPage({
     reset,
     setValue,
     watch,
+    trigger,
     formState: { errors },
+    getValues,
   } = useForm<PaymentLogSchema>({
     resolver: zodResolver(paymentLogSchema),
     defaultValues: {
@@ -81,6 +84,11 @@ export default function CreatePaymentLogPage({
 
   const watchedValues = watch();
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // State untuk menampilkan dialog konfirmasi
+  const [showConfirm, setShowConfirm] = useState(false);
+  // Simpan data form saat submit awal agar dipakai saat konfirmasi
+  const [formData, setFormData] = useState<PaymentLogSchema | null>(null);
 
   // Simpan draft ke localStorage
   useEffect(() => {
@@ -129,32 +137,26 @@ export default function CreatePaymentLogPage({
     gradeData = [],
   } = relatedData ?? [];
 
-  console.log(relatedData, "Isi relatedData");
-  console.log(data, "Isi data");
-
-  type Grade = { id: number; level: number };
-  type ClassWithGrade = { grade?: Grade };
-  // const gradeData: Grade[] =
-  //   (classData as ClassWithGrade[])
-  //     ?.filter((c): c is { grade: Grade } => !!c.grade && !!c.grade.id)
-  //     .map((c) => ({
-  //       id: c.grade.id,
-  //       level: c.grade.level,
-  //     }))
-  //     .filter(
-  //       (grade, index, self) =>
-  //         self.findIndex((g) => g.id === grade.id) === index
-  //     ) || [];
-  console.log(gradeData, "data tingkat");
-  console.log(classData, "data kelas");
-
-  const onSubmit = handleSubmit((data) => {
+  // Submit final setelah konfirmasi
+  const handleSubmitForm = handleSubmit((formData) => {
     setIsSubmitting(true);
-
+    setShowConfirm(false);
     startTransition(() => {
-      formAction(data);
+      formAction(formData);
     });
   });
+
+  // Submit awal: validasi → kalau valid munculkan dialog
+  const onSubmit = async () => {
+    const valid = await trigger();
+    if (valid) {
+      const values = getValues();
+      setFormData(values);
+      setShowConfirm(true);
+    } else {
+      setShowConfirm(false);
+    }
+  };
 
   useEffect(() => {
     if (state.success) {
@@ -170,7 +172,13 @@ export default function CreatePaymentLogPage({
         <h1 className="text-lg font-semibold text-center">
           {type === "create" ? "Buat Tagihan Baru" : "Edit Tagihan"}
         </h1>
-        <form onSubmit={onSubmit} className="space-y-4">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            onSubmit();
+          }}
+          className="space-y-4"
+        >
           <div>
             <label className="block mb-1 font-medium">Jenis Pembayaran</label>
             <select
@@ -254,10 +262,7 @@ export default function CreatePaymentLogPage({
               <p className="text-red-600">{errors.paymentMethod.message}</p>
             )}
           </div>
-          <span className="items-center justify-center text-center">
-            {" "}
-            TUNAI
-          </span>
+          <span className="items-center justify-center text-center"> TUNAI</span>
 
           <div>
             <label className="block mb-1 font-medium">
@@ -305,12 +310,7 @@ export default function CreatePaymentLogPage({
                 )}
               {watchedValues.recipientType === "class" &&
                 classData.map(
-                  (kelas: {
-                    id: number;
-                    name: string;
-                    // capacity: number;
-                    // _count: { students: number };
-                  }) => (
+                  (kelas: { id: number; name: string }) => (
                     <option key={kelas.id} value={kelas.id}>
                       {kelas.name}
                     </option>
@@ -358,6 +358,18 @@ export default function CreatePaymentLogPage({
           </div>
         </form>
       </div>
+
+      {showConfirm && (
+        <ConfirmDialog
+          message={
+            type === "create"
+              ? "Tambah tagihan baru?"
+              : "Simpan perubahan tagihan?"
+          }
+          onConfirm={handleSubmitForm}
+          onCancel={() => setShowConfirm(false)}
+        />
+      )}
     </div>
   );
 }

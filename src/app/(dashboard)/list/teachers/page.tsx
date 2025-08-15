@@ -4,7 +4,7 @@ import FormContainer from "@/components/FormContainer";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
-import TeacherListClient from "@/components/TeacherListClient";
+import TeacherListClient from "@/components/client/TeacherListClient";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/setting";
 import {

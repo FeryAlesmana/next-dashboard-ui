@@ -1,10 +1,10 @@
 "use client";
 import { useState } from "react";
 import Table from "@/components/Table";
-import BulkActions from "./BulkActions";
-import PpdbTableClient from "./PpdbTableClient";
+import AssignmentTableClient from "./AssignmentTableClient";
+import BulkActions from "../BulkActions";
 
-export default function PpdbListClient({
+export default function AssignmentListClient({
   columns,
   data,
   role,
@@ -27,7 +27,7 @@ export default function PpdbListClient({
     <div className="space-y-4 mt-3">
       <BulkActions
         selectedIds={selected}
-        table="ppdb"
+        table="assignment"
         onReset={() => setSelected([])}
         data={data}
         relatedData={relatedData}
@@ -49,7 +49,7 @@ export default function PpdbListClient({
           {/* other headers */}
         </tr>
         {data.map((data) => (
-          <PpdbTableClient
+          <AssignmentTableClient
             key={data.id}
             data={data}
             role={role}

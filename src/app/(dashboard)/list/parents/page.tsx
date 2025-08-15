@@ -2,7 +2,7 @@ import ClientPageWrapper from "@/components/ClientWrapper";
 import FilterSortToggle from "@/components/FilterSortToggle";
 import FormContainer from "@/components/FormContainer";
 import Pagination from "@/components/Pagination";
-import ParentListClient from "@/components/ParentListClient";
+import ParentListClient from "@/components/client/ParentListClient";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
 import prisma from "@/lib/prisma";

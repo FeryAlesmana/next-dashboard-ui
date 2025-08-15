@@ -10,46 +10,41 @@ import {
   useEffect,
   useState,
 } from "react";
-import { examSchema, ExamSchema } from "@/lib/formValidationSchema";
-import { createExam, CurrentState, updateExam } from "@/lib/actions";
+import { mexamSchema, MexamSchema } from "@/lib/formValidationSchema";
+import { CurrentState, updateAssignments, updateExams } from "@/lib/actions";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import Select from "react-select";
 import ConfirmDialog from "../ConfirmDialog";
-
-const ExamForm = ({
-  setOpen,
-  type,
-  data,
-  relatedData,
-}: {
-  setOpen: Dispatch<SetStateAction<boolean>>;
-  type: "create" | "update";
+type UpdateManyExamsFormProps = {
+  ids?: number[];
+  table: string;
   data?: any;
   relatedData?: any;
-}) => {
+  setOpen: Dispatch<SetStateAction<boolean>>;
+};
+const UpdateManyExamsForm = ({
+  ids,
+  table,
+  data,
+  relatedData,
+  setOpen,
+}: UpdateManyExamsFormProps) => {
   const {
     register,
     handleSubmit,
-    control,
     trigger,
+    setValue,
     formState: { errors },
-  } = useForm<ExamSchema>({
-    resolver: zodResolver(examSchema),
+  } = useForm<MexamSchema>({
+    resolver: zodResolver(mexamSchema),
   });
 
-  const createExamHandler = async (
+  const updateAssignmentHandler = async (
     prevState: CurrentState,
-    payload: ExamSchema
+    payload: MexamSchema
   ): Promise<CurrentState> => {
-    return await createExam(prevState, payload);
-  };
-
-  const updateExamHandler = async (
-    prevState: CurrentState,
-    payload: ExamSchema
-  ): Promise<CurrentState> => {
-    return await updateExam(prevState, payload);
+    return await updateExams(prevState, payload);
   };
 
   const initialState: CurrentState = {
@@ -58,93 +53,78 @@ const ExamForm = ({
     message: "",
   };
   const [state, formAction] = useActionState(
-    type === "create" ? createExamHandler : updateExamHandler,
+    updateAssignmentHandler,
     initialState
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [formData, setFormData] = useState<ExamSchema | null>(null);
 
   useEffect(() => {
     if (!state.success && !state.error) return;
     setIsSubmitting(false);
   }, [state.success, state.error]);
 
-  // Submit sesungguhnya dijalankan di sini, setelah user klik "Ya" pada dialog konfirmasi
-  const submitForm = () => {
-    if (!formData) return;
+  const handleSubmitForm = handleSubmit((data) => {
     setIsSubmitting(true);
     startTransition(() => {
-      formAction(formData);
+      formAction(data);
     });
-    setShowConfirm(false);
-  };
-
-  // Tangani tombol submit: cek validasi dulu,
-  // jika validasi berhasil simpan data & tampilkan konfirmasi,
-  // jika gagal jangan tampilkan dialog.
-  const onSubmit = async () => {
+  });
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     const valid = await trigger();
     if (valid) {
-      handleSubmit((data) => {
-        setFormData(data);
-        setShowConfirm(true);
-      })();
+      // Jika valid, tampilkan dialog konfirmasi
+      setShowConfirm(true);
     } else {
+      // Jika tidak valid, jangan tampilkan dialog dan jangan submit
       setShowConfirm(false);
     }
   };
-
   const router = useRouter();
 
   useEffect(() => {
+    setValue("ids", ids!);
     if (state.success) {
-      toast(
-        `Ujian telah berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`
-      );
+      toast(`Tugas telah berhasil di Edit!`);
       setOpen(false);
       router.refresh();
     }
-  }, [state, type, setOpen, router]);
+  }, [state, setOpen, router, setValue, ids]);
 
   const { lessons } = relatedData;
+
   const formatDateForInput = (dateString: string) => {
     const date = new Date(dateString);
+
+    // Convert to Asia/Jakarta time
     const jakartaDate = new Date(
       date.toLocaleString("en-US", { timeZone: "Asia/Jakarta" })
     );
+
     const year = jakartaDate.getFullYear();
     const month = String(jakartaDate.getMonth() + 1).padStart(2, "0");
     const day = String(jakartaDate.getDate()).padStart(2, "0");
     const hours = String(jakartaDate.getHours()).padStart(2, "0");
     const minutes = String(jakartaDate.getMinutes()).padStart(2, "0");
+
     return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
-
-  const lessonOption = lessons.map(
-    (lesson: {
-      id: number;
-      name: string;
-      subject: { name: string };
-      class: { name: string };
-    }) => ({
-      value: lesson.id,
-      label: `${lesson.name} - ${lesson.subject?.name ?? "-"} - ${
-        lesson.class?.name ?? "-"
-      }`,
-    })
-  );
-
+  if (!ids || ids.length === 0) {
+    return <span>Tidak ada data yang dipilih.</span>;
+  }
   return (
     <>
-      <form
-        action=""
-        className="flex flex-col gap-8"
-        onSubmit={(e) => e.preventDefault()}
-      >
-        <h1 className="text-xl font-semibold">
-          {type === "create" ? "Tambah Ujian baru" : "Edit Ujian"}
-        </h1>
+      <form action="" className="flex flex-col gap-8" onSubmit={onSubmit}>
+        <h1 className="text-xl font-semibold">Edit Tugas Banyak</h1>
+        <input type="hidden" name="table" value={table} />
+        {/* {ids.map((id: number) => (
+          <input key={id} type="hidden" value={id} {...register("ids")} />
+        ))} */}
+        <input type="hidden" {...register("ids")} />
+        <span className="text-center font-medium">
+          {ids.length} Nilai akan diperbarui.
+        </span>
         <span className="text-xs text-gray-400 font-medium">
           Informasi Ujian
         </span>
@@ -155,7 +135,7 @@ const ExamForm = ({
             defaultValue={data?.title}
             register={register}
             error={errors?.title}
-          />
+          ></InputField>
           <InputField
             label="Waktu mulai"
             name="startTime"
@@ -165,7 +145,7 @@ const ExamForm = ({
             register={register}
             error={errors?.startTime}
             type="datetime-local"
-          />
+          ></InputField>
           <InputField
             label="Waktu selesai"
             name="endTime"
@@ -173,40 +153,8 @@ const ExamForm = ({
             register={register}
             error={errors?.endTime}
             type="datetime-local"
-          />
-          <div className="flex flex-col gap-2 w-full md:w-1/4">
-            <label className="text-xs text-gray-400">Jadwal</label>
-            <Controller
-              name="lessonId"
-              control={control}
-              defaultValue={data?.lessonId || ""}
-              render={({ field }) => {
-                return (
-                  <Select
-                    {...field}
-                    options={lessonOption}
-                    className="text-sm"
-                    classNamePrefix="select"
-                    placeholder="Cari Jadwal..."
-                    onChange={(selectedOption) =>
-                      field.onChange(selectedOption?.value)
-                    }
-                    value={
-                      lessonOption.find(
-                        (opt: { value: number; label: string }) =>
-                          opt.value === field.value
-                      ) || null
-                    }
-                  />
-                );
-              }}
-            />
-            {errors.lessonId?.message && (
-              <p className="text-xs text-red-400">
-                {errors.lessonId.message.toString()}
-              </p>
-            )}
-          </div>
+          ></InputField>
+
           <div className="flex flex-col gap-2 w-full md:w-1/4">
             <label className="text-xs text-gray-400">Tipe Ujian</label>
             <select
@@ -227,18 +175,7 @@ const ExamForm = ({
               </p>
             )}
           </div>
-          {data && (
-            <InputField
-              label="Id"
-              name="id"
-              defaultValue={data?.id}
-              register={register}
-              error={errors?.id}
-              hidden
-            />
-          )}
         </div>
-
         {(state.error || Object.keys(errors).length > 0) && (
           <span className="text-red-500">
             Terjadi Kesalahan! {state.message ?? ""}
@@ -252,27 +189,21 @@ const ExamForm = ({
 
         <div className="text-center pt-4 justify-items-center">
           <button
-            type="button"
+            type="submit"
             className="bg-blue-600 text-white font-semibold px-6 py-3 rounded hover:bg-blue-700 flex items-center justify-center gap-2"
             disabled={isSubmitting}
-            onClick={onSubmit}
           >
             {isSubmitting && (
               <span className="animate-spin inline-block w-5 h-5 border-2 border-white border-t-blue-400 rounded-full mr-2"></span>
             )}
-            {isSubmitting
-              ? "Memproses..."
-              : type === "create"
-              ? "Tambah ujian"
-              : "Update dan Simpan"}
+            {isSubmitting ? "Memproses..." : "Update dan Simpan"}
           </button>
         </div>
       </form>
-
       {showConfirm && (
         <ConfirmDialog
-          message={type === "create" ? "Tambah Ujian baru?" : "Ubah Ujian?"}
-          onConfirm={submitForm}
+          message="Edit Tugas ini akan mengubah data yang ada. Apakah Anda yakin?"
+          onConfirm={handleSubmitForm}
           onCancel={() => setShowConfirm(false)}
         />
       )}
@@ -280,4 +211,4 @@ const ExamForm = ({
   );
 };
 
-export default ExamForm;
+export default UpdateManyExamsForm;

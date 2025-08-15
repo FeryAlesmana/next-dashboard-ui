@@ -18,16 +18,16 @@ export default function ConfirmDialog({
         <p className="text-center font-medium mb-6">{message}</p>
         <div className="flex justify-center gap-4">
           <button
-            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
+            className="bg-blue-600 hover:bg-gray-600 text-white px-4 py-2 rounded"
             onClick={onConfirm}
           >
-            Yes
+            Ya
           </button>
           <button
             className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded"
             onClick={onCancel}
           >
-            No
+            Tidak
           </button>
         </div>
       </div>

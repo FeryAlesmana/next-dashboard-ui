@@ -1,12 +1,11 @@
 "use client";
 import { useState } from "react";
 import Table from "@/components/Table";
-import BulkActions from "./BulkActions";
-import ParentTableClient from "./ParentTableClient";
-// import UpdateManyParentForm from "./UpdateManyParentForm";
-// import DeleteManyModal from "./DeleteManyModal";
+import PaymentTableClient from "./PaymentTableClient";
+import BulkActions from "../BulkActions";
+import TeacherTableClient from "./TeacherTableClient";
 
-export default function ParentListClient({
+export default function TeacherListClient({
   columns,
   data,
   role,
@@ -29,7 +28,7 @@ export default function ParentListClient({
     <div className="space-y-4 mt-3">
       <BulkActions
         selectedIds={selected}
-        table="parent"
+        table="teacher"
         onReset={() => setSelected([])}
         data={data}
         relatedData={relatedData}
@@ -51,13 +50,12 @@ export default function ParentListClient({
           {/* other headers */}
         </tr>
         {data.map((data) => (
-          <ParentTableClient
+          <TeacherTableClient
             key={data.id}
             data={data}
             role={role}
             selected={selected}
             onToggle={toggleSelection}
-            relatedData={relatedData}
           />
         ))}
       </Table>

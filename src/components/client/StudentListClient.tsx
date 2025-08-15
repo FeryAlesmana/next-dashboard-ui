@@ -1,16 +1,18 @@
 "use client";
 import { useState } from "react";
+import StudentTableClient from "./StudentTableClient";
 import Table from "@/components/Table";
-import PaymentTableClient from "./PaymentTableClient";
-import BulkActions from "./BulkActions";
+import BulkActions from "../BulkActions";
+// import UpdateManyStudentForm from "./UpdateManyStudentForm";
+// import DeleteManyModal from "./DeleteManyModal";
 
-export default function PaymentListClient({
+export default function StudentListClient({
   columns,
-  data,
+  students,
   role,
   relatedData,
 }: {
-  data: any[];
+  students: any[];
   relatedData?: any;
   role: string;
   columns: { header: string; accessor: string; className?: string }[];
@@ -27,9 +29,9 @@ export default function PaymentListClient({
     <div className="space-y-4 mt-3">
       <BulkActions
         selectedIds={selected}
-        table="paymentLog"
+        table="student"
         onReset={() => setSelected([])}
-        data={data}
+        data={students}
         relatedData={relatedData}
       />
 
@@ -39,23 +41,22 @@ export default function PaymentListClient({
             <td className="px-4 py-2">
               <input
                 type="checkbox"
-                checked={selected.length === data.length}
+                checked={selected.length === students.length}
                 onChange={(e) =>
-                  setSelected(e.target.checked ? data.map((s) => s.id) : [])
+                  setSelected(e.target.checked ? students.map((s) => s.id) : [])
                 }
               />
             </td>
           )}
           {/* other headers */}
         </tr>
-        {data.map((data) => (
-          <PaymentTableClient
-            key={data.id}
-            data={data}
+        {students.map((student) => (
+          <StudentTableClient
+            key={student.id}
+            student={student}
             role={role}
             selected={selected}
             onToggle={toggleSelection}
-            relatedData={relatedData}
           />
         ))}
       </Table>

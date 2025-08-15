@@ -2,8 +2,8 @@ import ClientPageWrapper from "@/components/ClientWrapper";
 import FilterSortToggle from "@/components/FilterSortToggle";
 import FormContainer from "@/components/FormContainer";
 import Pagination from "@/components/Pagination";
-import StudentTableClient from "@/components/StudentTableClient";
-import StudentTableServer from "@/components/StudentListClient";
+import StudentTableClient from "@/components/client/StudentTableClient";
+import StudentTableServer from "@/components/client/StudentListClient";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
 import prisma from "@/lib/prisma";
@@ -17,7 +17,7 @@ import { Class, Prisma, Student } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
 import React from "react";
-import StudentListClient from "@/components/StudentListClient";
+import StudentListClient from "@/components/client/StudentListClient";
 
 type StudentList = Student & {
   class: Class;

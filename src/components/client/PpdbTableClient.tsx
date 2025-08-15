@@ -1,5 +1,5 @@
 "use client";
-import FormModal from "./FormModal";
+import FormModal from "../FormModal";
 import { FaCheckCircle, FaTimesCircle } from "react-icons/fa";
 
 export default function PpdbTableClient({

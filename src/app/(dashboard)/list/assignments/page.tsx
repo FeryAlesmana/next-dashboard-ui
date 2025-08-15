@@ -1,6 +1,8 @@
 import ClientPageWrapper from "@/components/ClientWrapper";
+import FilterSortToggle from "@/components/FilterSortToggle";
 import FormContainer from "@/components/FormContainer";
 import Pagination from "@/components/Pagination";
+import ParentAssignmentView from "@/components/client/ParentAssignmentView";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
 import prisma from "@/lib/prisma";
@@ -16,6 +18,7 @@ import {
 } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
+import AssignmentListClient from "@/components/client/AssignmentListClient";
 
 type AssignmentList = Assignment & {
   lesson: { subject: Subject; class: Class; teacher: Teacher };
@@ -27,7 +30,7 @@ const AssignmentListPage = async ({
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) => {
   const sp = await normalizeSearchParams(searchParams);
-  const { page, ...queryParams } = sp;
+  const { page, limit, ...queryParams } = sp;
   const key = new URLSearchParams(
     Object.entries(sp).reduce((acc, [k, v]) => {
       if (v !== undefined) acc[k] = v;
@@ -35,9 +38,18 @@ const AssignmentListPage = async ({
     }, {} as Record<string, string>)
   ).toString();
   const p = page ? parseInt(page) : 1;
+  const perPage = limit === "all" ? undefined : parseInt(limit ?? "10");
   const { role, userId } = await getCurrentUser();
 
   const columns = [
+    ...(role === "admin"
+      ? [
+          {
+            header: "Select",
+            accessor: "checkbox",
+          },
+        ]
+      : []),
     {
       header: "Mata Pelajaran",
       accessor: "Nama",
@@ -128,10 +140,11 @@ const AssignmentListPage = async ({
   );
 
   const query: Prisma.AssignmentWhereInput = {};
+  let orderBy: Prisma.AssignmentOrderByWithRelationInput | undefined;
   query.lesson = {};
   if (queryParams) {
     for (const [key, value] of Object.entries(queryParams)) {
-      if (value !== undefined)
+      if (value !== undefined && value !== "")
         switch (key) {
           case "teacherId":
             query.lesson.teacherId = value;
@@ -139,10 +152,35 @@ const AssignmentListPage = async ({
           case "classId":
             query.lesson.classId = parseInt(value);
             break;
+          case "gradeId":
+            query.lesson = query.lesson || {};
+            query.lesson.class = query.lesson.class || {};
+            query.lesson.class.gradeId = parseInt(value);
+            break;
+
           case "search":
             query.lesson.subject = {
               name: { contains: value, mode: "insensitive" },
             };
+            break;
+          case "sort":
+            switch (value) {
+              case "az":
+                orderBy = { title: "asc" };
+                break;
+              case "za":
+                orderBy = { title: "desc" };
+                break;
+              case "id_asc":
+                orderBy = { id: "asc" };
+                break;
+              case "id_desc":
+                orderBy = { id: "desc" };
+                break;
+              case "dl":
+                orderBy = { dueDate: "asc" }; // or "desc" if preferred
+                break;
+            }
             break;
           default:
             break;
@@ -239,101 +277,98 @@ const AssignmentListPage = async ({
 
       students = studentWithAssignments;
 
-      return (
-        <div className="w-full mx-auto p-6">
-          <h1 className="text-2xl font-bold mb-6">Tugas Anak</h1>
-
-          {students.length === 0 ? (
-            <div className="text-center text-gray-500">
-              Belum ada Tugas tersedia untuk anak Anda.
-            </div>
-          ) : (
-            students.map((student) => (
-              <div key={student.id} className="mb-12">
-                <h2 className="text-xl font-semibold mb-4">{student.name}</h2>
-
-                {student.assignments.length === 0 ? (
-                  <div className="text-center text-gray-500">
-                    Belum ada Tugas untuk {student.name}.
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto border rounded-lg">
-                    <table className="min-w-full divide-y divide-gray-200 text-sm">
-                      <thead className="bg-gray-100">
-                        <tr>
-                          {columns.map((col) => (
-                            <th
-                              key={col.accessor}
-                              className={`px-4 py-3 font-semibold text-center ${
-                                col.className ?? ""
-                              }`}
-                            >
-                              {col.header}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-100 text-center">
-                        {student.assignments.map((item: any) => (
-                          <tr
-                            key={item.id}
-                            className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight"
-                          >
-                            <td className="p-4">{item.subjectName}</td>
-                            <td className="hidden md:table-cell">
-                              {item.className}
-                            </td>
-                            <td className="hidden md:table-cell">
-                              {item.teacherName}
-                            </td>
-                            <td className="hidden md:table-cell">
-                              {item.dueDate.toLocaleTimeString("id-ID", {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                                hour12: false,
-                                day: "numeric",
-                                month: "numeric",
-                                year: "numeric",
-                              })}
-                            </td>
-                            <td className="hidden md:table-cell">
-                              {item.assTypes
-                                ? AssignmentsTypeLabel[item.assTypes as assType]
-                                : "-"}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
-            ))
-          )}
-        </div>
-      );
+      return <ParentAssignmentView students={students} columns={columns} />;
     }
     default:
       break;
   }
+  let kelasId: number[] = [];
 
-  const [data, count] = await prisma.$transaction([
-    prisma.assignment.findMany({
-      where: query,
-      include: {
-        lesson: {
-          select: {
-            subject: { select: { name: true } },
-            teacher: { select: { name: true, namalengkap: true } },
-            class: { select: { name: true } },
+  if (role === "teacher") {
+    const teacher = await prisma.teacher.findUnique({
+      where: { id: userId! },
+      select: {
+        classes: { select: { id: true } },
+      },
+    });
+
+    const supervised = teacher?.classes.map((c) => c.id) || [];
+    kelasId = [...new Set([...supervised])];
+  }
+  const [data, count, assignLessons, ClassAssignment] =
+    await prisma.$transaction([
+      prisma.assignment.findMany({
+        where: query,
+        orderBy,
+        include: {
+          lesson: {
+            select: {
+              subject: { select: { name: true } },
+              teacher: { select: { name: true, namalengkap: true, id: true } },
+              class: { select: { name: true, grade: true } },
+            },
           },
         },
-      },
-      take: ITEM_PER_PAGE,
-      skip: ITEM_PER_PAGE * (p - 1),
-    }),
-    prisma.assignment.count({ where: query }),
-  ]);
+        take: perPage,
+        skip: perPage ? perPage * (p - 1) : undefined,
+      }),
+      prisma.assignment.count({ where: query }),
+      prisma.lesson.findMany({
+        where: {
+          ...(role === "teacher" ? { teacherId: userId! } : {}),
+        },
+        select: {
+          id: true,
+          name: true,
+          subject: { select: { name: true } },
+          class: { select: { name: true } },
+        },
+      }),
+      prisma.class.findMany({
+        where: {
+          ...(kelasId.length > 0 ? { id: { in: kelasId } } : {}),
+        },
+        select: {
+          id: true,
+          name: true,
+          grade: { select: { level: true } },
+        },
+      }),
+    ]);
+  const classOptions = ClassAssignment.map((cls) => ({
+    label: cls?.name ?? "Unknown Class",
+    value: cls?.id?.toString() ?? "", // always string, never undefined
+  }));
+
+  const gradeOptions = Array.from(
+    new Set(
+      ClassAssignment.map((cls) => cls.grade?.level).filter(
+        (level): level is number => level !== undefined
+      )
+    )
+  )
+    .sort((a, b) => a - b)
+    .map((level) => ({
+      label: level.toString(),
+      value: level, // stays a number
+    }));
+
+  const teacherOptions = Array.from(
+    new Map(
+      data
+        .filter((ass) => ass.lesson?.teacher?.id)
+        .map((ass) => [
+          ass.lesson!.teacher!.id,
+          {
+            label: ass.lesson!.teacher!.name ?? "Unknown Teacher",
+            value: ass.lesson!.teacher!.id.toString(), // always string
+          },
+        ])
+    ).values()
+  );
+  let relatedData: any = {};
+  relatedData = { lessons: assignLessons, kelas2: ClassAssignment };
+
   return (
     <ClientPageWrapper key={key} role={role!}>
       <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
@@ -343,12 +378,32 @@ const AssignmentListPage = async ({
           <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
             <TableSearch></TableSearch>
             <div className="flex items-center gap-4 self-end">
-              <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
-                <Image src="/filter.png" alt="" width={14} height={14}></Image>
-              </button>
-              <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
-                <Image src="/sort.png" alt="" width={14} height={14}></Image>
-              </button>
+              <FilterSortToggle
+                filterFields={[
+                  {
+                    name: "classId",
+                    label: "Kelas",
+                    options: classOptions,
+                  },
+                  {
+                    name: "gradeId",
+                    label: "Tingkat",
+                    options: gradeOptions,
+                  },
+                  {
+                    name: "teacherId",
+                    label: "Guru",
+                    options: teacherOptions,
+                  },
+                ]}
+                sortOptions={[
+                  { label: "A-Z", value: "az" },
+                  { label: "Z-A", value: "za" },
+                  { label: "ID Asc", value: "id_asc" },
+                  { label: "ID Desc", value: "id_desc" },
+                  { label: "Deadline", value: "dl" },
+                ]}
+              />
               {(role === "admin" || role === "teacher") && (
                 <FormContainer table="assignment" type="create"></FormContainer>
               )}
@@ -357,7 +412,13 @@ const AssignmentListPage = async ({
         </div>
         {/* LIST */}
         <div className="">
-          <Table columns={columns} renderRow={renderRow} data={data}></Table>
+          {/* <Table columns={columns} renderRow={renderRow} data={data}></Table> */}
+          <AssignmentListClient
+            data={data}
+            columns={columns}
+            role={role!}
+            relatedData={relatedData}
+          />
         </div>
         {/* PAGINATION*/}
         <div className="">

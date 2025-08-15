@@ -2,6 +2,7 @@
 
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useState } from "react";
+import Select from "react-select";
 
 const defaultSortOptions = [
   { label: "A-Z", value: "az" },
@@ -56,27 +57,63 @@ const FilterSortBar = ({
       className={`transition-all duration-300 ease-in-out overflow-hidden ${className}`}
     >
       <div className="flex flex-col lg:flex-row flex-wrap gap-2 items-start lg:items-center justify-start mb-4">
-        {filterFields.map((field) => (
-          <select
-            key={field.name}
-            className="border px-2 py-1 rounded-md text-sm"
-            value={filters[field.name]?.toString() || ""}
-            onChange={(e) => {
-              setFilters((prev) => ({
-                ...prev,
-                [field.name]: e.target.value,
-              }));
-              updateQuery(field.name, e.target.value);
-            }}
-          >
-            <option value="">Filter by {field.label}</option>
-            {field.options.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        ))}
+        {filterFields.map((field) => {
+          const selectedValue = filters[field.name]?.toString() || "";
+          return (
+            <div key={field.name} className="w-min-[200px]">
+              <Select
+                instanceId={field.name}
+                placeholder={`Filter by ${field.label}`}
+                options={field.options.map((opt) => ({
+                  label: opt.label,
+                  value: opt.value.toString(),
+                }))}
+                value={
+                  selectedValue
+                    ? {
+                        label:
+                          field.options.find(
+                            (opt) => opt.value.toString() === selectedValue
+                          )?.label || "",
+                        value: selectedValue,
+                      }
+                    : null
+                }
+                onChange={(selected) => {
+                  const value = selected ? selected.value : "";
+                  setFilters((prev) => ({
+                    ...prev,
+                    [field.name]: value,
+                  }));
+                  updateQuery(field.name, value);
+                }}
+                isClearable
+                menuPortalTarget={document.body} // render outside overflow-hidden parents
+                styles={{
+                  control: (base) => ({
+                    ...base,
+                    minHeight: "32px", // match small select height
+                    height: "32px",
+                    fontSize: "0.875rem", // text-sm
+                  }),
+                  valueContainer: (base) => ({
+                    ...base,
+                    height: "32px",
+                    padding: "0 8px",
+                  }),
+                  indicatorsContainer: (base) => ({
+                    ...base,
+                    height: "32px",
+                  }),
+                  menuPortal: (base) => ({
+                    ...base,
+                    zIndex: 9999, // make dropdown appear above everything
+                  }),
+                }}
+              />
+            </div>
+          );
+        })}
 
         {sortOptions.length > 0 && (
           <select

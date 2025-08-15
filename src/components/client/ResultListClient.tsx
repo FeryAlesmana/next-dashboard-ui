@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import Table from "@/components/Table";
-import BulkActions from "./BulkActions";
+import BulkActions from "../BulkActions";
 import ResultTableClient from "./ResultTableClient";
 
 export default function ResultListClient({

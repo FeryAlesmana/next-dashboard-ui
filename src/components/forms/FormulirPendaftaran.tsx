@@ -19,6 +19,7 @@ import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
 import { createPpdb, CurrentState, updatePpdb } from "@/lib/actions";
 import { cloudinaryUpload } from "@/lib/upload/cloudinaryUpload";
+import ConfirmDialog from "../ConfirmDialog";
 
 const FORM_KEY = "ppdb_draft_form";
 
@@ -42,6 +43,7 @@ const FormulirPendaftaran = ({
     setValue,
     setError,
     watch,
+    trigger,
     formState: { errors },
   } = useForm<PpdbSchema>({
     resolver: zodResolver(ppdbSchema),
@@ -160,6 +162,8 @@ const FormulirPendaftaran = ({
     kk_ktp_sktm?: string;
   }>({});
 
+  const [showConfirm, setShowConfirm] = useState(false);
+
   // For email feedback
   const [selectedFields, setSelectedFields] = useState<any[]>([]);
   const [sendingFeedback, setSendingFeedback] = useState(false);
@@ -205,8 +209,22 @@ const FormulirPendaftaran = ({
     }
   };
 
+  // Fungsi ini dipanggil saat tombol submit ditekan
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    // Trigger validasi manual
+    const valid = await trigger();
+    if (valid) {
+      // Jika valid, tampilkan dialog konfirmasi
+      setShowConfirm(true);
+    } else {
+      // Jika tidak valid, jangan tampilkan dialog dan jangan submit
+      setShowConfirm(false);
+    }
+  };
+
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const onSubmit = handleSubmit((data) => {
+  const handleSubmitForm = handleSubmit((data) => {
     setIsSubmitting(true);
     startTransition(() => {
       formAction({
@@ -1576,6 +1594,17 @@ const FormulirPendaftaran = ({
             </button>
           </div>
         </form>
+        {showConfirm && (
+          <ConfirmDialog
+            message={
+              type === "create"
+                ? "Tambah Pengumuman baru?"
+                : "Simpan perubahan Pengumuman?"
+            }
+            onConfirm={handleSubmitForm}
+            onCancel={() => setShowConfirm(false)}
+          />
+        )}
       </div>
     </div>
   );

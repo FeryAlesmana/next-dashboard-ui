@@ -2,7 +2,7 @@ import ClientPageWrapper from "@/components/ClientWrapper";
 import FormContainer from "@/components/FormContainer";
 import FormModal from "@/components/FormModal";
 import Pagination from "@/components/Pagination";
-import PpdbListClient from "@/components/PpdbListClient";
+import PpdbListClient from "@/components/client/PpdbListClient";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
 import prisma from "@/lib/prisma";

@@ -1,7 +1,7 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
-import FormModal from "./FormModal";
+import FormModal from "../FormModal";
 
 export default function PaymenTableClient({
   data,

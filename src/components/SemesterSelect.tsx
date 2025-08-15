@@ -1,7 +1,5 @@
 'use client';
 import Select from "react-select";
-import { useEffect, useState } from 'react';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 type SemesterOption = {
   label: string;
