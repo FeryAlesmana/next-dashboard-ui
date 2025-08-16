@@ -5,7 +5,7 @@ export type BaseTableClientProps = {
   data: any;
   role: string;
   selected: string[];
-  relatedData: any;
+  relatedData?: any;
   onToggle: (id: string) => void;
   onDeleted?: (ids: (string | number)[]) => void;
   onChanged?: (item: any) => void;
