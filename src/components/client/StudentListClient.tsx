@@ -4,8 +4,6 @@ import StudentTableClient from "./StudentTableClient";
 import Table from "@/components/Table";
 import BulkActions from "../BulkActions";
 import { BaseListClientProps } from "./AssignmentListClient";
-// import UpdateManyStudentForm from "./UpdateManyStudentForm";
-// import DeleteManyModal from "./DeleteManyModal";
 
 export default function StudentListClient({
   columns,
@@ -50,9 +48,10 @@ export default function StudentListClient({
         {data.map((student) => (
           <StudentTableClient
             key={student.id}
-            student={student}
+            data={student}
             role={role}
             selected={selected}
+            relatedData={relatedData}
             onToggle={toggleSelection}
           />
         ))}

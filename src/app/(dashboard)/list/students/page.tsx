@@ -294,7 +294,7 @@ const StudentsListPage = async ({
           </Table> */}
 
           <StudentListClient
-            students={data}
+            data={data}
             role={role!}
             columns={columns}
             relatedData={relatedData}
