@@ -3,20 +3,17 @@ import { useState } from "react";
 import StudentTableClient from "./StudentTableClient";
 import Table from "@/components/Table";
 import BulkActions from "../BulkActions";
+import { BaseListClientProps } from "./AssignmentListClient";
 // import UpdateManyStudentForm from "./UpdateManyStudentForm";
 // import DeleteManyModal from "./DeleteManyModal";
 
 export default function StudentListClient({
   columns,
-  students,
+  data,
   role,
   relatedData,
-}: {
-  students: any[];
-  relatedData?: any;
-  role: string;
-  columns: { header: string; accessor: string; className?: string }[];
-}) {
+  options,
+}: BaseListClientProps) {
   const [selected, setSelected] = useState<string[]>([]);
 
   const toggleSelection = (id: string) => {
@@ -31,7 +28,7 @@ export default function StudentListClient({
         selectedIds={selected}
         table="student"
         onReset={() => setSelected([])}
-        data={students}
+        data={data}
         relatedData={relatedData}
       />
 
@@ -41,16 +38,16 @@ export default function StudentListClient({
             <td className="px-4 py-2">
               <input
                 type="checkbox"
-                checked={selected.length === students.length}
+                checked={selected.length === data.length}
                 onChange={(e) =>
-                  setSelected(e.target.checked ? students.map((s) => s.id) : [])
+                  setSelected(e.target.checked ? data.map((s) => s.id) : [])
                 }
               />
             </td>
           )}
           {/* other headers */}
         </tr>
-        {students.map((student) => (
+        {data.map((student) => (
           <StudentTableClient
             key={student.id}
             student={student}

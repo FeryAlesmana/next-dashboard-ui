@@ -1,4 +1,3 @@
-
 "use client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
@@ -11,10 +10,7 @@ import {
   useEffect,
   useState,
 } from "react";
-import {
-  AssignmentSchema,
-  assignmentSchema,
-} from "@/lib/formValidationSchema";
+import { AssignmentSchema, assignmentSchema } from "@/lib/formValidationSchema";
 import {
   createAssignment,
   CurrentState,
@@ -25,18 +21,21 @@ import { toast } from "react-toastify";
 import Select from "react-select";
 import ConfirmDialog from "../ConfirmDialog";
 
+export type BaseFormProps = {
+  setOpen: Dispatch<SetStateAction<boolean>>;
+  type: "create" | "update";
+  data?: any;
+  relatedData?: any;
+  onChanged?: (item: any) => void;
+};
 
 const AssignmentForm = ({
   setOpen,
   type,
   data,
   relatedData,
-}: {
-  setOpen: Dispatch<SetStateAction<boolean>>;
-  type: "create" | "update";
-  data?: any;
-  relatedData?: any;
-}) => {
+  onChanged,
+}: BaseFormProps) => {
   const {
     register,
     handleSubmit,
@@ -108,13 +107,20 @@ const AssignmentForm = ({
 
   useEffect(() => {
     if (state.success) {
+      const updatedItem = state.data ?? formData; // <- depends on what your action returns
+
       toast(
         `Tugas telah berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`
       );
       setOpen(false);
-      router.refresh();
+
+      if (onChanged && updatedItem) {
+        onChanged(updatedItem); // 🔥 notify parent so it can update localData
+      } else {
+        router.refresh(); // fallback if no handler passed
+      }
     }
-  }, [state, type, setOpen, router]);
+  }, [state, type, setOpen, router, onChanged, formData]);
 
   const { lessons = [] } = relatedData ?? {};
 
@@ -166,17 +172,17 @@ const AssignmentForm = ({
             <label className="text-xs text-gray-400">Tipe Tugas</label>
             <select
               className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
-              {...register("assTypes")}
-              defaultValue={data?.assTypes}
+              {...register("assType")}
+              defaultValue={data?.assType}
             >
               <option value="">Pilih Tipe Tugas</option>
               <option value="TUGAS_HARIAN">Tugas Harian</option>
               <option value="PEKERJAAN_RUMAH">Pekerjaan Rumah(PR)</option>
               <option value="TUGAS_AKHIR">Tugas Akhir</option>
             </select>
-            {errors.assTypes?.message && (
+            {errors.assType?.message && (
               <p className="text-xs text-red-400">
-                {errors.assTypes.message.toString()}
+                {errors.assType.message.toString()}
               </p>
             )}
           </div>

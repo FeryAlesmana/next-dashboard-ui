@@ -156,6 +156,7 @@ const forms: {
     type: "create" | "update",
     data?: any,
     relatedData?: any,
+    onChanged?: (item: any) => void,
     role?: string,
     lessonId?: string
   ) => JSX.Element;
@@ -200,12 +201,13 @@ const forms: {
       relatedData={relatedData}
     />
   ),
-  assignment: (setOpen, type, data, relatedData) => (
+  assignment: (setOpen, type, data, relatedData, onChanged) => (
     <AssignmentForm
       setOpen={setOpen}
       type={type}
       data={data}
       relatedData={relatedData}
+      onChanged={onChanged}
     />
   ),
   event: (setOpen, type, data, relatedData) => (
@@ -216,12 +218,13 @@ const forms: {
       relatedData={relatedData}
     />
   ),
-  exam: (setOpen, type, data, relatedData) => (
+  exam: (setOpen, type, data, relatedData, onChanged) => (
     <ExamForm
       type={type}
       setOpen={setOpen}
       data={data}
       relatedData={relatedData}
+      onChanged={onChanged}
     />
   ),
   lesson: (setOpen, type, data, relatedData) => (
@@ -282,6 +285,8 @@ const FormModal = ({
   lessonId,
   relatedData,
   prefilEmail,
+  onDeleted,
+  onChanged,
 }: FormContainerProps & { relatedData?: any }) => {
   const size = type === "create" ? "w-8 h-8" : "w-7 h-7";
   const bgColor =
@@ -325,42 +330,69 @@ const FormModal = ({
   };
 
   const Form = () => {
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [state, formAction] = useActionState(universalDeleteHandler, {
       success: false,
       error: false,
     });
 
     const router = useRouter();
-
+    useEffect(() => {
+      if (!state.success && !state.error) return;
+      setIsSubmitting(false);
+    }, [state.success, state.error]);
     useEffect(() => {
       if (state.success) {
         toast(`${table} telah berhasil di Hapus`);
         setOpen(false);
+        if (onDeleted) {
+          if (type === "delete" && id) {
+            onDeleted([id]); // pass deleted ids
+          } else if (type === "deleteMany" && ids) {
+            onDeleted(ids);
+          } else {
+            router.refresh();
+          }
+        }
         router.refresh();
       }
     }, [state, router]);
     console.log(relatedData, " relatedData in form Modal");
 
     return type === "delete" && id ? (
-      <form action={formAction} className="p4 flex flex-col gap-4">
+      <form
+        action={formAction}
+        onSubmit={() => setIsSubmitting(true)}
+        className="p4 flex flex-col gap-4"
+      >
         <input type="hidden" name="table" value={table} />
         <input type="hidden" name="ids" value={id} />
 
         <span className="text-center font-medium">
           Data akan terhapus. Apakah anda yakin?
         </span>
-        <button className="bg-red-700 text-white py-2 px-4 rounded-md border-none w-max self-center">
-          Hapus
-        </button>
+        <div className="flex justify-center gap-4">
+          <button
+            type="submit"
+            className="bg-red-600 w-1/4 text-white font-semibold px-6 py-3 rounded hover:bg-gray-700 flex items-center justify-center gap-2"
+            disabled={isSubmitting}
+          >
+            {isSubmitting && (
+              <span className="animate-spin inline-block w-3 h-3 border-2 border-white border-t-blue-400 rounded-full mr-2"></span>
+            )}
+            {isSubmitting ? "Memproses..." : "Hapus"}
+          </button>
+        </div>
       </form>
     ) : type === "deleteMany" && Array.isArray(ids) ? (
       <DeleteManyForm
         table={table}
         ids={ids as string[]}
         formAction={formAction}
+        onDeleted={onDeleted}
       />
     ) : type === "create" || type === "update" ? (
-      forms[table](setOpen, type, data, relatedData)
+      forms[table](setOpen, type, data, relatedData, onChanged)
     ) : (
       "Form tidak ditemukan!"
     );
@@ -685,6 +717,7 @@ const FormModal = ({
                     table={table}
                     data={data}
                     relatedData={relatedData}
+                    onChanged={onChanged}
                   />
                   <div
                     className="absolute top-4 right-4 cursor-pointer"
@@ -727,6 +760,7 @@ const FormModal = ({
                     table={table}
                     data={data}
                     relatedData={relatedData}
+                    onChanged={onChanged}
                   />
                   <div
                     className="absolute top-4 right-4 cursor-pointer"

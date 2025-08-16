@@ -1,6 +1,7 @@
 "use client";
 import { assTypes, exTypes } from "@prisma/client";
 import FormModal from "../FormModal";
+import { BaseTableClientProps } from "./AssignmentTableClient";
 
 export default function ExamTableClient({
   data,
@@ -8,13 +9,9 @@ export default function ExamTableClient({
   selected,
   onToggle,
   relatedData,
-}: {
-  data: any;
-  role: string;
-  selected: string[];
-  relatedData: any;
-  onToggle: (id: string) => void;
-}) {
+  onDeleted,
+  onChanged,
+}: BaseTableClientProps) {
   const examTypeLabel = {
     UJIAN_HARIAN: "Ujian Harian",
     UJIAN_TENGAH_SEMESTER: "Ujian Tengah Semester",
@@ -76,8 +73,14 @@ export default function ExamTableClient({
                   type="update"
                   data={data}
                   relatedData={relatedData}
+                  onChanged={onChanged}
                 ></FormModal>
-                <FormModal table="exam" type="delete" id={data.id}></FormModal>
+                <FormModal
+                  table="exam"
+                  type="delete"
+                  id={data.id}
+                  onDeleted={() => onDeleted?.([data.id])}
+                ></FormModal>
               </>
             )}
           </div>

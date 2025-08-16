@@ -302,57 +302,31 @@ const ExamListPage = async ({
   let relatedData = {};
   relatedData = { lessons: examLessons };
 
+  const classOptions = classes.map((cls) => ({
+    label: cls?.name ?? "Unknown Class",
+    value: cls?.id?.toString() ?? "",
+  }));
+
+  const gradeOptions = Array.from(
+    new Set(
+      classes
+        .map((cls) => cls.grade?.level)
+        .filter((level): level is number => level !== undefined)
+    )
+  )
+    .sort((a, b) => a - b)
+    .map((level) => ({
+      label: level.toString(),
+      value: level,
+    }));
+  let options = {};
+  options = {
+    classOptions: classOptions,
+    gradeOptions: gradeOptions,
+  };
   return (
     <ClientPageWrapper key={key} role={role!}>
       <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
-        {/* TOP */}
-        <div className="flex items-center justify-between">
-          <h1 className="hidden md:block text-lg font-semibold">All Exams</h1>
-          <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-            <TableSearch></TableSearch>
-            <div className="flex items-center gap-4 self-end">
-              <FilterSortToggle
-                filterFields={[
-                  {
-                    name: "classId",
-                    label: "Kelas",
-                    options: classes.map((cls) => ({
-                      label: cls?.name ?? "Unknown Class",
-                      value: cls?.id?.toString() ?? "",
-                    })),
-                  },
-                  {
-                    name: "gradeId",
-                    label: "Tingkat",
-                    options: Array.from(
-                      new Set(
-                        classes
-                          .map((cls) => cls.grade?.level)
-                          .filter(
-                            (level): level is number => level !== undefined
-                          )
-                      )
-                    )
-                      .sort((a, b) => a - b)
-                      .map((level) => ({
-                        label: level.toString(),
-                        value: level,
-                      })),
-                  },
-                ]}
-                sortOptions={[
-                  { label: "A-Z", value: "az" },
-                  { label: "Z-A", value: "za" },
-                  { label: "ID Asc", value: "id_asc" },
-                  { label: "ID Desc", value: "id_desc" },
-                ]}
-              />
-              {(role === "admin" || role === "teacher") && (
-                <FormContainer table="exam" type="create"></FormContainer>
-              )}
-            </div>
-          </div>
-        </div>
         {/* LIST */}
         <div className="">
           {/* <Table columns={columns} renderRow={renderRow} data={data}></Table> */}
@@ -361,6 +335,7 @@ const ExamListPage = async ({
             role={role!}
             columns={columns}
             relatedData={relatedData}
+            options={options}
           />
         </div>
         {/* PAGINATION*/}

@@ -16,18 +16,15 @@ import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import Select from "react-select";
 import ConfirmDialog from "../ConfirmDialog";
+import { BaseFormProps } from "./AssignmentForm";
 
 const ExamForm = ({
   setOpen,
   type,
   data,
   relatedData,
-}: {
-  setOpen: Dispatch<SetStateAction<boolean>>;
-  type: "create" | "update";
-  data?: any;
-  relatedData?: any;
-}) => {
+  onChanged,
+}: BaseFormProps) => {
   const {
     register,
     handleSubmit,
@@ -95,17 +92,23 @@ const ExamForm = ({
     }
   };
 
-  const router = useRouter();
+const router = useRouter()
 
   useEffect(() => {
     if (state.success) {
+      const updatedItem = state.data ?? formData;
       toast(
         `Ujian telah berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`
       );
+      if (onChanged && updatedItem) {
+        onChanged(updatedItem); // 🔥 notify parent so it can update localData
+      } else {
+        router.refresh(); // fallback if no handler passed
+      }
       setOpen(false);
       router.refresh();
     }
-  }, [state, type, setOpen, router]);
+  }, [state, type, setOpen, router, onChanged, formData]);
 
   const { lessons } = relatedData;
   const formatDateForInput = (dateString: string) => {

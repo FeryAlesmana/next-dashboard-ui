@@ -3,18 +3,15 @@ import { useState } from "react";
 import Table from "@/components/Table";
 import PaymentTableClient from "./PaymentTableClient";
 import BulkActions from "../BulkActions";
+import { BaseListClientProps } from "./AssignmentListClient";
 
 export default function PaymentListClient({
   columns,
   data,
   role,
   relatedData,
-}: {
-  data: any[];
-  relatedData?: any;
-  role: string;
-  columns: { header: string; accessor: string; className?: string }[];
-}) {
+  options
+}: BaseListClientProps) {
   const [selected, setSelected] = useState<string[]>([]);
 
   const toggleSelection = (id: string) => {

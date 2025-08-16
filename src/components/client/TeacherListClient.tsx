@@ -4,18 +4,15 @@ import Table from "@/components/Table";
 import PaymentTableClient from "./PaymentTableClient";
 import BulkActions from "../BulkActions";
 import TeacherTableClient from "./TeacherTableClient";
+import { BaseListClientProps } from "./AssignmentListClient";
 
 export default function TeacherListClient({
   columns,
   data,
   role,
   relatedData,
-}: {
-  data: any[];
-  relatedData?: any;
-  role: string;
-  columns: { header: string; accessor: string; className?: string }[];
-}) {
+  options,
+}: BaseListClientProps) {
   const [selected, setSelected] = useState<string[]>([]);
 
   const toggleSelection = (id: string) => {

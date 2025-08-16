@@ -14,20 +14,18 @@ import {
   massignmentSchema,
   MassignmentSchema,
 } from "@/lib/formValidationSchema";
-import {
-  CurrentState,
-  updateAssignments,
-} from "@/lib/actions";
+import { CurrentState, updateAssignments } from "@/lib/actions";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import Select from "react-select";
 import ConfirmDialog from "../ConfirmDialog";
-type UpdateManyAssignmentFormProps = {
+export type UpdateManyFormProps = {
   ids?: number[];
   table: string;
   data?: any;
   relatedData?: any;
   setOpen: Dispatch<SetStateAction<boolean>>;
+  onChanged?: (items: any[]) => void;
 };
 const UpdateManyAssignmentsForm = ({
   ids,
@@ -35,7 +33,8 @@ const UpdateManyAssignmentsForm = ({
   data,
   relatedData,
   setOpen,
-}: UpdateManyAssignmentFormProps) => {
+  onChanged,
+}: UpdateManyFormProps) => {
   const {
     register,
     handleSubmit,
@@ -93,10 +92,13 @@ const UpdateManyAssignmentsForm = ({
     setValue("ids", ids!);
     if (state.success) {
       toast(`Tugas telah berhasil di Edit!`);
+      if (state.data && onChanged) {
+        onChanged(state.data);
+      }
       setOpen(false);
       router.refresh();
     }
-  }, [state, setOpen, router, setValue, ids]);
+  }, [state, setOpen, router, setValue, ids, onChanged]);
 
   const { lessons, kelas2 } = relatedData;
 

@@ -7,6 +7,9 @@ export default function BulkActions({
   selectedIds,
   table,
   onReset,
+  onDeleted,
+  handleChanged,
+  handleManyChanged,
   data,
   relatedData,
 }: {
@@ -27,6 +30,9 @@ export default function BulkActions({
     | "ppdb"
     | "paymentLog";
   onReset: () => void;
+  onDeleted?: (ids: (string | number)[]) => void;
+  handleChanged?: (item: any) => void;
+  handleManyChanged?: (items: any[]) => void;
   data?: any;
   relatedData?: any;
 }) {
@@ -51,7 +57,12 @@ export default function BulkActions({
             </h2>
           </div>
           <div className="flex items-center gap-2">
-            <FormModal type="deleteMany" table={table} ids={selectedIds} />
+            <FormModal
+              type="deleteMany"
+              table={table}
+              ids={selectedIds}
+              onDeleted={onDeleted}
+            />
             {/* Show Update or UpdateMany based on count */}
             {selectedIds.length === 1 ? (
               <FormModal
@@ -59,6 +70,7 @@ export default function BulkActions({
                 table={table}
                 id={selectedIds[0]} // pass single id
                 data={data.find((item: any) => item.id === selectedIds[0])}
+                onChanged={handleChanged}
                 relatedData={relatedData}
               />
             ) : (
@@ -66,6 +78,7 @@ export default function BulkActions({
                 type="updateMany"
                 table={table}
                 ids={selectedIds}
+                onChanged={handleManyChanged}
                 data={data}
                 relatedData={relatedData}
               />

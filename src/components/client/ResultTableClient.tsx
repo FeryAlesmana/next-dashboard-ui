@@ -1,6 +1,7 @@
 "use client";
 import { resTypes } from "@prisma/client";
 import FormModal from "../FormModal";
+import { BaseTableClientProps } from "./AssignmentTableClient";
 
 export default function ResultTableClient({
   data,
@@ -8,13 +9,9 @@ export default function ResultTableClient({
   selected,
   onToggle,
   relatedData,
-}: {
-  data: any;
-  role: string;
-  selected: string[];
-  relatedData: any;
-  onToggle: (id: string) => void;
-}) {
+  onDeleted,
+  onChanged,
+}: BaseTableClientProps) {
   const resultTypelabel = {
     UJIAN_HARIAN: "Ujian Harian",
     UJIAN_TENGAH_SEMESTER: "Ujian Tengah Semester",
@@ -42,7 +39,8 @@ export default function ResultTableClient({
         <td className="hidden md:table-cell">{data.teacher}</td>
         <td className="hidden md:table-cell">{data.class}</td>
         <td className="hidden md:table-cell">
-          {data?.selectedType}{"-"}
+          {data?.selectedType}
+          {"-"}
           {data?.resultType
             ? resultTypelabel[data?.resultType as resTypes]
             : "-"}

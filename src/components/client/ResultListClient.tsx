@@ -3,18 +3,14 @@ import { useState } from "react";
 import Table from "@/components/Table";
 import BulkActions from "../BulkActions";
 import ResultTableClient from "./ResultTableClient";
+import { BaseListClientProps } from "./AssignmentListClient";
 
 export default function ResultListClient({
   columns,
   data,
   role,
   relatedData,
-}: {
-  data: any[];
-  relatedData?: any;
-  role: string;
-  columns: { header: string; accessor: string; className?: string }[];
-}) {
+}: BaseListClientProps) {
   const [selected, setSelected] = useState<string[]>([]);
 
   const toggleSelection = (id: string) => {

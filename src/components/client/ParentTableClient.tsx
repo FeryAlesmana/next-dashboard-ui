@@ -1,5 +1,6 @@
 "use client";
 import FormModal from "../FormModal";
+import { BaseTableClientProps } from "./AssignmentTableClient";
 
 export default function ParentTableClient({
   data,
@@ -7,13 +8,9 @@ export default function ParentTableClient({
   selected,
   onToggle,
   relatedData,
-}: {
-  data: any;
-  role: string;
-  selected: string[];
-  relatedData: any;
-  onToggle: (id: string) => void;
-}) {
+  onDeleted,
+  onChanged,
+}: BaseTableClientProps) {
   return (
     <>
       <tr className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight">

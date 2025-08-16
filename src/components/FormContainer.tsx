@@ -24,6 +24,8 @@ export type FormContainerProps = {
   ids?: string[] | number[]; // For bulk delete
   lessonId?: string; // For attendance form
   prefilEmail?: string;
+  onDeleted?: (ids: (string | number)[]) => void;
+  onChanged?: (item: any) => void;
 };
 const FormContainer = async ({
   table,

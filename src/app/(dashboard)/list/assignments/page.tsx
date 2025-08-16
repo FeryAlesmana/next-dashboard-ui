@@ -368,49 +368,16 @@ const AssignmentListPage = async ({
   );
   let relatedData: any = {};
   relatedData = { lessons: assignLessons, kelas2: ClassAssignment };
+  let options = {};
+  options = {
+    classOptions: classOptions,
+    gradeOptions: gradeOptions,
+    teacherOptions: teacherOptions,
+  };
 
   return (
     <ClientPageWrapper key={key} role={role!}>
       <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
-        {/* TOP */}
-        <div className="flex items-center justify-between">
-          <h1 className="hidden md:block text-lg font-semibold">Semua Tugas</h1>
-          <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-            <TableSearch></TableSearch>
-            <div className="flex items-center gap-4 self-end">
-              <FilterSortToggle
-                filterFields={[
-                  {
-                    name: "classId",
-                    label: "Kelas",
-                    options: classOptions,
-                  },
-                  {
-                    name: "gradeId",
-                    label: "Tingkat",
-                    options: gradeOptions,
-                  },
-                  {
-                    name: "teacherId",
-                    label: "Guru",
-                    options: teacherOptions,
-                  },
-                ]}
-                sortOptions={[
-                  { label: "A-Z", value: "az" },
-                  { label: "Z-A", value: "za" },
-                  { label: "ID Asc", value: "id_asc" },
-                  { label: "ID Desc", value: "id_desc" },
-                  { label: "Deadline", value: "dl" },
-                ]}
-              />
-              {(role === "admin" || role === "teacher") && (
-                <FormContainer table="assignment" type="create"></FormContainer>
-              )}
-            </div>
-          </div>
-        </div>
-        {/* LIST */}
         <div className="">
           {/* <Table columns={columns} renderRow={renderRow} data={data}></Table> */}
           <AssignmentListClient
@@ -418,6 +385,7 @@ const AssignmentListPage = async ({
             columns={columns}
             role={role!}
             relatedData={relatedData}
+            options={options}
           />
         </div>
         {/* PAGINATION*/}

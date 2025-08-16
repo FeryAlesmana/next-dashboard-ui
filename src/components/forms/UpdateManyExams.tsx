@@ -16,20 +16,16 @@ import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import Select from "react-select";
 import ConfirmDialog from "../ConfirmDialog";
-type UpdateManyExamsFormProps = {
-  ids?: number[];
-  table: string;
-  data?: any;
-  relatedData?: any;
-  setOpen: Dispatch<SetStateAction<boolean>>;
-};
+import { UpdateManyFormProps } from "./UpdateManyAssignments";
+
 const UpdateManyExamsForm = ({
   ids,
   table,
   data,
   relatedData,
   setOpen,
-}: UpdateManyExamsFormProps) => {
+  onChanged,
+}: UpdateManyFormProps) => {
   const {
     register,
     handleSubmit,
@@ -87,10 +83,13 @@ const UpdateManyExamsForm = ({
     setValue("ids", ids!);
     if (state.success) {
       toast(`Tugas telah berhasil di Edit!`);
+      if (state.data && onChanged) {
+        onChanged(state.data);
+      }
       setOpen(false);
       router.refresh();
     }
-  }, [state, setOpen, router, setValue, ids]);
+  }, [state, setOpen, router, setValue, ids, onChanged]);
 
   const { lessons } = relatedData;
 

@@ -2,18 +2,16 @@
 import Image from "next/image";
 import Link from "next/link";
 import FormModal from "../FormModal";
+import { BaseTableClientProps } from "./AssignmentTableClient";
 
 export default function TeacherTableClient({
   data,
   role,
   selected,
   onToggle,
-}: {
-  data: any;
-  role: string;
-  selected: string[];
-  onToggle: (id: string) => void;
-}) {
+  onDeleted,
+  onChanged,
+}: BaseTableClientProps) {
   return (
     <>
       <tr className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight">

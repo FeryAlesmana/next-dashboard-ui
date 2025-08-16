@@ -245,8 +245,12 @@ export type ExamSchema = z.infer<typeof examSchema>;
 
 export const eventSchema = z.object({
   id: z.coerce.number().optional(),
-  title: z.string().min(4, { message: "Event wajib diisi minimal 4 karakter!" }),
-  description: z.string().min(10, { message: "Deskripsi wajib diisi minimal 10 karakter!" }),
+  title: z
+    .string()
+    .min(4, { message: "Event wajib diisi minimal 4 karakter!" }),
+  description: z
+    .string()
+    .min(10, { message: "Deskripsi wajib diisi minimal 10 karakter!" }),
   startTime: z.coerce.date({ message: "Waktu mulai event wajib diisi!" }),
   endTime: z.coerce.date({ message: "Waktu ahir event wajib diisi!" }),
   classId: z.coerce.number({ message: "Id kelas wajib di isi" }),
@@ -273,7 +277,7 @@ export const assignmentSchema = z.object({
       message: "Deadline harus setelah hari ini!",
     }),
   lessonId: z.coerce.number({ message: "Id pelajaran wajib diisi!" }),
-  assTypes: z.nativeEnum(assTypes, { message: "Tipe Tugas wajib diisi!" }),
+  assType: z.nativeEnum(assTypes, { message: "Tipe Tugas wajib diisi!" }),
 });
 
 export type AssignmentSchema = z.infer<typeof assignmentSchema>;

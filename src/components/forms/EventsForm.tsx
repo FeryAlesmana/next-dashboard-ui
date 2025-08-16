@@ -67,9 +67,7 @@ const EventsForm = ({
   useEffect(() => {
     if (state.success) {
       toast(
-        `Event telah berhasil di ${
-          type === "create" ? "Tambah!" : "Edit!"
-        }`
+        `Event telah berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`
       );
       setOpen(false);
       router.refresh();
@@ -80,7 +78,7 @@ const EventsForm = ({
   const submitForm = () => {
     if (!formData) return;
     setIsSubmitting(true);
-    
+
     startTransition(() => {
       formAction(formData);
     });
@@ -109,15 +107,13 @@ const EventsForm = ({
 
   return (
     <>
-      <form
-        action=""
-        className="flex flex-col gap-8"
-        onSubmit={onSubmit}
-      >
+      <form action="" className="flex flex-col gap-8" onSubmit={onSubmit}>
         <h1 className="text-xl font-semibold">
           {type === "create" ? "Tambah Acara baru" : "Edit Acara"}
         </h1>
-        <span className="text-xs text-gray-400 font-medium">Informasi Acara</span>
+        <span className="text-xs text-gray-400 font-medium">
+          Informasi Acara
+        </span>
         <div className="flex justify-between flex-wrap gap-4 m-4 mb-8">
           <InputField
             label="Nama Event"
@@ -148,7 +144,9 @@ const EventsForm = ({
               ))}
             </select>
             {errors.classId?.message && (
-              <p className="text-xs text-red-400">{errors.classId.message.toString()}</p>
+              <p className="text-xs text-red-400">
+                {errors.classId.message.toString()}
+              </p>
             )}
           </div>
         </div>
@@ -156,7 +154,9 @@ const EventsForm = ({
           <InputField
             label="Waktu mulai"
             name="startTime"
-            defaultValue={data?.startTime ? formatDateForInput(data.startTime) : ""}
+            defaultValue={
+              data?.startTime ? formatDateForInput(data.startTime) : ""
+            }
             register={register}
             error={errors?.startTime}
             type="datetime-local"
@@ -210,7 +210,9 @@ const EventsForm = ({
 
       {showConfirm && (
         <ConfirmDialog
-          message={type === "create" ? "Tambah Event baru?" : "Simpan perubahan Event?"}
+          message={
+            type === "create" ? "Tambah Event baru?" : "Simpan perubahan Event?"
+          }
           onConfirm={submitForm}
           onCancel={() => setShowConfirm(false)}
         />

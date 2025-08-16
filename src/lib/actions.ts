@@ -47,6 +47,7 @@ export type CurrentState = {
   error: boolean;
   message?: string;
   id?: string;
+  data?: any;
 };
 const client = await clerkClient();
 
@@ -917,7 +918,7 @@ export const createExam = async (
         return { success: false, error: true };
       }
     }
-    await prisma.exam.create({
+    const createEx = await prisma.exam.create({
       data: {
         title: data.title,
         startTime: data.startTime,
@@ -925,8 +926,17 @@ export const createExam = async (
         lessonId: data.lessonId,
         exType: data.exType,
       },
+      include: {
+        lesson: {
+          select: {
+            subject: { select: { name: true } },
+            teacher: { select: { name: true, namalengkap: true } },
+            class: { select: { name: true } },
+          },
+        },
+      },
     });
-    return { success: true, error: false };
+    return { success: true, error: false, data: createEx };
   } catch (error) {
     console.error("Create Ujian error: ", error);
     return { success: false, error: true };
@@ -962,7 +972,20 @@ export const updateExam = async (
         exType: data.exType,
       },
     });
-    return { success: true, error: false };
+
+    const updatedExam = await prisma.exam.findUnique({
+      where: { id: data.id },
+      include: {
+        lesson: {
+          select: {
+            subject: { select: { name: true } },
+            teacher: { select: { name: true, namalengkap: true } },
+            class: { select: { name: true } },
+          },
+        },
+      },
+    });
+    return { success: true, error: false, data: updatedExam };
   } catch (error) {
     const message =
       error instanceof Error
@@ -1009,7 +1032,20 @@ export const updateExams = async (
       data: updateData,
     });
 
-    return { success: true, error: false };
+    const updatedExams = await prisma.exam.findMany({
+      where: { id: { in: ids } },
+      include: {
+        lesson: {
+          select: {
+            subject: { select: { name: true } },
+            teacher: { select: { name: true, namalengkap: true, id: true } },
+            class: { select: { name: true, grade: true } },
+          },
+        },
+      },
+    });
+
+    return { success: true, error: false, data: updatedExams };
   } catch (error) {
     const message =
       error instanceof Error
@@ -1045,27 +1081,6 @@ export const deleteExam = async (
   }
 };
 
-export const createEvent = async (
-  currentState: CurrentState,
-  data: EventSchema
-) => {
-  try {
-    await prisma.event.create({
-      data: {
-        title: data.title,
-        description: data.description,
-        startTime: new Date(data.startTime),
-        endTime: new Date(data.endTime),
-        classId: data.classId,
-      },
-    });
-    return { success: true, error: false };
-  } catch (error) {
-    console.error("Create Event error: ", error);
-    return { success: false, error: true };
-  }
-};
-
 export const deleteExams = async (
   currentState: CurrentState,
   formData: FormData
@@ -1086,7 +1101,7 @@ export const deleteExams = async (
         // Optionally continue deleting others instead of failing all
       }
     }
-
+    revalidatePath("list/exams");
     return {
       success: true,
       error: false,
@@ -1103,14 +1118,32 @@ export const deleteExams = async (
     return { success: false, error: true, message };
   }
 };
-
-
+export const createEvent = async (
+  currentState: CurrentState,
+  data: EventSchema
+) => {
+  try {
+    const createEvent = await prisma.event.create({
+      data: {
+        title: data.title,
+        description: data.description,
+        startTime: new Date(data.startTime),
+        endTime: new Date(data.endTime),
+        classId: data.classId,
+      },
+    });
+    return { success: true, error: false, data: createEvent };
+  } catch (error) {
+    console.error("Create Event error: ", error);
+    return { success: false, error: true };
+  }
+};
 export const updateEvent = async (
   currentState: CurrentState,
   data: EventSchema
 ) => {
   try {
-    await prisma.event.update({
+    const updateEvent = await prisma.event.update({
       where: {
         id: data.id,
       },
@@ -1122,7 +1155,7 @@ export const updateEvent = async (
         classId: data.classId,
       },
     });
-    return { success: true, error: false };
+    return { success: true, error: false, data: updateEvent };
   } catch (error) {
     const message =
       error instanceof Error
@@ -1244,16 +1277,26 @@ export const createAssignment = async (
         return { success: false, error: true };
       }
     }
-    await prisma.assignment.create({
+    const createAss = await prisma.assignment.create({
       data: {
         title: data.title,
         startDate: new Date(),
         dueDate: data.dueDate,
         lessonId: data.lessonId,
-        assType: data.assTypes,
+        assType: data.assType,
+      },
+      include: {
+        lesson: {
+          select: {
+            subject: { select: { name: true } },
+            teacher: { select: { name: true, namalengkap: true, id: true } },
+            class: { select: { name: true, grade: true } },
+          },
+        },
       },
     });
-    return { success: true, error: false };
+
+    return { success: true, error: false, data: createAss };
   } catch (error) {
     console.error("Create Tugas error: ", error);
     return { success: false, error: true };
@@ -1286,10 +1329,24 @@ export const updateAssignment = async (
         startDate: new Date(),
         dueDate: new Date(data.dueDate),
         lessonId: data.lessonId,
-        assType: data.assTypes,
+        assType: data.assType,
       },
     });
-    return { success: true, error: false };
+    const updateAss = await prisma.assignment.findUnique({
+      where: {
+        id: data.id,
+      },
+      include: {
+        lesson: {
+          select: {
+            subject: { select: { name: true } },
+            teacher: { select: { name: true, namalengkap: true, id: true } },
+            class: { select: { name: true, grade: true } },
+          },
+        },
+      },
+    });
+    return { success: true, error: false, data: updateAss };
   } catch (error) {
     const message =
       error instanceof Error
@@ -1333,7 +1390,20 @@ export const updateAssignments = async (
       data: updateData,
     });
 
-    return { success: true, error: false };
+    const updatedAssignments = await prisma.assignment.findMany({
+      where: { id: { in: ids } },
+      include: {
+        lesson: {
+          select: {
+            subject: { select: { name: true } },
+            teacher: { select: { name: true, namalengkap: true, id: true } },
+            class: { select: { name: true, grade: true } },
+          },
+        },
+      },
+    });
+
+    return { success: true, error: false, data: updatedAssignments };
   } catch (error) {
     const message =
       error instanceof Error
@@ -1705,10 +1775,10 @@ export const deleteParent = async (
       return { success: false, error: true, message: "Missing Parent ID" };
     }
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    await prisma.student.updateMany({
-      where: { parentId: id },
-      data: { parentId: "-" },
-    });
+    // await prisma.student.updateMany({
+    //   where: { parentId: id },
+    //   data: { parentId: "-" },
+    // });
     await prisma.parent.delete({
       where: {
         id: id,
@@ -1726,6 +1796,7 @@ export const deleteParent = async (
         "⚠️ Clerk returned no user info. User may already be deleted?"
       );
     }
+    revalidatePath("/list/parents");
 
     return { success: true, error: false };
   } catch (error) {
