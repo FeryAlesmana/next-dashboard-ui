@@ -97,6 +97,9 @@ export default function ParentListClient({
         onReset={() => setSelected([])}
         data={data}
         relatedData={relatedData}
+        onDeleted={handleDeleteOptimistic}
+        handleChanged={handleChanged}
+        handleManyChanged={handleManyChanged}
       />
 
       <Table columns={columns}>
@@ -114,14 +117,16 @@ export default function ParentListClient({
           )}
           {/* other headers */}
         </tr>
-        {data.map((data) => (
+        {localData.map((row) => (
           <ParentTableClient
-            key={data.id}
-            data={data}
+            key={row.id}
+            data={row}
             role={role}
             selected={selected}
             onToggle={toggleSelection}
             relatedData={relatedData}
+            onDeleted={handleDeleteOptimistic}
+            onChanged={handleChanged}
           />
         ))}
       </Table>

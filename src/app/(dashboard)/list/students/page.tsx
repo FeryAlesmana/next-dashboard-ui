@@ -83,48 +83,6 @@ const StudentsListPage = async ({
         ]
       : []),
   ];
-  const renderRow = (item: StudentList) => (
-    <tr
-      key={item.id}
-      className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight"
-    >
-      <td className="flex items-center p-4 gap-4">
-        <Image
-          src={item.img || "/noAvatar.png"}
-          alt=""
-          width={40}
-          height={40}
-          className="md:hidden xl:block w-10 h-10 rounded-full object-cover"
-        ></Image>
-        <div className="flex flex-col">
-          <h3 className="font-semibold">{item.name}</h3>
-          <p className="text-xs text-gray-500">{item.class.name}</p>
-        </div>
-      </td>
-      <td className="hidden md:table-cell">{item.student_details.nisn}</td>
-      <td className="hidden md:table-cell">{item.class.name[0]}</td>
-      <td className="hidden md:table-cell">
-        {item.student_details.noWA ?? item.phone}
-      </td>
-      <td className="hidden md:table-cell">{item.address}</td>
-      <td>
-        <div className="flex items-center gap-2">
-          <Link href={`/list/students/${item.id}`}>
-            <button className="w-7 h-7 flex items-center justify-center rounded-full bg-lamaSky">
-              <Image src="/view.png" alt="" width={16} height={16}></Image>
-            </button>
-          </Link>
-          {role === "admin" && (
-            <FormContainer
-              table="student"
-              type="delete"
-              id={item.id}
-            ></FormContainer>
-          )}
-        </div>
-      </td>
-    </tr>
-  );
 
   const query: Prisma.StudentWhereInput = {};
   let orderBy: Prisma.StudentOrderByWithRelationInput | undefined;
@@ -220,84 +178,44 @@ const StudentsListPage = async ({
 
   // console.log(data, "data in student");
 
-  let relatedData = {};
-
   const grades = Array.from(
     new Map(classes.map((c) => [c.grade?.id, c.grade])).values()
   );
 
   // console.log(grades, "Tingkat di studentList");
+  const classOptions = classes.map((cls) => ({
+    label: cls.name,
+    value: cls.id.toString(),
+  }));
+  const gradeOptions = Array.from(
+    new Set(
+      classes
+        .map((cls) => cls.grade?.level)
+        .filter((level): level is number => level !== undefined)
+    )
+  )
+    .sort((a, b) => a - b)
+    .map((level) => ({
+      label: level.toString(),
+      value: level,
+    }));
 
-  relatedData = { classes: classes, parents: parents, grades: grades };
+  let options = { gradeOptions, classOptions };
+  let relatedData = { classes: classes, parents: parents, grades: grades };
 
   return (
     <ClientPageWrapper key={key} role={role!}>
       <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
         {/* TOP */}
-        <div className="flex items-center justify-between">
-          <h1 className="hidden md:block text-lg font-semibold">
-            Semua Murid ({count} Siswa)
-          </h1>
-          <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-            <TableSearch></TableSearch>
-            <div className="flex items-center gap-4 self-end">
-              <FilterSortToggle
-                filterFields={[
-                  {
-                    name: "classId",
-                    label: "Kelas",
-                    options: classes.map((cls) => ({
-                      label: cls.name,
-                      value: cls.id.toString(),
-                    })),
-                  },
-                  {
-                    name: "gradeId",
-                    label: "Tingkat",
-                    options: Array.from(
-                      new Set(
-                        classes
-                          .map((cls) => cls.grade?.level)
-                          .filter(
-                            (level): level is number => level !== undefined
-                          )
-                      )
-                    )
-                      .sort((a, b) => a - b)
-                      .map((level) => ({
-                        label: level.toString(),
-                        value: level,
-                      })),
-                  },
-                ]}
-                sortOptions={[
-                  { label: "A-Z", value: "az" },
-                  { label: "Z-A", value: "za" },
-                  { label: "ID Asc", value: "id_asc" },
-                  { label: "ID Desc", value: "id_desc" },
-                ]}
-              />
-              {role === "admin" && (
-                <FormContainer table="student" type="create"></FormContainer>
-              )}
-            </div>
-          </div>
-        </div>
+
         {/* LIST */}
         <div className="">
-          {/* <Table columns={columns}>
-            {data.map((item) => (
-              <React.Fragment key={item.id}>
-                <StudentTableClient  student={item} role={role!} />
-              </React.Fragment>
-            ))}
-          </Table> */}
-
           <StudentListClient
             data={data}
             role={role!}
             columns={columns}
             relatedData={relatedData}
+            count={count}
           />
         </div>
         {/* PAGINATION*/}

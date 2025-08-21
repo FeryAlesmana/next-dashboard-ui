@@ -13,6 +13,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { LessonWithRelations } from "../attendance/page";
 import ParentLessonView from "@/components/client/ParentLessonView";
+import LessonListClient from "@/components/client/LessonListClient";
 
 // type LessonList = Lesson & { subject: Subject } & { class: Class } & {
 //   teacher: Teacher;
@@ -24,7 +25,7 @@ const LessonListPage = async ({
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) => {
   const sp = await normalizeSearchParams(searchParams);
-  const { page, ...queryParams } = sp;
+  const { page, limit, ...queryParams } = sp;
   const key = new URLSearchParams(
     Object.entries(sp).reduce((acc, [k, v]) => {
       if (v !== undefined) acc[k] = v;
@@ -33,6 +34,7 @@ const LessonListPage = async ({
   ).toString();
 
   const p = page ? parseInt(page) : 1;
+  const perPage = limit === "all" ? undefined : parseInt(limit ?? "10");
 
   const { role, userId } = await getCurrentUser();
   const columns = [
@@ -412,82 +414,74 @@ const LessonListPage = async ({
         class: { select: { name: true, gradeId: true } },
         teacher: { select: { name: true, namalengkap: true } },
       },
-      take: ITEM_PER_PAGE,
-      skip: ITEM_PER_PAGE * (p - 1),
+      take: perPage,
+      skip: perPage ? perPage * (p - 1) : undefined,
     }),
     prisma.lesson.count({ where: query }),
     prisma.class.findMany({
       include: { grade: true, _count: { select: { students: true } } },
     }),
   ]);
+  const lessonSubjects = await prisma.subject.findMany({
+    select: {
+      id: true,
+      name: true,
+    },
+  });
+  const lessonClasses = await prisma.class.findMany({
+    select: {
+      id: true,
+      name: true,
+    },
+  });
+  const Lessonteachers = await prisma.teacher.findMany({
+    select: {
+      id: true,
+      name: true,
+      namalengkap: true,
+    },
+  });
 
+  let relatedData = {
+    subjects: lessonSubjects,
+    classes: lessonClasses,
+    teachers: Lessonteachers,
+  };
+  const classOptions = classesData.map((cls) => ({
+    label: cls.name,
+    value: cls.id.toString(),
+  }));
+
+  const gradeOptions = Array.from(
+    new Set(
+      classesData
+        .map((cls) => cls.grade?.level)
+        .filter((level): level is number => level !== undefined)
+    )
+  )
+    .sort((a, b) => a - b)
+    .map((level) => ({
+      label: level.toString(),
+      value: level,
+    }));
+
+  let options = {
+    classOptions,
+    gradeOptions,
+  };
   return (
     <ClientPageWrapper key={key} role={role!}>
       <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
-        {/* TOP */}
-        <div className="flex items-center justify-between">
-          <h1 className="hidden md:block text-lg font-semibold">Jadwal {}</h1>
-          <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-            <TableSearch></TableSearch>
-            <div className="flex items-center gap-4 self-end">
-              <FilterSortToggle
-                filterFields={[
-                  {
-                    name: "classId",
-                    label: "Kelas",
-                    options: classesData.map((cls) => ({
-                      label: cls.name,
-                      value: cls.id.toString(),
-                    })),
-                  },
-                  {
-                    name: "gradeId",
-                    label: "Tingkat",
-                    options: Array.from(
-                      new Set(
-                        classesData
-                          .map((cls) => cls.grade?.level)
-                          .filter(
-                            (level): level is number => level !== undefined
-                          )
-                      )
-                    )
-                      .sort((a, b) => a - b)
-                      .map((level) => ({
-                        label: level.toString(),
-                        value: level,
-                      })),
-                  },
-                  {
-                    name: "day",
-                    label: "Hari",
-                    options: [
-                      { label: "Senin", value: "SENIN" },
-                      { label: "Selasa", value: "SELASA" },
-                      { label: "Rabu", value: "RABU" },
-                      { label: "Kamis", value: "KAMIS" },
-                      { label: "Jumat", value: "JUMAT" },
-                      // Add more as needed
-                    ],
-                  },
-                ]}
-                sortOptions={[
-                  { label: "A-Z", value: "az" },
-                  { label: "Z-A", value: "za" },
-                  { label: "ID Asc", value: "id_asc" },
-                  { label: "ID Desc", value: "id_desc" },
-                  { label: "Day", value: "day" }, // Only for this page
-                ]}
-              />
-              {role === "admin" && (
-                <FormContainer table="lesson" type="create"></FormContainer>
-              )}
-            </div>
-          </div>
-        </div>
         {/* LIST */}
         <div className="">
-          <Table columns={columns} renderRow={renderRow} data={data}></Table>
+          {/* <Table columns={columns} renderRow={renderRow} data={data}></Table> */}
+          <LessonListClient
+            columns={columns}
+            data={data}
+            role={role!}
+            relatedData={relatedData}
+            options={options}
+          />
         </div>
         {/* PAGINATION*/}
         <div className="">

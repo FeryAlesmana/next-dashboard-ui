@@ -57,15 +57,18 @@ export const createSubject = async (
 ) => {
   try {
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    await prisma.subject.create({
+    const createdSubject = await prisma.subject.create({
       data: {
         name: data.name,
         teachers: {
           connect: data.teachers.map((teacherId) => ({ id: teacherId })),
         },
       },
+      include: {
+        teachers: true,
+      },
     });
-    return { success: true, error: false };
+    return { success: true, error: false, data: createdSubject };
   } catch (error) {
     console.log(error + " Di server action");
     return { success: false, error: true };
@@ -78,7 +81,7 @@ export const updateSubject = async (
 ) => {
   try {
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    await prisma.subject.update({
+    const updatedSubject = await prisma.subject.update({
       where: {
         id: data.id,
       },
@@ -88,8 +91,11 @@ export const updateSubject = async (
           set: data.teachers.map((teacherId) => ({ id: teacherId })),
         },
       },
+      include: {
+        teachers: true,
+      },
     });
-    return { success: true, error: false };
+    return { success: true, error: false, data: updatedSubject };
   } catch (error) {
     console.log(error + " Di server action");
     return { success: false, error: true };
@@ -114,16 +120,57 @@ export const deleteSubject = async (
   }
 };
 
+export const deleteSubjects = async (
+  currentState: CurrentState,
+  formData: FormData
+): Promise<CurrentState> => {
+  const ids = formData.getAll("ids") as string[];
+
+  if (!ids || ids.length === 0) {
+    return { success: false, error: true, message: "No student IDs provided." };
+  }
+
+  try {
+    for (const id of ids) {
+      const idAsNumber = parseInt(id);
+      try {
+        await prisma.subject.delete({ where: { id: idAsNumber } });
+      } catch (innerError) {
+        console.error(`❌ Failed to delete Subject ID ${id}:`, innerError);
+        // Optionally continue deleting others instead of failing all
+      }
+    }
+
+    return {
+      success: true,
+      error: false,
+      message: `Deleted ${ids.length} Subject(s) successfully.`,
+    };
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === "string"
+        ? error
+        : "Unknown error";
+
+    return { success: false, error: true, message };
+  }
+};
+
 export const createClass = async (
   currentState: CurrentState,
   data: ClassSchema
 ): Promise<CurrentState> => {
   try {
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    await prisma.class.create({
+    const createdClass = await prisma.class.create({
       data: data,
+      include: {
+        supervisor: true,
+      },
     });
-    return { success: true, error: false };
+    return { success: true, error: false, data: createdClass };
   } catch (error) {
     console.log(error + " Di server action");
     return { success: false, error: true };
@@ -136,13 +183,16 @@ export const updateClass = async (
 ) => {
   try {
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    await prisma.class.update({
+    const updatedClass = await prisma.class.update({
       where: {
         id: data.id,
       },
       data: data,
+      include: {
+        supervisor: true,
+      },
     });
-    return { success: true, error: false };
+    return { success: true, error: false, data: updatedClass };
   } catch (error) {
     console.log(error + " Di server action");
     return { success: false, error: true };
@@ -166,6 +216,43 @@ export const deleteClass = async (
     return { success: false, error: true };
   }
 };
+export const deleteClasses = async (
+  currentState: CurrentState,
+  formData: FormData
+): Promise<CurrentState> => {
+  const ids = formData.getAll("ids") as string[];
+
+  if (!ids || ids.length === 0) {
+    return { success: false, error: true, message: "No student IDs provided." };
+  }
+
+  try {
+    for (const id of ids) {
+      const idAsNumber = parseInt(id);
+      try {
+        await prisma.class.delete({ where: { id: idAsNumber } });
+      } catch (innerError) {
+        console.error(`❌ Failed to delete class ID ${id}:`, innerError);
+        // Optionally continue deleting others instead of failing all
+      }
+    }
+
+    return {
+      success: true,
+      error: false,
+      message: `Deleted ${ids.length} class(es) successfully.`,
+    };
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === "string"
+        ? error
+        : "Unknown error";
+
+    return { success: false, error: true, message };
+  }
+};
 export const createTeacher = async (
   currentState: CurrentState,
   data: CreateteacherSchema
@@ -179,7 +266,7 @@ export const createTeacher = async (
       publicMetadata: { role: "teacher" },
     });
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    await prisma.teacher.create({
+    const createdTeacher = await prisma.teacher.create({
       data: {
         id: user.id,
         username: data.username,
@@ -214,8 +301,14 @@ export const createTeacher = async (
           })),
         },
       },
+      include: {
+        subjects: { select: { id: true, name: true } },
+        classes: true,
+        lessons: true,
+      },
     });
-    return { success: true, error: false };
+
+    return { success: true, error: false, data: createdTeacher };
   } catch (error: any) {
     let message = "Unknown error";
     // Handle Clerk API errors properly
@@ -320,7 +413,15 @@ export const updateTeacher = async (
         },
       },
     });
-    return { success: true, error: false };
+    const updatedTeacher = prisma.teacher.findUnique({
+      where: { id: user?.id || data.id },
+      include: {
+        subjects: { select: { id: true, name: true } },
+        classes: true,
+        lessons: true,
+      },
+    });
+    return { success: true, error: false, data: updatedTeacher };
   } catch (error) {
     const message =
       error instanceof Error
@@ -367,10 +468,19 @@ export async function updateManyTeachers(
         })
       )
     );
+    const updatedTeachers = await prisma.teacher.findMany({
+      where: { id: { in: ids } },
+      include: {
+        subjects: { select: { id: true, name: true } },
+        classes: true,
+        lessons: true,
+      },
+    });
     return {
       success: true,
       error: false,
       message: "Berhasil memperbarui guru.",
+      data: updatedTeachers,
     };
   } catch (error: any) {
     console.error("UpdateManyTeacher error:", error);
@@ -503,8 +613,6 @@ export const createStudent = async (
     },
   });
 
-  console.log(data, "Data in createStudent");
-
   if (classItem && classItem.capacity === classItem._count.students) {
     return { success: false, error: true };
   }
@@ -524,7 +632,7 @@ export const createStudent = async (
 
     console.log(user.id, "userId in createStudent");
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    await prisma.student.create({
+    const createdStudent = await prisma.student.create({
       data: {
         id: user.id,
         username: data.username,
@@ -546,41 +654,41 @@ export const createStudent = async (
         gradeId: data.gradeId,
         classId: data.classId,
         parentId: data.parentId,
-      },
-    });
-    await prisma.student_details.create({
-      data: {
-        student: {
-          connect: { id: user?.id || data.id },
+        student_details: {
+          create: {
+            asalSekolah: data.asalSekolah,
+            birthPlace: data.birthPlace,
+            nisn: data.nisn,
+            npsn: data.npsn,
+            noWa: data.noWa,
+            no_ijz: data.no_ijz,
+            nik: data.nik,
+            kps: data.kps || null,
+            no_kps: data.no_kps || null,
+            height: data.height,
+            weight: data.weight,
+            transportation: data.transportation,
+            tempat_tinggal: data.tempat_tinggal,
+            distance_from_home: data.distance_from_home,
+            time_from_home: data.time_from_home,
+            number_of_siblings: data.number_of_siblings,
+            postcode: data.postcode,
+            awards: data.awards || null,
+            awards_date: data.awards_date || null,
+            scholarship: data.scholarship || null,
+            scholarship_detail: data.scholarship_detail || null,
+            dokumenIjazah: data.dokumenIjazah || null,
+            dokumenAkte: data.dokumenAkte || null,
+            dokumenPasfoto: data.dokumenPasfoto || null,
+            dokumenKKKTP: data.dokumenKKKTP || null,
+          },
         },
-        asalSekolah: data.asalSekolah,
-        birthPlace: data.birthPlace,
-        nisn: data.nisn,
-        npsn: data.npsn,
-        noWa: data.noWa,
-        no_ijz: data.no_ijz,
-        nik: data.nik,
-        kps: data.kps || null,
-        no_kps: data.no_kps || null,
-        height: data.height,
-        weight: data.weight,
-        transportation: data.transportation,
-        tempat_tinggal: data.tempat_tinggal,
-        distance_from_home: data.distance_from_home,
-        time_from_home: data.time_from_home,
-        number_of_siblings: data.number_of_siblings,
-        postcode: data.postcode,
-        awards: data.awards || null,
-        awards_date: data.awards_date || null,
-        scholarship: data.scholarship || null,
-        scholarship_detail: data.scholarship_detail || null,
-        dokumenIjazah: data.dokumenIjazah || null,
-        dokumenAkte: data.dokumenAkte || null,
-        dokumenPasfoto: data.dokumenPasfoto || null,
-        dokumenKKKTP: data.dokumenKKKTP || null,
+      },
+      include: {
+        student_details: true,
       },
     });
-    return { success: true, error: false, id: user.id };
+    return { success: true, error: false, id: user.id, data: createdStudent };
   } catch (error: any) {
     console.error("Create student failed:", error);
     if (error?.errors) {
@@ -829,11 +937,19 @@ export async function updateManyStudents(
         gradeId: classData.gradeId,
       },
     });
-
+    const updatedStudents = await prisma.student.findMany({
+      where: { id: { in: payload.ids } },
+      include: {
+        student_details: true,
+        class: true,
+        grade: true,
+      },
+    });
     return {
       success: true,
       error: false,
       message: "Berhasil mengupdate siswa.",
+      data: updatedStudents,
     };
   } catch (err) {
     console.error(err);
@@ -1527,7 +1643,7 @@ export const createParent = async (
         break;
     }
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    await prisma.parent.create({
+    const createdParent = await prisma.parent.create({
       data: {
         id: user.id,
         username: data.username,
@@ -1537,7 +1653,7 @@ export const createParent = async (
         email: data.email,
         sex: data.sex,
         waliMurid: data.waliMurid,
-        birthday: data.birthday,
+        birthday: new Date(data.birthday),
         job: data.job,
         income: data.income,
         degree: data.degree,
@@ -1545,8 +1661,25 @@ export const createParent = async (
         address: data.address,
         ...studentField,
       },
+      include: {
+        students: {
+          include: {
+            class: { select: { id: true, name: true, grade: true } },
+          },
+        },
+        secondaryStudents: {
+          include: {
+            class: { select: { id: true, name: true, grade: true } },
+          },
+        },
+        guardianStudents: {
+          include: {
+            class: { select: { id: true, name: true, grade: true } },
+          },
+        },
+      },
     });
-    return { success: true, error: false, id: user.id };
+    return { success: true, error: false, id: user.id, data: createdParent };
   } catch (error: any) {
     console.log(error + " Di server action");
 
@@ -1659,7 +1792,7 @@ export const updateParent = async (
         }),
         name: data.name,
         namalengkap: data.namalengkap,
-        birthday: data.birthday,
+        birthday: new Date(data.birthday),
         email: data.email,
         phone: data.phone,
         address: data.address,
@@ -1668,7 +1801,27 @@ export const updateParent = async (
         ...studentField,
       },
     });
-    return { success: true, error: false };
+    const updatedParent = await prisma.parent.findUnique({
+      where: { id: data.id },
+      include: {
+        students: {
+          include: {
+            class: { select: { id: true, name: true, grade: true } },
+          },
+        },
+        secondaryStudents: {
+          include: {
+            class: { select: { id: true, name: true, grade: true } },
+          },
+        },
+        guardianStudents: {
+          include: {
+            class: { select: { id: true, name: true, grade: true } },
+          },
+        },
+      },
+    });
+    return { success: true, error: false, data: updatedParent };
   } catch (error) {
     const message =
       error instanceof Error
@@ -1748,10 +1901,32 @@ export async function updateManyParents(
       })
     );
 
+    const updatedParents = await prisma.parent.findMany({
+      where: { id: { in: ids } },
+      include: {
+        students: {
+          include: {
+            class: { select: { id: true, name: true, grade: true } },
+          },
+        },
+        secondaryStudents: {
+          include: {
+            class: { select: { id: true, name: true, grade: true } },
+          },
+        },
+        guardianStudents: {
+          include: {
+            class: { select: { id: true, name: true, grade: true } },
+          },
+        },
+      },
+    });
+
     return {
       success: true,
       error: false,
       message: "Berhasil memperbarui wali murid.",
+      data: updatedParents,
     };
   } catch (error: any) {
     console.error("UpdateManyParent error:", error);
@@ -1934,12 +2109,50 @@ export const deleteLesson = async (
   }
 };
 
+export const deleteLessons = async (
+  currentState: CurrentState,
+  formData: FormData
+): Promise<CurrentState> => {
+  const ids = formData.getAll("ids") as string[];
+
+  if (!ids || ids.length === 0) {
+    return { success: false, error: true, message: "No student IDs provided." };
+  }
+
+  try {
+    for (const id of ids) {
+      const idAsNumber = parseInt(id);
+      try {
+        await prisma.lesson.delete({ where: { id: idAsNumber } });
+      } catch (innerError) {
+        console.error(`❌ Failed to delete Lesson ID ${id}:`, innerError);
+        // Optionally continue deleting others instead of failing all
+      }
+    }
+
+    return {
+      success: true,
+      error: false,
+      message: `Deleted ${ids.length} Lesson(s) successfully.`,
+    };
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === "string"
+        ? error
+        : "Unknown error";
+
+    return { success: false, error: true, message };
+  }
+};
+
 export const createResult = async (
   currentState: CurrentState,
   data: ResultSchema
 ) => {
   try {
-    await prisma.result.create({
+    const createdResult = await prisma.result.create({
       data: {
         score: data.score,
         studentId: data.studentId,
@@ -1953,8 +2166,33 @@ export const createResult = async (
         }),
         resultType: data.resultType,
       },
+      include: {
+        student: { select: { name: true, namalengkap: true } },
+        exam: {
+          include: {
+            lesson: {
+              select: {
+                class: { select: { name: true, gradeId: true } },
+                teacher: { select: { name: true, namalengkap: true } },
+                subject: true,
+              },
+            },
+          },
+        },
+        assignment: {
+          include: {
+            lesson: {
+              select: {
+                class: { select: { name: true, gradeId: true } },
+                teacher: { select: { name: true, namalengkap: true } },
+                subject: true,
+              },
+            },
+          },
+        },
+      },
     });
-    return { success: true, error: false };
+    return { success: true, error: false, data: createdResult };
   } catch (error) {
     console.error("Create Jadwal error: ", error);
     return { success: false, error: true };
@@ -1984,7 +2222,35 @@ export const updateResult = async (
         resultType: data.resultType,
       },
     });
-    return { success: true, error: false };
+    const updatedResult = await prisma.result.findUnique({
+      where: { id: data.id },
+      include: {
+        student: { select: { name: true, namalengkap: true } },
+        exam: {
+          include: {
+            lesson: {
+              select: {
+                class: { select: { name: true, gradeId: true } },
+                teacher: { select: { name: true, namalengkap: true } },
+                subject: true,
+              },
+            },
+          },
+        },
+        assignment: {
+          include: {
+            lesson: {
+              select: {
+                class: { select: { name: true, gradeId: true } },
+                teacher: { select: { name: true, namalengkap: true } },
+                subject: true,
+              },
+            },
+          },
+        },
+      },
+    });
+    return { success: true, error: false, data: updatedResult };
   } catch (error) {
     const message =
       error instanceof Error
@@ -2092,7 +2358,35 @@ export const updateResults = async (
       data: updateData,
     });
 
-    return { success: true, error: false };
+    const updatedResults = await prisma.result.findMany({
+      where: { id: { in: ids } },
+      include: {
+        student: { select: { name: true, namalengkap: true } },
+        exam: {
+          include: {
+            lesson: {
+              select: {
+                class: { select: { name: true, gradeId: true } },
+                teacher: { select: { name: true, namalengkap: true } },
+                subject: true,
+              },
+            },
+          },
+        },
+        assignment: {
+          include: {
+            lesson: {
+              select: {
+                class: { select: { name: true, gradeId: true } },
+                teacher: { select: { name: true, namalengkap: true } },
+                subject: true,
+              },
+            },
+          },
+        },
+      },
+    });
+    return { success: true, error: false, data: updatedResults };
   } catch (error) {
     const message =
       error instanceof Error
@@ -2493,8 +2787,11 @@ export const updatePpdb = async (
         });
       }
     }
+    const updatedPpdb = await prisma.pPDB.findUnique({
+      where: { id: data.id },
+    });
 
-    return { success: true, error: false };
+    return { success: true, error: false, data: updatedPpdb };
   } catch (error) {
     const message =
       error instanceof Error
@@ -2531,6 +2828,44 @@ export const deletePpdb = async (
         : "Unknown error";
 
     console.error("Delete Ppdb error: ", error);
+    return { success: false, error: true, message };
+  }
+};
+
+export const deletePPDBs = async (
+  currentState: CurrentState,
+  formData: FormData
+): Promise<CurrentState> => {
+  const ids = formData.getAll("ids") as string[];
+
+  if (!ids || ids.length === 0) {
+    return { success: false, error: true, message: "No student IDs provided." };
+  }
+
+  try {
+    for (const id of ids) {
+      const idAsNumber = parseInt(id);
+      try {
+        await prisma.pPDB.delete({ where: { id: idAsNumber } });
+      } catch (innerError) {
+        console.error(`❌ Failed to delete pPDB ID ${id}:`, innerError);
+        // Optionally continue deleting others instead of failing all
+      }
+    }
+
+    return {
+      success: true,
+      error: false,
+      message: `Deleted ${ids.length} pPDB(es) successfully.`,
+    };
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === "string"
+        ? error
+        : "Unknown error";
+
     return { success: false, error: true, message };
   }
 };
@@ -2722,16 +3057,16 @@ export async function createPaymentLog(
     let studentIds: string[] = [];
 
     if (recipientType === "student") {
-      studentIds = [recipientId];
+      studentIds = [recipientId as string];
     } else if (recipientType === "class") {
       const classData = await prisma.class.findUnique({
-        where: { id: parseInt(recipientId) },
+        where: { id: recipientId as number },
         include: { students: { select: { id: true } } },
       });
       studentIds = classData?.students.map((s) => s.id) ?? [];
     } else if (recipientType === "grade") {
       const gradeData = await prisma.grade.findUnique({
-        where: { id: parseInt(recipientId) },
+        where: { id: recipientId as number },
         include: { students: { select: { id: true } } },
       });
       studentIds = gradeData?.students.map((s) => s.id) ?? [];
@@ -2770,8 +3105,34 @@ export async function createPaymentLog(
         gradeId: student.gradeId,
       })),
     });
-
-    return { success: true, error: false, message: "Tagihan berhasil dibuat." };
+    const createdPayments = await prisma.paymentLog.findMany({
+      where: {
+        studentId: { in: studentData.map((s) => s.id) },
+        paymentType: paymentData.paymentType,
+        dueDate: new Date(paymentData.dueDate),
+      },
+      include: {
+        student: {
+          select: {
+            name: true,
+            namalengkap: true,
+            img: true,
+            class: {
+              select: {
+                name: true,
+              },
+            },
+            student_details: { select: { nisn: true } },
+          },
+        },
+      },
+    });
+    return {
+      success: true,
+      error: false,
+      message: "Tagihan berhasil dibuat.",
+      data: createdPayments,
+    };
   } catch (err) {
     console.error(err);
     return { success: false, error: true, message: "Gagal membuat tagihan." };
@@ -2800,23 +3161,23 @@ export async function updatePaymentLog(
 
     if (recipientType === "class") {
       const classData = await prisma.class.findUnique({
-        where: { id: parseInt(recipientId) },
+        where: { id: recipientId as number },
         include: { grade: true },
       });
       classId = classData?.id ?? null;
       gradeId = classData?.gradeId ?? null;
     } else if (recipientType === "grade") {
-      gradeId = parseInt(recipientId);
+      gradeId = recipientId as number;
     } else if (recipientType === "student") {
       const student = await prisma.student.findUnique({
-        where: { id: recipientId },
+        where: { id: recipientId as string },
         select: { classId: true, gradeId: true },
       });
       classId = student?.classId ?? null;
       gradeId = student?.gradeId ?? null;
     }
 
-    await prisma.paymentLog.update({
+    const updatedPayment = await prisma.paymentLog.update({
       where: {
         id: data.id,
       },
@@ -2831,12 +3192,28 @@ export async function updatePaymentLog(
         classId,
         gradeId,
       },
+      include: {
+        student: {
+          select: {
+            name: true,
+            namalengkap: true,
+            img: true,
+            class: {
+              select: {
+                name: true,
+              },
+            },
+            student_details: { select: { nisn: true } },
+          },
+        },
+      },
     });
 
     return {
       success: true,
       error: false,
       message: "Tagihan berhasil diperbarui.",
+      data: updatedPayment,
     };
   } catch (err) {
     console.error(err);
@@ -2869,16 +3246,16 @@ export async function updatePaymentLogs(
 
     if (recipientType === "class") {
       const classData = await prisma.class.findUnique({
-        where: { id: parseInt(recipientId) },
+        where: { id: recipientId as number },
         include: { grade: true },
       });
       classId = classData?.id ?? null;
       gradeId = classData?.gradeId ?? null;
     } else if (recipientType === "grade") {
-      gradeId = parseInt(recipientId);
+      gradeId = recipientId as number;
     } else if (recipientType === "student") {
       const student = await prisma.student.findUnique({
-        where: { id: recipientId },
+        where: { id: recipientId as string },
         select: { classId: true, gradeId: true },
       });
       classId = student?.classId ?? null;
@@ -2902,11 +3279,30 @@ export async function updatePaymentLogs(
         gradeId,
       },
     });
-
+    const updatedPayments = await prisma.paymentLog.findMany({
+      where: {
+        id: { in: selectedIdsAsNumbers },
+      },
+      include: {
+        student: {
+          select: {
+            name: true,
+            namalengkap: true,
+            class: {
+              select: {
+                name: true,
+              },
+            },
+            student_details: { select: { nisn: true } },
+          },
+        },
+      },
+    });
     return {
       success: true,
       error: false,
       message: "Tagihan berhasil diperbarui.",
+      data: updatedPayments,
     };
   } catch (err) {
     console.error(err);

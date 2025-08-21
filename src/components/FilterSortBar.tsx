@@ -20,6 +20,7 @@ const FilterSortBar = ({
     label: string;
     name: string;
     options: { label: string; value: string | number }[];
+    boptions?: { label: string; value: boolean | undefined }[];
   }[];
   sortOptions?: { label: string; value: string }[];
   className?: string;

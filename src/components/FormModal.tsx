@@ -7,20 +7,24 @@ import {
   deleteAssignments,
   deleteAttendance,
   deleteClass,
+  deleteClasses,
   deleteEvent,
   deleteExam,
   deleteExams,
   deleteLesson,
+  deleteLessons,
   deleteParent,
   deleteParents,
   deletePaymentLog,
   deletePaymentLogs,
   deletePpdb,
+  deletePPDBs,
   deleteResult,
   deleteResults,
   deleteStudent,
   deleteStudents,
   deleteSubject,
+  deleteSubjects,
   deleteTeacher,
   deleteTeachers,
 } from "@/lib/actions";
@@ -85,16 +89,16 @@ const bulkDeleteMap = {
   student: deleteStudents,
   teacher: deleteTeachers,
   parent: deleteParents,
-  class: deleteStudents,
-  subject: deleteStudents,
-  lesson: deleteStudents,
+  class: deleteClasses,
+  subject: deleteSubjects,
+  lesson: deleteLessons,
   exam: deleteExams,
   assignment: deleteAssignments,
   result: deleteResults,
   attendance: deleteStudents,
   event: deleteStudents,
   announcement: deleteStudents,
-  ppdb: deleteStudents,
+  ppdb: deletePPDBs,
   paymentLog: deletePaymentLogs,
 };
 
@@ -161,36 +165,40 @@ const forms: {
     lessonId?: string
   ) => JSX.Element;
 } = {
-  teacher: (setOpen, type, data, relatedData) => (
+  teacher: (setOpen, type, data, relatedData, onChanged) => (
     <TeacherForm
       setOpen={setOpen}
       type={type}
       data={data}
       relatedData={relatedData}
+      onChanged={onChanged}
     />
   ),
-  student: (setOpen, type, data, relatedData) => (
+  student: (setOpen, type, data, relatedData, onChanged) => (
     <StudentForm
       setOpen={setOpen}
       type={type}
       data={data}
       relatedData={relatedData}
+      onChanged={onChanged}
     />
   ),
-  subject: (setOpen, type, data, relatedData) => (
+  subject: (setOpen, type, data, relatedData, onChanged) => (
     <SubjectForm
       type={type}
       setOpen={setOpen}
       data={data}
       relatedData={relatedData}
+      onChanged={onChanged}
     />
   ),
-  class: (setOpen, type, data, relatedData) => (
+  class: (setOpen, type, data, relatedData, onChanged) => (
     <ClassForm
       type={type}
       setOpen={setOpen}
       data={data}
       relatedData={relatedData}
+      onChanged={onChanged}
     />
   ),
   announcement: (setOpen, type, data, relatedData) => (
@@ -227,36 +235,40 @@ const forms: {
       onChanged={onChanged}
     />
   ),
-  lesson: (setOpen, type, data, relatedData) => (
+  lesson: (setOpen, type, data, relatedData, onChanged) => (
     <LessonForm
       type={type}
       setOpen={setOpen}
       data={data}
       relatedData={relatedData}
+      onChanged={onChanged}
     />
   ),
-  parent: (setOpen, type, data, relatedData) => (
+  parent: (setOpen, type, data, relatedData, onChanged) => (
     <ParentForm
       type={type}
       setOpen={setOpen}
       data={data}
       relatedData={relatedData}
+      onChanged={onChanged}
     />
   ),
-  result: (setOpen, type, data, relatedData) => (
+  result: (setOpen, type, data, relatedData, onChanged) => (
     <ResultForm
       type={type}
       setOpen={setOpen}
       data={data}
       relatedData={relatedData}
+      onChanged={onChanged}
     />
   ),
-  ppdb: (setOpen, type, data, relatedData) => (
+  ppdb: (setOpen, type, data, relatedData, onChanged) => (
     <FormulirPendaftaran
       type={type}
       setOpen={setOpen}
       data={data}
       relatedData={relatedData}
+      onChanged={onChanged}
     />
   ),
   attendance: (setOpen, type, data, relatedData) => (
@@ -267,12 +279,13 @@ const forms: {
       relatedData={relatedData}
     />
   ),
-  paymentLog: (setOpen, type, data, relatedData) => (
+  paymentLog: (setOpen, type, data, relatedData, onChanged) => (
     <PaymentForm
       type={type}
       setOpen={setOpen}
       data={data}
       relatedData={relatedData}
+      onChanged={onChanged}
     />
   ),
 };
@@ -386,6 +399,7 @@ const FormModal = ({
       </form>
     ) : type === "deleteMany" && Array.isArray(ids) ? (
       <DeleteManyForm
+        setOpen={setOpen}
         table={table}
         ids={ids as string[]}
         formAction={formAction}
@@ -405,6 +419,7 @@ const FormModal = ({
         data={data}
         relatedData={relatedData}
         prefilEmail={prefilEmail}
+        onChanged={onChanged}
       />
     ); // Skip rendering
   if (table === "attendance" && type === "create")
@@ -546,6 +561,7 @@ const FormModal = ({
                     table={table}
                     data={data}
                     relatedData={relatedData}
+                    onChanged={onChanged}
                   />
                   <div
                     className="absolute top-4 right-4 cursor-pointer"
@@ -589,6 +605,7 @@ const FormModal = ({
                     table={table}
                     data={data}
                     relatedData={relatedData}
+                    onChanged={onChanged}
                   />
                   <div
                     className="absolute top-4 right-4 cursor-pointer"
@@ -632,6 +649,7 @@ const FormModal = ({
                     table={table}
                     data={data}
                     relatedData={relatedData}
+                    onChanged={onChanged}
                   />
                   <div
                     className="absolute top-4 right-4 cursor-pointer"
@@ -675,6 +693,7 @@ const FormModal = ({
                     table={table}
                     data={data}
                     relatedData={relatedData}
+                    onChanged={onChanged}
                   />
                   <div
                     className="absolute top-4 right-4 cursor-pointer"

@@ -1,20 +1,20 @@
 "use client";
-import { useState } from "react";
-import Table from "@/components/Table";
-import BulkActions from "../BulkActions";
-import ResultTableClient from "./ResultTableClient";
-import { BaseListClientProps } from "./AssignmentListClient";
+import Image from "next/image";
 import TableSearch from "../TableSearch";
-import FilterSortToggle from "../FilterSortToggle";
+import { BaseListClientProps } from "./AssignmentListClient";
+import { useState } from "react";
+import BulkActions from "../BulkActions";
+import Table from "@/components/Table";
 import FormModal from "../FormModal";
-
-export default function ResultListClient({
+import ClassesTableClient from "./ClassesTableClient";
+import FilterSortToggle from "../FilterSortToggle";
+const ClassesListClient = ({
   columns,
   data,
   role,
   relatedData,
   options,
-}: BaseListClientProps) {
+}: BaseListClientProps) => {
   const [selected, setSelected] = useState<string[]>([]);
   const [localData, setLocalData] = useState(data); // 👈 keep a client copy
 
@@ -47,27 +47,34 @@ export default function ResultListClient({
       })
     );
   };
-
-  const { classOptions = [], gradeOptions = [] } = options || {};
+  const {
+    capacityOptions = [],
+    gradeOptions = [],
+    teacherOptions = [],
+  } = options || {};
   return (
     <div className="space-y-4 mt-3">
-      {/* TOP */}
       <div className="flex items-center justify-between">
-        <h1 className="hidden md:block text-lg font-semibold">Semua Nilai</h1>
+        <h1 className="hidden md:block text-lg font-semibold">Semua Kelas</h1>
         <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
           <TableSearch></TableSearch>
           <div className="flex items-center gap-4 self-end">
             <FilterSortToggle
               filterFields={[
                 {
-                  name: "classId",
-                  label: "Kelas",
-                  options: classOptions,
+                  name: "capacity",
+                  label: "Kapasitas",
+                  options: capacityOptions,
                 },
                 {
                   name: "gradeId",
                   label: "Tingkat",
                   options: gradeOptions,
+                },
+                {
+                  name: "supervisorId",
+                  label: "Guru",
+                  options: teacherOptions,
                 },
               ]}
               sortOptions={[
@@ -75,11 +82,13 @@ export default function ResultListClient({
                 { label: "Z-A", value: "za" },
                 { label: "ID Asc", value: "id_asc" },
                 { label: "ID Desc", value: "id_desc" },
+                { label: "Kapasitas Asc", value: "cp_asc" },
+                { label: "Kapasitas Desc", value: "cp_desc" },
               ]}
             />
-            {(role === "admin" || role === "teacher") && (
+            {role === "admin" && (
               <FormModal
-                table="result"
+                table="class"
                 type="create"
                 relatedData={relatedData}
                 onChanged={handleChanged}
@@ -90,17 +99,17 @@ export default function ResultListClient({
       </div>
       <BulkActions
         selectedIds={selected}
-        table="result"
+        table="class"
         onReset={() => setSelected([])}
-        data={data}
+        data={localData}
         relatedData={relatedData}
-        onDeleted={handleDeleteOptimistic}
+        onDeleted={handleDeleteOptimistic} // pass handler
         handleChanged={handleChanged}
         handleManyChanged={handleManyChanged}
       />
-
+      {/* LIST */}
       <Table columns={columns}>
-        <tr className="text-left text-gray-500 text-sm">
+        <tr key="header" className="text-left text-gray-500 text-sm">
           {role === "admin" && (
             <td className="px-4 py-2">
               <input
@@ -115,7 +124,7 @@ export default function ResultListClient({
           {/* other headers */}
         </tr>
         {localData.map((row) => (
-          <ResultTableClient
+          <ClassesTableClient
             key={row.id}
             data={row}
             role={role}
@@ -129,4 +138,6 @@ export default function ResultListClient({
       </Table>
     </div>
   );
-}
+};
+
+export default ClassesListClient;

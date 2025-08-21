@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  mparentSchema,
-  MparentSchema,
-  mteacherSchema,
-  MteacherSchema,
-} from "@/lib/formValidationSchema";
+import { mparentSchema, MparentSchema } from "@/lib/formValidationSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import {
@@ -20,7 +15,6 @@ import { Controller, useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import { updateManyParents, updateManyTeachers } from "@/lib/actions"; // make sure this is defined
 import Select from "react-select";
-import { Day } from "@prisma/client";
 import InputField from "../InputField";
 
 type UpdateManyParentFormProps = {
@@ -29,6 +23,7 @@ type UpdateManyParentFormProps = {
   data?: any;
   relatedData?: any;
   setOpen: Dispatch<SetStateAction<boolean>>;
+  onChanged?: (items: any[]) => void;
 };
 
 const UpdateManyParentForm = ({
@@ -37,6 +32,7 @@ const UpdateManyParentForm = ({
   data,
   relatedData,
   setOpen,
+  onChanged,
 }: UpdateManyParentFormProps) => {
   const {
     register,
@@ -72,10 +68,13 @@ const UpdateManyParentForm = ({
   useEffect(() => {
     if (state.success) {
       toast("Berhasil memperbarui Guru-guru.");
+      if (state.data && onChanged) {
+        onChanged(state.data);
+      }
       setOpen(false);
       router.refresh();
     }
-  }, [state.success, setOpen, router]);
+  }, [state.success, setOpen, router, state.data, onChanged]);
 
   if (!ids || ids.length === 0) {
     return <span>Tidak ada data yang dipilih.</span>;

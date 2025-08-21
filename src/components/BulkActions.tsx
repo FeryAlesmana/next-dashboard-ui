@@ -39,7 +39,13 @@ export default function BulkActions({
   if (selectedIds.length === 0) return null;
 
   console.log(selectedIds, "ids in baction");
-
+  const noUpdateManyTables = [
+    "class",
+    "event",
+    "announcement",
+    "subject",
+    "lesson",
+  ]; // extend later if needed
   return (
     <AnimatePresence>
       {selectedIds.length > 0 && (
@@ -61,7 +67,7 @@ export default function BulkActions({
               type="deleteMany"
               table={table}
               ids={selectedIds}
-              onDeleted={onDeleted}
+              onDeleted={() => onDeleted?.(selectedIds)}
             />
             {/* Show Update or UpdateMany based on count */}
             {selectedIds.length === 1 ? (
@@ -74,14 +80,16 @@ export default function BulkActions({
                 relatedData={relatedData}
               />
             ) : (
-              <FormModal
-                type="updateMany"
-                table={table}
-                ids={selectedIds}
-                onChanged={handleManyChanged}
-                data={data}
-                relatedData={relatedData}
-              />
+              !noUpdateManyTables.includes(table) && (
+                <FormModal
+                  type="updateMany"
+                  table={table}
+                  ids={selectedIds}
+                  onChanged={handleManyChanged}
+                  data={data}
+                  relatedData={relatedData}
+                />
+              )
             )}
             <button
               onClick={onReset}

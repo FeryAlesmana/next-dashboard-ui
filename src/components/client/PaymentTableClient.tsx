@@ -1,6 +1,5 @@
 "use client";
 import Image from "next/image";
-import Link from "next/link";
 import FormModal from "../FormModal";
 import { BaseTableClientProps } from "./AssignmentTableClient";
 
@@ -13,6 +12,8 @@ export default function PaymenTableClient({
   onDeleted,
   onChanged,
 }: BaseTableClientProps) {
+  console.log("PaymentTableClient data", data);
+
   return (
     <>
       <tr className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight">
@@ -83,13 +84,19 @@ export default function PaymenTableClient({
           <div className="flex items-center gap-2">
             {role === "admin" && (
               <>
-                <FormModal type="delete" table="paymentLog" id={data.id} />
                 <FormModal
                   type="update"
                   table="paymentLog"
                   id={data.id}
                   data={data}
                   relatedData={relatedData}
+                  onChanged={onChanged}
+                />
+                <FormModal
+                  type="delete"
+                  table="paymentLog"
+                  id={data.id}
+                  onDeleted={() => onDeleted?.([data.id])}
                 />
               </>
             )}

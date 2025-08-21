@@ -1,9 +1,17 @@
 "use client";
-import { resTypes } from "@prisma/client";
+import { assTypes } from "@prisma/client";
 import FormModal from "../FormModal";
-import { BaseTableClientProps } from "./AssignmentTableClient";
+export type BaseTableClientProps = {
+  data: any;
+  role: string;
+  selected: string[];
+  relatedData?: any;
+  onToggle: (id: string) => void;
+  onDeleted?: (ids: (string | number)[]) => void;
+  onChanged?: (item: any) => void;
+};
 
-export default function ResultTableClient({
+export default function SubjectTableClient({
   data,
   role,
   selected,
@@ -12,14 +20,6 @@ export default function ResultTableClient({
   onDeleted,
   onChanged,
 }: BaseTableClientProps) {
-  const resultTypelabel = {
-    UJIAN_HARIAN: "Ujian Harian",
-    UJIAN_TENGAH_SEMESTER: "Ujian Tengah Semester",
-    UJIAN_AKHIR_SEMESTER: "Ujian Akhir Semester",
-    PEKERJAAN_RUMAH: "Pekerjaan Rumah",
-    TUGAS_AKHIR: "Tugas Akhir",
-    TUGAS_HARIAN: "Tugas Harian",
-  } as const;
   return (
     <>
       <tr className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight">
@@ -33,31 +33,24 @@ export default function ResultTableClient({
           </td>
         )}
 
-        <td className="p-4">{data?.subject || "-"}</td>
-        <td>{data.student}</td>
-        <td className="hidden md:table-cell">{data.score}</td>
-        <td className="hidden md:table-cell">{data.teacher}</td>
-        <td className="hidden md:table-cell">{data.class}</td>
+        <td className="text-center">{data.id}</td>
+        <td className="p-4 gap-4 text-center">{data.name}</td>
         <td className="hidden md:table-cell">
-          {data?.selectedType}
-          {"-"}
-          {data?.resultType
-            ? resultTypelabel[data?.resultType as resTypes]
-            : "-"}
+          {data.teachers.map((teacher: any) => teacher.name).join(",")}
         </td>
         <td>
           <div className="flex items-center gap-2">
             {role === "admin" && (
               <>
                 <FormModal
-                  table="result"
+                  table="subject"
                   type="update"
                   data={data}
                   relatedData={relatedData}
                   onChanged={onChanged}
                 ></FormModal>
                 <FormModal
-                  table="result"
+                  table="subject"
                   type="delete"
                   id={data.id}
                   onDeleted={() => onDeleted?.([data.id])}

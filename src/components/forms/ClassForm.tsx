@@ -1,6 +1,6 @@
 "use client";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import InputField from "../InputField";
 import {
   Dispatch,
@@ -15,23 +15,21 @@ import { toast } from "react-toastify";
 import { createClass, CurrentState, updateClass } from "@/lib/actions";
 import { classSchema, ClassSchema } from "@/lib/formValidationSchema";
 import ConfirmDialog from "../ConfirmDialog";
-
+import Select from "react-select";
+import { BaseFormProps } from "./AssignmentForm";
 
 const ClassForm = ({
   setOpen,
   type,
   data,
   relatedData,
-}: {
-  setOpen: Dispatch<SetStateAction<boolean>>;
-  type: "create" | "update";
-  data?: any;
-  relatedData?: any;
-}) => {
+  onChanged,
+}: BaseFormProps) => {
   const {
     register,
     handleSubmit,
     trigger,
+    control,
     formState: { errors },
   } = useForm<ClassSchema>({
     resolver: zodResolver(classSchema),
@@ -95,15 +93,26 @@ const ClassForm = ({
 
   useEffect(() => {
     if (state.success) {
+      const updatedItem = state.data ?? formData;
       toast(
         `Kelas telah berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`
       );
+      if (onChanged && updatedItem) {
+        onChanged(updatedItem); // 🔥 notify parent so it can update localData
+      } else {
+        router.refresh(); // fallback if no handler passed
+      }
       setOpen(false);
       router.refresh();
     }
-  }, [state, type, setOpen, router]);
+  }, [state, type, setOpen, router, onChanged, formData]);
 
   const { teachers = [], grades = [] } = relatedData ?? {};
+
+  const teacherOptions = teachers.map((teacher: any) => ({
+    value: teacher.id,
+    label: `${teacher.name} - ${teacher.namalengkap}`,
+  }));
 
   return (
     <>
@@ -119,7 +128,9 @@ const ClassForm = ({
         <h1 className="text-xl font-semibold">
           {type === "create" ? "Tambah Kelas baru" : "Edit Kelas"}
         </h1>
-        <span className="text-xs text-gray-400 font-medium">Informasi Kelas</span>
+        <span className="text-xs text-gray-400 font-medium">
+          Informasi Kelas
+        </span>
         <div className="flex justify-between flex-wrap gap-4 m-4 mb-8">
           <InputField
             label="Kelas"
@@ -138,19 +149,33 @@ const ClassForm = ({
           />
           <div className="flex flex-col gap-2 w-full md:w-1/4">
             <label className="text-xs text-gray-400">Wali Kelas</label>
-            <select
-              className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
-              {...register("supervisorId")}
-              defaultValue={data?.supervisorId ?? ""}
-            >
-              {teachers.map(
-                (teacher: { id: string; name: string; namalengkap: string }) => (
-                  <option value={teacher.id} key={teacher.id}>
-                    {teacher.name + " " + teacher.namalengkap}
-                  </option>
-                )
-              )}
-            </select>
+
+            <Controller
+              name="supervisorId"
+              control={control}
+              defaultValue={data?.supervisorId || ""}
+              render={({ field }) => {
+                return (
+                  <Select
+                    {...field}
+                    options={teacherOptions}
+                    className="text-sm"
+                    classNamePrefix="select"
+                    placeholder="Cari Wali Kelas..."
+                    onChange={(selectedOption) =>
+                      field.onChange(selectedOption?.value)
+                    }
+                    value={
+                      teacherOptions.find(
+                        (opt: { value: string; label: string }) =>
+                          opt.value === field.value
+                      ) || null
+                    }
+                  />
+                );
+              }}
+            />
+
             {errors.supervisorId?.message && (
               <p className="text-xs text-red-400">
                 {errors.supervisorId.message.toString()}
@@ -177,6 +202,16 @@ const ClassForm = ({
             )}
           </div>
         </div>
+        {data && (
+          <InputField
+            label="Id"
+            name="id"
+            defaultValue={data?.id}
+            register={register}
+            error={errors?.id}
+            hidden
+          />
+        )}
         {(state.error || Object.keys(errors).length > 0) && (
           <span className="text-red-500">
             Terjadi Kesalahan! {state.message ?? ""}

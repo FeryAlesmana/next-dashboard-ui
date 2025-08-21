@@ -19,6 +19,7 @@ import {
   CurrentState,
   updatePaymentLog,
 } from "@/lib/actions";
+import { BaseFormProps } from "./AssignmentForm";
 
 const FORM_KEY = "payment_log_draft_form";
 
@@ -27,12 +28,8 @@ export default function CreatePaymentLogPage({
   type,
   relatedData,
   setOpen,
-}: {
-  setOpen: Dispatch<SetStateAction<boolean>>;
-  data?: any;
-  type: "create" | "update";
-  relatedData: any;
-}) {
+  onChanged,
+}: BaseFormProps) {
   const router = useRouter();
   const {
     register,
@@ -160,11 +157,17 @@ export default function CreatePaymentLogPage({
 
   useEffect(() => {
     if (state.success) {
+      const updatedItem = state.data ?? formData;
       toast(`Tagihan berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`);
       setOpen(false);
+      if (onChanged && updatedItem) {
+        onChanged(updatedItem); // 🔥 notify parent so it can update localData
+      } else {
+        router.refresh(); // fallback if no handler passed
+      }
       router.refresh();
     }
-  }, [state, type, setOpen, router]);
+  }, [state, type, setOpen, router, onChanged, formData]);
 
   return (
     <div className="max-w-4xl mx-auto p-4">
@@ -262,7 +265,10 @@ export default function CreatePaymentLogPage({
               <p className="text-red-600">{errors.paymentMethod.message}</p>
             )}
           </div>
-          <span className="items-center justify-center text-center"> TUNAI</span>
+          <span className="items-center justify-center text-center">
+            {" "}
+            TUNAI
+          </span>
 
           <div>
             <label className="block mb-1 font-medium">
@@ -302,20 +308,22 @@ export default function CreatePaymentLogPage({
               <option value="">Pilih Penerima</option>
               {watchedValues.recipientType === "student" &&
                 studentData.map(
-                  (student: { id: string; name: string; namalengkap: string }) => (
+                  (student: {
+                    id: string;
+                    name: string;
+                    namalengkap: string;
+                  }) => (
                     <option key={student.id} value={student.id}>
                       {student.name} {student.namalengkap}
                     </option>
                   )
                 )}
               {watchedValues.recipientType === "class" &&
-                classData.map(
-                  (kelas: { id: number; name: string }) => (
-                    <option key={kelas.id} value={kelas.id}>
-                      {kelas.name}
-                    </option>
-                  )
-                )}
+                classData.map((kelas: { id: number; name: string }) => (
+                  <option key={kelas.id} value={kelas.id}>
+                    {kelas.name}
+                  </option>
+                ))}
               {watchedValues.recipientType === "grade" &&
                 gradeData.map((grade: { id: number; level: number }) => (
                   <option key={grade.id} value={grade.id}>

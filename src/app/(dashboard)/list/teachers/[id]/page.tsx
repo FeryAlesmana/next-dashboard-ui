@@ -21,7 +21,7 @@ const SingleTeacherPage = async ({
   const { userId, role } = await getCurrentUser();
 
   // Block users from viewing others' profiles unless they are admin
-  if (role !== "admin" && userId !== id) {
+  if (!role) {
     return notFound();
   }
   const teacher:

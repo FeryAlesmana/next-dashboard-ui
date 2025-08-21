@@ -17,14 +17,7 @@ import { updateManyTeachers } from "@/lib/actions"; // make sure this is defined
 import Select from "react-select";
 import { Day } from "@prisma/client";
 import ConfirmDialog from "../ConfirmDialog";
-
-type UpdateManyTeacherFormProps = {
-  ids?: string[];
-  table: string;
-  data?: any;
-  relatedData?: any;
-  setOpen: Dispatch<SetStateAction<boolean>>;
-};
+import { UpdateManyFormProps } from "./UpdateManyAssignments";
 
 const UpdateManyTeacherForm = ({
   ids,
@@ -32,7 +25,8 @@ const UpdateManyTeacherForm = ({
   data,
   relatedData,
   setOpen,
-}: UpdateManyTeacherFormProps) => {
+  onChanged,
+}: UpdateManyFormProps & { ids?: string[] }) => {
   const {
     register,
     handleSubmit,
@@ -77,10 +71,13 @@ const UpdateManyTeacherForm = ({
   useEffect(() => {
     if (state.success) {
       toast("Berhasil memperbarui Guru-guru.");
+      if (state.data && onChanged) {
+        onChanged(state.data);
+      }
       setOpen(false);
       router.refresh();
     }
-  }, [state.success, setOpen, router]);
+  }, [state.success, setOpen, router, onChanged, state.data]);
 
   if (!ids || ids.length === 0) {
     return <span>Tidak ada data yang dipilih.</span>;

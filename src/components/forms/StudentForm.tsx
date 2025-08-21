@@ -3,23 +3,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import InputField from "../InputField";
-import Image from "next/image";
 import {
   CreatestudentSchema,
   createStudentSchema,
-  studentSchema,
-  StudentSchema,
   UpdatestudentSchema,
   updateStudentSchema,
 } from "@/lib/formValidationSchema";
-import {
-  Dispatch,
-  SetStateAction,
-  startTransition,
-  useActionState,
-  useEffect,
-  useState,
-} from "react";
+import { startTransition, useActionState, useEffect, useState } from "react";
 import { createStudent, CurrentState, updateStudent } from "@/lib/actions";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
@@ -27,18 +17,15 @@ import Select from "react-select";
 import { cloudinaryUpload } from "@/lib/upload/cloudinaryUpload";
 import UploadPhoto from "../UploadPhoto";
 import ConfirmDialog from "../ConfirmDialog";
+import { BaseFormProps } from "./AssignmentForm";
 
 const StudentForm = ({
   type,
   data,
   setOpen,
   relatedData,
-}: {
-  type: "create" | "update";
-  data?: any;
-  setOpen: Dispatch<SetStateAction<boolean>>;
-  relatedData: any;
-}) => {
+  onChanged,
+}: BaseFormProps) => {
   const schema = type === "create" ? createStudentSchema : updateStudentSchema;
   const {
     register,
@@ -110,9 +97,11 @@ const StudentForm = ({
   const router = useRouter();
 
   useEffect(() => {
-    if (!state.success && !state.error) return;
+    if (!state.success && !state.error) {
+      toast.error(state.message || "Terjadi kesalahan.");
+    }
     setIsSubmitting(false);
-  }, [state.success, state.error]);
+  }, [state]);
 
   const handleSubmitForm = handleSubmit(async (data) => {
     setIsSubmitting(true);
@@ -126,29 +115,11 @@ const StudentForm = ({
       dokumenKKKTP: dokumen.kk_ktp_sktm,
     };
 
-    let result;
-    if (type === "create") {
-      result = await createStudent(initialState, payload);
-    } else {
-      result = await updateStudent(initialState, payload);
-    }
-
+    startTransition(() => {
+      formAction(payload);
+    });
+    setShowConfirm(false);
     setIsSubmitting(false);
-
-    if (result?.success) {
-      toast(
-        `Siswa telah berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`
-      );
-      setOpen(false);
-
-      if (result.id && result.id !== payload.id) {
-        router.push(`/list/students/student/${result.id}`);
-      } else {
-        router.refresh();
-      }
-    } else if (result?.error) {
-      toast.error(result.message || "Terjadi kesalahan.");
-    }
   });
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -162,6 +133,27 @@ const StudentForm = ({
       setShowConfirm(false);
     }
   };
+  useEffect(() => {
+    if (state.success) {
+      const updatedItem = state.data ?? data; // <- depends on what your action returns
+
+      toast(
+        `Siswa telah berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`
+      );
+      setOpen(false);
+      if (type === "create") {
+        setTimeout(
+          () => router.push(`/list/students/student/${state.id}`),
+          3000
+        );
+      }
+      if (onChanged && updatedItem) {
+        onChanged(updatedItem); // 🔥 notify parent so it can update localData
+      } else {
+        router.refresh(); // fallback if no handler passed
+      }
+    }
+  }, [state, type, setOpen, router, onChanged, data]);
   const { grades, classes, parents } = relatedData;
 
   //  console.log(data, "data in studentForm");

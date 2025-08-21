@@ -25,7 +25,7 @@ const UpdateManyExamsForm = ({
   relatedData,
   setOpen,
   onChanged,
-}: UpdateManyFormProps) => {
+}: UpdateManyFormProps & { ids?: number[] }) => {
   const {
     register,
     handleSubmit,

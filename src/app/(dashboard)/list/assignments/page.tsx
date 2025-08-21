@@ -82,62 +82,6 @@ const AssignmentListPage = async ({
         ]
       : []),
   ];
-  const AssignmentsTypeLabel = {
-    PEKERJAAN_RUMAH: "Pekerjaan Rumah",
-    TUGAS_AKHIR: "Tugas Akhir",
-    TUGAS_HARIAN: "Tugas Harian",
-  } as const;
-
-  type assType = keyof typeof AssignmentsTypeLabel;
-  const renderRow = (item: AssignmentList) => (
-    <tr
-      key={item.id}
-      className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight"
-    >
-      <td className="flex items-center p-4 gap-4">
-        {item.lesson.subject?.name || "-"}
-      </td>
-      <td>{item.lesson.class.name}</td>
-      <td className="hidden md:table-cell">
-        {item.lesson.teacher
-          ? `${item.lesson.teacher.name} ${item.lesson.teacher.namalengkap}`
-          : "Tidak ada guru"}
-      </td>
-      <td className="hidden md:table-cell">
-        {" "}
-        {item.dueDate.toLocaleDateString("id-ID", {
-          timeZone: "Asia/Jakarta",
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: false,
-          day: "numeric",
-          month: "numeric",
-        })}
-      </td>
-      <td className="hidden md:table-cell">
-        {item.assType ? AssignmentsTypeLabel[item.assType as assType] : "-"}
-      </td>
-
-      <td>
-        <div className="flex items-center gap-2">
-          {(role === "admin" || role === "teacher") && (
-            <>
-              <FormContainer
-                table="assignment"
-                type="update"
-                data={item}
-              ></FormContainer>
-              <FormContainer
-                table="assignment"
-                type="delete"
-                id={item.id}
-              ></FormContainer>
-            </>
-          )}
-        </div>
-      </td>
-    </tr>
-  );
 
   const query: Prisma.AssignmentWhereInput = {};
   let orderBy: Prisma.AssignmentOrderByWithRelationInput | undefined;

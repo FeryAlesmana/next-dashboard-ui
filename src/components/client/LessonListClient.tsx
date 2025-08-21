@@ -2,13 +2,13 @@
 import { useState } from "react";
 import Table from "@/components/Table";
 import BulkActions from "../BulkActions";
-import ResultTableClient from "./ResultTableClient";
 import { BaseListClientProps } from "./AssignmentListClient";
 import TableSearch from "../TableSearch";
 import FilterSortToggle from "../FilterSortToggle";
 import FormModal from "../FormModal";
+import LessonTableClient from "./LessonTableClient";
 
-export default function ResultListClient({
+export default function LessonListClient({
   columns,
   data,
   role,
@@ -53,7 +53,7 @@ export default function ResultListClient({
     <div className="space-y-4 mt-3">
       {/* TOP */}
       <div className="flex items-center justify-between">
-        <h1 className="hidden md:block text-lg font-semibold">Semua Nilai</h1>
+        <h1 className="hidden md:block text-lg font-semibold">Jadwal {}</h1>
         <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
           <TableSearch></TableSearch>
           <div className="flex items-center gap-4 self-end">
@@ -69,17 +69,30 @@ export default function ResultListClient({
                   label: "Tingkat",
                   options: gradeOptions,
                 },
+                {
+                  name: "day",
+                  label: "Hari",
+                  options: [
+                    { label: "Senin", value: "SENIN" },
+                    { label: "Selasa", value: "SELASA" },
+                    { label: "Rabu", value: "RABU" },
+                    { label: "Kamis", value: "KAMIS" },
+                    { label: "Jumat", value: "JUMAT" },
+                    // Add more as needed
+                  ],
+                },
               ]}
               sortOptions={[
                 { label: "A-Z", value: "az" },
                 { label: "Z-A", value: "za" },
                 { label: "ID Asc", value: "id_asc" },
                 { label: "ID Desc", value: "id_desc" },
+                { label: "Day", value: "day" }, // Only for this page
               ]}
             />
-            {(role === "admin" || role === "teacher") && (
+            {role === "admin" && (
               <FormModal
-                table="result"
+                table="lesson"
                 type="create"
                 relatedData={relatedData}
                 onChanged={handleChanged}
@@ -90,7 +103,7 @@ export default function ResultListClient({
       </div>
       <BulkActions
         selectedIds={selected}
-        table="result"
+        table="lesson"
         onReset={() => setSelected([])}
         data={data}
         relatedData={relatedData}
@@ -115,7 +128,7 @@ export default function ResultListClient({
           {/* other headers */}
         </tr>
         {localData.map((row) => (
-          <ResultTableClient
+          <LessonTableClient
             key={row.id}
             data={row}
             role={role}

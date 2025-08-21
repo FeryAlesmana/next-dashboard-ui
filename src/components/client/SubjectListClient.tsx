@@ -2,13 +2,13 @@
 import { useState } from "react";
 import Table from "@/components/Table";
 import BulkActions from "../BulkActions";
-import ResultTableClient from "./ResultTableClient";
 import { BaseListClientProps } from "./AssignmentListClient";
 import TableSearch from "../TableSearch";
 import FilterSortToggle from "../FilterSortToggle";
 import FormModal from "../FormModal";
+import SubjectTableClient from "./SubjectTableClient";
 
-export default function ResultListClient({
+export default function SubjectListClient({
   columns,
   data,
   role,
@@ -48,12 +48,18 @@ export default function ResultListClient({
     );
   };
 
-  const { classOptions = [], gradeOptions = [] } = options || {};
+  const {
+    classOptions = [],
+    gradeOptions = [],
+    teacherOptions = [],
+  } = options || {};
   return (
     <div className="space-y-4 mt-3">
       {/* TOP */}
       <div className="flex items-center justify-between">
-        <h1 className="hidden md:block text-lg font-semibold">Semua Nilai</h1>
+        <h1 className="hidden md:block text-lg font-semibold">
+          Semua Mata Pelajaran
+        </h1>
         <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
           <TableSearch></TableSearch>
           <div className="flex items-center gap-4 self-end">
@@ -69,6 +75,11 @@ export default function ResultListClient({
                   label: "Tingkat",
                   options: gradeOptions,
                 },
+                {
+                  name: "teacherId",
+                  label: "Guru",
+                  options: teacherOptions,
+                },
               ]}
               sortOptions={[
                 { label: "A-Z", value: "az" },
@@ -77,9 +88,9 @@ export default function ResultListClient({
                 { label: "ID Desc", value: "id_desc" },
               ]}
             />
-            {(role === "admin" || role === "teacher") && (
+            {role === "admin" && (
               <FormModal
-                table="result"
+                table="subject"
                 type="create"
                 relatedData={relatedData}
                 onChanged={handleChanged}
@@ -90,7 +101,7 @@ export default function ResultListClient({
       </div>
       <BulkActions
         selectedIds={selected}
-        table="result"
+        table="subject"
         onReset={() => setSelected([])}
         data={data}
         relatedData={relatedData}
@@ -115,7 +126,7 @@ export default function ResultListClient({
           {/* other headers */}
         </tr>
         {localData.map((row) => (
-          <ResultTableClient
+          <SubjectTableClient
             key={row.id}
             data={row}
             role={role}

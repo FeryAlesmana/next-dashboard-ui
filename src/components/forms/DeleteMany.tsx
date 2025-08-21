@@ -1,6 +1,12 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { startTransition, useEffect, useState } from "react";
+import {
+  Dispatch,
+  SetStateAction,
+  startTransition,
+  useEffect,
+  useState,
+} from "react";
 import { toast } from "react-toastify";
 
 // DeleteManyForm.tsx
@@ -9,6 +15,7 @@ type DeleteManyFormProps = {
   formAction: (formData: FormData) => void;
   table: string;
   onDeleted?: (ids: (string | number)[]) => void;
+  setOpen: Dispatch<SetStateAction<boolean>>;
 };
 
 export default function DeleteManyForm({
@@ -16,6 +23,7 @@ export default function DeleteManyForm({
   formAction,
   table,
   onDeleted,
+  setOpen,
 }: DeleteManyFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -36,16 +44,13 @@ export default function DeleteManyForm({
     if (!isSubmitting) return;
     // you can watch state from props if you pass it down
     toast(`${ids.length} data dari ${table} berhasil dihapus`);
+    setOpen(false);
     if (onDeleted) {
-      if (!ids || ids.length === 0) {
-        onDeleted(ids);
-      } else {
-        router.refresh();
-      }
+      onDeleted(ids);
     }
     router.refresh();
     setIsSubmitting(false);
-  }, [isSubmitting, ids, table, router, onDeleted]);
+  }, [isSubmitting, ids, table, router, onDeleted, setOpen]);
   if (!ids || ids.length === 0) {
     return <span>Tidak ada data yang dipilih.</span>;
   }

@@ -12,8 +12,10 @@ import {
   useState,
 } from "react";
 import {
+  CreateteacherSchema,
   createTeacherSchema,
   TeacherSchema,
+  UpdateteacherSchema,
   updateTeacherSchema,
 } from "@/lib/formValidationSchema";
 import { useRouter } from "next/navigation";
@@ -24,18 +26,15 @@ import { Day } from "@prisma/client";
 import UploadPhoto from "../UploadPhoto";
 import z from "zod";
 import ConfirmDialog from "../ConfirmDialog";
+import { BaseFormProps } from "./AssignmentForm";
 
 const TeacherForm = ({
   type,
   data,
   setOpen,
   relatedData,
-}: {
-  type: "create" | "update";
-  data?: any;
-  setOpen: Dispatch<SetStateAction<boolean>>;
-  relatedData: any;
-}) => {
+  onChanged,
+}: BaseFormProps) => {
   const schema = type === "create" ? createTeacherSchema : updateTeacherSchema;
 
   const {
@@ -43,7 +42,6 @@ const TeacherForm = ({
     handleSubmit,
     control,
     reset,
-    watch,
     formState: { errors },
   } = useForm<
     typeof schema extends z.ZodTypeAny ? z.infer<typeof schema> : never
@@ -58,6 +56,19 @@ const TeacherForm = ({
   });
   // console.log("✅ TeacherForm rendered");
   const [img, setImg] = useState<any>();
+  const createTeacherHandler = async (
+    prevState: CurrentState,
+    payload: CreateteacherSchema
+  ): Promise<CurrentState> => {
+    return await createTeacher(prevState, payload);
+  };
+
+  const updateTeacherHandler = async (
+    prevState: CurrentState,
+    payload: UpdateteacherSchema
+  ): Promise<CurrentState> => {
+    return await updateTeacher(prevState, payload);
+  };
 
   const initialState: CurrentState = {
     success: false,
@@ -65,7 +76,7 @@ const TeacherForm = ({
     message: "",
   };
   const [state, formAction] = useActionState(
-    type === "create" ? createTeacher : updateTeacher,
+    type === "create" ? createTeacherHandler : updateTeacherHandler,
     initialState
   );
 
@@ -130,15 +141,21 @@ const TeacherForm = ({
       });
     }
     if (state.success) {
+      const updatedItem = state.data ?? data;
       toast(
         `Guru telah berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`
       );
+      if (onChanged && updatedItem) {
+        onChanged(updatedItem); // 🔥 notify parent so it can update localData
+      } else {
+        router.refresh(); // fallback if no handler passed
+      }
       setOpen(false);
       setTimeout(() => {
         router.refresh();
       }, 800); // 0.8s delay
     }
-  }, [state, type, setOpen, router, data, reset, img]);
+  }, [state, type, setOpen, router, data, reset, img, onChanged]);
   const [showPassword, setShowPassword] = useState(false);
   return (
     <>

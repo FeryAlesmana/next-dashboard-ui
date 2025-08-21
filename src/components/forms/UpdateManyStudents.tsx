@@ -13,15 +13,8 @@ import {
 } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
-import { updateManyStudents } from "@/lib/actions"; // make sure this is defined
-
-type UpdateManyStudentsFormProps = {
-  ids?: string[];
-  table: string;
-  data?: any;
-  relatedData?: any;
-  setOpen: Dispatch<SetStateAction<boolean>>;
-};
+import { CurrentState, updateManyStudents } from "@/lib/actions"; // make sure this is defined
+import { UpdateManyFormProps } from "./UpdateManyAssignments";
 
 const UpdateManyStudentsForm = ({
   ids,
@@ -29,7 +22,8 @@ const UpdateManyStudentsForm = ({
   data,
   relatedData,
   setOpen,
-}: UpdateManyStudentsFormProps) => {
+  onChanged,
+}: UpdateManyFormProps & { ids?: string[] }) => {
   const {
     register,
     handleSubmit,
@@ -60,9 +54,21 @@ const UpdateManyStudentsForm = ({
       ) || [];
 
   console.log(classes, "isi Kelas Kelas");
-
-  const initialState = { success: false, error: false, message: "" };
-  const [state, formAction] = useActionState(updateManyStudents, initialState);
+  const updateManyStudentsHandler = async (
+    prevState: CurrentState,
+    payload: MstudentSchema
+  ): Promise<CurrentState> => {
+    return await updateManyStudents(prevState, payload);
+  };
+  const initialState: CurrentState = {
+    success: false,
+    error: false,
+    message: "",
+  };
+  const [state, formAction] = useActionState(
+    updateManyStudentsHandler,
+    initialState
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
 
@@ -73,11 +79,14 @@ const UpdateManyStudentsForm = ({
 
   useEffect(() => {
     if (state.success) {
-      toast("Berhasil memperbarui siswa.");
+      toast("Berhasil memperbarui siswa-siswa.");
+      if (state.data && onChanged) {
+        onChanged(state.data);
+      }
       setOpen(false);
       router.refresh();
     }
-  }, [state.success, setOpen, router]);
+  }, [state.success, setOpen, router, onChanged, state.data]);
 
   if (!ids || ids.length === 0) {
     return <span>Tidak ada data yang dipilih.</span>;

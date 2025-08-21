@@ -46,8 +46,14 @@ export default function PpdbTableClient({
                   type="update"
                   data={data}
                   relatedData={relatedData}
+                  onChanged={onChanged}
                 ></FormModal>
-                <FormModal table="ppdb" type="delete" id={data.id}></FormModal>
+                <FormModal
+                  table="ppdb"
+                  type="delete"
+                  id={data.id}
+                  onDeleted={() => onDeleted?.([data.id])}
+                ></FormModal>
               </>
             )}
           </div>

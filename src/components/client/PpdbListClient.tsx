@@ -10,13 +10,38 @@ export default function PpdbListClient({
   data,
   role,
   relatedData,
-  options
+  options,
 }: BaseListClientProps) {
   const [selected, setSelected] = useState<string[]>([]);
+  const [localData, setLocalData] = useState(data); // 👈 keep a client copy
 
   const toggleSelection = (id: string) => {
     setSelected((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+    );
+  };
+  const handleDeleteOptimistic = (ids: (string | number)[]) => {
+    setLocalData((prev) => prev.filter((item) => !ids.includes(item.id)));
+    setSelected([]); // reset selection
+  };
+  const handleChanged = (item: any) => {
+    setLocalData((prev) => {
+      const exists = prev.find((p) => p.id === item.id);
+      if (exists) {
+        // update existing
+        return prev.map((p) => (p.id === item.id ? { ...p, ...item } : p));
+      } else {
+        // append new
+        return [...prev, item];
+      }
+    });
+  };
+  const handleManyChanged = (items: any[]) => {
+    setLocalData((prev) =>
+      prev.map((p) => {
+        const updated = items.find((u) => u.id === p.id);
+        return updated ? { ...p, ...updated } : p;
+      })
     );
   };
 
@@ -28,6 +53,9 @@ export default function PpdbListClient({
         onReset={() => setSelected([])}
         data={data}
         relatedData={relatedData}
+        onDeleted={handleDeleteOptimistic} // pass handler
+        handleChanged={handleChanged}
+        handleManyChanged={handleManyChanged}
       />
 
       <Table columns={columns}>
@@ -45,14 +73,16 @@ export default function PpdbListClient({
           )}
           {/* other headers */}
         </tr>
-        {data.map((data) => (
+        {localData.map((row) => (
           <PpdbTableClient
-            key={data.id}
-            data={data}
+            key={row.id}
+            data={row}
             role={role}
             selected={selected}
             onToggle={toggleSelection}
             relatedData={relatedData}
+            onDeleted={handleDeleteOptimistic}
+            onChanged={handleChanged}
           />
         ))}
       </Table>

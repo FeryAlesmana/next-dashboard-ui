@@ -4,29 +4,19 @@ import { Controller, useForm } from "react-hook-form";
 import InputField from "../InputField";
 import { subjectSchema, SubjectSchema } from "@/lib/formValidationSchema";
 import { createSubject, CurrentState, updateSubject } from "@/lib/actions";
-import {
-  Dispatch,
-  SetStateAction,
-  startTransition,
-  useActionState,
-  useEffect,
-  useState,
-} from "react";
+import { startTransition, useActionState, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
 import Select from "react-select";
+import { BaseFormProps } from "./AssignmentForm";
 
 const SubjectForm = ({
   setOpen,
   type,
   data,
   relatedData,
-}: {
-  setOpen: Dispatch<SetStateAction<boolean>>;
-  type: "create" | "update";
-  data?: any;
-  relatedData?: any;
-}) => {
+  onChanged,
+}: BaseFormProps) => {
   const {
     register,
     handleSubmit,
@@ -74,15 +64,21 @@ const SubjectForm = ({
 
   useEffect(() => {
     if (state.success) {
+      const updatedItem = state.data ?? data;
       toast(
         `Mata Pelajaran telah berhasil di ${
           type === "create" ? "Tambah!" : "Edit!"
         }`
       );
       setOpen(false);
+      if (onChanged && updatedItem) {
+        onChanged(updatedItem); // 🔥 notify parent so it can update localData
+      } else {
+        router.refresh(); // fallback if no handler passed
+      }
       router.refresh();
     }
-  }, [state, type, setOpen, router]);
+  }, [state, type, setOpen, router, onChanged, data]);
 
   const { teachers = [] } = relatedData ?? {};
   const teacherOption = teachers.map(

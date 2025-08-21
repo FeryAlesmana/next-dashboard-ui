@@ -59,7 +59,12 @@ export default function TeacherTableClient({
               </button>
             </Link>
             {role === "admin" && (
-              <FormModal table="teacher" type="delete" id={data.id}></FormModal>
+              <FormModal
+                table="teacher"
+                type="delete"
+                id={data.id}
+                onDeleted={() => onDeleted?.([data.id])}
+              ></FormModal>
             )}
           </div>
         </td>

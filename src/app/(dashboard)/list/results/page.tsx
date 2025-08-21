@@ -47,39 +47,6 @@ const ResultListPage = async ({
       ? [{ header: "Aksi", accessor: "action" }]
       : []),
   ];
-  const resultTypelabel = {
-    UJIAN_HARIAN: "Ujian Harian",
-    UJIAN_TENGAH_SEMESTER: "Ujian Tengah Semester",
-    UJIAN_AKHIR_SEMESTER: "Ujian Akhir Semester",
-    PEKERJAAN_RUMAH: "Pekerjaan Rumah",
-    TUGAS_AKHIR: "Tugas Akhir",
-    TUGAS_HARIAN: "Tugas Harian",
-  } as const;
-  const renderRow = (item: any) => (
-    <tr
-      key={item.id}
-      className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight"
-    >
-      <td className="p-4">{item?.subject || "-"}</td>
-      <td>{item.student}</td>
-      <td className="hidden md:table-cell">{item.score}</td>
-      <td className="hidden md:table-cell">{item.teacher}</td>
-      <td className="hidden md:table-cell">{item.class}</td>
-      <td className="hidden md:table-cell">
-        {item?.resultType ? resultTypelabel[item?.resultType as resTypes] : "-"}
-      </td>
-      <td>
-        <div className="flex items-center gap-2">
-          {(role === "admin" || role === "teacher") && (
-            <>
-              <FormContainer table="result" type="update" data={item} />
-              <FormContainer table="result" type="delete" id={item.id} />
-            </>
-          )}
-        </div>
-      </td>
-    </tr>
-  );
 
   const query: Prisma.ResultWhereInput = {};
   let orderBy: Prisma.ResultOrderByWithRelationInput | undefined;
@@ -350,47 +317,22 @@ const ResultListPage = async ({
       };
     })
     .filter(Boolean);
+  const classOptions = classes.map((cls) => ({
+    label: cls?.name ?? "Unknown Class",
+    value: cls?.id?.toString() ?? "",
+  }));
+  const gradeOptions = grades.map((level) => ({
+    label: level.toString(),
+    value: level,
+  }));
+
+  let options = {
+    classOptions,
+    gradeOptions,
+  };
   return (
     <ClientPageWrapper key={key} role={role!}>
       <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
-        {/* TOP */}
-        <div className="flex items-center justify-between">
-          <h1 className="hidden md:block text-lg font-semibold">Semua Nilai</h1>
-          <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-            <TableSearch></TableSearch>
-            <div className="flex items-center gap-4 self-end">
-              <FilterSortToggle
-                filterFields={[
-                  {
-                    name: "classId",
-                    label: "Kelas",
-                    options: classes.map((cls) => ({
-                      label: cls?.name ?? "Unknown Class",
-                      value: cls?.id?.toString() ?? "",
-                    })),
-                  },
-                  {
-                    name: "gradeId",
-                    label: "Tingkat",
-                    options: grades.map((level) => ({
-                      label: level.toString(),
-                      value: level,
-                    })),
-                  },
-                ]}
-                sortOptions={[
-                  { label: "A-Z", value: "az" },
-                  { label: "Z-A", value: "za" },
-                  { label: "ID Asc", value: "id_asc" },
-                  { label: "ID Desc", value: "id_desc" },
-                ]}
-              />
-              {(role === "admin" || role === "teacher") && (
-                <FormContainer table="result" type="create"></FormContainer>
-              )}
-            </div>
-          </div>
-        </div>
         {/* LIST */}
         <div className="">
           {/* <Table columns={columns} renderRow={renderRow} data={data}></Table> */}
@@ -399,6 +341,7 @@ const ResultListPage = async ({
             data={data}
             role={role!}
             relatedData={relatedData}
+            options={options}
           />
         </div>
         {/* PAGINATION*/}

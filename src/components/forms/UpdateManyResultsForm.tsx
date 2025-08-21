@@ -17,14 +17,7 @@ import { updateResults } from "@/lib/actions"; // make sure this is defined
 import InputField from "../InputField";
 import Select from "react-select";
 import { assTypes, exTypes, resTypes } from "@prisma/client";
-
-type UpdateManyResultsFormProps = {
-  ids?: number[];
-  table: string;
-  data?: any;
-  relatedData?: any;
-  setOpen: Dispatch<SetStateAction<boolean>>;
-};
+import { UpdateManyFormProps } from "./UpdateManyAssignments";
 
 const UpdateManyResultsForm = ({
   ids,
@@ -32,7 +25,8 @@ const UpdateManyResultsForm = ({
   data,
   relatedData,
   setOpen,
-}: UpdateManyResultsFormProps) => {
+  onChanged,
+}: UpdateManyFormProps & { ids?: number[] }) => {
   const {
     register,
     handleSubmit,
@@ -63,10 +57,13 @@ const UpdateManyResultsForm = ({
     setValue("selectedType", selectedType);
     if (state.success) {
       toast("Berhasil memperbarui siswa.");
+      if (state.data && onChanged) {
+        onChanged(state.data);
+      }
       setOpen(false);
       router.refresh();
     }
-  }, [state.success, setOpen, router, setValue, selectedType]);
+  }, [state, setOpen, router, setValue, selectedType, onChanged]);
 
   if (!ids || ids.length === 0) {
     return <span>Tidak ada data yang dipilih.</span>;

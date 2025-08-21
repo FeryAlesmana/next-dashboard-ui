@@ -20,13 +20,13 @@ import { toast } from "react-toastify";
 import Select from "react-select";
 import ConfirmDialog from "../ConfirmDialog";
 export type UpdateManyFormProps = {
-  ids?: number[];
   table: string;
   data?: any;
   relatedData?: any;
   setOpen: Dispatch<SetStateAction<boolean>>;
   onChanged?: (items: any[]) => void;
 };
+
 const UpdateManyAssignmentsForm = ({
   ids,
   table,
@@ -34,7 +34,7 @@ const UpdateManyAssignmentsForm = ({
   relatedData,
   setOpen,
   onChanged,
-}: UpdateManyFormProps) => {
+}: UpdateManyFormProps & { ids?: number[] }) => {
   const {
     register,
     handleSubmit,

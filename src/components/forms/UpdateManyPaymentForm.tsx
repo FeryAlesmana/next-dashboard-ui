@@ -29,12 +29,14 @@ export default function CreatePaymentLogPage({
   data,
   relatedData,
   setOpen,
+  onChanged,
 }: {
   ids?: number[];
   table: string;
   setOpen: Dispatch<SetStateAction<boolean>>;
   data?: any;
   relatedData: any;
+  onChanged?: (items: any[]) => void;
 }) {
   // Extract selected items
 
@@ -164,12 +166,15 @@ export default function CreatePaymentLogPage({
   useEffect(() => {
     if (state.success) {
       toast(`Tagihan berhasil di Edit!`);
+      if (state.data && onChanged) {
+        onChanged(state.data);
+      }
       setOpen(false);
       router.refresh();
     } else {
       setIsSubmitting(false);
     }
-  }, [state, setOpen, router]);
+  }, [state, setOpen, router, onChanged]);
   //   useEffect(() => {
   //     if (ids && ids.length > 0) {
   //       setValue("ids", ids);

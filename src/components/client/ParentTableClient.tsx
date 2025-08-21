@@ -58,11 +58,13 @@ export default function ParentTableClient({
                   type="update"
                   data={data}
                   relatedData={relatedData}
+                  onChanged={onChanged}
                 ></FormModal>
                 <FormModal
                   table="parent"
                   type="delete"
                   id={data.id}
+                  onDeleted={() => onDeleted?.([data.id])}
                 ></FormModal>
               </>
             )}

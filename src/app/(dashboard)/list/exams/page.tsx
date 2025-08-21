@@ -23,7 +23,7 @@ const ExamListPage = async ({
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) => {
   const sp = await normalizeSearchParams(searchParams);
-  const { page, ...queryParams } = sp;
+  const { page, limit, ...queryParams } = sp;
   const key = new URLSearchParams(
     Object.entries(sp).reduce((acc, [k, v]) => {
       if (v !== undefined) acc[k] = v;
@@ -31,6 +31,7 @@ const ExamListPage = async ({
     }, {} as Record<string, string>)
   ).toString();
   const p = page ? parseInt(page) : 1;
+  const perPage = limit === "all" ? undefined : parseInt(limit ?? "10");
 
   const { role, userId } = await getCurrentUser();
   const columns = [
@@ -79,70 +80,6 @@ const ExamListPage = async ({
         ]
       : []),
   ];
-  const examTypeLabel = {
-    UJIAN_HARIAN: "Ujian Harian",
-    UJIAN_TENGAH_SEMESTER: "Ujian Tengah Semester",
-    UJIAN_AKHIR_SEMESTER: "Ujian Akhir Semester",
-  } as const;
-  const renderRow = (item: ExamList) => (
-    <tr
-      key={item.id}
-      className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight"
-    >
-      <td className="flex items-center p-4 gap-4">
-        {item.lesson.subject?.name || "-"}
-      </td>
-      <td>{item.lesson.class.name}</td>
-      <td className="hidden md:table-cell">
-        {item.lesson.teacher
-          ? `${item.lesson.teacher.name} ${item.lesson.teacher.namalengkap}`
-          : "Tidak ada guru"}
-      </td>
-      <td className="hidden md:table-cell">
-        {" "}
-        {item.startTime.toLocaleDateString("id-ID", {
-          timeZone: "Asia/Jakarta",
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: false,
-          day: "numeric",
-          month: "numeric",
-        })}
-      </td>
-      <td className="hidden md:table-cell">
-        {" "}
-        {item.endTime.toLocaleDateString("id-ID", {
-          timeZone: "Asia/Jakarta",
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: false,
-          day: "numeric",
-          month: "numeric",
-        })}
-      </td>
-      <td className="hidden md:table-cell">
-        {item.exType ? examTypeLabel[item.exType] : "-"}
-      </td>
-      <td>
-        <div className="flex items-center gap-2">
-          {(role === "admin" || role == "teacher") && (
-            <>
-              <FormContainer
-                table="exam"
-                type="update"
-                data={item}
-              ></FormContainer>
-              <FormContainer
-                table="exam"
-                type="delete"
-                id={item.id}
-              ></FormContainer>
-            </>
-          )}
-        </div>
-      </td>
-    </tr>
-  );
 
   const query: Prisma.ExamWhereInput = {};
 
@@ -276,8 +213,8 @@ const ExamListPage = async ({
           },
         },
       },
-      take: ITEM_PER_PAGE,
-      skip: ITEM_PER_PAGE * (p - 1),
+      take: perPage,
+      skip: perPage ? perPage * (p - 1) : undefined,
     }),
     prisma.exam.count({ where: query }),
     prisma.lesson.findMany({

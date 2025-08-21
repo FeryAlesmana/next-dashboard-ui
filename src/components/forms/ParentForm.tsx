@@ -22,18 +22,15 @@ import { toast } from "react-toastify";
 import Select from "react-select";
 import z from "zod";
 import ConfirmDialog from "../ConfirmDialog";
+import { BaseFormProps } from "./AssignmentForm";
 
 const ParentForm = ({
   setOpen,
   type,
   data,
   relatedData,
-}: {
-  setOpen: Dispatch<SetStateAction<boolean>>;
-  type: "create" | "update";
-  data?: any;
-  relatedData?: any;
-}) => {
+  onChanged,
+}: BaseFormProps) => {
   const schema = type === "create" ? createParentSchema : updateParentSchema;
   const {
     register,
@@ -43,6 +40,7 @@ const ParentForm = ({
     reset,
     formState: { errors },
     getValues,
+    trigger,
   } = useForm<
     typeof schema extends z.ZodTypeAny ? z.infer<typeof schema> : never
   >({
@@ -93,14 +91,18 @@ const ParentForm = ({
   };
 
   // Submit awal: validasi → kalau valid munculkan dialog
-  const onSubmit = handleSubmit(
-    () => {
-      setShowConfirm(true);
-    },
-    () => {
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const valid = await trigger();
+    if (valid) {
+      // Ambil data form jika valid dan tampilkan dialog konfirmasi
+      handleSubmit((data) => {
+        setShowConfirm(true);
+      })();
+    } else {
       setShowConfirm(false);
     }
-  );
+  };
 
   useEffect(() => {
     if (type === "update" && data?.students) {
@@ -118,15 +120,19 @@ const ParentForm = ({
       });
     }
     if (state.success) {
+      const updatedItem = state.data ?? data;
       toast(
-        `Orang tua telah berhasil di ${
-          type === "create" ? "Tambah!" : "Edit!"
-        }`
+        `Orang tua telah berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`
       );
       setOpen(false);
+      if (onChanged && updatedItem) {
+        onChanged(updatedItem); // 🔥 notify parent so it can update localData
+      } else {
+        router.refresh(); // fallback if no handler passed
+      }
       router.refresh();
     }
-  }, [state, type, setOpen, router, data, reset]);
+  }, [state, type, setOpen, router, data, reset, onChanged]);
 
   const { students = [] } = relatedData ?? {};
   const studentOptions = students.map(

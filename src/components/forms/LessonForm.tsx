@@ -17,18 +17,15 @@ import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import Select from "react-select";
 import ConfirmDialog from "../ConfirmDialog";
+import { BaseFormProps } from "./AssignmentForm";
 
 const LessonForm = ({
   setOpen,
   type,
   data,
   relatedData,
-}: {
-  setOpen: Dispatch<SetStateAction<boolean>>;
-  type: "create" | "update";
-  data?: any;
-  relatedData: any;
-}) => {
+  onChanged,
+}: BaseFormProps) => {
   const {
     register,
     handleSubmit,
@@ -76,13 +73,19 @@ const LessonForm = ({
 
   useEffect(() => {
     if (state.success) {
+      const updatedItem = state.data ?? formData;
       toast(
         `Jadwal telah berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`
       );
       setOpen(false);
+      if (onChanged && updatedItem) {
+        onChanged(updatedItem); // 🔥 notify parent so it can update localData
+      } else {
+        router.refresh(); // fallback if no handler passed
+      }
       router.refresh();
     }
-  }, [state, type, setOpen, router]);
+  }, [state, type, setOpen, router, onChanged, formData]);
 
   // Submit sebenarnya, dipanggil setelah konfirmasi "Ya"
   const submitForm = () => {
@@ -198,7 +201,9 @@ const LessonForm = ({
                   className="text-sm"
                   classNamePrefix="select"
                   placeholder="Cari Matpel..."
-                  onChange={(selectedOption) => field.onChange(selectedOption?.value)}
+                  onChange={(selectedOption) =>
+                    field.onChange(selectedOption?.value)
+                  }
                   value={
                     SubjectOptions.find(
                       (opt: { value: number; label: string }) =>
@@ -210,7 +215,9 @@ const LessonForm = ({
             />
 
             {errors.subjectId?.message && (
-              <p className="text-xs text-red-400">{errors.subjectId.message.toString()}</p>
+              <p className="text-xs text-red-400">
+                {errors.subjectId.message.toString()}
+              </p>
             )}
           </div>
           <InputField
@@ -252,7 +259,9 @@ const LessonForm = ({
                   className="text-sm"
                   classNamePrefix="select"
                   placeholder="Cari Kelas..."
-                  onChange={(selectedOption) => field.onChange(selectedOption?.value)}
+                  onChange={(selectedOption) =>
+                    field.onChange(selectedOption?.value)
+                  }
                   value={
                     ClassOptions.find(
                       (opt: { value: number; label: string }) =>
@@ -264,7 +273,9 @@ const LessonForm = ({
             />
 
             {errors.classId?.message && (
-              <p className="text-xs text-red-400">{errors.classId.message.toString()}</p>
+              <p className="text-xs text-red-400">
+                {errors.classId.message.toString()}
+              </p>
             )}
           </div>
           <div className="flex flex-col gap-2 w-full md:w-1/4">
@@ -281,7 +292,9 @@ const LessonForm = ({
               <option value="JUMAT">JUMAT</option>
             </select>
             {errors.day?.message && (
-              <p className="text-xs text-red-400">{errors.day.message.toString()}</p>
+              <p className="text-xs text-red-400">
+                {errors.day.message.toString()}
+              </p>
             )}
           </div>
           <div className="flex flex-col gap-2 w-full md:w-1/4">
@@ -298,7 +311,9 @@ const LessonForm = ({
                   className="text-sm"
                   classNamePrefix="select"
                   placeholder="Cari Guru..."
-                  onChange={(selectedOption) => field.onChange(selectedOption?.value)}
+                  onChange={(selectedOption) =>
+                    field.onChange(selectedOption?.value)
+                  }
                   value={
                     teacherOptions.find(
                       (opt: { value: string; label: string }) =>
@@ -310,7 +325,9 @@ const LessonForm = ({
             />
 
             {errors.teacherId?.message && (
-              <p className="text-xs text-red-400">{errors.teacherId.message.toString()}</p>
+              <p className="text-xs text-red-400">
+                {errors.teacherId.message.toString()}
+              </p>
             )}
           </div>
         </div>
@@ -355,7 +372,11 @@ const LessonForm = ({
 
       {showConfirm && (
         <ConfirmDialog
-          message={type === "create" ? "Tambahkan Jadwal baru?" : "Simpan perubahan jadwal?"}
+          message={
+            type === "create"
+              ? "Tambahkan Jadwal baru?"
+              : "Simpan perubahan jadwal?"
+          }
           onConfirm={submitForm}
           onCancel={() => setShowConfirm(false)}
         />

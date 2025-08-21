@@ -17,18 +17,15 @@ import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { resTypes } from "@prisma/client";
 import ConfirmDialog from "../ConfirmDialog";
+import { BaseFormProps } from "./AssignmentForm";
 
 const ResultForm = ({
   setOpen,
   type,
   data,
   relatedData,
-}: {
-  setOpen: Dispatch<SetStateAction<boolean>>;
-  type: "create" | "update";
-  data?: any;
-  relatedData?: any;
-}) => {
+  onChanged,
+}: BaseFormProps) => {
   const {
     register,
     handleSubmit,
@@ -103,14 +100,20 @@ const ResultForm = ({
 
   useEffect(() => {
     setValue("selectedType", selectedType);
+    const updatedItem = state.data ?? data;
     if (state.success) {
       toast(
         `Ujian telah berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`
       );
       setOpen(false);
+      if (onChanged && updatedItem) {
+        onChanged(updatedItem); // 🔥 notify parent so it can update localData
+      } else {
+        router.refresh(); // fallback if no handler passed
+      }
       router.refresh();
     }
-  }, [state, type, setOpen, router, setValue, selectedType]);
+  }, [state, type, setOpen, router, setValue, selectedType, onChanged, data]);
 
   const { students = [], exams = [], assignments = [] } = relatedData ?? {};
   const studentOption = students.map(
@@ -145,7 +148,9 @@ const ResultForm = ({
     <>
       <form action="" className="flex flex-col gap-8" onSubmit={onSubmit}>
         <h1 className="text-xl font-semibold">Tambah Nilai Baru</h1>
-        <span className="text-xs text-gray-400 font-medium">Informasi Nilai</span>
+        <span className="text-xs text-gray-400 font-medium">
+          Informasi Nilai
+        </span>
         <div className="flex justify-between flex-wrap gap-10 m-4 mb-8">
           <InputField
             label="Nilai"
@@ -402,7 +407,9 @@ const ResultForm = ({
       {/* Dialog konfirmasi muncul jika showConfirm true */}
       {showConfirm && (
         <ConfirmDialog
-          message={type === "create" ? "Tambah Nilai baru?" : "Simpan perubahan nilai?"}
+          message={
+            type === "create" ? "Tambah Nilai baru?" : "Simpan perubahan nilai?"
+          }
           onConfirm={handleSubmitForm}
           onCancel={() => setShowConfirm(false)}
         />

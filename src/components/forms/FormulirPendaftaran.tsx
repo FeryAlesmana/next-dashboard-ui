@@ -20,6 +20,7 @@ import { useRouter } from "next/navigation";
 import { createPpdb, CurrentState, updatePpdb } from "@/lib/actions";
 import { cloudinaryUpload } from "@/lib/upload/cloudinaryUpload";
 import ConfirmDialog from "../ConfirmDialog";
+import { BaseFormProps } from "./AssignmentForm";
 
 const FORM_KEY = "ppdb_draft_form";
 
@@ -29,13 +30,8 @@ const FormulirPendaftaran = ({
   relatedData,
   setOpen,
   prefilEmail,
-}: {
-  setOpen: Dispatch<SetStateAction<boolean>>;
-  data?: any;
-  type: "create" | "update";
-  relatedData: any;
-  prefilEmail?: string;
-}) => {
+  onChanged,
+}: BaseFormProps & { prefilEmail?: string }) => {
   const {
     register,
     handleSubmit,
@@ -247,17 +243,22 @@ const FormulirPendaftaran = ({
   useEffect(() => {
     console.log("state.success:", state.success);
     if (state.success) {
+      const updatedItem = state.data ?? data; // <- depends on what your action returns
       localStorage.removeItem(FORM_KEY);
       toast(
         `PPDB telah berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`
       );
-      if (type === "update") {
-        setOpen(false);
+      if (onChanged && updatedItem) {
+        onChanged(updatedItem); // 🔥 notify parent so it can update localData
+      } else {
+        // fallback if no handler passed
+        setTimeout(() => {
+          if (type === "update") {
+            setOpen(false);
+            router.refresh();
+          }
+        }, 300); // 300ms delay;
       }
-      setTimeout(() => {
-        if (type === "update") setOpen(false);
-        router.refresh();
-      }, 300); // 300ms delay;
     }
     if (state.error && state.message) {
       // If the error is a field name (like "nisn"), set it on that field
@@ -272,7 +273,7 @@ const FormulirPendaftaran = ({
         });
       }
     }
-  }, [state, type, router, setOpen, setError]);
+  }, [state, type, router, setOpen, setError, onChanged, data]);
   // All possible field options for react-select
   const fieldOptions = Object.keys(ppdbSchema.shape)
     .filter(

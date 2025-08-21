@@ -789,7 +789,10 @@ export const paymentLogSchema = z.object({
   paymentMethod: z.string().optional(),
   receiptNumber: z.string().optional(),
   recipientType: z.enum(["student", "class", "grade"]),
-  recipientId: z.string().min(1, "Penerima wajib dipilih"),
+  recipientId: z.union([
+    z.string().min(1, "Penerima wajib dipilih"), // for student
+    z.coerce.number().min(1, "Penerima wajib dipilih"), // for class/grade
+  ]),
 });
 
 export type PaymentLogSchema = z.infer<typeof paymentLogSchema>;
@@ -810,7 +813,10 @@ export const mPaymentLogSchema = z.object({
   paymentMethod: z.string().optional(),
   receiptNumber: z.string().optional(),
   recipientType: z.enum(["student", "class", "grade"]),
-  recipientId: z.string().min(1, "Penerima wajib dipilih"),
+  recipientId: z.union([
+    z.string().min(1, "Penerima wajib dipilih"), // for student
+    z.coerce.number().min(1, "Penerima wajib dipilih"), // for class/grade
+  ]),
 });
 
 export type MpaymentLogSchema = z.infer<typeof mPaymentLogSchema>;
