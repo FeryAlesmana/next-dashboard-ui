@@ -12,8 +12,6 @@ export default function PaymenTableClient({
   onDeleted,
   onChanged,
 }: BaseTableClientProps) {
-  console.log("PaymentTableClient data", data);
-
   return (
     <>
       <tr className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight">

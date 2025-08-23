@@ -81,6 +81,43 @@ const ResultListPage = async ({
               },
             ];
             break;
+          case "stype":
+            if (value === "Ujian") {
+              query.examId = { not: null };
+            } else if (value === "Tugas") {
+              query.assignmentId = { not: null };
+            }
+            break;
+          case "extype":
+            switch (value) {
+              case "harian":
+                query.resultType = "UJIAN_HARIAN";
+                break;
+              case "uts":
+                query.resultType = "UJIAN_TENGAH_SEMESTER";
+                break;
+              case "uas":
+                query.resultType = "UJIAN_AKHIR_SEMESTER";
+                break;
+              default:
+                break;
+            }
+            break;
+          case "asstype":
+            switch (value) {
+              case "tharian":
+                query.resultType = "TUGAS_HARIAN";
+                break;
+              case "pr":
+                query.resultType = "PEKERJAAN_RUMAH";
+                break;
+              case "ta":
+                query.resultType = "TUGAS_AKHIR";
+                break;
+              default:
+                break;
+            }
+            break;
 
           case "sort":
             switch (value) {
@@ -342,6 +379,7 @@ const ResultListPage = async ({
             role={role!}
             relatedData={relatedData}
             options={options}
+            searchParams={sp}
           />
         </div>
         {/* PAGINATION*/}

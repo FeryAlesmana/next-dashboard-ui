@@ -62,6 +62,9 @@ export default function PaymentListClient({
     gradeOptions = [],
     pStatusOptions = [],
   } = options || {};
+
+  console.log(relatedData, "relatedData di payment list client");
+
   return (
     <div className="space-y-4 mt-3">
       {/* TOP */}

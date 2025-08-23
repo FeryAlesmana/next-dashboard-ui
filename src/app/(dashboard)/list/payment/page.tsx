@@ -245,45 +245,56 @@ const PaymentLogListPage = async ({
         }
     }
   }
-  const [data, count, classesData, studentData] = await prisma.$transaction([
-    prisma.paymentLog.findMany({
-      where: query,
-      orderBy,
-      include: {
-        student: {
-          select: {
-            name: true,
-            namalengkap: true,
-            img: true,
-            class: {
-              select: {
-                name: true,
+  const [data, count, classesData, studentData, gradeData] =
+    await prisma.$transaction([
+      prisma.paymentLog.findMany({
+        where: query,
+        orderBy,
+        include: {
+          student: {
+            select: {
+              name: true,
+              namalengkap: true,
+              img: true,
+              class: {
+                select: {
+                  name: true,
+                },
               },
+              student_details: { select: { nisn: true } },
             },
-            student_details: { select: { nisn: true } },
           },
         },
-      },
-      take: perPage,
-      skip: perPage ? perPage * (p - 1) : undefined,
-    }),
-    prisma.paymentLog.count({ where: query }),
-    prisma.class.findMany({
-      include: {
-        grade: { select: { id: true, level: true } },
-        _count: { select: { students: true } },
-      },
-    }),
-    prisma.student.findMany({
-      select: {
-        id: true,
-        name: true,
-        namalengkap: true,
-      },
-    }),
-  ]);
+        take: perPage,
+        skip: perPage ? perPage * (p - 1) : undefined,
+      }),
+      prisma.paymentLog.count({ where: query }),
+      prisma.class.findMany({
+        include: {
+          grade: { select: { id: true, level: true } },
+          _count: { select: { students: true } },
+        },
+      }),
+      prisma.student.findMany({
+        select: {
+          id: true,
+          name: true,
+          namalengkap: true,
+        },
+      }),
+      prisma.grade.findMany({
+        select: {
+          id: true,
+          level: true,
+        },
+      }),
+    ]);
   let relatedData = {};
-  relatedData = { studentData: studentData, classData: classesData };
+  relatedData = {
+    studentData: studentData,
+    classData: classesData,
+    gradeData: gradeData,
+  };
 
   const classOptions = classesData.map((cls) => ({
     label: cls.name,

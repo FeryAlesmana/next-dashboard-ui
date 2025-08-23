@@ -789,34 +789,43 @@ export const paymentLogSchema = z.object({
   paymentMethod: z.string().optional(),
   receiptNumber: z.string().optional(),
   recipientType: z.enum(["student", "class", "grade"]),
-  recipientId: z.union([
-    z.string().min(1, "Penerima wajib dipilih"), // for student
-    z.coerce.number().min(1, "Penerima wajib dipilih"), // for class/grade
-  ]),
+  recipientId: z.string().min(1, "Penerima wajib dipilih"),
 });
 
 export type PaymentLogSchema = z.infer<typeof paymentLogSchema>;
 
 export const mPaymentLogSchema = z.object({
   ids: z.array(z.number().min(1)),
-  paymentType: z.enum([
-    "TUITION",
-    "EXTRACURRICULAR",
-    "UNIFORM",
-    "BOOKS",
-    "OTHER",
-  ]),
-  amount: z.number().min(1, "Jumlah harus lebih dari 0"),
-  dueDate: z.string().min(1, "Tenggat waktu wajib diisi"),
-  status: z.enum(["PENDING", "PAID", "OVERDUE", "PARTIALLY_PAID"]),
-  description: z.string().optional(),
-  paymentMethod: z.string().optional(),
-  receiptNumber: z.string().optional(),
-  recipientType: z.enum(["student", "class", "grade"]),
-  recipientId: z.union([
-    z.string().min(1, "Penerima wajib dipilih"), // for student
-    z.coerce.number().min(1, "Penerima wajib dipilih"), // for class/grade
-  ]),
+  paymentType: z
+    .enum(["TUITION", "EXTRACURRICULAR", "UNIFORM", "BOOKS", "OTHER"])
+    .or(z.literal(""))
+    .optional(),
+  amount: z
+    .number()
+    .min(1, "Jumlah harus lebih dari 0")
+    .or(z.literal(""))
+    .optional(),
+  dueDate: z
+    .string()
+    .min(1, "Tenggat waktu wajib diisi")
+    .or(z.literal(""))
+    .optional(),
+  status: z
+    .enum(["PENDING", "PAID", "OVERDUE", "PARTIALLY_PAID"])
+    .or(z.literal(""))
+    .optional(),
+  description: z.string().or(z.literal("")).optional(),
+  paymentMethod: z.string().or(z.literal("")).optional(),
+  receiptNumber: z.string().or(z.literal("")).optional(),
+  recipientType: z
+    .enum(["student", "class", "grade"])
+    .or(z.literal(""))
+    .optional(),
+  recipientId: z
+    .string()
+    .min(1, "Penerima wajib dipilih")
+    .or(z.literal(""))
+    .optional(),
 });
 
 export type MpaymentLogSchema = z.infer<typeof mPaymentLogSchema>;
@@ -848,7 +857,9 @@ export const mresultSchema = z.object({
   score: z.coerce
     .number()
     .min(1, { message: "Nilai murid wajib diisi!" })
-    .max(100, { message: "Maksimal 100!" }),
+    .max(100, { message: "Maksimal 100!" })
+    .or(z.literal(""))
+    .optional(),
   examId: z.coerce
     .number({ message: "Id Ujian wajib diisi!" })
     .optional()
@@ -860,9 +871,12 @@ export const mresultSchema = z.object({
   selectedType: z.enum(["Ujian", "Tugas", ""], {
     message: "Tipe Hasil wajib diisi!",
   }),
-  resultType: z.nativeEnum(resTypes, {
-    message: "Tipe Nilai murid wajib diisi!",
-  }),
+  resultType: z
+    .nativeEnum(resTypes, {
+      message: "Tipe Nilai murid wajib diisi!",
+    })
+    .or(z.literal(""))
+    .optional(),
 });
 
 export type MresultSchema = z.infer<typeof mresultSchema>;

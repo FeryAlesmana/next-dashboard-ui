@@ -14,9 +14,35 @@ export default function ResultListClient({
   role,
   relatedData,
   options,
-}: BaseListClientProps) {
+  searchParams,
+}: BaseListClientProps & { searchParams?: any }) {
   const [selected, setSelected] = useState<string[]>([]);
   const [localData, setLocalData] = useState(data); // 👈 keep a client copy
+  const normalizeResult = (item: any) => {
+    const source = item.exam ?? item.assignment;
+    const lesson = source?.lesson;
+
+    const isExam = !!item.exam;
+
+    return {
+      id: item.id,
+      title: source?.title || "-",
+      subject: lesson?.subject?.name || "-",
+      studentId: item.studentId || "",
+      student: item.student
+        ? `${item.student.name} ${item.student.namalengkap}`
+        : "-",
+      teacher: lesson?.teacher
+        ? `${lesson.teacher.name} ${lesson.teacher.namalengkap}`
+        : "-",
+      score: item.score,
+      class: lesson?.class?.name || "-",
+      selectedType: isExam ? "Ujian" : "Tugas",
+      examId: item.examId || undefined,
+      assignmentId: item.assignmentId || undefined,
+      resultType: item.resultType || "",
+    };
+  };
 
   const toggleSelection = (id: string) => {
     setSelected((prev) =>
@@ -28,27 +54,52 @@ export default function ResultListClient({
     setSelected([]); // reset selection
   };
   const handleChanged = (item: any) => {
+    const normalized = normalizeResult(item);
+
     setLocalData((prev) => {
-      const exists = prev.find((p) => p.id === item.id);
+      const exists = prev.find((p) => p.id === normalized.id);
       if (exists) {
-        // update existing
-        return prev.map((p) => (p.id === item.id ? { ...p, ...item } : p));
+        return prev.map((p) =>
+          p.id === normalized.id ? { ...p, ...normalized } : p
+        );
       } else {
-        // append new
-        return [...prev, item];
+        return [...prev, normalized];
       }
     });
   };
+
   const handleManyChanged = (items: any[]) => {
+    const normalizedItems = items.map(normalizeResult);
+
     setLocalData((prev) =>
       prev.map((p) => {
-        const updated = items.find((u) => u.id === p.id);
+        const updated = normalizedItems.find((u) => u.id === p.id);
         return updated ? { ...p, ...updated } : p;
       })
     );
   };
 
   const { classOptions = [], gradeOptions = [] } = options || {};
+  const selectedType = searchParams?.stype || "";
+  const sTypeOptions = [
+    { label: "Semua", value: "" },
+    { label: "Ujian", value: "Ujian" },
+    { label: "Tugas", value: "Tugas" },
+  ];
+  const ujianOptions = [
+    { label: "Semua", value: "" },
+    { label: "Ujian Harian", value: "harian" },
+    { label: "Ujian Tengah Semester", value: "uts" },
+    { label: "Ujian Akhir Semester", value: "uas" },
+  ];
+  const tugasOptions = [
+    { label: "Semua", value: "" },
+    { label: "Tugas Harian", value: "tharian" },
+    { label: "Pekerjaan Rumah", value: "pr" },
+    { label: "Tugas Akhir", value: "ta" },
+  ];
+  console.log("searchParams", searchParams);
+
   return (
     <div className="space-y-4 mt-3">
       {/* TOP */}
@@ -69,6 +120,28 @@ export default function ResultListClient({
                   label: "Tingkat",
                   options: gradeOptions,
                 },
+                {
+                  name: "stype",
+                  label: "Tipe",
+                  options: sTypeOptions,
+                },
+                ...(selectedType === "Ujian"
+                  ? [
+                      {
+                        name: "extype",
+                        label: "Ujian",
+                        options: ujianOptions,
+                      },
+                    ]
+                  : selectedType === "Tugas"
+                  ? [
+                      {
+                        name: "asstype",
+                        label: "Tugas",
+                        options: tugasOptions,
+                      },
+                    ]
+                  : []),
               ]}
               sortOptions={[
                 { label: "A-Z", value: "az" },

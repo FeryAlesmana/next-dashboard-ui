@@ -216,6 +216,7 @@ const StudentsListPage = async ({
             columns={columns}
             relatedData={relatedData}
             count={count}
+            options={options}
           />
         </div>
         {/* PAGINATION*/}

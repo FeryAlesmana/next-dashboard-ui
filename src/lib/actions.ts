@@ -2204,24 +2204,54 @@ export const updateResult = async (
   data: ResultSchema
 ) => {
   try {
-    await prisma.result.update({
-      where: {
-        id: data.id,
-      },
-      data: {
-        score: data.score,
-        studentId: data.studentId,
-        ...(data.selectedType === "Ujian" && {
-          examId: data.examId,
-          assignmentId: null,
-        }),
-        ...(data.selectedType === "Tugas" && {
-          assignmentId: data.assignmentId,
-          examId: null,
-        }),
-        resultType: data.resultType,
-      },
-    });
+    const safeExamId = data.selectedType === "Ujian" ? data.examId : null;
+    const safeAssignmentId =
+      data.selectedType === "Tugas" ? data.assignmentId : null;
+    if (data.selectedType === "Ujian") {
+      // Step 1: clear assignmentId
+      await prisma.result.update({
+        where: { id: data.id },
+        data: { assignmentId: null },
+      });
+
+      // Step 2: update with examId
+      await prisma.result.update({
+        where: { id: data.id },
+        data: {
+          score: data.score,
+          studentId: data.studentId,
+          examId: safeExamId ? safeExamId : null,
+          resultType: data.resultType,
+        },
+      });
+    } else if (data.selectedType === "Tugas") {
+      // Step 1: clear examId
+      await prisma.result.update({
+        where: { id: data.id },
+        data: { examId: null },
+      });
+
+      // Step 2: update with assignmentId
+      await prisma.result.update({
+        where: { id: data.id },
+        data: {
+          score: data.score,
+          studentId: data.studentId,
+          assignmentId: safeAssignmentId ? safeAssignmentId : null,
+          resultType: data.resultType,
+        },
+      });
+    } else {
+      // Just update score/student/type
+      await prisma.result.update({
+        where: { id: data.id },
+        data: {
+          score: data.score,
+          examId: safeExamId ? safeExamId : null,
+          assignmentId: safeAssignmentId ? safeAssignmentId : null,
+        },
+      });
+    }
     const updatedResult = await prisma.result.findUnique({
       where: { id: data.id },
       include: {
@@ -2336,8 +2366,12 @@ export const updateResults = async (
 
     // Prepare common data to update based on selectedType
     const updateData: any = {
-      score,
-      resultType,
+      ...(score !== "" && {
+        score: score,
+      }),
+      ...(resultType !== "" && {
+        resultType: resultType,
+      }),
     };
 
     if (selectedType === "Ujian") {
@@ -3060,13 +3094,13 @@ export async function createPaymentLog(
       studentIds = [recipientId as string];
     } else if (recipientType === "class") {
       const classData = await prisma.class.findUnique({
-        where: { id: recipientId as number },
+        where: { id: parseInt(recipientId) },
         include: { students: { select: { id: true } } },
       });
       studentIds = classData?.students.map((s) => s.id) ?? [];
     } else if (recipientType === "grade") {
       const gradeData = await prisma.grade.findUnique({
-        where: { id: recipientId as number },
+        where: { id: parseInt(recipientId) },
         include: { students: { select: { id: true } } },
       });
       studentIds = gradeData?.students.map((s) => s.id) ?? [];
@@ -3161,13 +3195,13 @@ export async function updatePaymentLog(
 
     if (recipientType === "class") {
       const classData = await prisma.class.findUnique({
-        where: { id: recipientId as number },
+        where: { id: parseInt(recipientId) },
         include: { grade: true },
       });
       classId = classData?.id ?? null;
       gradeId = classData?.gradeId ?? null;
     } else if (recipientType === "grade") {
-      gradeId = recipientId as number;
+      gradeId = parseInt(recipientId);
     } else if (recipientType === "student") {
       const student = await prisma.student.findUnique({
         where: { id: recipientId as string },
@@ -3246,13 +3280,13 @@ export async function updatePaymentLogs(
 
     if (recipientType === "class") {
       const classData = await prisma.class.findUnique({
-        where: { id: recipientId as number },
+        where: { id: parseInt(recipientId!) },
         include: { grade: true },
       });
       classId = classData?.id ?? null;
       gradeId = classData?.gradeId ?? null;
     } else if (recipientType === "grade") {
-      gradeId = recipientId as number;
+      gradeId = parseInt(recipientId!);
     } else if (recipientType === "student") {
       const student = await prisma.student.findUnique({
         where: { id: recipientId as string },
@@ -3263,21 +3297,30 @@ export async function updatePaymentLogs(
     }
     const selectedIdsAsNumbers = ids.map((id) => id); // or Number(id)
 
-    await prisma.paymentLog.updateMany({
-      where: {
-        id: { in: selectedIdsAsNumbers },
-      },
-      data: {
-        amount: paymentData.amount,
+    // Build updateData dynamically, only include non-empty values
+    const updateData: any = {
+      ...(paymentData.amount !== undefined && { amount: paymentData.amount }),
+      ...(paymentData.paymentType !== "" && {
         paymentType: paymentData.paymentType,
-        status: paymentData.status,
-        dueDate: new Date(paymentData.dueDate),
-        description: paymentData.description || null,
-        paymentMethod: paymentData.paymentMethod || null,
-        receiptNumber: paymentData.receiptNumber || null,
-        classId,
-        gradeId,
-      },
+      }),
+      ...(paymentData.status !== "" && { status: paymentData.status }),
+      ...(paymentData.dueDate && { dueDate: new Date(paymentData.dueDate) }),
+      ...(paymentData.description !== "" && {
+        description: paymentData.description,
+      }),
+      ...(paymentData.paymentMethod !== "" && {
+        paymentMethod: paymentData.paymentMethod,
+      }),
+      ...(paymentData.receiptNumber !== "" && {
+        receiptNumber: paymentData.receiptNumber,
+      }),
+      ...(classId !== null && { classId }),
+      ...(gradeId !== null && { gradeId }),
+    };
+
+    await prisma.paymentLog.updateMany({
+      where: { id: { in: selectedIdsAsNumbers } },
+      data: updateData,
     });
     const updatedPayments = await prisma.paymentLog.findMany({
       where: {

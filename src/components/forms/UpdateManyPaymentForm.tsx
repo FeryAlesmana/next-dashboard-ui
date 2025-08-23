@@ -41,12 +41,18 @@ export default function CreatePaymentLogPage({
   // Extract selected items
 
   type PaymentFormDefaults = {
-    paymentType?: "TUITION" | "EXTRACURRICULAR" | "UNIFORM" | "BOOKS" | "OTHER";
-    amount?: number;
-    dueDate?: string;
-    status?: "PENDING" | "PAID" | "OVERDUE" | "PARTIALLY_PAID";
-    recipientType?: "student" | "class" | "grade";
-    recipientId?: string;
+    paymentType?:
+      | "TUITION"
+      | "EXTRACURRICULAR"
+      | "UNIFORM"
+      | "BOOKS"
+      | "OTHER"
+      | "";
+    amount?: number | "";
+    dueDate?: string | "";
+    status?: "PENDING" | "PAID" | "OVERDUE" | "PARTIALLY_PAID" | "";
+    recipientType?: "student" | "class" | "grade" | "";
+    recipientId?: string | "";
   };
   type PaymentItem = {
     id: number;
@@ -130,7 +136,9 @@ export default function CreatePaymentLogPage({
     defaultValues: {
       ids,
       recipientType: defaultValues.recipientType,
-      recipientId: defaultValues.recipientId,
+      recipientId: defaultValues.recipientId
+        ? String(defaultValues.recipientId) // force string here
+        : "",
     },
   });
 
@@ -186,7 +194,7 @@ export default function CreatePaymentLogPage({
 
   console.log(ids, "Isi ids");
 
-  type Grade = { id: number; level: number };
+  type Grade = { id: string; level: string };
   type ClassWithGrade = { grade?: Grade };
   const gradeData: Grade[] =
     (classData as ClassWithGrade[])
@@ -207,8 +215,13 @@ export default function CreatePaymentLogPage({
   const handleSubmitForm = handleSubmit((data) => {
     setIsSubmitting(true);
     setShowConfirm(false);
+    const payload = {
+      ...data,
+      recipientId: String(data.recipientId), // 🔑 force string
+    };
+
     startTransition(() => {
-      formAction(data);
+      formAction(payload);
     });
   });
   const onSubmit = (e: React.FormEvent) => {
@@ -375,19 +388,19 @@ export default function CreatePaymentLogPage({
               {watchedValues.recipientType === "class" &&
                 classData.map(
                   (kelas: {
-                    id: number;
+                    id: string;
                     name: string;
                     // capacity: number;
                     // _count: { students: number };
                   }) => (
-                    <option key={kelas.id} value={kelas.id}>
+                    <option key={kelas.id} value={String(kelas.id)}>
                       {kelas.name}
                     </option>
                   )
                 )}
               {watchedValues.recipientType === "grade" &&
-                gradeData.map((grade: { id: number; level: number }) => (
-                  <option key={grade.id} value={grade.id}>
+                gradeData.map((grade: { id: string; level: string }) => (
+                  <option key={grade.id} value={String(grade.id)}>
                     Angkatan {grade.level}
                   </option>
                 ))}

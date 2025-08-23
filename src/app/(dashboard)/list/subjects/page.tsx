@@ -63,11 +63,7 @@ const SubjectListPage = async ({
       if (value !== undefined && value !== "")
         switch (key) {
           case "teacherId":
-            query.lessons = {
-              some: {
-                teacherId: value,
-              },
-            };
+            query.teachers = { some: { id: value } };
             break;
           case "classId":
             query.lessons = {
