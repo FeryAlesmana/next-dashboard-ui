@@ -161,6 +161,7 @@ const ParentForm = ({
               register={register}
               error={errors?.username}
               table="parent"
+              placeholder="Masukkan username"
             />
           </div>
 
@@ -186,6 +187,7 @@ const ParentForm = ({
               register={register}
               error={errors?.password}
               table="parent"
+              placeholder="Isi password"
             />
             <label className="flex items-center gap-2 mt-1 text-xs">
               <input
@@ -229,6 +231,7 @@ const ParentForm = ({
             defaultValue={data?.phone}
             register={register}
             error={errors?.phone}
+            placeholder="10-13 digit"
           />
           <InputField
             label="Alamat"
@@ -236,6 +239,7 @@ const ParentForm = ({
             defaultValue={data?.address}
             register={register}
             error={errors?.address}
+            placeholder="Contoh: Jl. Menanam No. 37, RT. 02/05, Kelurahan Curug, Kecamatan Bojongsari"
           />
           <InputField
             label="Pekerjaan"
@@ -243,6 +247,7 @@ const ParentForm = ({
             defaultValue={data?.job}
             register={register}
             error={errors?.job}
+            placeholder="Masukkan pekerjaan"
           />
           <InputField
             label="Penghasilan"
@@ -250,6 +255,7 @@ const ParentForm = ({
             defaultValue={data?.income}
             register={register}
             error={errors?.income}
+            placeholder="Contoh: 5.200.000"
           />
           <div className="flex flex-col gap-2 w-full md:w-1/4">
             <label className="text-xs text-gray-400">Jenis Kelamin</label>

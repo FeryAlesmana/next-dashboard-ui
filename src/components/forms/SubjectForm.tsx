@@ -102,6 +102,7 @@ const SubjectForm = ({
           defaultValue={data?.name}
           register={register}
           error={errors?.name}
+          placeholder="Masukkan nama mapel"
         ></InputField>
         {data && (
           <InputField

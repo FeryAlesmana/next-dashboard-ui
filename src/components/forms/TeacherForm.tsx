@@ -175,6 +175,7 @@ const TeacherForm = ({
               register={register}
               error={errors?.username}
               table="teacher"
+              placeholder="Masukkan username"
             />
           </div>
 
@@ -200,6 +201,7 @@ const TeacherForm = ({
               register={register}
               error={errors?.password}
               table="teacher"
+              placeholder="Isi password"
             />
             <label className="flex items-center gap-2 mt-1 text-xs">
               <input
@@ -240,6 +242,7 @@ const TeacherForm = ({
             defaultValue={data?.phone}
             register={register}
             error={errors?.phone}
+            placeholder="Masukkan nomor telepon (10-13 digit)"
           ></InputField>
           <InputField
             label="Alamat"
@@ -247,6 +250,7 @@ const TeacherForm = ({
             defaultValue={data?.address}
             register={register}
             error={errors?.address}
+            placeholder="Masukkan nomor WhatsApp (10-13 digit)"
           ></InputField>
           <InputField
             label="RT"
@@ -254,6 +258,7 @@ const TeacherForm = ({
             defaultValue={data?.rt}
             register={register}
             error={errors?.rt}
+            placeholder="Masukkan RT"
           ></InputField>
           <InputField
             label="RW"
@@ -261,6 +266,7 @@ const TeacherForm = ({
             defaultValue={data?.rw}
             register={register}
             error={errors?.rw}
+            placeholder="Masukkan RW"
           ></InputField>
           <InputField
             label="Kelurahan"
@@ -268,6 +274,7 @@ const TeacherForm = ({
             defaultValue={data?.kelurahan}
             register={register}
             error={errors?.kelurahan}
+            placeholder="Masukkan kelurahan"
           ></InputField>
           <InputField
             label="Kecamatan"
@@ -275,6 +282,7 @@ const TeacherForm = ({
             defaultValue={data?.kecamatan}
             register={register}
             error={errors?.kecamatan}
+            placeholder="Masukkan kecamatan"
           ></InputField>
           <InputField
             label="Kota"
@@ -282,6 +290,7 @@ const TeacherForm = ({
             defaultValue={data?.kota}
             register={register}
             error={errors?.kota}
+            placeholder="Masukkan kota/kabupaten"
           ></InputField>
           {/* <InputField
           label="Gol. darah"

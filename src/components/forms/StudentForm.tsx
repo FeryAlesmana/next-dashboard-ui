@@ -184,6 +184,7 @@ const StudentForm = ({
               register={register}
               error={errors?.username}
               table="student"
+              placeholder="Masukkan username"
             />
           </div>
 
@@ -209,6 +210,7 @@ const StudentForm = ({
               register={register}
               error={errors?.password}
               table="student"
+              placeholder="Isi password"
             />
             <label className="flex items-center gap-2 mt-1 text-xs">
               <input
@@ -248,6 +250,7 @@ const StudentForm = ({
             defaultValue={data?.phone}
             register={register}
             error={errors?.phone}
+            placeholder="Masukkan nomor telepon (10-13 digit)"
           ></InputField>
           <InputField
             label="No. WhatsApp"
@@ -255,6 +258,7 @@ const StudentForm = ({
             defaultValue={data?.student_details?.noWa}
             register={register}
             error={errors?.noWa}
+            placeholder="Masukkan nomor WhatsApp (10-13 digit)"
           ></InputField>
           <InputField
             label="Alamat"
@@ -262,6 +266,7 @@ const StudentForm = ({
             defaultValue={data?.address}
             register={register}
             error={errors?.address}
+            placeholder="Contoh: Jl. Menanam No. 37, RT. 02/05, Kelurahan Curug, Kecamatan Bojongsari"
           ></InputField>
           <div className="flex flex-col gap-2 w-full md:w-1/4">
             <label className="text-xs text-gray-400">Agama</label>
@@ -300,6 +305,7 @@ const StudentForm = ({
             defaultValue={data?.student_details?.birthPlace}
             register={register}
             error={errors?.birthPlace}
+            placeholder="Masukkan kota/kabupaten tempat lahir"
           ></InputField>
           <InputField
             label="Asal sekolah"
@@ -307,6 +313,7 @@ const StudentForm = ({
             defaultValue={data?.student_details?.asalSekolah}
             register={register}
             error={errors?.asalSekolah}
+            placeholder="Masukkan asal sekolah (SMP/Sederajat)"
           ></InputField>
           <InputField
             label="NPSN"
@@ -314,6 +321,7 @@ const StudentForm = ({
             defaultValue={data?.student_details?.npsn}
             register={register}
             error={errors?.npsn}
+            placeholder="Masukkan NPSN"
           ></InputField>
           <InputField
             label="NISN"
@@ -321,6 +329,7 @@ const StudentForm = ({
             defaultValue={data?.student_details?.nisn}
             register={register}
             error={errors?.nisn}
+            placeholder="Masukkan NISN"
           ></InputField>
           <InputField
             label="No. Ijazah"
@@ -328,6 +337,7 @@ const StudentForm = ({
             defaultValue={data?.student_details?.no_ijz}
             register={register}
             error={errors?.no_ijz}
+            placeholder="Masukkan nomor ijazah"
           ></InputField>
           <InputField
             label="NIK"
@@ -335,6 +345,7 @@ const StudentForm = ({
             defaultValue={data?.student_details?.nik}
             register={register}
             error={errors?.nik}
+            placeholder="Masukkan NIK"
           ></InputField>
           <InputField
             label="Kode Pos"
@@ -342,6 +353,7 @@ const StudentForm = ({
             defaultValue={data?.student_details?.postcode}
             register={register}
             error={errors?.postcode}
+            placeholder="Masukkan kode pos"
           ></InputField>
           <InputField
             label="RT"
@@ -349,6 +361,7 @@ const StudentForm = ({
             defaultValue={data?.rt}
             register={register}
             error={errors?.rt}
+            placeholder="Masukkan RT"
           ></InputField>
           <InputField
             label="RW"
@@ -356,6 +369,7 @@ const StudentForm = ({
             defaultValue={data?.rw}
             register={register}
             error={errors?.rw}
+            placeholder="Masukkan RW"
           ></InputField>
           <InputField
             label="Kelurahan"
@@ -363,6 +377,7 @@ const StudentForm = ({
             defaultValue={data?.kelurahan}
             register={register}
             error={errors?.kelurahan}
+            placeholder="Masukkan kelurahan"
           ></InputField>
           <InputField
             label="Kecamatan"
@@ -370,6 +385,7 @@ const StudentForm = ({
             defaultValue={data?.kecamatan}
             register={register}
             error={errors?.kecamatan}
+            placeholder="Masukkan kecamatan"
           ></InputField>
           <InputField
             label="Kota"
@@ -377,6 +393,7 @@ const StudentForm = ({
             defaultValue={data?.kota}
             register={register}
             error={errors?.kota}
+            placeholder="Masukkan Kota/Kabupaten"
           ></InputField>
           <InputField
             label="Transportasi"
@@ -384,6 +401,7 @@ const StudentForm = ({
             defaultValue={data?.student_details?.transportation}
             register={register}
             error={errors?.transportation}
+            placeholder="Yang dipakai menuju sekolah"
           ></InputField>
           <div className="flex flex-col gap-2 w-full md:w-1/4">
             <label className="text-xs text-gray-400">Tempat Tinggal</label>
@@ -412,6 +430,7 @@ const StudentForm = ({
             defaultValue={data?.student_details?.kps}
             register={register}
             error={errors?.kps}
+            placeholder="Masukkan KPS"
           ></InputField>
           <InputField
             label="No KPS"
@@ -419,34 +438,39 @@ const StudentForm = ({
             defaultValue={data?.student_details?.no_kps}
             register={register}
             error={errors?.no_kps}
+            placeholder="Masukkan nomor KPS"
           ></InputField>
           <InputField
-            label="Tinggi"
+            label="Tinggi (cm)"
             name="height"
             defaultValue={data?.student_details?.height}
             register={register}
             error={errors?.height}
+            placeholder="Isi dengan angka saja"
           ></InputField>
           <InputField
-            label="Berat bedan"
+            label="Berat badan (kg)"
             name="weight"
             defaultValue={data?.student_details?.weight}
             register={register}
             error={errors?.weight}
+            placeholder="Isi dengan angka saja"
           ></InputField>
           <InputField
-            label="Jarak dari rumah"
+            label="Jarak dari rumah (km)"
             name="distance_from_home"
             defaultValue={data?.student_details?.distance_from_home}
             register={register}
             error={errors?.distance_from_home}
+            placeholder="Isi dengan angka saja"
           ></InputField>
           <InputField
-            label="Waktu tempuh"
+            label="Waktu tempuh (menit)"
             name="time_from_home"
             defaultValue={data?.student_details?.time_from_home}
             register={register}
             error={errors?.time_from_home}
+            placeholder="Isi dengan angka saja"
           ></InputField>
           <InputField
             label="Penghargaan"
@@ -454,6 +478,7 @@ const StudentForm = ({
             defaultValue={data?.student_details?.awards}
             register={register}
             error={errors?.awards}
+            placeholder="Isi penghargaan yang pernah dicapai"
           ></InputField>
           <InputField
             label="Jumlah saudara"
@@ -461,6 +486,7 @@ const StudentForm = ({
             defaultValue={data?.student_details?.number_of_siblings}
             register={register}
             error={errors?.number_of_siblings}
+            placeholder="Isi dengan angka saja"
           ></InputField>
           <div className="flex flex-col gap-2 w-full md:w-1/4">
             <label className="text-xs text-gray-400">Tingkat Penghargaan</label>
@@ -503,6 +529,7 @@ const StudentForm = ({
             defaultValue={data?.student_details?.scholarship}
             register={register}
             error={errors?.scholarship}
+            placeholder="Masukkan nama beasiswa"
           ></InputField>
           <InputField
             label="Sumber Beasiswa"
@@ -510,6 +537,7 @@ const StudentForm = ({
             defaultValue={data?.student_details?.scholarship_detail}
             register={register}
             error={errors?.scholarship_detail}
+            placeholder="Masukkan sumber beasiswa"
           ></InputField>
           <div className="flex flex-col gap-2 w-full md:w-1/4">
             <label className="text-xs text-gray-400">Orang tua</label>

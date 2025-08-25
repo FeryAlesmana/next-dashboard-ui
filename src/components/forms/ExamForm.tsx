@@ -158,6 +158,7 @@ const router = useRouter()
             defaultValue={data?.title}
             register={register}
             error={errors?.title}
+            placeholder="Masukkan nama ujian"
           />
           <InputField
             label="Waktu mulai"

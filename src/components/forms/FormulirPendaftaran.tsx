@@ -327,6 +327,7 @@ const FormulirPendaftaran = ({
               {...register("name")}
               className="w-full border rounded px-3 py-2"
               defaultValue={data?.name}
+              placeholder="Masukkan nama lengkap"
             />
             {errors.name && (
               <p className="text-red-600">{errors.name.message}</p>
@@ -340,6 +341,7 @@ const FormulirPendaftaran = ({
               <input
                 {...register("birthPlace")}
                 className="w-full border rounded px-3 py-2"
+                placeholder="Masukkan tempat lahir"
               />
               {errors.birthPlace && (
                 <p className="text-red-600">{errors.birthPlace.message}</p>
@@ -402,6 +404,7 @@ const FormulirPendaftaran = ({
             <input
               {...register("asalSekolah")}
               className="w-full border rounded px-3 py-2"
+              placeholder="Masukkan asal sekolah"
             />
             {errors.asalSekolah && (
               <p className="text-red-600">{errors.asalSekolah.message}</p>
@@ -417,6 +420,7 @@ const FormulirPendaftaran = ({
                 maxLength={8}
                 {...register("npsn")}
                 className="w-full border rounded px-3 py-2"
+                placeholder="Masukkan NPSN"
               />
               {errors.npsn && (
                 <p className="text-red-600">{errors.npsn.message}</p>
@@ -431,6 +435,7 @@ const FormulirPendaftaran = ({
                 maxLength={10}
                 {...register("nisn")}
                 className="w-full border rounded px-3 py-2"
+                placeholder="Masukkan NISN"
               />
               {errors.nisn && (
                 <p className="text-red-600">{errors.nisn.message}</p>
@@ -446,6 +451,7 @@ const FormulirPendaftaran = ({
               maxLength={12}
               {...register("no_ijz")}
               className="w-full border rounded px-3 py-2"
+              placeholder="Masukkan nomor seri ijazah SMP/Sederajat"
             />
             {errors.no_ijz && (
               <p className="text-red-600">{errors.no_ijz.message}</p>
@@ -460,6 +466,7 @@ const FormulirPendaftaran = ({
               maxLength={20}
               {...register("nik")}
               className="w-full border rounded px-3 py-2"
+              placeholder="Masukkan NIK"
             />
             {errors.nik && <p className="text-red-600">{errors.nik.message}</p>}
           </div>
@@ -471,6 +478,7 @@ const FormulirPendaftaran = ({
               <textarea
                 {...register("address")}
                 className="w-full border rounded px-3 py-2"
+                placeholder="Contoh: Jl. Mekarsari No. 88"
               />
               {errors.address && (
                 <p className="text-red-600">{errors.address.message}</p>
@@ -485,6 +493,7 @@ const FormulirPendaftaran = ({
                 maxLength={5}
                 {...register("postcode")}
                 className="w-full border rounded px-3 py-2"
+                placeholder="Masukkan kode pos"
               />
               {errors.postcode && (
                 <p className="text-red-600">{errors.postcode.message}</p>
@@ -501,6 +510,7 @@ const FormulirPendaftaran = ({
                 maxLength={2}
                 {...register("rt")}
                 className="w-full border rounded px-3 py-2"
+                placeholder="Masukkan RT"
               />
               {errors.rt && <p className="text-red-600">{errors.rt.message}</p>}
             </div>
@@ -513,6 +523,7 @@ const FormulirPendaftaran = ({
                 maxLength={2}
                 {...register("rw")}
                 className="w-full border rounded px-3 py-2"
+                placeholder="Masukkan RW"
               />
               {errors.rw && <p className="text-red-600">{errors.rw.message}</p>}
             </div>
@@ -523,6 +534,7 @@ const FormulirPendaftaran = ({
               <input
                 {...register("kelurahan")}
                 className="w-full border rounded px-3 py-2"
+                placeholder="Masukkan Kelurahan"
               />
               {errors.kelurahan && (
                 <p className="text-red-600">{errors.kelurahan.message}</p>
@@ -537,6 +549,7 @@ const FormulirPendaftaran = ({
               <input
                 {...register("kecamatan")}
                 className="w-full border rounded px-3 py-2"
+                placeholder="Masukkan kecamatan"
               />
               {errors.kecamatan && (
                 <p className="text-red-600">{errors.kecamatan.message}</p>
@@ -549,6 +562,7 @@ const FormulirPendaftaran = ({
               <input
                 {...register("kota")}
                 className="w-full border rounded px-3 py-2"
+                placeholder="Masukkan kota"
               />
               {errors.kota && (
                 <p className="text-red-600">{errors.kota.message}</p>
@@ -565,6 +579,7 @@ const FormulirPendaftaran = ({
                 maxLength={11}
                 {...register("phone")}
                 className="w-full border rounded px-3 py-2"
+                placeholder="Masukkan nomor telepon (10-13 digit)"
               />
               {errors.phone && (
                 <p className="text-red-600">{errors.phone.message}</p>
@@ -579,6 +594,7 @@ const FormulirPendaftaran = ({
                 maxLength={13}
                 {...register("noWhatsapp")}
                 className="w-full border rounded px-3 py-2"
+                placeholder="Masukkan nomor WhatsApp"
               />
               {errors.noWhatsapp && (
                 <p className="text-red-600">{errors.noWhatsapp.message}</p>
@@ -595,6 +611,7 @@ const FormulirPendaftaran = ({
               <input
                 {...register("transportation")}
                 className="w-full border rounded px-3 py-2"
+                placeholder="Sepeda motor/Jalan kaki/Mobil/Sepeda dan lainnya"
               />
               {errors.transportation && (
                 <p className="text-red-600">{errors.transportation.message}</p>
@@ -629,6 +646,7 @@ const FormulirPendaftaran = ({
               type="email"
               {...register("email")}
               className="w-full border rounded px-3 py-2"
+              placeholder="Contoh: namaemail88@email.com"
             />
             {errors.email && (
               <p className="text-red-600">{errors.email.message}</p>
@@ -661,6 +679,7 @@ const FormulirPendaftaran = ({
               <input
                 {...register("no_kps")}
                 className="w-full border rounded px-3 py-2"
+                placeholder="Masukkan nomor KPS jika ada"
               />
               {errors.no_kps && (
                 <p className="text-red-600">{errors.no_kps.message}</p>
@@ -677,6 +696,7 @@ const FormulirPendaftaran = ({
               <input
                 {...register("height")}
                 className="w-full border rounded px-3 py-2"
+                placeholder="Isi dengan angka saja"
               />
               {errors.height && (
                 <p className="text-red-600">{errors.height.message}</p>
@@ -689,6 +709,7 @@ const FormulirPendaftaran = ({
               <input
                 {...register("weight")}
                 className="w-full border rounded px-3 py-2"
+                placeholder="Isi dengan angka saja"
               />
               {errors.weight && (
                 <p className="text-red-600">{errors.weight.message}</p>
@@ -705,6 +726,7 @@ const FormulirPendaftaran = ({
               <input
                 {...register("distance_from_home")}
                 className="w-full border rounded px-3 py-2"
+                placeholder="Isi dengan angka saja"
               />
               {errors.distance_from_home && (
                 <p className="text-red-600">
@@ -721,6 +743,7 @@ const FormulirPendaftaran = ({
               <input
                 {...register("time_from_home")}
                 className="w-full border rounded px-3 py-2"
+                placeholder="Isi dengan angka saja"
               />
               {errors.time_from_home && (
                 <p className="text-red-600">{errors.time_from_home.message}</p>
@@ -736,6 +759,7 @@ const FormulirPendaftaran = ({
             <input
               {...register("number_of_siblings")}
               className="w-full border rounded px-3 py-2"
+              placeholder="Jika 3 bersaudara maka tulis 2"
             />
             {errors.number_of_siblings && (
               <p className="text-red-600">
@@ -751,6 +775,7 @@ const FormulirPendaftaran = ({
             <input
               {...register("awards")}
               className="w-full border rounded px-3 py-2"
+              placeholder="Contoh: Juara kesatu OSN Matematika tingkat Kecamatan Bojongsari"
             />
             {errors.awards && (
               <p className="text-red-600">{errors.awards.message}</p>
@@ -796,6 +821,7 @@ const FormulirPendaftaran = ({
               <input
                 {...register("scholarship")}
                 className="w-full border rounded px-3 py-2"
+                placeholder="Masukkan nama beasiswa"
               />
               {errors.scholarship && (
                 <p className="text-red-600">{errors.scholarship.message}</p>
@@ -806,6 +832,7 @@ const FormulirPendaftaran = ({
               <input
                 {...register("scholarship_detail")}
                 className="w-full border rounded px-3 py-2"
+                placeholder="Masukkan sumber beasiswa"
               />
               {errors.scholarship_detail && (
                 <p className="text-red-600">
@@ -838,6 +865,7 @@ const FormulirPendaftaran = ({
             <input
               {...register("namaAyah")}
               className="w-full border rounded px-3 py-2"
+              placeholder="Masukkan nama lengkap Ayah"
             />
             {errors.namaAyah && (
               <p className="text-red-600">{errors.namaAyah.message}</p>
@@ -861,6 +889,7 @@ const FormulirPendaftaran = ({
               <input
                 {...register("pekerjaanAyah")}
                 className="w-full border rounded px-3 py-2"
+                placeholder="Masukkan pekerjaan"
               />
               {errors.pekerjaanAyah && (
                 <p className="text-red-600">{errors.pekerjaanAyah.message}</p>
@@ -891,11 +920,12 @@ const FormulirPendaftaran = ({
           <div className="flex gap-4">
             <div className="w-1/2">
               <label className="block mb-1 font-medium">
-                Penghasilan Ayah (Rp)
+                Penghasilan Ayah (Rp. Perbulan)
               </label>
               <input
                 {...register("penghasilanAyah")}
                 className="w-full border rounded px-3 py-2"
+                placeholder="Contoh: 5.200.000"
               />
               {errors.penghasilanAyah && (
                 <p className="text-red-600">{errors.penghasilanAyah.message}</p>
@@ -906,6 +936,7 @@ const FormulirPendaftaran = ({
               <input
                 {...register("telpAyah")}
                 className="w-full border rounded px-3 py-2"
+                placeholder="Masukkan nomor telepon (10-13 digit)"
               />
               {errors.telpAyah && (
                 <p className="text-red-600">{errors.telpAyah.message}</p>
@@ -923,6 +954,7 @@ const FormulirPendaftaran = ({
             <input
               {...register("namaIbu")}
               className="w-full border rounded px-3 py-2"
+              placeholder="Masukkan nama lengkap Ibu"
             />
             {errors.namaIbu && (
               <p className="text-red-600">{errors.namaIbu.message}</p>
@@ -946,6 +978,7 @@ const FormulirPendaftaran = ({
               <input
                 {...register("pekerjaanIbu")}
                 className="w-full border rounded px-3 py-2"
+                placeholder="Masukkan pekerjaan"
               />
               {errors.pekerjaanIbu && (
                 <p className="text-red-600">{errors.pekerjaanIbu.message}</p>
@@ -976,11 +1009,12 @@ const FormulirPendaftaran = ({
           <div className="flex gap-4">
             <div className="w-1/2">
               <label className="block mb-1 font-medium">
-                Penghasilan Ibu (Rp)
+                Penghasilan Ibu (Rp. Perbulan)
               </label>
               <input
                 {...register("penghasilanIbu")}
                 className="w-full border rounded px-3 py-2"
+                placeholder="Contoh: 5.200.000"
               />
               {errors.penghasilanIbu && (
                 <p className="text-red-600">{errors.penghasilanIbu.message}</p>
@@ -991,6 +1025,7 @@ const FormulirPendaftaran = ({
               <input
                 {...register("telpIbu")}
                 className="w-full border rounded px-3 py-2"
+                placeholder="Masukkan nomor telepon (10-13 digit)"
               />
               {errors.telpIbu && (
                 <p className="text-red-600">{errors.telpIbu.message}</p>
@@ -1006,6 +1041,7 @@ const FormulirPendaftaran = ({
             <input
               {...register("namaWali")}
               className="w-full border rounded px-3 py-2"
+              placeholder="Masukkan nama lengkap Wali Murid"
             />
             {errors.namaWali && (
               <p className="text-red-600">{errors.namaWali.message}</p>
@@ -1029,6 +1065,7 @@ const FormulirPendaftaran = ({
               <input
                 {...register("pekerjaanWali")}
                 className="w-full border rounded px-3 py-2"
+                placeholder="Masukkan pekerjaan"
               />
               {errors.pekerjaanWali && (
                 <p className="text-red-600">{errors.pekerjaanWali.message}</p>
@@ -1059,11 +1096,12 @@ const FormulirPendaftaran = ({
           <div className="flex gap-4">
             <div className="w-1/2">
               <label className="block mb-1 font-medium">
-                Penghasilan Wali (Rp)
+                Penghasilan Wali (Rp. Perbulan)
               </label>
               <input
                 {...register("penghasilanWali")}
                 className="w-full border rounded px-3 py-2"
+                placeholder="Contoh: 5.200.000"
               />
               {errors.penghasilanWali && (
                 <p className="text-red-600">{errors.penghasilanWali.message}</p>
@@ -1074,6 +1112,7 @@ const FormulirPendaftaran = ({
               <input
                 {...register("telpWali")}
                 className="w-full border rounded px-3 py-2"
+                placeholder="Masukkan nomor telepon (10-13 digit)"
               />
               {errors.telpWali && (
                 <p className="text-red-600">{errors.telpWali.message}</p>

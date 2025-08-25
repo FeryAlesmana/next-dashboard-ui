@@ -138,6 +138,7 @@ const ClassForm = ({
             defaultValue={data?.name}
             register={register}
             error={errors?.name}
+            placeholder="Masukkan kode kelas"
           />
           <InputField
             label="Kapasitas"
@@ -146,6 +147,7 @@ const ClassForm = ({
             defaultValue={data?.capacity}
             register={register}
             error={errors?.capacity}
+            placeholder="Masukkan kapasitas kelas"
           />
           <div className="flex flex-col gap-2 w-full md:w-1/4">
             <label className="text-xs text-gray-400">Wali Kelas</label>

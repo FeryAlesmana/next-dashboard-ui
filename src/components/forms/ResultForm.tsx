@@ -159,6 +159,7 @@ const ResultForm = ({
             defaultValue={data?.score}
             register={register}
             error={errors?.score}
+            placeholder="Masukkan nilai"
           />
 
           {/* Student select */}

@@ -121,6 +121,7 @@ const EventsForm = ({
             defaultValue={data?.title}
             register={register}
             error={errors?.title}
+            placeholder="Masukkan judul kegiatan"
           />
           <InputField
             label="Deskripsi"
@@ -129,6 +130,7 @@ const EventsForm = ({
             register={register}
             error={errors?.description}
             type="textarea"
+            placeholder="Isi dengan setidaknya 10 karakter"
           />
           <div className="flex flex-col gap-2 w-full md:w-1/4">
             <label className="text-xs text-gray-400">Kelas</label>
