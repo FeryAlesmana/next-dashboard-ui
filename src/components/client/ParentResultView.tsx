@@ -2,7 +2,16 @@
 import { resTypes } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 
+const SemesterSelect = dynamic(() => import("../SemesterSelect"), {
+  ssr: false,
+});
+type Semester = {
+  label: string;
+  start: Date;
+  end: Date;
+};
 const ParentResultView = ({
   groupedByStudent,
   role,

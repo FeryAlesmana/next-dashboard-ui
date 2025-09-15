@@ -22,9 +22,8 @@ type AttendanceMeetingFormProps = {
   setOpen: Dispatch<SetStateAction<boolean>>;
   type: "create" | "update";
   data?: any;
-  relatedData?: { students: any[]; lessons?: any[] };
+  relatedData?: { students: any[]; lessons?: any[]; meetingNo: number };
 };
-
 
 const AttendanceMeetingForm = ({
   setOpen,
@@ -32,7 +31,7 @@ const AttendanceMeetingForm = ({
   data,
   relatedData,
 }: AttendanceMeetingFormProps) => {
-  const { students = [], lessons = [] } = relatedData || {};
+  const { students = [], lessons = [], meetingNo } = relatedData || {};
   const attendanceData = (data?.attendance || {}) as AttendanceData;
 
   const statuses: AttendanceStatus[] = ["HADIR", "SAKIT", "ABSEN"];
@@ -52,6 +51,7 @@ const AttendanceMeetingForm = ({
     defaultValues: {
       meetingId: data?.meetingId,
       lessonId: data?.lessonId,
+      meetingNo: data.meetingNo,
       date: data?.date ? new Date(data.date) : undefined,
       startTime: data?.startTime,
       endTime: data?.endTime,
@@ -74,6 +74,7 @@ const AttendanceMeetingForm = ({
       reset({
         meetingId: data.meetingId,
         lessonId: data.lessonId,
+        meetingNo: data.meetingNo,
         date: data.date ? new Date(data.date) : undefined,
         startTime: data.startTime,
         endTime: data.endTime,
@@ -137,25 +138,26 @@ const AttendanceMeetingForm = ({
 
   useEffect(() => {
     if (state.success) {
-      toast(
-        `Presensi berhasil di ${
-          type === "create" ? "Tambah!" : "Edit!"
-        }`
-      );
+      toast(`Presensi berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`);
       setOpen(false);
       router.refresh();
     }
   }, [state, type, setOpen, router]);
-
+  function toNormalCase(str: string): string {
+    if (!str) return "";
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+  }
   return (
     <>
       <form onSubmit={onSubmit} className="flex flex-col gap-8">
         <h1 className="text-xl font-semibold">
-          Presensi Pertemuan-{data?.meetingId}
+          Presensi Pertemuan-{data?.meetingNo}
         </h1>
         {currentLesson && (
           <div className="text-lg font-medium text-gray-700">
-            {`Pelajaran: ${currentLesson.name}`}
+            {`Pelajaran: ${currentLesson.name} (${toNormalCase(
+              currentLesson.day
+            )}) - ${currentLesson.subject.name} `}
           </div>
         )}
         <div className="grid gap-4">
@@ -176,12 +178,17 @@ const AttendanceMeetingForm = ({
               <tbody>
                 {students.map((student, index) => (
                   <tr key={student.id} className="odd:bg-white even:bg-gray-50">
-                    <td className="border px-4 py-2 text-center">{index + 1}</td>
+                    <td className="border px-4 py-2 text-center">
+                      {index + 1}
+                    </td>
                     <td className="border px-4 py-2">{student.name}</td>
                     <td className="border px-4 py-2">
                       <div className="flex justify-center gap-4">
                         {statuses.map((status) => (
-                          <label key={status} className="flex items-center gap-1">
+                          <label
+                            key={status}
+                            className="flex items-center gap-1"
+                          >
                             <input
                               type="radio"
                               value={status}
@@ -233,7 +240,11 @@ const AttendanceMeetingForm = ({
 
       {showConfirm && (
         <ConfirmDialog
-          message={type === "create" ? "Tambah presensi baru?" : "Simpan perubahan presensi?"}
+          message={
+            type === "create"
+              ? "Tambah presensi baru?"
+              : "Simpan perubahan presensi?"
+          }
           onConfirm={handleConfirmSubmit}
           onCancel={() => setShowConfirm(false)}
         />

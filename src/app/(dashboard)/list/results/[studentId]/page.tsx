@@ -1,8 +1,10 @@
-import { getCurrentUser } from "@/lib/utils";
+import { getCurrentUser, normalizeSearchParams } from "@/lib/utils";
 import { notFound } from "next/navigation";
 import prisma from "@/lib/prisma";
-import { resTypes } from "@prisma/client";
+import { Prisma, resTypes } from "@prisma/client";
 import PrintButton from "@/components/PrintButton";
+import z from "zod";
+import SingleResultPageClient from "@/components/client/SingleResultPageClient";
 
 const resultTypelabel = {
   UJIAN_HARIAN: "Ujian Harian",
@@ -29,13 +31,30 @@ const getScore = (
 
 const SingleResultPage = async ({
   params,
+  searchParams,
 }: {
   params: Promise<{ studentId: string }>;
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) => {
   const { role } = await getCurrentUser();
   if (role === undefined) return notFound();
-
+  const sp = await normalizeSearchParams(searchParams);
+  const { ...queryParams } = sp;
   const { studentId } = await params;
+  const semesterSchema = z.object({
+    start: z.string().datetime(),
+    end: z.string().datetime(),
+  });
+
+  // 🔹 parse semester here once
+  let parsed: { start: string; end: string } | null = null;
+  if (queryParams.semester) {
+    try {
+      parsed = semesterSchema.parse(JSON.parse(queryParams.semester as string));
+    } catch (e) {
+      parsed = null;
+    }
+  }
 
   const student = await prisma.student.findUnique({
     where: { id: studentId },
@@ -44,6 +63,12 @@ const SingleResultPage = async ({
       class: {
         include: {
           lessons: {
+            where: parsed
+              ? {
+                  startTime: { gte: new Date(parsed.start) },
+                  endTime: { lte: new Date(parsed.end) },
+                }
+              : undefined, // no filter if no semester
             include: {
               subject: true,
               teacher: true,
@@ -51,13 +76,47 @@ const SingleResultPage = async ({
           },
         },
       },
+      grade: { select: { level: true } },
     },
   });
 
-  if (!student || !student.class) return notFound();
+  if (!student || !student.class || !student.grade) return notFound();
 
+  const query: Prisma.ResultWhereInput = {};
+  if (queryParams) {
+    for (const [key, value] of Object.entries(queryParams)) {
+      if (value !== undefined && value !== "") {
+        if (parsed) {
+          query.OR = [
+            {
+              studentId: student.id,
+              exam: {
+                is: {
+                  lesson: {
+                    startTime: { gte: new Date(parsed.start) },
+                    endTime: { lte: new Date(parsed.end) },
+                  },
+                },
+              },
+            },
+            {
+              studentId: student.id,
+              assignment: {
+                is: {
+                  lesson: {
+                    startTime: { gte: new Date(parsed.start) },
+                    endTime: { lte: new Date(parsed.end) },
+                  },
+                },
+              },
+            },
+          ];
+        }
+      }
+    }
+  }
   const results = await prisma.result.findMany({
-    where: { studentId: student.id },
+    where: query,
     include: {
       exam: { include: { lesson: true } },
       assignment: { include: { lesson: true } },
@@ -65,7 +124,7 @@ const SingleResultPage = async ({
   });
 
   const lessons = student.class.lessons;
-
+  const gradeLevel = student.grade.level;
   // Group results by subject-teacher pair
   const groupedResults = new Map<
     string,
@@ -79,141 +138,13 @@ const SingleResultPage = async ({
     }
   >();
 
-  const avgList: number[] = [];
   return (
-    <div className="p-6 max-w-6xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6 text-center text-purple-800">
-        Laporan Nilai Murid
-      </h1>
-
-      <div className="mb-8 bg-white shadow rounded-lg p-4 border border-gray-200">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-700">
-          <p>
-            <span className="font-semibold">Nama Murid:</span> {student.name}{" "}
-            {student.namalengkap}
-          </p>
-          <p>
-            <span className="font-semibold">NISN:</span>{" "}
-            {student.student_details?.nisn}
-          </p>
-          <p>
-            <span className="font-semibold">Kelas:</span> {student.class.name}
-          </p>
-        </div>
-      </div>
-
-      <div className="overflow-x-auto bg-white shadow rounded-lg border border-gray-200">
-        <table className="min-w-full text-sm">
-          <thead className="bg-purple-100 text-gray-800">
-            <tr>
-              <th className="p-3 text-left border-b border-gray-300 hidden md:table-cell">
-                No
-              </th>
-              <th className="p-3 text-left border-b border-gray-300">
-                Mata Pelajaran
-              </th>
-              <th className="p-3 text-left border-b border-gray-300 hidden md:table-cell">
-                Nama Guru
-              </th>
-              <th className="p-3 text-center border-b border-gray-300">
-                Tugas
-              </th>
-              <th className="p-3 text-center border-b border-gray-300">UH</th>
-              <th className="p-3 text-center border-b border-gray-300">UTS</th>
-              <th className="p-3 text-center border-b border-gray-300">UAS</th>
-              <th className="p-3 text-center border-b border-gray-300">
-                Rata-rata
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {lessons.map((lesson, index) => {
-              const tugas =
-                getScore(results, lesson.id, [
-                  "TUGAS_HARIAN",
-                  "PEKERJAAN_RUMAH",
-                ]) || 0;
-              const UH = getScore(results, lesson.id, ["UJIAN_HARIAN"]) || 0;
-              const uts =
-                getScore(results, lesson.id, ["UJIAN_TENGAH_SEMESTER"]) || 0;
-              const uas =
-                getScore(results, lesson.id, ["UJIAN_AKHIR_SEMESTER"]) || 0;
-              const avg = Math.round((tugas + UH + uts + uas) / 4);
-              avgList.push(avg);
-
-              return (
-                <tr
-                  key={lesson.id}
-                  className={`${
-                    index % 2 === 0 ? "bg-gray-50" : "bg-white"
-                  } hover:bg-purple-50 transition-colors duration-150`}
-                >
-                  <td className="p-3 border-b border-gray-200 hidden md:table-cell">
-                    {index + 1}
-                  </td>
-                  <td className="p-3 border-b border-gray-200">
-                    {lesson.subject?.name}
-                  </td>
-                  <td className="p-3 border-b border-gray-200 hidden md:table-cell">
-                    {lesson.teacher?.name} {lesson.teacher?.namalengkap}
-                  </td>
-                  <td className="p-3 border-b border-gray-200 text-center">
-                    {tugas}
-                  </td>
-                  <td className="p-3 border-b border-gray-200 text-center">
-                    {UH}
-                  </td>
-                  <td className="p-3 border-b border-gray-200 text-center">
-                    {uts}
-                  </td>
-                  <td className="p-3 border-b border-gray-200 text-center">
-                    {uas}
-                  </td>
-                  <td className="p-3 border-b border-gray-200 text-center font-semibold">
-                    {avg}
-                  </td>
-                </tr>
-              );
-            })}
-            {avgList.length > 0 && (
-              <tr className="font-bold hidden md:table-row">
-                <td
-                  colSpan={6}
-                  className="p-3 border-t border-gray-300 text-center"
-                >
-                  Rata-Rata Nilai Keseluruhan
-                </td>
-                <td className="p-3 border-t border-gray-300 text-center">
-                  {Math.round(
-                    avgList.reduce((acc, curr) => acc + curr, 0) /
-                      avgList.length
-                  )}
-                </td>
-              </tr>
-            )}
-
-            {/* Mobile version (below md) */}
-            {avgList.length > 0 && (
-              <tr className="font-bold md:hidden">
-                <td
-                  colSpan={5}
-                  className="p-3 border-t border-gray-300 text-center"
-                >
-                  Rata-Rata
-                </td>
-                <td className="p-3 border-t border-gray-300 text-center">
-                  {Math.round(
-                    avgList.reduce((acc, curr) => acc + curr, 0) /
-                      avgList.length
-                  )}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-      <PrintButton />
-    </div>
+    <SingleResultPageClient
+      gradeLevel={gradeLevel}
+      lessons={lessons}
+      results={results}
+      student={student}
+    />
   );
 };
 

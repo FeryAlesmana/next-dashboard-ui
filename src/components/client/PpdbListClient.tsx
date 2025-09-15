@@ -73,18 +73,29 @@ export default function PpdbListClient({
           )}
           {/* other headers */}
         </tr>
-        {localData.map((row) => (
-          <PpdbTableClient
-            key={row.id}
-            data={row}
-            role={role}
-            selected={selected}
-            onToggle={toggleSelection}
-            relatedData={relatedData}
-            onDeleted={handleDeleteOptimistic}
-            onChanged={handleChanged}
-          />
-        ))}
+        {localData.length === 0 ? (
+          <tr>
+            <td
+              colSpan={columns.length + (role === "admin" ? 1 : 0)}
+              className="text-center text-gray-500 py-6"
+            >
+              Tidak ada data untuk table ini
+            </td>
+          </tr>
+        ) : (
+          localData.map((row) => (
+            <PpdbTableClient
+              key={row.id}
+              data={row}
+              role={role}
+              selected={selected}
+              onToggle={toggleSelection}
+              relatedData={relatedData}
+              onDeleted={handleDeleteOptimistic}
+              onChanged={handleChanged}
+            />
+          ))
+        )}
       </Table>
     </div>
   );

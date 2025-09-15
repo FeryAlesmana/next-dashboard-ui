@@ -27,6 +27,7 @@ import {
   deleteSubjects,
   deleteTeacher,
   deleteTeachers,
+  deleteUser,
 } from "@/lib/actions";
 import dynamic from "next/dynamic";
 import Image from "next/image";
@@ -48,6 +49,8 @@ import UpdateManyParentForm from "./forms/UpdateManyParents";
 import UpdateManyResultsForm from "./forms/UpdateManyResultsForm";
 import UpdateManyAssignmentsForm from "./forms/UpdateManyAssignments";
 import UpdateManyExamsForm from "./forms/UpdateManyExams";
+import ImportTeachersForm from "./forms/ImportTeachersForm";
+import ImportStudentsForm from "./forms/ImportStudentForm";
 // import StudentForm from "./forms/StudentForm";
 // import TeacherForm from "./forms/TeacherForm";
 
@@ -66,6 +69,7 @@ const deleteActionMap = {
   announcement: deleteAnnouncement,
   ppdb: deletePpdb,
   paymentLog: deletePaymentLog,
+  user: deleteUser,
 };
 
 const singleDeleteMap = {
@@ -83,6 +87,7 @@ const singleDeleteMap = {
   announcement: deleteAnnouncement,
   ppdb: deletePpdb,
   paymentLog: deletePaymentLog,
+  user: deleteUser,
 };
 
 const bulkDeleteMap = {
@@ -100,6 +105,7 @@ const bulkDeleteMap = {
   announcement: deleteStudents,
   ppdb: deletePPDBs,
   paymentLog: deletePaymentLogs,
+  user: deleteStudents,
 };
 
 const TeacherForm = dynamic(() => import("./forms/TeacherForm"), {
@@ -151,6 +157,9 @@ const MeetingForm = dynamic(() => import("./forms/MeetingForm"), {
   loading: () => <h1>Loading...</h1>,
 });
 const PaymentForm = dynamic(() => import("./forms/PaymentForm"), {
+  loading: () => <h1>Loading...</h1>,
+});
+const UserForm = dynamic(() => import("./forms/UserForm"), {
   loading: () => <h1>Loading...</h1>,
 });
 
@@ -281,6 +290,15 @@ const forms: {
   ),
   paymentLog: (setOpen, type, data, relatedData, onChanged) => (
     <PaymentForm
+      type={type}
+      setOpen={setOpen}
+      data={data}
+      relatedData={relatedData}
+      onChanged={onChanged}
+    />
+  ),
+  user: (setOpen, type, data, relatedData, onChanged) => (
+    <UserForm
       type={type}
       setOpen={setOpen}
       data={data}
@@ -489,6 +507,85 @@ const FormModal = ({
         )}
       </>
     );
+  }
+
+  if (type === "createMany") {
+    switch (table) {
+      case "importTeachers": {
+        return (
+          <>
+            <div className="">
+              <button
+                onClick={() => setOpen(true)}
+                className="flex items-center justify-center rounded-full bg-lamaYellow hover:brightness-90 shadow-md transition w-8 h-8"
+              >
+                <Image src="/import.png" alt="import" width={16} height={16} />
+              </button>
+            </div>
+            {open && (
+              <div className="w-screen h-screen absolute left-0 top-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">
+                <div className="bg-white p-4 rounded-md relative w-[700px] h-auto">
+                  <ImportTeachersForm
+                    setOpen={setOpen}
+                    data={data}
+                    onChanged={onChanged}
+                  />
+                  <div
+                    className="absolute top-4 right-4 cursor-pointer"
+                    onClick={() => setOpen(false)}
+                  >
+                    <Image
+                      src="/close.png"
+                      width={14}
+                      height={14}
+                      alt="Tutup"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
+        );
+      }
+      case "importStudents": {
+        return (
+          <>
+            <div className="">
+              <button
+                onClick={() => setOpen(true)}
+                className="flex items-center justify-center rounded-full bg-lamaYellow hover:brightness-90 shadow-md transition w-8 h-8"
+              >
+                <Image src="/import.png" alt="import" width={16} height={16} />
+              </button>
+            </div>
+            {open && (
+              <div className="w-screen h-screen absolute left-0 top-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">
+                <div className="bg-white p-4 rounded-md relative w-[700px] h-auto">
+                  <ImportStudentsForm
+                    setOpen={setOpen}
+                    data={data}
+                    onChanged={onChanged}
+                  />
+                  <div
+                    className="absolute top-4 right-4 cursor-pointer"
+                    onClick={() => setOpen(false)}
+                  >
+                    <Image
+                      src="/close.png"
+                      width={14}
+                      height={14}
+                      alt="Tutup"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
+        );
+      }
+      default:
+        break;
+    }
   }
 
   if (type === "updateMany") {
@@ -802,6 +899,7 @@ const FormModal = ({
         break;
     }
   }
+  console.log(table, " table in form modal");
 
   return (
     <>
@@ -811,7 +909,7 @@ const FormModal = ({
     ${
       type === "deleteMany"
         ? " text-white hover:bg-purple-300 shadow-sm"
-        : bgColor
+        : bgColor + " hover:brightness-90 shadow-md"
     }
   `}
         onClick={() => setOpen(true)}
@@ -828,7 +926,7 @@ const FormModal = ({
         <div className="w-screen h-screen absolute left-0 top-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">
           <div
             className={`bg-white p-4 rounded-md relative w-[90%] md:w-[70%] lg:w-[60%] xl:w-[50%] 2xl:w-[40%] ${
-              type === "delete" || type === "deleteMany"
+              ["delete", "deleteMany", "createMany"].includes(type)
                 ? "w-[350px] h-auto"
                 : [
                     "student",

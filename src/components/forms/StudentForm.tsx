@@ -97,7 +97,7 @@ const StudentForm = ({
   const router = useRouter();
 
   useEffect(() => {
-    if (!state.success && !state.error) {
+    if (!state.success && state.error) {
       toast.error(state.message || "Terjadi kesalahan.");
     }
     setIsSubmitting(false);

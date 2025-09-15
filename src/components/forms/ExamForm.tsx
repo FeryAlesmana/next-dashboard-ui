@@ -70,9 +70,20 @@ const ExamForm = ({
   // Submit sesungguhnya dijalankan di sini, setelah user klik "Ya" pada dialog konfirmasi
   const submitForm = () => {
     if (!formData) return;
+    const toDateTime = (timeStr: string): Date => {
+      const [hour, minute] = timeStr.split(":").map(Number);
+      const result = new Date(formData.date);
+      result.setHours(hour, minute, 0, 0);
+      return result;
+    };
+    const payload = {
+      ...formData,
+      startTime: toDateTime(formData.startTime).toISOString(),
+      endTime: toDateTime(formData.endTime).toISOString(),
+    };
     setIsSubmitting(true);
     startTransition(() => {
-      formAction(formData);
+      formAction(payload);
     });
     setShowConfirm(false);
   };
@@ -92,7 +103,7 @@ const ExamForm = ({
     }
   };
 
-const router = useRouter()
+  const router = useRouter();
 
   useEffect(() => {
     if (state.success) {
@@ -161,22 +172,39 @@ const router = useRouter()
             placeholder="Masukkan nama ujian"
           />
           <InputField
+            label="Tanggal"
+            name="date"
+            type="date"
+            defaultValue={
+              data?.date ? new Date(data.date).toISOString().split("T")[0] : ""
+            }
+            register={register}
+            error={errors?.date}
+          />
+          <InputField
             label="Waktu mulai"
             name="startTime"
             defaultValue={
-              data?.startTime ? formatDateForInput(data.startTime) : ""
+              data?.startTime
+                ? new Date(data.startTime).toTimeString().slice(0, 5)
+                : ""
             }
             register={register}
             error={errors?.startTime}
-            type="datetime-local"
+            type="time"
           />
+
           <InputField
             label="Waktu selesai"
             name="endTime"
-            defaultValue={data?.endTime ? formatDateForInput(data.endTime) : ""}
+            defaultValue={
+              data?.endTime
+                ? new Date(data.endTime).toTimeString().slice(0, 5)
+                : ""
+            }
             register={register}
             error={errors?.endTime}
-            type="datetime-local"
+            type="time"
           />
           <div className="flex flex-col gap-2 w-full md:w-1/4">
             <label className="text-xs text-gray-400">Jadwal</label>

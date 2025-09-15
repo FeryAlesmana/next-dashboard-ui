@@ -1,4 +1,5 @@
 import ClientPageWrapper from "@/components/ClientWrapper";
+import FormModal from "@/components/FormModal";
 import Pagination from "@/components/Pagination";
 import TeacherListClient from "@/components/client/TeacherListClient";
 import prisma from "@/lib/prisma";
@@ -205,6 +206,7 @@ const TeacherListPage = async ({
         <div className="">
           <Pagination page={p} count={count}></Pagination>
         </div>
+        
       </div>
     </ClientPageWrapper>
   );

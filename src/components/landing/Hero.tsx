@@ -1,12 +1,23 @@
 import Image from "next/image";
+import Link from "next/link";
 import React, { useEffect, useRef, useState } from "react";
-
-const Hero: React.FC = () => {
+type slideHero = {
+  id: number;
+  imageUrl: string;
+};
+interface Slide {
+  slides?: slideHero[];
+  role?: string;
+}
+const Hero: React.FC<Slide> = ({ slides, role }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const sliderRef = useRef<HTMLDivElement>(null);
 
   // Daftar gambar yang akan ditampilkan
-  const images = ["/guru1.jpeg", "/guru1.jpeg", "/guru1.jpeg", "/guru1.jpeg"];
+  const images =
+    slides && slides.length > 0
+      ? slides.map((s) => s.imageUrl)
+      : ["/guru1.jpeg", "/guru1.jpeg", "/guru1.jpeg", "/guru1.jpeg"];
 
   useEffect(() => {
     // Auto slide setiap 5 detik
@@ -67,6 +78,16 @@ const Hero: React.FC = () => {
           ref={sliderRef}
           className="relative overflow-hidden rounded-xl shadow-2xl mx-auto w-full max-w-4xl h-96"
         >
+          {/* Admin edit button */}
+          {role === "admin" && (
+            <Link
+              href="/settings"
+              className="absolute top-3 right-3 z-20 bg-white/80 hover:bg-lamaPurple text-black rounded-full p-2 shadow transition"
+              title="Edit slides"
+            >
+              <Image src="/updateDark.png" alt="edit" width={16} height={16} />
+            </Link>
+          )}
           {images.map((img, index) => (
             <div
               key={index}

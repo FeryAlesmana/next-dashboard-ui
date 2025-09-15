@@ -4,6 +4,7 @@ import Pagination from "@/components/Pagination";
 import prisma from "@/lib/prisma";
 import { getCurrentUser, normalizeSearchParams } from "@/lib/utils";
 import { Prisma, Subject, Teacher } from "@prisma/client";
+import z from "zod";
 
 type SubjectList = Subject & { teachers: Teacher[] };
 
@@ -57,7 +58,12 @@ const SubjectListPage = async ({
 
   const query: Prisma.SubjectWhereInput = {};
   let orderBy: Prisma.SubjectOrderByWithRelationInput | undefined;
+  let gradeLevel = 3;
 
+  const semesterSchema = z.object({
+    start: z.string().datetime(),
+    end: z.string().datetime(),
+  });
   if (queryParams) {
     for (const [key, value] of Object.entries(queryParams)) {
       if (value !== undefined && value !== "")
@@ -80,6 +86,19 @@ const SubjectListPage = async ({
                 },
               },
             };
+            break;
+          case "semester":
+            try {
+              const parsed = semesterSchema.parse(JSON.parse(value as string));
+              query.lessons = {
+                some: {
+                  startTime: { gte: new Date(parsed.start) },
+                  endTime: { lte: new Date(parsed.end) },
+                },
+              };
+            } catch {
+              query.id = -1; // block tampered values
+            }
             break;
 
           case "search":
@@ -171,6 +190,7 @@ const SubjectListPage = async ({
             data={data}
             role={role!}
             relatedData={relatedData}
+            gradeLevel={gradeLevel}
             options={options}
           />
         </div>

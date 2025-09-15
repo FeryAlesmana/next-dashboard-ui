@@ -5,17 +5,12 @@ import Pagination from "@/components/Pagination";
 import ParentPaymentView from "@/components/client/ParentPaymentView";
 import PaymentListClient from "@/components/client/PaymentListClient";
 import StudentPaymentView from "@/components/client/StudentPaymentView";
-import Table from "@/components/Table";
-import TableSearch from "@/components/TableSearch";
 import prisma from "@/lib/prisma";
-import { ITEM_PER_PAGE } from "@/lib/setting";
 import { getCurrentUser, normalizeSearchParams } from "@/lib/utils";
 import { PaymentLog, PaymentType, Prisma, Student } from "@prisma/client";
-import Image from "next/image";
+import z from "zod";
 
-// type PaymentLogList = PaymentLog & {
-//   student: Student;
-// };
+
 
 const PaymentLogListPage = async ({
   searchParams,
@@ -83,7 +78,7 @@ const PaymentLogListPage = async ({
 
   const query: Prisma.PaymentLogWhereInput = {};
   let orderBy: Prisma.PaymentLogOrderByWithRelationInput | undefined;
-
+  let gradeLevel = 3;
   // ROLE CONDITION
   switch (role) {
     case "admin":
@@ -190,7 +185,10 @@ const PaymentLogListPage = async ({
     default:
       break;
   }
-
+  const semesterSchema = z.object({
+    start: z.string().datetime(),
+    end: z.string().datetime(),
+  });
   if (queryParams) {
     for (const [key, value] of Object.entries(queryParams)) {
       if (value !== undefined && value !== "")
@@ -223,6 +221,17 @@ const PaymentLogListPage = async ({
             break;
           case "paymentType":
             query.paymentType = value as PaymentType;
+            break;
+          case "semester":
+            try {
+              const parsed = semesterSchema.parse(JSON.parse(value as string));
+              query.createdAt = {
+                gte: new Date(parsed.start),
+                lte: new Date(parsed.end),
+              };
+            } catch {
+              query.id = -1; // block tampered values
+            }
             break;
           case "sort":
             switch (value) {
@@ -335,6 +344,7 @@ const PaymentLogListPage = async ({
             columns={columns}
             relatedData={relatedData}
             options={options}
+            gradeLevel={gradeLevel}
           />
         </div>
         {/* PAGINATION */}

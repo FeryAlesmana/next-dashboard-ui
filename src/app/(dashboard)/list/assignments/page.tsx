@@ -19,6 +19,8 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import AssignmentListClient from "@/components/client/AssignmentListClient";
+import ParentAssignmentViewSemester from "@/components/client/ParentAssigmentViewSemester";
+import z from "zod";
 
 type AssignmentList = Assignment & {
   lesson: { subject: Subject; class: Class; teacher: Teacher };
@@ -82,7 +84,10 @@ const AssignmentListPage = async ({
         ]
       : []),
   ];
-
+  const semesterSchema = z.object({
+    start: z.string().datetime(),
+    end: z.string().datetime(),
+  });
   const query: Prisma.AssignmentWhereInput = {};
   let orderBy: Prisma.AssignmentOrderByWithRelationInput | undefined;
   query.lesson = {};
@@ -90,6 +95,9 @@ const AssignmentListPage = async ({
     for (const [key, value] of Object.entries(queryParams)) {
       if (value !== undefined && value !== "")
         switch (key) {
+          case "id":
+            query.id = parseInt(value);
+            break;
           case "teacherId":
             query.lesson.teacherId = value;
             break;
@@ -101,7 +109,19 @@ const AssignmentListPage = async ({
             query.lesson.class = query.lesson.class || {};
             query.lesson.class.gradeId = parseInt(value);
             break;
-
+          case "semester":
+            try {
+              const parsed = semesterSchema.parse(JSON.parse(value as string));
+              query.lesson = {
+                is: {
+                  startTime: { gte: new Date(parsed.start) },
+                  endTime: { lte: new Date(parsed.end) },
+                },
+              };
+            } catch {
+              query.id = -1; // block tampered values
+            }
+            break;
           case "search":
             query.lesson.subject = {
               name: { contains: value, mode: "insensitive" },
@@ -134,6 +154,7 @@ const AssignmentListPage = async ({
 
   // ROLE CONDITION
   const hasTeacherIdParam = query.lesson.teacherId !== undefined;
+  let gradeLevel = 3;
   let students: any[] = [];
   switch (role) {
     case "admin":
@@ -153,6 +174,12 @@ const AssignmentListPage = async ({
       }
       break;
     case "student":
+      const student = await prisma.student.findUnique({
+        where: { id: userId! },
+        select: { class: { select: { grade: { select: { level: true } } } } },
+      });
+
+      gradeLevel = student?.class?.grade?.level ?? 3;
       query.lesson.class = {
         students: {
           some: {
@@ -170,7 +197,14 @@ const AssignmentListPage = async ({
             { guardianId: userId! },
           ],
         },
-        select: { classId: true, name: true, id: true },
+        select: {
+          classId: true,
+          name: true,
+          id: true,
+          class: {
+            select: { name: true, grade: { select: { level: true } } },
+          },
+        },
       });
 
       const classIds = children
@@ -215,13 +249,23 @@ const AssignmentListPage = async ({
             }))
           );
 
-          return { id: child.id, name: child.name, assignments };
+          return { ...child, assignments };
         })
       );
 
       students = studentWithAssignments;
 
-      return <ParentAssignmentView students={students} columns={columns} />;
+      return (
+        // <ParentAssignmentView students={students} columns={columns} />
+        <ParentAssignmentViewSemester
+          columns={columns}
+          userId={userId!}
+          gradeLevel={students.map((s) => ({
+            studentId: s.id,
+            gradeLevel: s.class?.grade?.level,
+          }))}
+        />
+      );
     }
     default:
       break;
@@ -329,6 +373,7 @@ const AssignmentListPage = async ({
             columns={columns}
             role={role!}
             relatedData={relatedData}
+            gradeLevel={gradeLevel}
             options={options}
           />
         </div>

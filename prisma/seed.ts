@@ -268,6 +268,7 @@ async function main() {
     await prisma.exam.create({
       data: {
         title: `Exam ${i}`,
+        date: new Date(),
         startTime: new Date(new Date().setHours(new Date().getHours() + 1)),
         endTime: new Date(new Date().setHours(new Date().getHours() + 2)),
         lessonId: (i % 30) + 1,

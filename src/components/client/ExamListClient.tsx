@@ -7,6 +7,7 @@ import { BaseListClientProps } from "./AssignmentListClient";
 import TableSearch from "../TableSearch";
 import FilterSortToggle from "../FilterSortToggle";
 import FormModal from "../FormModal";
+import { Semester } from "./StudentPaymentView";
 
 export default function ExamListClient({
   columns,
@@ -14,7 +15,8 @@ export default function ExamListClient({
   role,
   relatedData,
   options,
-}: BaseListClientProps) {
+  gradeLevel,
+}: BaseListClientProps & { gradeLevel: number }) {
   const [selected, setSelected] = useState<string[]>([]);
   const [localData, setLocalData] = useState(data); // 👈 keep a client copy
 
@@ -48,6 +50,29 @@ export default function ExamListClient({
     );
   };
   const { classOptions = [], gradeOptions = [] } = options || {};
+  const generateSemesters = (gradeLevel: number): Semester[] => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const startYear = currentYear - (gradeLevel - 1);
+
+    const generated: Semester[] = [];
+
+    for (let year = startYear; year <= currentYear; year++) {
+      generated.push({
+        label: `Ganjil ${year}/${year + 1}`,
+        start: new Date(`${year}-07-01`),
+        end: new Date(`${year}-12-31`),
+      });
+      generated.push({
+        label: `Genap ${year}/${year + 1}`,
+        start: new Date(`${year + 1}-01-01`),
+        end: new Date(`${year + 1}-06-30`),
+      });
+    }
+
+    return generated.reverse();
+  };
+
   return (
     <div className="space-y-4 mt-3">
       {/* TOP */}
@@ -67,6 +92,17 @@ export default function ExamListClient({
                   name: "gradeId",
                   label: "Tingkat",
                   options: gradeOptions,
+                },
+                {
+                  name: "semester",
+                  label: "Semester",
+                  options: generateSemesters(gradeLevel).map((sem) => ({
+                    label: sem.label,
+                    value: JSON.stringify({
+                      start: sem.start.toISOString(),
+                      end: sem.end.toISOString(),
+                    }),
+                  })),
                 },
               ]}
               sortOptions={[
@@ -113,18 +149,29 @@ export default function ExamListClient({
           )}
           {/* other headers */}
         </tr>
-        {localData.map((row) => (
-          <ExamTableClient
-            key={row.id}
-            data={row}
-            role={role}
-            selected={selected}
-            onToggle={toggleSelection}
-            relatedData={relatedData}
-            onDeleted={handleDeleteOptimistic}
-            onChanged={handleChanged}
-          />
-        ))}
+        {localData.length === 0 ? (
+          <tr>
+            <td
+              colSpan={columns.length + (role === "admin" ? 1 : 0)}
+              className="text-center text-gray-500 py-6"
+            >
+              Tidak ada data untuk table ini
+            </td>
+          </tr>
+        ) : (
+          localData.map((row) => (
+            <ExamTableClient
+              key={row.id}
+              data={row}
+              role={role}
+              selected={selected}
+              onToggle={toggleSelection}
+              relatedData={relatedData}
+              onDeleted={handleDeleteOptimistic}
+              onChanged={handleChanged}
+            />
+          ))
+        )}
       </Table>
     </div>
   );

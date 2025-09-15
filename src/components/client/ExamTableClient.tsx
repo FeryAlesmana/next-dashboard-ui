@@ -40,25 +40,24 @@ export default function ExamTableClient({
             : "Tidak ada guru"}
         </td>
         <td className="hidden md:table-cell">
+          {new Intl.DateTimeFormat("en-US").format(data.date)}
+        </td>
+        <td className="hidden md:table-cell">
           {" "}
-          {data.startTime.toLocaleDateString("id-ID", {
+          {data.startTime.toLocaleTimeString("id-ID", {
             timeZone: "Asia/Jakarta",
             hour: "2-digit",
             minute: "2-digit",
             hour12: false,
-            day: "numeric",
-            month: "numeric",
           })}
         </td>
         <td className="hidden md:table-cell">
           {" "}
-          {data.endTime.toLocaleDateString("id-ID", {
+          {data.endTime.toLocaleTimeString("id-ID", {
             timeZone: "Asia/Jakarta",
             hour: "2-digit",
             minute: "2-digit",
             hour12: false,
-            day: "numeric",
-            month: "numeric",
           })}
         </td>
         <td className="hidden md:table-cell">

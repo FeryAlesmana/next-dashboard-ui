@@ -46,7 +46,7 @@ export default function FilterSortToggle({
       <div className="flex justify-end">
         <button
           onClick={() => setOpen((prev) => !prev)}
-          className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow"
+          className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow hover:brightness-90 shadow-md transition"
         >
           <Image src={iconSrc} alt="Filter" width={14} height={14} />
         </button>

@@ -17,6 +17,10 @@ const ParentPage = async () => {
         { guardianId: userId! },
       ],
     },
+    include: {
+      student_details: true,
+      class: true,
+    },
   });
   return (
     <div className="p-4 flex flex-1 gap-4 flex-col xl:flex-row">
@@ -27,7 +31,7 @@ const ParentPage = async () => {
             <div className="h-full bg-white p-4 rounded-md">
               <div className="flex flex-row justify-between">
                 <h2 className="text-xl font-semibold mb-4">
-                  Jadwal {student.name}
+                  Jadwal {student.name} (Kelas {student.class?.name || "-"})
                 </h2>
                 <Link href={`/list/students/${student.id}`}>
                   <Image

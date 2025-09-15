@@ -26,7 +26,12 @@ const ClassesTableClient = ({
         </td>
       )}
       <td className="flex items-center p-4 gap-4">{data.name}</td>
-      <td className="hidden md:table-cell">{data.capacity}</td>
+      <td className="hidden md:table-cell">
+        {data._count?.students !== undefined
+          ? `${data._count.students}/${data.capacity ?? 0}`
+          : `0/${data.capacity ?? 0}`}
+      </td>
+
       <td className="hidden md:table-cell">{data.name[0]}</td>
       <td className="hidden md:table-cell">
         {data.supervisor
@@ -35,7 +40,7 @@ const ClassesTableClient = ({
             }`.trim()
           : "-"}
       </td>
-
+      {/* data.students ? `${data.students._count}/ ${data.capacity}` : "-" */}
       <td>
         <div className="flex items-center gap-2">
           {role === "admin" && (

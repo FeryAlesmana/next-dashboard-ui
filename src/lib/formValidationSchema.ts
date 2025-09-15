@@ -81,6 +81,44 @@ export const createTeacherSchema = teacherSchema.extend({
 
 export type CreateteacherSchema = z.infer<typeof createTeacherSchema>;
 
+export const importTeacherSchema = z.object({
+  file: z
+    .instanceof(File, {
+      message: "Yang anda upload bukan file!",
+    })
+    .refine((file) => file.size <= 5 * 1024 * 1024, {
+      message: "Ukuran file harus kurang dari 5MB",
+    })
+    .refine(
+      (file) =>
+        file.type ===
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+        file.type === "application/vnd.ms-excel",
+      {
+        message: "Format file harus .xlsx atau .xls",
+      }
+    ),
+});
+export type ImportTeacherSchema = z.infer<typeof importTeacherSchema>;
+export const importstudentSchema = z.object({
+  file: z
+    .instanceof(File, {
+      message: "Yang anda upload bukan file!",
+    })
+    .refine((file) => file.size <= 5 * 1024 * 1024, {
+      message: "Ukuran file harus kurang dari 5MB",
+    })
+    .refine(
+      (file) =>
+        file.type ===
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+        file.type === "application/vnd.ms-excel",
+      {
+        message: "Format file harus .xlsx atau .xls",
+      }
+    ),
+});
+export type ImportStudentSchema = z.infer<typeof importstudentSchema>;
 // For update — password is optional or empty string
 export const updateTeacherSchema = teacherSchema.extend({
   password: z
@@ -235,8 +273,9 @@ export type UpdatestudentSchema = z.infer<typeof updateStudentSchema>;
 export const examSchema = z.object({
   id: z.coerce.number().optional(),
   title: z.string().min(2, { message: "Nama Ujian wajib diisi!" }),
-  startTime: z.coerce.date({ message: "Waktu mulai Ujian harus diisi" }),
-  endTime: z.coerce.date({ message: "Waktu selesai Ujian wajib diisi!" }),
+  date: z.coerce.date({ message: "Tanggal wajib diisi!" }),
+  startTime: z.string().min(1, { message: "Waktu mulai wajib diisi!" }), // dulu: z.coerce.date()
+  endTime: z.string().min(1, { message: "Waktu selesai wajib diisi!" }),
   lessonId: z.coerce.number({ message: "Id pelajaran wajib di isi" }),
   exType: z.nativeEnum(exTypes, { message: "Tipe Ujian wajib di isi" }),
 });
@@ -740,6 +779,9 @@ export const attendanceSchema = z.object({
   meetingId: z.coerce
     .number({ message: "Id pertemuan wajib di isi" })
     .optional(),
+  meetingNo: z.coerce
+    .number({ message: "Id pertemuan wajib di isi" })
+    .optional(),
   meetingCount: z.coerce
     .number({ message: "Banyak pertemuan wajib di isi" })
     .min(1, { message: "Banyak pertemuan wajib di isi minimal 1" })
@@ -925,3 +967,32 @@ export const mexamSchema = z.object({
 });
 
 export type MexamSchema = z.infer<typeof mexamSchema>;
+
+export const userSchema = z.object({
+  id: z.string().optional(),
+  username: z.string().min(1, { message: "Nama User wajib diisi!" }),
+  password: z
+    .string()
+    .min(8, { message: "Password harus mempunyai 8 karakter!" })
+    .or(z.literal(""))
+    .optional(),
+  email: z
+    .string()
+    .email({ message: "Email anda Tidak valid!" })
+    .optional()
+    .or(z.literal("")),
+  role: z.enum(["student", "teacher", "parent", "admin"], {
+    message: "Role Akun wajib diisi!",
+  }),
+  userId: z.string({ message: "Id User wajib di isi" }),
+});
+
+export type UserSchema = z.infer<typeof userSchema>;
+
+export const eskulSchema = z.object({
+  id: z.coerce.number().optional(),
+  name: z.string().min(1, { message: "Nama Eskul wajib diisi!" }),
+  imageUrl: z.string({ message: "Image Eskul wajib di isi" }),
+});
+
+export type EskulSchema = z.infer<typeof eskulSchema>;

@@ -1,15 +1,18 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import SemesterSelect from "../SemesterSelect";
 import StudentParentTableSkeleton from "../StudentParentTableSkeleton";
+import dynamic from "next/dynamic";
 
-type Semester = {
+export type Semester = {
   label: string;
   start: Date;
   end: Date;
 };
 
+const SemesterSelect = dynamic(() => import("../SemesterSelect"), {
+  ssr: false,
+});
 export default function StudentPaymentView({
   userId,
   gradeLevel,

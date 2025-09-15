@@ -63,6 +63,9 @@ const PpdbPage = async ({
     for (const [key, value] of Object.entries(queryParams)) {
       if (value !== undefined && value !== "")
         switch (key) {
+          case "id":
+            query.id = parseInt(value);
+            break;
           case "search":
             query.name = { contains: value, mode: "insensitive" };
             break;

@@ -34,7 +34,7 @@ const ParentExamView = ({
                 <table className="min-w-full divide-y divide-gray-200 text-sm">
                   <thead className="bg-gray-100">
                     <tr>
-                      {columns.map((col) => (
+                    {columns.map((col) => (
                         <th
                           key={col.accessor}
                           className={`px-4 py-3 font-semibold text-center ${

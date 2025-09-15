@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
@@ -255,6 +255,7 @@ model Lesson {
 model Exam {
   id        Int      @id @default(autoincrement())
   title     String
+  date      DateTime @default(now())
   startTime DateTime
   endTime   DateTime
 
@@ -299,6 +300,7 @@ model Result {
   studentId    String?
   student      Student?    @relation(fields: [studentId], references: [id], onDelete: SetNull)
   resultType   resTypes?
+  createdAt    DateTime    @default(now())
 }
 
 enum resTypes {
@@ -471,4 +473,30 @@ model PaymentInstallment {
   amount       Float
   paidAt       DateTime?
   createdAt    DateTime   @default(now())
+}
+
+model HeroSlide {
+  id        Int      @id @default(autoincrement())
+  imageUrl  String
+  createdAt DateTime @default(now())
+}
+
+model GalleryImage {
+  id        Int      @id @default(autoincrement())
+  imageUrl  String
+  caption   String?
+  createdAt DateTime @default(now())
+}
+
+model Extracurricular {
+  id        Int      @id @default(autoincrement())
+  name      String
+  imageUrl  String
+  createdAt DateTime @default(now())
+}
+
+model SupportActivity {
+  id        Int      @id @default(autoincrement())
+  name      String
+  createdAt DateTime @default(now())
 }
