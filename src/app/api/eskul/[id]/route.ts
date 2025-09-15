@@ -2,16 +2,20 @@ import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
 type Params = {
-  params: { id: string };
+  params: Promise<{
+    id: string;
+  }>;
 };
 
 // UPDATE caption
 export async function PATCH(req: Request, { params }: Params) {
   const { name } = await req.json();
-  const id = parseInt(params.id);
+  const { id } = await params;
+
+  const idNumber = parseInt(id);
 
   const updated = await prisma.extracurricular.update({
-    where: { id },
+    where: { id: idNumber },
     data: { name },
   });
 
