@@ -119,55 +119,65 @@ const EskulSettings = () => {
         )}
       </div>
       <div className="mt-4 grid grid-cols-4 gap-4">
-        {eskul.map((item) => (
-          <div key={item.id} className="border rounded p-2 relative">
-            {deletingId === item.id ? (
-              <div className="w-full h-24 bg-gray-200 animate-pulse rounded" />
-            ) : (
-              <Image
-                src={item.imageUrl}
-                alt={"hero"}
-                className="w-full h-24 object-cover rounded"
-                width={160}
-                height={160}
-              />
-            )}
-            <div className="mt-2 text-center">
-              {editingId === item.id ? (
-                <input
-                  type="text"
-                  defaultValue={item.name ?? ""}
-                  autoFocus
-                  className="border rounded px-2 py-1 w-full text-sm"
-                  onBlur={(e) => handleNameSave(item.id, e.target.value.trim())}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      handleNameSave(
-                        item.id,
-                        (e.target as HTMLInputElement).value.trim()
-                      );
-                    }
-                  }}
-                />
-              ) : (
-                <p
-                  className="text-sm cursor-pointer"
-                  onClick={() => setEditingId(item.id)}
-                >
-                  {savingId === item.id ? "Saving..." : item.name || "Add name"}
-                </p>
-              )}
-            </div>
-
-            <button
-              onClick={() => handleDelete(item.id)}
-              disabled={deletingId === item.id}
-              className="absolute top-1 right-1 bg-red-500 text-white text-xs px-2 py-1 rounded"
-            >
-              ✕
-            </button>
+        {eskul.length === 0 ? (
+          <div className="col-span-4 flex items-center justify-center h-24 border-2 border-dashed border-gray-300 rounded bg-gray-50 text-gray-500">
+            Belum ada Item untuk Komponen ini
           </div>
-        ))}
+        ) : (
+          eskul.map((item) => (
+            <div key={item.id} className="border rounded p-2 relative">
+              {deletingId === item.id ? (
+                <div className="w-full h-24 bg-gray-200 animate-pulse rounded" />
+              ) : (
+                <Image
+                  src={item.imageUrl}
+                  alt={"hero"}
+                  className="w-full h-24 object-cover rounded"
+                  width={160}
+                  height={160}
+                />
+              )}
+              <div className="mt-2 text-center">
+                {editingId === item.id ? (
+                  <input
+                    type="text"
+                    defaultValue={item.name ?? ""}
+                    autoFocus
+                    className="border rounded px-2 py-1 w-full text-sm"
+                    onBlur={(e) =>
+                      handleNameSave(item.id, e.target.value.trim())
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        handleNameSave(
+                          item.id,
+                          (e.target as HTMLInputElement).value.trim()
+                        );
+                      }
+                    }}
+                  />
+                ) : (
+                  <p
+                    className="text-sm cursor-pointer"
+                    onClick={() => setEditingId(item.id)}
+                  >
+                    {savingId === item.id
+                      ? "Saving..."
+                      : item.name || "Add name"}
+                  </p>
+                )}
+              </div>
+
+              <button
+                onClick={() => handleDelete(item.id)}
+                disabled={deletingId === item.id}
+                className="absolute top-1 right-1 bg-red-500 text-white text-xs px-2 py-1 rounded"
+              >
+                ✕
+              </button>
+            </div>
+          ))
+        )}
       </div>
     </section>
   );

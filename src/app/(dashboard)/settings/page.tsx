@@ -150,83 +150,70 @@ const Settings = () => {
           )}
         </div>
         <div className="mt-4 grid grid-cols-4 gap-4">
-          {gallery.map((item) => (
-            <div key={item.id} className="border rounded p-2 relative">
-              {deletingId === item.id ? (
-                <div className="w-full h-24 bg-gray-200 animate-pulse rounded" />
-              ) : (
-                <Image
-                  src={item.imageUrl}
-                  alt={item.caption ?? "gallery"}
-                  className="w-full h-24 object-cover rounded"
-                  width={160}
-                  height={160}
-                />
-              )}
-
-              <div className="mt-2 text-center">
-                {editingId === item.id ? (
-                  <input
-                    type="text"
-                    defaultValue={item.caption ?? ""}
-                    autoFocus
-                    className="border rounded px-2 py-1 w-full text-sm"
-                    onBlur={(e) =>
-                      handleCaptionSave(item.id, e.target.value.trim())
-                    }
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        handleCaptionSave(
-                          item.id,
-                          (e.target as HTMLInputElement).value.trim()
-                        );
-                      }
-                    }}
-                  />
-                ) : (
-                  <p
-                    className="text-sm cursor-pointer"
-                    onClick={() => setEditingId(item.id)}
-                  >
-                    {savingId === item.id
-                      ? "Saving..."
-                      : item.caption || "Add caption"}
-                  </p>
-                )}
-              </div>
-
-              <button
-                onClick={() => handleDelete(item.id)}
-                disabled={deletingId === item.id}
-                className="absolute top-1 right-1 bg-red-500 text-white text-xs px-2 py-1 rounded disabled:opacity-50"
-              >
-                ✕
-              </button>
+          {gallery.length === 0 ? (
+            <div className="col-span-4 flex items-center justify-center h-24 border-2 border-dashed border-gray-300 rounded bg-gray-50 text-gray-500">
+              Belum ada Item untuk Komponen ini
             </div>
-          ))}
+          ) : (
+            gallery.map((item) => (
+              <div key={item.id} className="border rounded p-2 relative">
+                {deletingId === item.id ? (
+                  <div className="w-full h-24 bg-gray-200 animate-pulse rounded" />
+                ) : (
+                  <Image
+                    src={item.imageUrl}
+                    alt={item.caption ?? "gallery"}
+                    className="w-full h-24 object-cover rounded"
+                    width={160}
+                    height={160}
+                  />
+                )}
+
+                <div className="mt-2 text-center">
+                  {editingId === item.id ? (
+                    <input
+                      type="text"
+                      defaultValue={item.caption ?? ""}
+                      autoFocus
+                      className="border rounded px-2 py-1 w-full text-sm"
+                      onBlur={(e) =>
+                        handleCaptionSave(item.id, e.target.value.trim())
+                      }
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          handleCaptionSave(
+                            item.id,
+                            (e.target as HTMLInputElement).value.trim()
+                          );
+                        }
+                      }}
+                    />
+                  ) : (
+                    <p
+                      className="text-sm cursor-pointer"
+                      onClick={() => setEditingId(item.id)}
+                    >
+                      {savingId === item.id
+                        ? "Saving..."
+                        : item.caption || "Add caption"}
+                    </p>
+                  )}
+                </div>
+
+                <button
+                  onClick={() => handleDelete(item.id)}
+                  disabled={deletingId === item.id}
+                  className="absolute top-1 right-1 bg-red-500 text-white text-xs px-2 py-1 rounded disabled:opacity-50"
+                >
+                  ✕
+                </button>
+              </div>
+            ))
+          )}
         </div>
       </section>
 
       {/* Eskul */}
-      {/* <section>
-        <h2 className="text-lg font-bold mb-2">EkstraKulikuler</h2>
-        <FormModal type="create" table="eskul" />
-        <div className="mt-4 grid grid-cols-3 gap-4">
-          {data?.eskul.map((slide) => (
-            <div key={slide.id} className="border rounded p-2">
-              <Image
-                src={slide.imageUrl}
-                alt={slide.name}
-                className="w-full h-32 object-cover rounded"
-                width={160}
-                height={160}
-              />
-              <p className="text-center mt-2 font-medium">{slide.name}</p>
-              <FormModal type="update" table="eskul" data={slide} />
-            </div>
-          ))}
-        </div>
-      </section> */}
       <EskulSettings />
     </div>
   );

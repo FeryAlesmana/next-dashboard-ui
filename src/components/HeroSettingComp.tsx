@@ -104,29 +104,35 @@ const HeroSettings = () => {
         )}
       </div>
       <div className="mt-4 grid grid-cols-4 gap-4">
-        {hero.map((item) => (
-          <div key={item.id} className="border rounded p-2 relative">
-            {deletingId === item.id ? (
-              <div className="w-full h-24 bg-gray-200 animate-pulse rounded" />
-            ) : (
-              <Image
-                src={item.imageUrl}
-                alt={"hero"}
-                className="w-full h-24 object-cover rounded"
-                width={160}
-                height={160}
-              />
-            )}
-
-            <button
-              onClick={() => handleDelete(item.id)}
-              disabled={deletingId === item.id}
-              className="absolute top-1 right-1 bg-red-500 text-white text-xs px-2 py-1 rounded"
-            >
-              ✕
-            </button>
+        {hero.length === 0 ? (
+          <div className="col-span-4 flex items-center justify-center h-24 border-2 border-dashed border-gray-300 rounded bg-gray-50 text-gray-500">
+            Belum ada gambar untuk Komponen ini
           </div>
-        ))}
+        ) : (
+          hero.map((item) => (
+            <div key={item.id} className="border rounded p-2 relative">
+              {deletingId === item.id ? (
+                <div className="w-full h-24 bg-gray-200 animate-pulse rounded" />
+              ) : (
+                <Image
+                  src={item.imageUrl}
+                  alt="hero"
+                  className="w-full h-24 object-cover rounded"
+                  width={160}
+                  height={160}
+                />
+              )}
+
+              <button
+                onClick={() => handleDelete(item.id)}
+                disabled={deletingId === item.id}
+                className="absolute top-1 right-1 bg-red-500 text-white text-xs px-2 py-1 rounded"
+              >
+                ✕
+              </button>
+            </div>
+          ))
+        )}
       </div>
     </section>
   );
