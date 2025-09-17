@@ -24,8 +24,6 @@ export const FIELD_MAP: Record<string, string> = {
   // Optional
   username: "username",
   password: "password",
-  namalengkap: "namalengkap",
-  "nama lengkap": "namalengkap",
 
   email: "email",
   rw: "rw",
