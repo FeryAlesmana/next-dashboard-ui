@@ -136,9 +136,9 @@ const ParentForm = ({
 
   const { students = [] } = relatedData ?? {};
   const studentOptions = students.map(
-    (student: { id: string; name: string; namalengkap: string }) => ({
+    (student: { id: string; name: string }) => ({
       value: student.id,
-      label: `${student.name} ${student.namalengkap}`,
+      label: `${student.name} `,
     })
   );
   const [showPassword, setShowPassword] = useState(false);
@@ -210,13 +210,6 @@ const ParentForm = ({
             defaultValue={data?.name}
             register={register}
             error={errors?.name}
-          />
-          <InputField
-            label="Nama Belakang"
-            name="namalengkap"
-            defaultValue={data?.namalengkap}
-            register={register}
-            error={errors?.namalengkap}
           />
           <InputField
             label="Birthday"

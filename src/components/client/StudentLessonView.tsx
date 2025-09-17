@@ -156,7 +156,7 @@ export default function StudentLessonViewSemester({
                   <td>{lsn.day}</td>
                   <td className="hidden md:table-cell">
                     {lsn.teacherId
-                      ? `${lsn.teacher?.name} ${lsn.teacher?.namalengkap}`
+                      ? `${lsn.teacher?.name}`
                       : "Tidak ada guru"}
                   </td>
                   <td className="text-center lg:text-left ">

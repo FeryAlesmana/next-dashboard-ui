@@ -74,7 +74,7 @@ const ParentLessonView = ({
                         <td>{item.day}</td>
                         <td className="hidden md:table-cell">
                           {item.teacherId
-                            ? `${item.teacher?.name} ${item.teacher?.namalengkap}`
+                            ? `${item.teacher?.name} `
                             : "Tidak ada guru"}
                         </td>
                         <td>

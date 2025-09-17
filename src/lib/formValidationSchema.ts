@@ -43,7 +43,6 @@ export const teacherSchema = z.object({
     .or(z.literal(""))
     .optional(),
   name: z.string().min(1, { message: "Nama depan wajib diisi!" }),
-  namalengkap: z.string().min(1, { message: "Nama belakang wajib diisi!" }),
   email: z
     .string()
     .email({ message: "Email anda Tidak valid!" })
@@ -138,7 +137,6 @@ export const studentSchema = z.object({
     .min(3, { message: "Username harus lebih dari 3 karakter!" })
     .max(64, { message: "Username harus kurang dari 64 karakter!" }),
   name: z.string().min(1, { message: "Nama depan wajib diisi!" }),
-  namalengkap: z.string().min(1, { message: "Nama belakang wajib diisi!" }),
   email: z
     .string()
     .email({ message: "Email anda Tidak valid!" })
@@ -334,7 +332,6 @@ export const parentSchema = z.object({
     .optional(),
   email: z.string().email({ message: "Email anda Tidak valid!" }),
   name: z.string().min(1, { message: "Nama depan wajib diisi!" }),
-  namalengkap: z.string().min(1, { message: "Nama belakang wajib diisi!" }),
   sex: z.nativeEnum(UserSex, {
     message: " Jenis Kelamin Calon Siswa wajib diisi!",
   }),
@@ -417,13 +414,6 @@ export const ppdbSchema = z.object({
   name: z.string({
     message: " nama Calon Siswa wajib diisi!",
   }),
-  namalengkap: z
-    .string({
-      message: " nama Calon Siswa wajib diisi!",
-    })
-    .optional()
-    .nullable()
-    .or(z.literal("")),
   birthday: z.string({
     message: " Tanggal lahir Calon Siswa wajib diisi!",
   }),
@@ -438,14 +428,16 @@ export const ppdbSchema = z.object({
   }),
   phone: z
     .string({ message: " No telepon Calon Siswa wajib diisi!" })
-    .length(11)
+    .min(10, { message: " No telepon Calon Siswa Minimal 10 karakter!" })
+    .max(13, { message: " No telepon Calon Siswa Maksimal 13 karakter!" })
     .regex(/^\d+$/),
   asalSekolah: z
     .string({ message: " Asal sekoolah Calon Siswa wajib diisi!" })
     .min(1),
   npsn: z
     .string({ message: " NPSN Calon Siswa wajib diisi!" })
-    .length(8)
+    .min(8, { message: " NPSN Calon Siswa Minimal 8 karakter!" })
+    .max(10, { message: " NPSNCalon Siswa Maksimal 10 karakter!" })
     .regex(/^\d+$/),
   nisn: z
     .string({ message: " NISN Calon Siswa wajib diisi!" })
@@ -707,7 +699,6 @@ export type PpdbSchema = z.infer<typeof ppdbSchema>;
 
 export const fieldLabelMap: Record<string, string> = {
   name: "Nama Calon Siswa",
-  namalengkap: "Nama Panggilan",
   birthday: "Tanggal Lahir",
   birthPlace: "Tempat Lahir",
   sex: "Jenis Kelamin",

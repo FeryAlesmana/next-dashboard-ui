@@ -137,7 +137,7 @@ export default function ParentLessonViewSemester({
           <div key={studentId} className="mb-12">
             <div className="flex justify-between items-center mb-2">
               <h2 className="text-xl font-semibold">
-                {student?.name || "Murid"} {student?.namalengkap || ""}
+                {student?.name || "Murid"}
               </h2>
               <SemesterSelect
                 semesters={semesters}
@@ -203,7 +203,7 @@ export default function ParentLessonViewSemester({
                         <td>{lesson.day}</td>
                         <td className="hidden md:table-cell">
                           {lesson.teacherId
-                            ? `${lesson.teacher?.name} ${lesson.teacher?.namalengkap}`
+                            ? `${lesson.teacher?.name} `
                             : "Tidak ada guru"}
                         </td>
                         <td className="text-center lg:text-left ">

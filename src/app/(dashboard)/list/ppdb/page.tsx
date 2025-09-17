@@ -28,6 +28,14 @@ const PpdbPage = async ({
   const perPage = limit === "all" ? undefined : parseInt(limit ?? "10");
 
   const columns = [
+    ...(role === "admin"
+      ? [
+          {
+            header: "Select",
+            accessor: "checkbox",
+          },
+        ]
+      : []),
     {
       header: "No",
       accessor: "nomor",

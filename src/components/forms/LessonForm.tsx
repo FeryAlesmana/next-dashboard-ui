@@ -156,9 +156,9 @@ const LessonForm = ({
     label: `${kelas.name}`,
   }));
   const teacherOptions = teachers.map(
-    (teacher: { id: string; name: string; namalengkap: string }) => ({
+    (teacher: { id: string; name: string }) => ({
       value: teacher.id,
-      label: `${teacher.name} ${teacher.namalengkap}`,
+      label: `${teacher.name} `,
     })
   );
 

@@ -158,12 +158,10 @@ const StudentForm = ({
 
   //  console.log(data, "data in studentForm");
 
-  const parentOption = parents.map(
-    (parent: { id: string; name: string; namalengkap: string }) => ({
-      value: parent.id,
-      label: `${parent.name} ${parent.namalengkap}`,
-    })
-  );
+  const parentOption = parents.map((parent: { id: string; name: string }) => ({
+    value: parent.id,
+    label: `${parent.name} `,
+  }));
   const [showPassword, setShowPassword] = useState(false);
 
   return (
@@ -236,13 +234,6 @@ const StudentForm = ({
             defaultValue={data?.name}
             register={register}
             error={errors?.name}
-          ></InputField>
-          <InputField
-            label="Nama Belakang"
-            name="namalengkap"
-            defaultValue={data?.namalengkap}
-            register={register}
-            error={errors?.namalengkap}
           ></InputField>
           <InputField
             label="No. Telepon"

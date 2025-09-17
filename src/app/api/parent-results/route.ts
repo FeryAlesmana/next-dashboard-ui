@@ -16,7 +16,6 @@ export async function GET(req: NextRequest) {
     select: {
       id: true,
       name: true,
-      namalengkap: true,
       class: {
         select: {
           grade: {
@@ -54,13 +53,13 @@ export async function GET(req: NextRequest) {
       ],
     },
     include: {
-      student: { select: { name: true, namalengkap: true, id: true } },
+      student: { select: { name: true, id: true } },
       exam: {
         include: {
           lesson: {
             select: {
               class: { select: { name: true } },
-              teacher: { select: { name: true, namalengkap: true } },
+              teacher: { select: { name: true } },
               subject: true,
             },
           },
@@ -71,7 +70,7 @@ export async function GET(req: NextRequest) {
           lesson: {
             select: {
               class: { select: { name: true } },
-              teacher: { select: { name: true, namalengkap: true } },
+              teacher: { select: { name: true } },
               subject: true,
             },
           },
@@ -92,9 +91,7 @@ export async function GET(req: NextRequest) {
         id: item.id,
         title: source.title,
         subject: lesson.subject?.name || "-",
-        teacher: lesson.teacher
-          ? `${lesson.teacher.name} ${lesson.teacher.namalengkap}`
-          : "-",
+        teacher: lesson.teacher ? `${lesson.teacher.name}` : "-",
         class: lesson.class?.name || "-",
         score: item.score,
         type: item.exam ? "Ujian" : "Tugas",
@@ -106,7 +103,6 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     id: student.id,
     name: student.name,
-    namalengkap: student.namalengkap,
     gradeLevel: student.class?.grade?.level ?? 1,
     results: mappedResults,
   });

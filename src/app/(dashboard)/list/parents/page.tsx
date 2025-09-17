@@ -152,7 +152,6 @@ const ParentsListPage = async ({
       select: {
         id: true,
         name: true,
-        namalengkap: true,
       },
     }),
   ]);

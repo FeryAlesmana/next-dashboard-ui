@@ -193,7 +193,7 @@ const ResultListPage = async ({
               lesson: {
                 select: {
                   class: { select: { name: true } },
-                  teacher: { select: { name: true, namalengkap: true } },
+                  teacher: { select: { name: true } },
                   subject: true,
                 },
               },
@@ -204,7 +204,7 @@ const ResultListPage = async ({
               lesson: {
                 select: {
                   class: { select: { name: true } },
-                  teacher: { select: { name: true, namalengkap: true } },
+                  teacher: { select: { name: true } },
                   subject: true,
                 },
               },
@@ -224,9 +224,7 @@ const ResultListPage = async ({
             id: item.id,
             title: source.title,
             subject: lesson.subject?.name || "-",
-            teacher: lesson.teacher
-              ? `${lesson.teacher.name} ${lesson.teacher.namalengkap}`
-              : "-",
+            teacher: lesson.teacher ? `${lesson.teacher.name} ` : "-",
             class: lesson.class?.name || "-",
             score: item.score,
             type: item.exam ? "Ujian" : "Tugas",
@@ -269,13 +267,13 @@ const ResultListPage = async ({
       const results = await prisma.result.findMany({
         where: { studentId: { in: studentIds } },
         include: {
-          student: { select: { name: true, namalengkap: true, id: true } },
+          student: { select: { name: true, id: true } },
           exam: {
             include: {
               lesson: {
                 select: {
                   class: { select: { name: true } },
-                  teacher: { select: { name: true, namalengkap: true } },
+                  teacher: { select: { name: true } },
                   subject: true,
                 },
               },
@@ -286,7 +284,7 @@ const ResultListPage = async ({
               lesson: {
                 select: {
                   class: { select: { name: true } },
-                  teacher: { select: { name: true, namalengkap: true } },
+                  teacher: { select: { name: true } },
                   subject: true,
                 },
               },
@@ -309,9 +307,7 @@ const ResultListPage = async ({
               id: item.id,
               title: source.title,
               subject: lesson.subject?.name || "-",
-              teacher: lesson.teacher
-                ? `${lesson.teacher.name} ${lesson.teacher.namalengkap}`
-                : "-",
+              teacher: lesson.teacher ? `${lesson.teacher.name}` : "-",
               class: lesson.class?.name || "-",
               score: item.score,
               type: item.exam ? "Ujian" : "Tugas",
@@ -332,13 +328,13 @@ const ResultListPage = async ({
           const results = await prisma.result.findMany({
             where: { studentId: child.id },
             include: {
-              student: { select: { name: true, namalengkap: true, id: true } },
+              student: { select: { name: true, id: true } },
               exam: {
                 include: {
                   lesson: {
                     select: {
                       class: { select: { name: true } },
-                      teacher: { select: { name: true, namalengkap: true } },
+                      teacher: { select: { name: true } },
                       subject: true,
                     },
                   },
@@ -349,7 +345,7 @@ const ResultListPage = async ({
                   lesson: {
                     select: {
                       class: { select: { name: true } },
-                      teacher: { select: { name: true, namalengkap: true } },
+                      teacher: { select: { name: true } },
                       subject: true,
                     },
                   },
@@ -371,9 +367,7 @@ const ResultListPage = async ({
                 id: item.id,
                 title: source.title,
                 subject: lesson.subject?.name || "-",
-                teacher: lesson.teacher
-                  ? `${lesson.teacher.name} ${lesson.teacher.namalengkap}`
-                  : "-",
+                teacher: lesson.teacher ? `${lesson.teacher.name} ` : "-",
                 class: lesson.class?.name || "-",
                 score: item.score,
                 type: item.exam ? "Ujian" : "Tugas",
@@ -414,13 +408,13 @@ const ResultListPage = async ({
       prisma.result.findMany({
         where: query,
         include: {
-          student: { select: { name: true, namalengkap: true } },
+          student: { select: { name: true } },
           exam: {
             include: {
               lesson: {
                 select: {
                   class: { select: { name: true, gradeId: true } },
-                  teacher: { select: { name: true, namalengkap: true } },
+                  teacher: { select: { name: true } },
                   subject: true,
                 },
               },
@@ -431,7 +425,7 @@ const ResultListPage = async ({
               lesson: {
                 select: {
                   class: { select: { name: true, gradeId: true } },
-                  teacher: { select: { name: true, namalengkap: true } },
+                  teacher: { select: { name: true } },
                   subject: true,
                 },
               },
@@ -446,7 +440,6 @@ const ResultListPage = async ({
         select: {
           id: true,
           name: true,
-          namalengkap: true,
           classId: true,
         },
       }),
@@ -498,12 +491,8 @@ const ResultListPage = async ({
         title: source.title,
         subject: lesson.subject?.name || "-",
         studentId: item.studentId || "",
-        student: item.student
-          ? `${item.student.name} ${item.student.namalengkap}`
-          : "-",
-        teacher: lesson.teacher
-          ? `${lesson.teacher.name} ${lesson.teacher.namalengkap}`
-          : "-",
+        student: item.student ? `${item.student.name}` : "-",
+        teacher: lesson.teacher ? `${lesson.teacher.name} ` : "-",
         score: item.score,
         class: lesson.class?.name || "-",
         selectedType: isExam ? "Ujian" : "Tugas",

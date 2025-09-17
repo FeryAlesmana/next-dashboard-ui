@@ -104,7 +104,7 @@ const ImportStudentsForm = ({
         <ul className="list-disc list-inside grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-1">
           <li>Username</li>
           <li>Password</li>
-          <li>Nama Lengkap</li>
+          <li>NISN</li>
           <li>Email</li>
           <li>RW</li>
           <li>RT</li>

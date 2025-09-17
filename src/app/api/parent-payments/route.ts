@@ -16,7 +16,6 @@ export async function GET(req: NextRequest) {
     select: {
       id: true,
       name: true,
-      namalengkap: true,
       class: {
         select: {
           grade: {
@@ -44,7 +43,6 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     id: student.id,
     name: student.name,
-    namalengkap: student.namalengkap,
     gradeLevel: student.class?.grade?.level ?? 1,
     payments,
   });

@@ -47,38 +47,28 @@ const FormulirPendaftaran = ({
       isvalid: false, // set default to false here
     },
   });
+  const [allowAutosave, setAllowAutosave] = useState(type === "create"); // only true for create initially
+
   const watchedValues = watch();
 
   useEffect(() => {
+    if (!allowAutosave) return; // skip saving when not allowed
+
     const timeout = setTimeout(() => {
       localStorage.setItem(FORM_KEY, JSON.stringify(watchedValues));
-    }, 500); // Save after 500ms of inactivity
+    }, 500);
 
     return () => clearTimeout(timeout);
-  }, [watchedValues]);
+  }, [watchedValues, allowAutosave]);
 
   // Load saved data on mount
   useEffect(() => {
-    const saved = localStorage.getItem(FORM_KEY);
-    if (saved) {
-      const values = JSON.parse(saved);
-      for (const key in values) {
-        setValue(key as keyof PpdbSchema, values[key]);
-      }
-    }
-
-    if (type === "create" && prefilEmail) {
-      reset({
-        isvalid: false,
-        email: prefilEmail ?? "",
-      });
-    }
-
     if (type === "update" && data) {
+      localStorage.removeItem(FORM_KEY);
+      setAllowAutosave(false);
       reset({
         id: data.id,
         name: data.name ?? "",
-        namalengkap: data.namalengkap ?? "",
         birthPlace: data.birthPlace ?? "",
         birthday: data.birthday
           ? new Date(data.birthday).toISOString().split("T")[0]
@@ -109,7 +99,7 @@ const FormulirPendaftaran = ({
         namaWali: data.namaWali ?? "",
         nik: data.nik ?? "",
         nisn: data.nisn ?? "",
-        // noWa: data.noWa ?? "",
+        noWhatsapp: data.noWa ?? "",
         no_ijz: data.no_ijz ?? "",
         no_kps: data.no_kps ?? "",
         npsn: data.npsn ?? "",
@@ -149,6 +139,23 @@ const FormulirPendaftaran = ({
         transportation: data.transportation ?? "",
         weight: data.weight ?? 0,
       });
+    } else if (type === "create") {
+      setAllowAutosave(true);
+      // ✅ Only use saved draft for create mode
+      const saved = localStorage.getItem(FORM_KEY);
+      if (saved) {
+        const values = JSON.parse(saved);
+        for (const key in values) {
+          setValue(key as keyof PpdbSchema, values[key]);
+        }
+      }
+
+      if (prefilEmail) {
+        reset({
+          isvalid: false,
+          email: prefilEmail,
+        });
+      }
     }
   }, [setValue, data, reset, type, prefilEmail]);
   const [dokumen, setDokumen] = useState<{
@@ -222,6 +229,7 @@ const FormulirPendaftaran = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const handleSubmitForm = handleSubmit((data) => {
     setIsSubmitting(true);
+    setShowConfirm(false);
     startTransition(() => {
       formAction({
         ...data,
@@ -244,10 +252,13 @@ const FormulirPendaftaran = ({
     console.log("state.success:", state.success);
     if (state.success) {
       const updatedItem = state.data ?? data; // <- depends on what your action returns
-      localStorage.removeItem(FORM_KEY);
+
       toast(
         `PPDB telah berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`
       );
+      setOpen(false);
+      localStorage.removeItem(FORM_KEY);
+      router.refresh();
       if (onChanged && updatedItem) {
         onChanged(updatedItem); // 🔥 notify parent so it can update localData
       } else {
@@ -1638,8 +1649,8 @@ const FormulirPendaftaran = ({
           <ConfirmDialog
             message={
               type === "create"
-                ? "Tambah Pengumuman baru?"
-                : "Simpan perubahan Pengumuman?"
+                ? "Submit Formulir Pendaftaran?"
+                : "Simpan perubahan Formulir Pendaftaran?"
             }
             onConfirm={handleSubmitForm}
             onCancel={() => setShowConfirm(false)}

@@ -12,6 +12,8 @@ export default function PpdbTableClient({
   onDeleted,
   onChanged,
 }: BaseTableClientProps) {
+  console.log(data, "data in tbl client");
+
   return (
     <>
       <tr className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight">

@@ -60,7 +60,6 @@ const FormContainer = async ({
           select: {
             id: true,
             name: true,
-            namalengkap: true,
           },
         });
         relatedData = { teachers: subjectTeachers };
@@ -70,7 +69,6 @@ const FormContainer = async ({
           select: {
             id: true,
             name: true,
-            namalengkap: true,
           },
         });
         relatedData = { students: parentStudents };
@@ -86,7 +84,6 @@ const FormContainer = async ({
           select: {
             id: true,
             name: true,
-            namalengkap: true,
           },
         });
         relatedData = { teachers: classTeacher, grades: classGrades };
@@ -132,7 +129,6 @@ const FormContainer = async ({
           select: {
             id: true,
             name: true,
-            namalengkap: true,
           },
         });
 
@@ -267,7 +263,6 @@ const FormContainer = async ({
           select: {
             id: true,
             name: true,
-            namalengkap: true,
           },
         });
 
@@ -282,7 +277,7 @@ const FormContainer = async ({
           select: {
             id: true,
             name: true,
-            namalengkap: true,
+
             classId: true,
           },
         });
@@ -331,7 +326,6 @@ const FormContainer = async ({
           select: {
             id: true,
             name: true,
-            namalengkap: true,
           },
         });
 
@@ -371,7 +365,7 @@ const FormContainer = async ({
               select: {
                 id: true,
                 name: true,
-                namalengkap: true,
+
                 class: {
                   select: {
                     name: true,
@@ -400,7 +394,6 @@ const FormContainer = async ({
           select: {
             id: true,
             name: true,
-            namalengkap: true,
           },
         });
         const classData = await prisma.class.findMany({
@@ -430,24 +423,24 @@ const FormContainer = async ({
 
           const studentUser = await prisma.student.findUnique({
             where: { id: stringId },
-            select: { id: true, name: true, namalengkap: true },
+            select: { id: true, name: true },
           });
 
           const teacherUser = await prisma.teacher.findUnique({
             where: { id: stringId },
-            select: { id: true, name: true, namalengkap: true },
+            select: { id: true, name: true },
           });
 
           const parentUser = await prisma.parent.findUnique({
             where: { id: stringId },
-            select: { id: true, name: true, namalengkap: true },
+            select: { id: true, name: true },
           });
 
           foundUser = studentUser || teacherUser || parentUser || undefined;
         }
         // for dropdown options
         const students = await prisma.student.findMany({
-          select: { id: true, name: true, namalengkap: true },
+          select: { id: true, name: true },
         });
 
         const teachers = await prisma.teacher.findMany({
@@ -461,7 +454,7 @@ const FormContainer = async ({
         const usersData = [
           ...students.map((s) => ({
             id: s.id,
-            name: s.name || s.namalengkap,
+            name: s.name,
             type: "student",
           })),
           ...teachers.map((t) => ({ id: t.id, name: t.name, type: "teacher" })),

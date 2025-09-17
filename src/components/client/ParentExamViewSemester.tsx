@@ -170,7 +170,7 @@ export default function ParentExamViewSemester({
             <div className="flex justify-between items-center mb-2">
               <h2 className="text-xl font-semibold flex flex-row">
                 <span className="">
-                  {student?.name || "Murid"} {student?.namalengkap || ""}
+                  {student?.name || "Murid"}
                   <hr />
                 </span>
               </h2>

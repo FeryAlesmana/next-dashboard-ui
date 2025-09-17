@@ -230,13 +230,6 @@ const TeacherForm = ({
             error={errors?.name}
           ></InputField>
           <InputField
-            label="Nama Belakang"
-            name="namalengkap"
-            defaultValue={data?.namalengkap}
-            register={register}
-            error={errors?.namalengkap}
-          ></InputField>
-          <InputField
             label="No. Telepon"
             name="phone"
             defaultValue={data?.phone}

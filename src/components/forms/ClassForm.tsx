@@ -111,7 +111,7 @@ const ClassForm = ({
 
   const teacherOptions = teachers.map((teacher: any) => ({
     value: teacher.id,
-    label: `${teacher.name} - ${teacher.namalengkap}`,
+    label: `${teacher.name}`,
   }));
 
   return (

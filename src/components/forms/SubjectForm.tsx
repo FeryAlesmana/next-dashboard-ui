@@ -82,9 +82,9 @@ const SubjectForm = ({
 
   const { teachers = [] } = relatedData ?? {};
   const teacherOption = teachers.map(
-    (teacher: { id: string; name: string; namalengkap: string }) => ({
+    (teacher: { id: string; name: string }) => ({
       value: teacher.id,
-      label: `${teacher.name} ${teacher.namalengkap}`,
+      label: `${teacher.name} `,
     })
   );
 

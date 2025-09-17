@@ -132,7 +132,6 @@ const SingleResultPageClient = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-700">
           <p>
             <span className="font-semibold">Nama Murid:</span> {student.name}{" "}
-            {student.namalengkap || "-"}
           </p>
           <p>
             <span className="font-semibold">NISN:</span>{" "}
@@ -211,7 +210,7 @@ const SingleResultPageClient = ({
                         {lesson.subject?.name}
                       </td>
                       <td className="p-3 border-b border-gray-200 hidden md:table-cell">
-                        {lesson.teacher?.name} {lesson.teacher?.namalengkap}
+                        {lesson.teacher?.name}
                       </td>
                       <td className="p-3 border-b border-gray-200 text-center">
                         {tugas}

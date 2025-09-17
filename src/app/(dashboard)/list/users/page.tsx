@@ -63,7 +63,7 @@ const UserListPage = async ({
       select: {
         id: true,
         name: true,
-        namalengkap: true,
+
         password: true,
         email: true,
         img: true,
@@ -75,7 +75,7 @@ const UserListPage = async ({
       select: {
         id: true,
         name: true,
-        namalengkap: true,
+
         password: true,
         email: true,
         img: true,
@@ -87,7 +87,7 @@ const UserListPage = async ({
       select: {
         id: true,
         name: true,
-        namalengkap: true,
+
         password: true,
         email: true,
       },
@@ -102,7 +102,6 @@ const UserListPage = async ({
       email: foundUser?.email ?? "—",
       role: (u.publicMetadata?.role as string | undefined) ?? "—",
       password: foundUser?.password ? decryptPassword(foundUser.password) : "", // ← pulled from student/teacher/parent table
-      namalengkap: foundUser?.namalengkap ?? null,
     });
   }
   const renderRow = (item: any) => {

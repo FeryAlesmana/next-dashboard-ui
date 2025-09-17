@@ -91,7 +91,7 @@ const PaymentLogListPage = async ({
         select: {
           id: true,
           name: true,
-          namalengkap: true,
+          
           class: {
             select: { name: true, grade: { select: { level: true } } },
           },
@@ -128,7 +128,7 @@ const PaymentLogListPage = async ({
         select: {
           id: true,
           name: true,
-          namalengkap: true,
+          
           class: {
             select: { name: true, grade: { select: { level: true } } },
           },
@@ -263,7 +263,6 @@ const PaymentLogListPage = async ({
           student: {
             select: {
               name: true,
-              namalengkap: true,
               img: true,
               class: {
                 select: {
@@ -288,7 +287,6 @@ const PaymentLogListPage = async ({
         select: {
           id: true,
           name: true,
-          namalengkap: true,
         },
       }),
       prisma.grade.findMany({

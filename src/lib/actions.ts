@@ -280,7 +280,7 @@ export const createTeacher = async (
       username: data.username,
       password: data.password,
       firstName: data.name,
-      lastName: data.namalengkap,
+
       publicMetadata: { role: "teacher" },
     });
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -290,7 +290,6 @@ export const createTeacher = async (
         username: data.username,
         password: encryptPassword(data.password!),
         name: data.name,
-        namalengkap: data.namalengkap,
         email: data.email,
         phone: data.phone,
         address: data.address,
@@ -372,7 +371,6 @@ export const importTeachers = async (
       username: row.username || row.name,
       password: encryptPassword(row.password || row.email), // default password
       name: row.name,
-      namalengkap: row.namalengkap || row.name,
       email: row.email || null,
       phone: row.phone.toString(),
       address: row.address,
@@ -440,7 +438,6 @@ export const updateTeacher = async (
           password: data.password,
         }),
         firstName: data.name,
-        lastName: data.namalengkap,
       });
       if (user) {
         console.log("✅ User Sucessfully Updated:", user.id);
@@ -454,7 +451,7 @@ export const updateTeacher = async (
         username: data.username,
         password: data.password !== "" ? data.password : undefined,
         firstName: data.name,
-        lastName: data.namalengkap,
+
         publicMetadata: { role: "teacher" },
       });
 
@@ -482,7 +479,7 @@ export const updateTeacher = async (
           password: encryptPassword(data.password!),
         }),
         name: data.name,
-        namalengkap: data.namalengkap,
+
         email: data.email || null,
         phone: data.phone,
         address: data.address,
@@ -714,7 +711,7 @@ export const createStudent = async (
       username: data.username,
       password: data.password,
       firstName: data.name,
-      lastName: data.namalengkap,
+
       publicMetadata: { role: "student" },
     });
     console.log("Trying to createUser");
@@ -731,7 +728,7 @@ export const createStudent = async (
         username: data.username,
         password: encryptPassword(data.password),
         name: data.name,
-        namalengkap: data.namalengkap,
+
         email: data.email,
         phone: data.phone,
         address: data.address,
@@ -831,7 +828,7 @@ export const importStudents = async (
       username: row.username || row.name,
       password: encryptPassword(row.password || row.email), // default password
       name: row.name,
-      namalengkap: row.namalengkap || row.name,
+
       email: row.email || null,
       phone: row.phone.toString(),
       address: row.address,
@@ -901,7 +898,6 @@ export const updateStudent = async (
           password: data.password,
         }),
         firstName: data.name,
-        lastName: data.namalengkap,
       });
       if (user) {
         console.log("✅ User Sucessfully Updated:", user.id);
@@ -916,7 +912,7 @@ export const updateStudent = async (
         username: data.username,
         password: data.password !== "" ? data.password : undefined,
         firstName: data.name,
-        lastName: data.namalengkap,
+
         publicMetadata: { role: "student" },
       });
 
@@ -945,7 +941,7 @@ export const updateStudent = async (
           password: encryptPassword(data.password!),
         }),
         name: data.name,
-        namalengkap: data.namalengkap,
+
         email: data.email || null,
         phone: data.phone,
         address: data.address,
@@ -1215,7 +1211,7 @@ export const createExam = async (
         lesson: {
           select: {
             subject: { select: { name: true } },
-            teacher: { select: { name: true, namalengkap: true } },
+            teacher: { select: { name: true } },
             class: { select: { name: true } },
           },
         },
@@ -1265,7 +1261,7 @@ export const updateExam = async (
         lesson: {
           select: {
             subject: { select: { name: true } },
-            teacher: { select: { name: true, namalengkap: true } },
+            teacher: { select: { name: true } },
             class: { select: { name: true } },
           },
         },
@@ -1324,7 +1320,7 @@ export const updateExams = async (
         lesson: {
           select: {
             subject: { select: { name: true } },
-            teacher: { select: { name: true, namalengkap: true, id: true } },
+            teacher: { select: { name: true, id: true } },
             class: { select: { name: true, grade: true } },
           },
         },
@@ -1575,7 +1571,7 @@ export const createAssignment = async (
         lesson: {
           select: {
             subject: { select: { name: true } },
-            teacher: { select: { name: true, namalengkap: true, id: true } },
+            teacher: { select: { name: true, id: true } },
             class: { select: { name: true, grade: true } },
           },
         },
@@ -1626,7 +1622,7 @@ export const updateAssignment = async (
         lesson: {
           select: {
             subject: { select: { name: true } },
-            teacher: { select: { name: true, namalengkap: true, id: true } },
+            teacher: { select: { name: true, id: true } },
             class: { select: { name: true, grade: true } },
           },
         },
@@ -1682,7 +1678,7 @@ export const updateAssignments = async (
         lesson: {
           select: {
             subject: { select: { name: true } },
-            teacher: { select: { name: true, namalengkap: true, id: true } },
+            teacher: { select: { name: true, id: true } },
             class: { select: { name: true, grade: true } },
           },
         },
@@ -1772,7 +1768,7 @@ export const createParent = async (
       username: data.username,
       password: data.password,
       firstName: data.name,
-      lastName: data.namalengkap,
+
       publicMetadata: { role: "parent" },
     });
     if (user) {
@@ -1819,7 +1815,7 @@ export const createParent = async (
         username: data.username,
         password: encryptPassword(data.password),
         name: data.name,
-        namalengkap: data.namalengkap,
+
         email: data.email,
         sex: data.sex,
         waliMurid: data.waliMurid,
@@ -1889,7 +1885,6 @@ export const updateParent = async (
           password: data.password,
         }),
         firstName: data.name,
-        lastName: data.namalengkap,
       });
       if (user) {
         console.log("✅ User Sucessfully Updated:", user.id);
@@ -1904,7 +1899,7 @@ export const updateParent = async (
         username: data.username,
         password: data.password !== "" ? data.password : undefined,
         firstName: data.name,
-        lastName: data.namalengkap,
+
         publicMetadata: { role: "parent" },
       });
 
@@ -1960,7 +1955,7 @@ export const updateParent = async (
           password: encryptPassword(data.password!),
         }),
         name: data.name,
-        namalengkap: data.namalengkap,
+
         birthday: new Date(data.birthday),
         email: data.email,
         phone: data.phone,
@@ -2336,13 +2331,13 @@ export const createResult = async (
         resultType: data.resultType,
       },
       include: {
-        student: { select: { name: true, namalengkap: true } },
+        student: { select: { name: true } },
         exam: {
           include: {
             lesson: {
               select: {
                 class: { select: { name: true, gradeId: true } },
-                teacher: { select: { name: true, namalengkap: true } },
+                teacher: { select: { name: true } },
                 subject: true,
               },
             },
@@ -2353,7 +2348,7 @@ export const createResult = async (
             lesson: {
               select: {
                 class: { select: { name: true, gradeId: true } },
-                teacher: { select: { name: true, namalengkap: true } },
+                teacher: { select: { name: true } },
                 subject: true,
               },
             },
@@ -2424,13 +2419,13 @@ export const updateResult = async (
     const updatedResult = await prisma.result.findUnique({
       where: { id: data.id },
       include: {
-        student: { select: { name: true, namalengkap: true } },
+        student: { select: { name: true } },
         exam: {
           include: {
             lesson: {
               select: {
                 class: { select: { name: true, gradeId: true } },
-                teacher: { select: { name: true, namalengkap: true } },
+                teacher: { select: { name: true } },
                 subject: true,
               },
             },
@@ -2441,7 +2436,7 @@ export const updateResult = async (
             lesson: {
               select: {
                 class: { select: { name: true, gradeId: true } },
-                teacher: { select: { name: true, namalengkap: true } },
+                teacher: { select: { name: true } },
                 subject: true,
               },
             },
@@ -2564,13 +2559,13 @@ export const updateResults = async (
     const updatedResults = await prisma.result.findMany({
       where: { id: { in: ids } },
       include: {
-        student: { select: { name: true, namalengkap: true } },
+        student: { select: { name: true } },
         exam: {
           include: {
             lesson: {
               select: {
                 class: { select: { name: true, gradeId: true } },
-                teacher: { select: { name: true, namalengkap: true } },
+                teacher: { select: { name: true } },
                 subject: true,
               },
             },
@@ -2581,7 +2576,7 @@ export const updateResults = async (
             lesson: {
               select: {
                 class: { select: { name: true, gradeId: true } },
-                teacher: { select: { name: true, namalengkap: true } },
+                teacher: { select: { name: true } },
                 subject: true,
               },
             },
@@ -2613,7 +2608,6 @@ export const createPpdb = async (
       data: {
         id: data.id ? data.id : undefined,
         name: data.name,
-        namalengkap: data.name,
         email: data.email,
         phone: data.phone,
         address: data.address,
@@ -2738,7 +2732,6 @@ export const updatePpdb = async (
       },
       data: {
         name: data.name,
-        namalengkap: data.name,
         email: data.email,
         phone: data.phone,
         address: data.address,
@@ -2754,6 +2747,7 @@ export const updatePpdb = async (
         birthPlace: data.birthPlace,
         nisn: data.nisn,
         npsn: data.npsn,
+        noWa: data.noWhatsapp,
         no_ijz: data.no_ijz,
         nik: data.nik,
         kps: data.kps || null,
@@ -2819,7 +2813,6 @@ export const updatePpdb = async (
         username: data.name + "_student",
         password: data.nisn, // Or generate a random password
         name: data.name,
-        namalengkap: data.namalengkap ?? "",
         email: data.email,
         phone: data.phone,
         noWa: data.noWhatsapp,
@@ -2898,7 +2891,6 @@ export const updatePpdb = async (
           password: `${data.nik}@ayah`,
           email: `${data.nik}_ayah@parent.local`,
           name: data.namaAyah,
-          namalengkap: "",
           phone: data.telpAyah ?? "",
           birthday: data.tahunLahirAyah
             ? new Date(data.tahunLahirAyah)
@@ -2929,7 +2921,6 @@ export const updatePpdb = async (
           password: `${data.nik}@ibu`,
           email: `${data.nik}_ibu@parent.local`,
           name: data.namaIbu,
-          namalengkap: "",
           phone: data.telpIbu ?? "",
           birthday: data.tahunLahirIbu
             ? new Date(data.tahunLahirIbu)
@@ -2960,7 +2951,6 @@ export const updatePpdb = async (
           password: `${data.nik}@wali`,
           email: `${data.nik}_wali@parent.local`,
           name: data.namaWali,
-          namalengkap: "",
           phone: data.telpWali ?? "",
           birthday: data.tahunLahirWali
             ? new Date(data.tahunLahirWali)
@@ -3318,7 +3308,7 @@ export async function createPaymentLog(
         student: {
           select: {
             name: true,
-            namalengkap: true,
+
             img: true,
             class: {
               select: {
@@ -3399,7 +3389,7 @@ export async function updatePaymentLog(
         student: {
           select: {
             name: true,
-            namalengkap: true,
+
             img: true,
             class: {
               select: {
@@ -3499,7 +3489,7 @@ export async function updatePaymentLogs(
         student: {
           select: {
             name: true,
-            namalengkap: true,
+
             class: {
               select: {
                 name: true,

@@ -34,11 +34,7 @@ const ClassesTableClient = ({
 
       <td className="hidden md:table-cell">{data.name[0]}</td>
       <td className="hidden md:table-cell">
-        {data.supervisor
-          ? `${data.supervisor.name ?? ""} ${
-              data.supervisor.namalengkap ?? ""
-            }`.trim()
-          : "-"}
+        {data.supervisor ? `${data.supervisor.name ?? ""} `.trim() : "-"}
       </td>
       {/* data.students ? `${data.students._count}/ ${data.capacity}` : "-" */}
       <td>

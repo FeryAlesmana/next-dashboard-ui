@@ -127,7 +127,7 @@ const LessonListPage = async ({
       <td>{item.day}</td>
       <td className="hidden md:table-cell">
         {item.teacher
-          ? `${item.teacher.name} ${item.teacher.namalengkap}`
+          ? `${item.teacher.name}`
           : "Tidak ada guru"}
       </td>
       <td>
@@ -253,7 +253,7 @@ const LessonListPage = async ({
               where: { classId: cls.id },
               include: {
                 subject: { select: { name: true } },
-                teacher: { select: { name: true, namalengkap: true } },
+                teacher: { select: { name: true } },
               },
             });
             return { ...cls, lessons };
@@ -266,7 +266,7 @@ const LessonListPage = async ({
             include: {
               subject: { select: { name: true } },
               class: { select: { name: true, gradeId: true } },
-              teacher: { select: { name: true, namalengkap: true } },
+              teacher: { select: { name: true } },
             },
             take: ITEM_PER_PAGE,
             skip: ITEM_PER_PAGE * (p - 1),
@@ -324,7 +324,7 @@ const LessonListPage = async ({
                               </td>
                               <td className="p-2">
                                 {lesson.teacher
-                                  ? `${lesson.teacher.name} ${lesson.teacher.namalengkap}`
+                                  ? `${lesson.teacher.name}`
                                   : "-"}
                               </td>
                             </tr>
@@ -370,7 +370,7 @@ const LessonListPage = async ({
         select: {
           id: true,
           name: true,
-          namalengkap: true,
+
           class: {
             select: { name: true, grade: { select: { level: true } } },
           },
@@ -436,7 +436,7 @@ const LessonListPage = async ({
                 include: {
                   subject: true,
                   class: true,
-                  teacher: { select: { name: true, namalengkap: true } },
+                  teacher: { select: { name: true } },
                 },
               })
             : [];
@@ -475,7 +475,7 @@ const LessonListPage = async ({
       include: {
         subject: { select: { name: true } },
         class: { select: { name: true, gradeId: true } },
-        teacher: { select: { name: true, namalengkap: true } },
+        teacher: { select: { name: true } },
       },
       take: perPage,
       skip: perPage ? perPage * (p - 1) : undefined,
@@ -501,7 +501,6 @@ const LessonListPage = async ({
     select: {
       id: true,
       name: true,
-      namalengkap: true,
     },
   });
 

@@ -140,7 +140,7 @@ const SubjectListPage = async ({
       select: {
         id: true,
         name: true,
-        namalengkap: true,
+      
       },
     }),
     prisma.class.findMany({
@@ -159,7 +159,7 @@ const SubjectListPage = async ({
 
   const teacherOptions = teachers.map((t) => ({
     value: t.id,
-    label: t.name || t.namalengkap,
+    label: t.name,
   }));
 
   const classOptions = classes.map((c) => ({

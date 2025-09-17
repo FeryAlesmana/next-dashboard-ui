@@ -117,9 +117,9 @@ const ResultForm = ({
 
   const { students = [], exams = [], assignments = [] } = relatedData ?? {};
   const studentOption = students.map(
-    (student: { id: string; name: string; namalengkap: string }) => ({
+    (student: { id: string; name: string }) => ({
       value: student.id,
-      label: `${student.name} ${student.namalengkap}`,
+      label: `${student.name} `,
     })
   );
   const studentClassMap = Object.fromEntries(

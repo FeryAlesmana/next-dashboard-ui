@@ -307,17 +307,11 @@ export default function CreatePaymentLogPage({
             >
               <option value="">Pilih Penerima</option>
               {watchedValues.recipientType === "student" &&
-                studentData.map(
-                  (student: {
-                    id: string;
-                    name: string;
-                    namalengkap: string;
-                  }) => (
-                    <option key={student.id} value={student.id}>
-                      {student.name} {student.namalengkap}
-                    </option>
-                  )
-                )}
+                studentData.map((student: { id: string; name: string }) => (
+                  <option key={student.id} value={student.id}>
+                    {student.name}
+                  </option>
+                ))}
               {watchedValues.recipientType === "class" &&
                 classData.map((kelas: { id: number; name: string }) => (
                   <option key={kelas.id} value={kelas.id}>

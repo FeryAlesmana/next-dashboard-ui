@@ -31,12 +31,8 @@ export default function ResultListClient({
       title: source?.title || "-",
       subject: lesson?.subject?.name || "-",
       studentId: item.studentId || "",
-      student: item.student
-        ? `${item.student.name} ${item.student.namalengkap}`
-        : "-",
-      teacher: lesson?.teacher
-        ? `${lesson.teacher.name} ${lesson.teacher.namalengkap}`
-        : "-",
+      student: item.student ? `${item.student.name} ` : "-",
+      teacher: lesson?.teacher ? `${lesson.teacher.name} ` : "-",
       score: item.score,
       class: lesson?.class?.name || "-",
       selectedType: isExam ? "Ujian" : "Tugas",

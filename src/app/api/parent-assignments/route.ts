@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
     select: {
       id: true,
       name: true,
-      namalengkap: true,
+
       class: {
         select: {
           grade: {
@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
       lesson: {
         select: {
           subject: { select: { name: true } },
-          teacher: { select: { name: true, namalengkap: true } },
+          teacher: { select: { name: true } },
           class: { select: { name: true } },
         },
       },
@@ -55,7 +55,7 @@ export async function GET(req: NextRequest) {
       subjectName: ass.lesson?.subject?.name || "-",
       className: ass.lesson?.class?.name || "-",
       teacherName: ass.lesson?.teacher
-        ? `${ass.lesson.teacher.name} ${ass.lesson.teacher.namalengkap}`
+        ? `${ass.lesson.teacher.name} `
         : "Tidak ada guru",
       dueDate: ass.dueDate,
       assType: ass.assType,
@@ -64,7 +64,6 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     id: student.id,
     name: student.name,
-    namalengkap: student.namalengkap,
     gradeLevel: student.class?.grade?.level ?? 1,
     assignments,
   });

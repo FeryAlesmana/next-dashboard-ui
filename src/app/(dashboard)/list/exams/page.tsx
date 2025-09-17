@@ -213,7 +213,7 @@ const ExamListPage = async ({
               class: {
                 select: { grade: { select: { level: true } }, name: true },
               },
-              teacher: { select: { name: true, namalengkap: true } },
+              teacher: { select: { name: true } },
             },
           });
 
@@ -223,7 +223,7 @@ const ExamListPage = async ({
               subjectName: lesson.subject?.name || "-",
               className: lesson.class?.name || "-",
               teacherName: lesson.teacher
-                ? `${lesson.teacher.name} ${lesson.teacher.namalengkap}`
+                ? `${lesson.teacher.name}`
                 : "Tidak ada guru",
               startTime: exam.startTime,
               endTime: exam.endTime,
@@ -259,7 +259,7 @@ const ExamListPage = async ({
         lesson: {
           select: {
             subject: { select: { name: true } },
-            teacher: { select: { name: true, namalengkap: true } },
+            teacher: { select: { name: true } },
             class: { select: { name: true } },
           },
         },
