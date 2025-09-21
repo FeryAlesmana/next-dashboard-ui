@@ -121,7 +121,6 @@ export default function ParentLessonViewSemester({
   };
 
   if (!hydrated) return null;
-  console.log(studentsWithLessons, "student in lesson view");
 
   return (
     <div className="w-full mx-auto p-6">

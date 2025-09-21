@@ -25,14 +25,7 @@ const Navbar = ({ onToggleMenu, userProfile }: NavbarProps) => {
       </button>
 
       {/* Search */}
-      {/* <div className="hidden md:flex items-center gap-2 text-xs rounded-full ring-[1.5px] ring-gray-300 px-2">
-        <Image src="/search.png" alt="" width={14} height={14} />
-        <input
-          type="text"
-          placeholder="Search..."
-          className="w-[200px] p-2 bg-transparent outline-none"
-        />
-      </div> */}
+
       <SearchBar role={userProfile.role!} />
 
       {/* Profile Section */}
@@ -55,13 +48,15 @@ const Navbar = ({ onToggleMenu, userProfile }: NavbarProps) => {
             {userProfile.role}
           </span>
         </div>
-        <Image
-          src={userProfile.img}
-          alt="User Avatar"
-          width={36}
-          height={36}
-          className="rounded-full object-cover"
-        />
+        <div className="w-9 h-9 rounded-full overflow-hidden">
+          <Image
+            src={userProfile.img}
+            alt="User Avatar"
+            width={36}
+            height={36}
+            className="rounded-full object-cover"
+          />
+        </div>
       </div>
     </div>
   );

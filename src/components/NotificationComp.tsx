@@ -103,7 +103,7 @@ export default function NotificationBell() {
                     href = `/list/results?id=${n.studentId}`;
                     break;
                   case "attendance":
-                    href = `/list/attendance/${n.className}/${n.lessonId}`;
+                    href = `/list/attendance/${n.className}/${n.lessonId}?id=${n.meetingId}`;
                     break;
 
                   default:

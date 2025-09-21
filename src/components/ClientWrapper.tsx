@@ -61,12 +61,12 @@ export default function ClientPageWrapper({
                 key={idx}
                 className="grid grid-cols-6 gap-4 items-center p-4 border-b border-gray-200"
               >
-                <div className="col-span-1 h-4 bg-gray-300 rounded"></div>
-                <div className="col-span-1 h-4 bg-gray-300 rounded"></div>
-                <div className="col-span-1 h-4 bg-gray-300 rounded hidden md:block"></div>
-                <div className="col-span-1 h-4 bg-gray-300 rounded hidden md:block"></div>
-                <div className="col-span-1 h-4 bg-gray-300 rounded hidden md:block"></div>
-                <div className="col-span-1 flex gap-2">
+                <div className="col-span-2 h-4 bg-gray-300 rounded"></div>
+                <div className="col-span-2 h-4 bg-gray-300 rounded"></div>
+                <div className="col-span-2 h-4 bg-gray-300 rounded"></div>
+                <div className="col-span-2 h-4 bg-gray-300 rounded hidden md:block"></div>
+                <div className="col-span-2 h-4 bg-gray-300 rounded hidden md:block"></div>
+                <div className="col-span-2 flex gap-2">
                   {role === "admin" && (
                     <div>
                       <div className="w-8 h-8 bg-gray-300 rounded"></div>

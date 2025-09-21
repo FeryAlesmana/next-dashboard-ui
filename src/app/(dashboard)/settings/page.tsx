@@ -18,7 +18,6 @@ type GalleryImage = {
   caption?: string;
 };
 const Settings = () => {
-  const [data, setData] = useState<HomepageData | null>(null);
   const [gallery, setGallery] = useState<GalleryImage[]>([]);
   const [loading, setLoading] = useState(true);
   const [gloading, setgLoading] = useState(true);
@@ -35,7 +34,6 @@ const Settings = () => {
     try {
       const res = await fetch(`/api/homepage-data`);
       const data = await res.json();
-      setData(data);
       setGallery(data.gallery);
       setgLoading(false);
     } catch (err) {

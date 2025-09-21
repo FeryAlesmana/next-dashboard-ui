@@ -1,6 +1,10 @@
 import { notFound } from "next/navigation";
 import prisma from "@/lib/prisma";
-import { getCurrentUser, normalizeSearchParams } from "@/lib/utils";
+import {
+  buildStudentLessonAttendance,
+  getCurrentUser,
+  normalizeSearchParams,
+} from "@/lib/utils";
 import Link from "next/link";
 import { Prisma } from "@prisma/client";
 import { ITEM_PER_PAGE } from "@/lib/setting";
@@ -14,6 +18,7 @@ import React from "react";
 import BigCalendarContainer from "@/components/BigCalendarContainer";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import ClientPageWrapper from "@/components/ClientWrapper";
+import StudentLessonChart from "@/components/StudentLessonChart";
 
 interface AttendanceDetailPageProps {
   params: Promise<{
@@ -155,13 +160,7 @@ export default async function AttendanceDetailPage({
                 <FormContainer table="attendance" type="delete" id={item.id} />
               </div>
             ) : (
-              <Link
-                href={`/list/attendance/${className}/${lessonId}/${item.id}`}
-              >
-                <button className="w-7 h-7 flex items-center justify-center rounded-full">
-                  <Image src="/moreDark.png" alt="" width={16} height={16} />
-                </button>
-              </Link>
+              []
             )}
           </td>
         </tr>
@@ -207,22 +206,6 @@ export default async function AttendanceDetailPage({
       </React.Fragment>
     );
   };
-
-  const query: Prisma.MeetingWhereInput = {};
-
-  if (queryParams) {
-    for (const [key, value] of Object.entries(queryParams)) {
-      if (value !== undefined)
-        switch (key) {
-          case "search":
-            query.id = { equals: parseInt(value) };
-          default:
-            break;
-        }
-    }
-  }
-  // ✅ Await it once
-
   const lessonIdNumber = Number(lessonId);
 
   const idLesson = lessonId.toString();
@@ -232,49 +215,86 @@ export default async function AttendanceDetailPage({
     include: { subject: true, class: true, teacher: true },
   });
   if (!lesson) return notFound();
-  // Build meeting query with lessonId and search
-  let meetingWhere: Prisma.MeetingWhereInput = { lessonId: lessonIdNumber };
-  if (queryParams && queryParams.search) {
-    const searchValue = String(queryParams.search).trim();
-    if (searchValue) {
-      // Allow searching by meetingNo or date
-      if (!isNaN(Number(searchValue))) {
-        meetingWhere.meetingNo = Number(searchValue);
-      } else {
-        meetingWhere.date = { equals: new Date(searchValue) };
-      }
+  const query: Prisma.MeetingWhereInput = { lessonId: lessonIdNumber };
+
+  if (queryParams) {
+    for (const [key, value] of Object.entries(queryParams)) {
+      if (value !== undefined)
+        switch (key) {
+          case "search":
+            const searchValue = String(queryParams.search).trim();
+            if (searchValue) {
+              // Allow searching by meetingNo or date
+              if (!isNaN(Number(searchValue))) {
+                query.meetingNo = Number(searchValue);
+              } else {
+                query.date = { equals: new Date(searchValue) };
+              }
+            }
+            break;
+          case "id":
+            query.id = { equals: parseInt(value) };
+          default:
+            break;
+        }
     }
   }
+  // ✅ Await it once
 
-  const [data, count, classData] = await prisma.$transaction([
-    prisma.meeting.findMany({
-      orderBy: {
-        meetingNo: "asc",
-      },
-      where: meetingWhere,
-      include: {
-        attendances: {
-          include: { student: true },
+  // Build meeting query with lessonId and search
+
+  const [data, count, classData, totalMeetings, attendanceStats] =
+    await prisma.$transaction([
+      prisma.meeting.findMany({
+        orderBy: {
+          meetingNo: "asc",
         },
-        lesson: {
-          include: {
-            class: {
-              include: {
-                students: true,
+        where: query,
+        include: {
+          attendances: {
+            include: { student: true },
+          },
+          lesson: {
+            include: {
+              class: {
+                include: {
+                  students: true,
+                },
               },
             },
           },
         },
-      },
-      take: ITEM_PER_PAGE,
-      skip: ITEM_PER_PAGE * (p - 1),
-    }),
-    prisma.meeting.count({ where: meetingWhere }),
-    prisma.class.findUnique({
-      where: { name: className },
-      select: { id: true },
-    }),
-  ]);
+        take: ITEM_PER_PAGE,
+        skip: ITEM_PER_PAGE * (p - 1),
+      }),
+      prisma.meeting.count({ where: query }),
+      prisma.class.findUnique({
+        where: { name: className },
+        select: { id: true },
+      }),
+      prisma.meeting.count({ where: { lessonId: lessonIdNumber } }),
+
+      // ✅ Group attendance by student + status
+      prisma.attendance.groupBy({
+        by: ["studentId", "status"],
+        where: { lessonId: lessonIdNumber },
+        _count: { _all: true },
+        orderBy: {
+          studentId: "asc", // 👈 add this if TypeScript complains
+        },
+      }),
+    ]);
+  const chartData = attendanceStats.reduce((acc, item) => {
+    const studentId = item.studentId!;
+    if (!acc[studentId]) {
+      acc[studentId] = { HADIR: 0, SAKIT: 0, ABSEN: 0 };
+    }
+
+    // ✅ count comes from _all, since you grouped by status
+    acc[studentId][item.status] = (item._count as { _all: number })._all;
+
+    return acc;
+  }, {} as Record<string, { HADIR: number; SAKIT: number; ABSEN: number }>);
 
   return (
     <ClientPageWrapper key={key} role={role!}>
@@ -282,19 +302,21 @@ export default async function AttendanceDetailPage({
         {/* TOP BAR */}
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-lg font-semibold">
-            <span className="hidden md:inline">Daftar Pertemuan - </span>
-            {lesson?.subject?.name ?? "-"} ({lesson?.class?.name ?? "-"})
+            <Link href={`/list/attendance/${className}/${lessonId}`}>
+              <span className="hidden md:inline">Daftar Pertemuan - </span>
+              {lesson?.subject?.name ?? "-"} ({lesson?.class?.name ?? "-"})
+            </Link>
           </h1>
 
           <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
             <TableSearch />
             <div className="flex items-center gap-4 self-end">
-              <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
+              {/* <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
                 <Image src="/filter.png" alt="" width={14} height={14} />
               </button>
               <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
                 <Image src="/sort.png" alt="" width={14} height={14} />
-              </button>
+              </button> */}
               {role === "admin" && (
                 <FormContainer
                   table="attendance"
@@ -314,6 +336,38 @@ export default async function AttendanceDetailPage({
           <Pagination page={p} count={count} />
         </div>
       </div>
+      {role === "parent" &&
+        parentChildrenIds
+          .filter((id) =>
+            data[0]?.lesson?.class?.students.some((s: any) => s.id === id)
+          )
+          .map((studentId) => {
+            const student = data[0]?.lesson?.class?.students.find(
+              (s: any) => s.id === studentId
+            );
+
+            const studentStats = chartData[studentId] || {
+              HADIR: 0,
+              SAKIT: 0,
+              ABSEN: 0,
+            };
+            const chartArray = Object.entries(studentStats).map(
+              ([status, count]) => ({
+                status,
+                count,
+              })
+            );
+            return (
+              <div key={studentId} className="my-6 p-4 bg-white rounded shadow">
+                <h2 className="text-lg font-semibold mb-2">
+                  Kehadiran {student?.name || "Tidak diketahui"} (Total{" "}
+                  {totalMeetings} pertemuan)
+                </h2>
+                <StudentLessonChart data={chartArray} />
+              </div>
+            );
+          })}
+
       {/* Calendar */}
       <div className="w-full overflow-x-auto">
         <div className="min-w-[823px]">

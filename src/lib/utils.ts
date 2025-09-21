@@ -3,6 +3,26 @@ import prisma from "./prisma";
 
 import crypto from "crypto";
 
+export function buildStudentLessonAttendance(attendances: Attendance[]) {
+  const statusCounts = {
+    HADIR: 0,
+    SAKIT: 0,
+    ABSEN: 0,
+  };
+
+  attendances.forEach((att) => {
+    if (att.status && statusCounts[att.status] !== undefined) {
+      statusCounts[att.status]++;
+    }
+  });
+
+  return [
+    { status: "Hadir", count: statusCounts.HADIR },
+    { status: "Sakit", count: statusCounts.SAKIT },
+    { status: "Absen", count: statusCounts.ABSEN },
+  ];
+}
+
 export const FIELD_MAP: Record<string, string> = {
   // Required
   name: "name",
@@ -92,7 +112,7 @@ export function normalizeSex(value: any): "MALE" | "FEMALE" {
 
 import { parse, isValid, format, subDays, addDays } from "date-fns";
 import { id as localeID } from "date-fns/locale";
-import { resTypes } from "@prisma/client";
+import { Attendance, resTypes } from "@prisma/client";
 export function normalizeBirthday(value: any): string {
   if (!value) return "2000-01-01";
 
@@ -396,7 +416,7 @@ export async function getParentNotifications(parentId: string) {
       id: true,
       date: true,
       status: true,
-      student: { select: { name: true } },
+      student: { select: { name: true, id: true } },
       meeting: {
         select: {
           meetingNo: true,
@@ -416,6 +436,7 @@ export async function getParentNotifications(parentId: string) {
     message: `Absensi ${a.student?.name} pada ${a.meeting?.lesson.name} (pertemuan-${a.meeting?.meetingNo}): ${a.status}`,
     createdAt: a.date,
     className: a.meeting?.lesson.class?.name,
+    studentId: a.student?.id,
     meetingId: a.meeting?.id,
     lessonId: a.meeting?.lesson.id,
   }));
