@@ -805,61 +805,116 @@ export type AttendanceSchema = z.infer<typeof attendanceSchema>;
 export const attendanceStatusEnum = z.enum(["HADIR", "SAKIT", "ABSEN"]);
 export type AttendanceStatus = z.infer<typeof attendanceStatusEnum>;
 
-export const paymentLogSchema = z.object({
-  id: z.coerce.number().optional(),
-  // studentId: z.string().min(1, { message: "Nama murid wajib diisi!" }),
-  paymentType: z.enum([
-    "TUITION",
-    "EXTRACURRICULAR",
-    "UNIFORM",
-    "BOOKS",
-    "OTHER",
-  ]),
-  amount: z.number().min(1, "Jumlah harus lebih dari 0"),
-  dueDate: z.string().min(1, "Tenggat waktu wajib diisi"),
-  status: z.enum(["PENDING", "PAID", "OVERDUE", "PARTIALLY_PAID"]),
-  description: z.string().optional(),
-  paymentMethod: z.string().optional(),
-  receiptNumber: z.string().optional(),
-  recipientType: z.enum(["student", "class", "grade"]),
-  recipientId: z.string().min(1, "Penerima wajib dipilih"),
-});
+export const paymentLogSchema = z
+  .object({
+    id: z.coerce.number().optional(),
+    // studentId: z.string().min(1, { message: "Nama murid wajib diisi!" }),
+    paymentType: z.enum([
+      "TUITION",
+      "EXTRACURRICULAR",
+      "UNIFORM",
+      "BOOKS",
+      "OTHER",
+    ]),
+    amount: z.number().min(1, "Jumlah harus lebih dari 0"),
+    dueDate: z.string().min(1, "Tenggat waktu wajib diisi"),
+    status: z.enum(["PENDING", "PAID", "OVERDUE", "PARTIALLY_PAID"]),
+    description: z.string().optional(),
+    paymentMethod: z.string().optional(),
+    receiptNumber: z.string().optional(),
+    recipientType: z.enum(["student", "class", "grade"]),
+    recipientId: z.string().min(1, "Penerima wajib dipilih"),
+
+    paidAt: z.string().optional(), // ISO date
+    amountPaid: z.number().optional(),
+  })
+  .refine(
+    (data) =>
+      ["PAID", "PARTIALLY_PAID"].includes(data.status) ? !!data.paidAt : true,
+    {
+      message: "Tanggal pembayaran wajib diisi",
+      path: ["paidAt"],
+    }
+  )
+  .refine(
+    (data) =>
+      data.status !== "PAID" ||
+      (data.amountPaid !== undefined && data.amountPaid === data.amount),
+    {
+      message: "Jumlah dibayar harus sama dengan total saat status Lunas",
+      path: ["amountPaid"],
+    }
+  )
+  .refine(
+    (data) =>
+      data.status !== "PARTIALLY_PAID" ||
+      (data.amountPaid !== undefined && data.amountPaid < data.amount),
+    {
+      message:
+        "Jumlah dibayar harus lebih kecil dari total saat Sebagian Dibayar",
+      path: ["amountPaid"],
+    }
+  );
 
 export type PaymentLogSchema = z.infer<typeof paymentLogSchema>;
 
-export const mPaymentLogSchema = z.object({
-  ids: z.array(z.number().min(1)),
-  paymentType: z
-    .enum(["TUITION", "EXTRACURRICULAR", "UNIFORM", "BOOKS", "OTHER"])
-    .or(z.literal(""))
-    .optional(),
-  amount: z
-    .number()
-    .min(1, "Jumlah harus lebih dari 0")
-    .or(z.literal(""))
-    .optional(),
-  dueDate: z
-    .string()
-    .min(1, "Tenggat waktu wajib diisi")
-    .or(z.literal(""))
-    .optional(),
-  status: z
-    .enum(["PENDING", "PAID", "OVERDUE", "PARTIALLY_PAID"])
-    .or(z.literal(""))
-    .optional(),
-  description: z.string().or(z.literal("")).optional(),
-  paymentMethod: z.string().or(z.literal("")).optional(),
-  receiptNumber: z.string().or(z.literal("")).optional(),
-  recipientType: z
-    .enum(["student", "class", "grade"])
-    .or(z.literal(""))
-    .optional(),
-  recipientId: z
-    .string()
-    .min(1, "Penerima wajib dipilih")
-    .or(z.literal(""))
-    .optional(),
-});
+export const mPaymentLogSchema = z
+  .object({
+    ids: z.array(z.number().min(1)),
+    paymentType: z
+      .enum(["TUITION", "EXTRACURRICULAR", "UNIFORM", "BOOKS", "OTHER"])
+      .or(z.literal(""))
+      .optional(),
+    amount: z
+      .number()
+      .min(1, "Jumlah harus lebih dari 0")
+      .or(z.literal(""))
+      .optional(),
+    dueDate: z
+      .string()
+      .min(1, "Tenggat waktu wajib diisi")
+      .or(z.literal(""))
+      .optional(),
+    status: z
+      .enum(["PENDING", "PAID", "OVERDUE", "PARTIALLY_PAID"])
+      .or(z.literal(""))
+      .optional(),
+    description: z.string().or(z.literal("")).optional(),
+    paymentMethod: z.string().or(z.literal("")).optional(),
+    receiptNumber: z.string().or(z.literal("")).optional(),
+
+    paidAt: z.string().optional(), // ISO date
+    amountPaid: z.number().optional(),
+  })
+  .refine(
+    (data) =>
+      ["PAID", "PARTIALLY_PAID"].includes(data.status!) ? !!data.paidAt : true,
+    {
+      message: "Tanggal pembayaran wajib diisi",
+      path: ["paidAt"],
+    }
+  )
+  .refine(
+    (data) =>
+      data.status !== "PAID" ||
+      (data.amountPaid !== undefined && data.amountPaid === data.amount),
+    {
+      message: "Jumlah dibayar harus sama dengan total saat status Lunas",
+      path: ["amountPaid"],
+    }
+  )
+  .refine(
+    (data) =>
+      data.status !== "PARTIALLY_PAID" ||
+      (typeof data.amountPaid === "number" &&
+        typeof data.amount === "number" &&
+        data.amountPaid < data.amount),
+    {
+      message:
+        "Jumlah dibayar harus lebih kecil dari total saat Sebagian Dibayar",
+      path: ["amountPaid"],
+    }
+  );
 
 export type MpaymentLogSchema = z.infer<typeof mPaymentLogSchema>;
 

@@ -115,7 +115,7 @@ export default function Menu() {
       ],
     },
     {
-      title: "OTHER",
+      title: "LAINNYA",
       items: [
         {
           icon: "/profile.png",
@@ -127,7 +127,7 @@ export default function Menu() {
           icon: "/setting.png",
           label: "Settings",
           href: "/settings",
-          visible: ["admin", "teacher", "student", "parent"],
+          visible: ["admin"],
         },
         {
           icon: "/logout.png",

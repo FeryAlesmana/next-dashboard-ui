@@ -209,7 +209,6 @@ const SingleTeacherPage = async ({
             </Link>
           </div>
         </div>
-        <Perfomance></Perfomance>
         <Announcements></Announcements>
       </div>
     </div>

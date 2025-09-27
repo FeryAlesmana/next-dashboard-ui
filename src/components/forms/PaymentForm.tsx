@@ -96,6 +96,15 @@ export default function CreatePaymentLogPage({
     return () => clearTimeout(timeout);
   }, [watchedValues]);
 
+  const {
+    classData = [],
+    studentData = [],
+    gradeData = [],
+    installment,
+  } = relatedData ?? [];
+
+  let initialAmountPaid: number | undefined = undefined;
+
   // Muat draft dari localStorage atau data untuk update
   useEffect(() => {
     const saved = localStorage.getItem(FORM_KEY);
@@ -107,6 +116,9 @@ export default function CreatePaymentLogPage({
     }
 
     if (type === "update" && data) {
+      const matchedInstallment = installment.find(
+        (inst: any) => inst.paymentLogId === data.id
+      );
       reset({
         paymentType: data.paymentType ?? "TUITION",
         amount: data.amount ?? 0,
@@ -117,6 +129,10 @@ export default function CreatePaymentLogPage({
         description: data.description ?? "",
         paymentMethod: data.paymentMethod ?? "",
         receiptNumber: data.receiptNumber ?? "",
+        paidAt: data.paidAt
+          ? new Date(data.paidAt).toISOString().split("T")[0]
+          : "",
+        amountPaid: matchedInstallment?.amount ?? undefined,
         recipientType: data.studentId
           ? "student"
           : data.classId
@@ -125,14 +141,9 @@ export default function CreatePaymentLogPage({
         recipientId: data.studentId ?? data.classId ?? data.gradeId ?? "",
       });
     }
-  }, [setValue, reset, data, type]);
+  }, [setValue, reset, data, type, installment]);
 
   // Muat data siswa, kelas, dan angkatan
-  const {
-    classData = [],
-    studentData = [],
-    gradeData = [],
-  } = relatedData ?? [];
 
   // Submit final setelah konfirmasi
   const handleSubmitForm = handleSubmit((formData) => {
@@ -168,6 +179,15 @@ export default function CreatePaymentLogPage({
       router.refresh();
     }
   }, [state, type, setOpen, router, onChanged, formData]);
+  useEffect(() => {
+    if (watchedValues.status === "PAID") {
+      const rawAmount = getValues("amount"); // number | "" | undefined
+      const normalizedAmount =
+        typeof rawAmount === "number" ? rawAmount : undefined; // only keep number
+
+      setValue("amountPaid", normalizedAmount);
+    }
+  }, [watchedValues.status, getValues, setValue]);
 
   return (
     <div className="max-w-4xl mx-auto p-4">
@@ -239,6 +259,41 @@ export default function CreatePaymentLogPage({
               <p className="text-red-600">{errors.status.message}</p>
             )}
           </div>
+
+          {/* Conditionally render fields based on status */}
+          {(watchedValues.status === "PAID" ||
+            watchedValues.status === "PARTIALLY_PAID") && (
+            <>
+              <div>
+                <label className="block mb-1 font-medium">
+                  Tanggal Pembayaran
+                </label>
+                <input
+                  type="date"
+                  {...register("paidAt")}
+                  className="w-full border rounded px-3 py-2"
+                />
+                {errors.paidAt && (
+                  <p className="text-red-600">{errors.paidAt.message}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block mb-1 font-medium">Jumlah Dibayar</label>
+                <input
+                  type="number"
+                  {...register("amountPaid", { valueAsNumber: true })}
+                  readOnly={watchedValues.status === "PAID"}
+                  className={`w-full border rounded px-3 py-2 ${
+                    watchedValues.status === "PAID"
+                      ? "bg-gray-100 cursor-not-allowed"
+                      : ""
+                  }`}
+                  max={1000000000}
+                />
+              </div>
+            </>
+          )}
 
           <div>
             <label className="block mb-1 font-medium">

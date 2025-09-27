@@ -2,7 +2,7 @@ import { PrismaClient } from "@prisma/client";
 
 const prismaClientSingleton = () => {
   return new PrismaClient({
-    log: ["warn", "error", "info", "query"],
+    log: ["warn", "error", "info"],
   });
 };
 

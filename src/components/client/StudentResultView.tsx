@@ -24,7 +24,7 @@ const StudentResultView = ({ results }: { results: any[] }) => {
       <h1 className="text-2xl font-bold mb-6">Hasil Ujian & Tugas Saya</h1>
 
       {results.length === 0 ? (
-        <div className="text-center text-gray-500">
+        <div className="text-center text-gray-500 bg-white rounded-md p-8 shadow-sm">
           Belum ada hasil ujian atau tugas.
         </div>
       ) : (

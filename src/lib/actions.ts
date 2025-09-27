@@ -3384,6 +3384,20 @@ export async function updatePaymentLog(
         receiptNumber: paymentData.receiptNumber || null,
         classId,
         gradeId,
+        // store paidAt if provided
+        paidAt: paymentData.paidAt ? new Date(paymentData.paidAt) : null,
+
+        // handle installments (amountPaid lives here)
+        paymentInstallments: paymentData.amountPaid
+          ? {
+              create: {
+                amount: paymentData.amountPaid,
+                paidAt: paymentData.paidAt
+                  ? new Date(paymentData.paidAt)
+                  : null,
+              },
+            }
+          : undefined,
       },
       include: {
         student: {
@@ -3432,28 +3446,11 @@ export async function updatePaymentLogs(
   }
   console.log(data.ids, "Ids in actions");
   try {
-    const { recipientType, recipientId, ids, ...paymentData } = data;
+    const { ids, ...paymentData } = data;
 
     let classId: number | null = null;
     let gradeId: number | null = null;
 
-    if (recipientType === "class") {
-      const classData = await prisma.class.findUnique({
-        where: { id: parseInt(recipientId!) },
-        include: { grade: true },
-      });
-      classId = classData?.id ?? null;
-      gradeId = classData?.gradeId ?? null;
-    } else if (recipientType === "grade") {
-      gradeId = parseInt(recipientId!);
-    } else if (recipientType === "student") {
-      const student = await prisma.student.findUnique({
-        where: { id: recipientId as string },
-        select: { classId: true, gradeId: true },
-      });
-      classId = student?.classId ?? null;
-      gradeId = student?.gradeId ?? null;
-    }
     const selectedIdsAsNumbers = ids.map((id) => id); // or Number(id)
 
     // Build updateData dynamically, only include non-empty values
@@ -3475,12 +3472,28 @@ export async function updatePaymentLogs(
       }),
       ...(classId !== null && { classId }),
       ...(gradeId !== null && { gradeId }),
+      ...(paymentData.paidAt !== null && {
+        paidAt: new Date(paymentData.paidAt!),
+      }),
     };
 
     await prisma.paymentLog.updateMany({
       where: { id: { in: selectedIdsAsNumbers } },
       data: updateData,
     });
+    if (paymentData.amountPaid) {
+      await Promise.all(
+        selectedIdsAsNumbers.map((id) =>
+          prisma.paymentInstallment.create({
+            data: {
+              amount: paymentData.amountPaid!,
+              paidAt: paymentData.paidAt ? new Date(paymentData.paidAt) : null,
+              paymentLogId: id, // FK relation
+            },
+          })
+        )
+      );
+    }
     const updatedPayments = await prisma.paymentLog.findMany({
       where: {
         id: { in: selectedIdsAsNumbers },

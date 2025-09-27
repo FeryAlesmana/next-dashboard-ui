@@ -10,8 +10,6 @@ import { getCurrentUser, normalizeSearchParams } from "@/lib/utils";
 import { PaymentLog, PaymentType, Prisma, Student } from "@prisma/client";
 import z from "zod";
 
-
-
 const PaymentLogListPage = async ({
   searchParams,
 }: {
@@ -91,7 +89,7 @@ const PaymentLogListPage = async ({
         select: {
           id: true,
           name: true,
-          
+
           class: {
             select: { name: true, grade: { select: { level: true } } },
           },
@@ -128,7 +126,7 @@ const PaymentLogListPage = async ({
         select: {
           id: true,
           name: true,
-          
+
           class: {
             select: { name: true, grade: { select: { level: true } } },
           },
@@ -198,7 +196,6 @@ const PaymentLogListPage = async ({
               ...(query.student ?? {}),
               OR: [
                 { name: { contains: value, mode: "insensitive" } },
-                { namalengkap: { contains: value, mode: "insensitive" } },
                 {
                   student_details: {
                     nisn: {
@@ -209,6 +206,9 @@ const PaymentLogListPage = async ({
                 },
               ],
             } as Prisma.StudentWhereInput;
+            break;
+          case "id":
+            query.id = parseInt(value);
             break;
           case "status":
             query.status = value as any;
@@ -254,7 +254,7 @@ const PaymentLogListPage = async ({
         }
     }
   }
-  const [data, count, classesData, studentData, gradeData] =
+  const [data, count, classesData, studentData, gradeData, installment] =
     await prisma.$transaction([
       prisma.paymentLog.findMany({
         where: query,
@@ -295,12 +295,20 @@ const PaymentLogListPage = async ({
           level: true,
         },
       }),
+      prisma.paymentInstallment.findMany({
+        select: {
+          id: true,
+          amount: true,
+          paymentLogId: true, // assuming relation
+        },
+      }),
     ]);
   let relatedData = {};
   relatedData = {
     studentData: studentData,
     classData: classesData,
     gradeData: gradeData,
+    installment,
   };
 
   const classOptions = classesData.map((cls) => ({
@@ -319,17 +327,24 @@ const PaymentLogListPage = async ({
       label: level.toString(),
       value: level,
     }));
-  const pStatusOptions = Array.from(new Set(data.map((pt) => pt.status))).map(
-    (type) => ({
-      label: type,
-      value: type,
-    })
-  );
-
+  const pStatusOptions = [
+    { label: "Menunggu Pembayaran", value: "PENDING" },
+    { label: "Lunas", value: "PAID" },
+    { label: "Terlambat", value: "OVERDUE" },
+    { label: "Dibayar Sebagian", value: "PARTIALLY_PAID" },
+  ];
+  const paymentTypeOptions = [
+    { label: "SPP", value: "TUITION" },
+    { label: "Ekstrakurikuler", value: "EXTRACURRICULAR" },
+    { label: "Seragam", value: "UNIFORM" },
+    { label: "Buku", value: "BOOKS" },
+    { label: "Lainnya", value: "OTHER" },
+  ];
   let options = {
     classOptions,
     gradeOptions,
     pStatusOptions,
+    paymentTypeOptions,
   };
   return (
     <ClientPageWrapper key={key} role={role!}>

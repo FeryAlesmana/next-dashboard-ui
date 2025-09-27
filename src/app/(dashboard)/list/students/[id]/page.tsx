@@ -13,6 +13,8 @@ import { Suspense } from "react";
 import StudentAttendanceCard from "@/components/StudentAttendanceCard";
 import FormContainer from "@/components/FormContainer";
 import ForbiddenPage from "@/components/Forbidden";
+import { Semester } from "@/components/client/StudentPaymentView";
+import StudentLessonChart from "@/components/StudentLessonChart";
 
 const SingleStudentPage = async ({
   params,
@@ -34,6 +36,7 @@ const SingleStudentPage = async ({
   const student:
     | (Student & {
         class: (Class & { _count: { lessons: number } }) | null;
+        grade: { id: number; level: number } | null;
         student_details: student_details | null;
       })
     | null = await prisma.student.findUnique({
@@ -46,6 +49,7 @@ const SingleStudentPage = async ({
           },
         },
       },
+      grade: { select: { id: true, level: true } },
       student_details: true,
     },
   });
@@ -54,6 +58,68 @@ const SingleStudentPage = async ({
     ...student,
     password: student?.password ? decryptPassword(student.password) : "",
   };
+  const generateSemesters = (
+    createdAt: Date,
+    gradeLevel: number
+  ): Semester[] => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+
+    // Start from either enrollment year OR calculated grade start year
+    const startYear = Math.max(
+      createdAt.getFullYear(),
+      currentYear - (gradeLevel - 1)
+    );
+
+    const generated: Semester[] = [];
+
+    for (let year = startYear; year <= currentYear; year++) {
+      generated.push({
+        label: `Ganjil ${year}/${year + 1}`,
+        start: new Date(`${year}-07-01`),
+        end: new Date(`${year}-12-31`),
+      });
+      generated.push({
+        label: `Genap ${year}/${year + 1}`,
+        start: new Date(`${year + 1}-01-01`),
+        end: new Date(`${year + 1}-06-30`),
+      });
+    }
+
+    return generated.reverse();
+  };
+
+  const semesters = generateSemesters(
+    student ? student.createdAt : new Date(),
+    student?.grade?.level!
+  );
+  const now = new Date();
+  const currentSemester = semesters.find((s) => now >= s.start && now <= s.end);
+
+  const attendanceStats = await prisma.attendance.groupBy({
+    by: ["status"],
+    where: {
+      studentId: String(id), // 👈 only this student
+      date: {
+        gte: currentSemester?.start,
+        lte: currentSemester?.end,
+      },
+    },
+    _count: { _all: true },
+  });
+
+  const baseStats = { HADIR: 0, SAKIT: 0, ABSEN: 0 };
+
+  const stats = attendanceStats.reduce((acc, item) => {
+    acc[item.status] = item._count._all;
+    return acc;
+  }, baseStats);
+
+  // turn into array for recharts
+  const chartArray = Object.entries(stats).map(([status, count]) => ({
+    status,
+    count,
+  }));
 
   if (!student) {
     return notFound();
@@ -78,9 +144,7 @@ const SingleStudentPage = async ({
             </div>
             <div className="w-2/3 flex flex-col justify-between gap-4">
               <div className="flex items-center gap-4">
-                <h1 className="text-xl font-semibold">
-                  {student.name}
-                </h1>
+                <h1 className="text-xl font-semibold">{student.name}</h1>
                 {role === "admin" && (
                   <FormContainer
                     table="student"
@@ -222,7 +286,13 @@ const SingleStudentPage = async ({
             </Link>
           </div>
         </div>
-        <Perfomance></Perfomance>
+        <div className="my-6 p-4 bg-white rounded shadow">
+          <h2 className="text-lg font-semibold mb-2">
+            Kehadiran (Semester {currentSemester?.label})
+          </h2>
+          <StudentLessonChart data={chartArray} />
+        </div>
+
         <Announcements></Announcements>
       </div>
     </div>

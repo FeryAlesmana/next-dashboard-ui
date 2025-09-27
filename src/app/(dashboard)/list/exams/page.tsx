@@ -89,6 +89,7 @@ const ExamListPage = async ({
   ];
 
   const query: Prisma.ExamWhereInput = {};
+  let orderBy: Prisma.ExamOrderByWithRelationInput | undefined;
 
   query.lesson = {};
 
@@ -137,6 +138,24 @@ const ExamListPage = async ({
                 },
               },
             ];
+          case "sort":
+            switch (value) {
+              case "az":
+                orderBy = { title: "asc" };
+                break;
+              case "za":
+                orderBy = { title: "desc" };
+                break;
+              case "id_asc":
+                orderBy = { id: "asc" };
+                break;
+              case "id_desc":
+                orderBy = { id: "desc" };
+                break;
+              case "dl":
+                orderBy = { date: "asc" }; // or "desc" if preferred
+                break;
+            }
             break;
           default:
             break;

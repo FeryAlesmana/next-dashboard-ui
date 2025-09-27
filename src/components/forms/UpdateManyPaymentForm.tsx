@@ -128,6 +128,7 @@ export default function CreatePaymentLogPage({
     register,
     handleSubmit,
     reset,
+    getValues,
     setValue,
     watch,
     formState: { errors },
@@ -135,10 +136,6 @@ export default function CreatePaymentLogPage({
     resolver: zodResolver(mPaymentLogSchema),
     defaultValues: {
       ids,
-      recipientType: defaultValues.recipientType,
-      recipientId: defaultValues.recipientId
-        ? String(defaultValues.recipientId) // force string here
-        : "",
     },
   });
 
@@ -183,6 +180,16 @@ export default function CreatePaymentLogPage({
       setIsSubmitting(false);
     }
   }, [state, setOpen, router, onChanged]);
+  useEffect(() => {
+    if (watchedValues.status === "PAID") {
+      const rawAmount = getValues("amount"); // number | "" | undefined
+      const normalizedAmount =
+        typeof rawAmount === "number" ? rawAmount : undefined; // only keep number
+
+      setValue("amountPaid", normalizedAmount);
+    }
+  }, [watchedValues.status, getValues, setValue]);
+
   //   useEffect(() => {
   //     if (ids && ids.length > 0) {
   //       setValue("ids", ids);
@@ -217,7 +224,6 @@ export default function CreatePaymentLogPage({
     setShowConfirm(false);
     const payload = {
       ...data,
-      recipientId: String(data.recipientId), // 🔑 force string
     };
 
     startTransition(() => {
@@ -307,6 +313,40 @@ export default function CreatePaymentLogPage({
             )}
           </div>
 
+          {/* Conditionally render fields based on status */}
+          {(watchedValues.status === "PAID" ||
+            watchedValues.status === "PARTIALLY_PAID") && (
+            <>
+              <div>
+                <label className="block mb-1 font-medium">
+                  Tanggal Pembayaran
+                </label>
+                <input
+                  type="date"
+                  {...register("paidAt")}
+                  className="w-full border rounded px-3 py-2"
+                />
+                {errors.paidAt && (
+                  <p className="text-red-600">{errors.paidAt.message}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block mb-1 font-medium">Jumlah Dibayar</label>
+                <input
+                  type="number"
+                  {...register("amountPaid", { valueAsNumber: true })}
+                  readOnly={watchedValues.status === "PAID"}
+                  className={`w-full border rounded px-3 py-2 ${
+                    watchedValues.status === "PAID"
+                      ? "bg-gray-100 cursor-not-allowed"
+                      : ""
+                  }`}
+                />
+              </div>
+            </>
+          )}
+
           <div>
             <label className="block mb-1 font-medium">
               Deskripsi (Opsional)
@@ -351,7 +391,7 @@ export default function CreatePaymentLogPage({
             )}
           </div>
 
-          <div>
+          {/* <div>
             <label className="block mb-1 font-medium">Tipe Penerima</label>
             <select
               {...register("recipientType")}
@@ -404,7 +444,7 @@ export default function CreatePaymentLogPage({
             )}
           </div>
 
-          {errors.ids && <p className="text-red-600">{errors.ids.message}</p>}
+          {errors.ids && <p className="text-red-600">{errors.ids.message}</p>} */}
 
           <div className="text-center pt-4">
             <button

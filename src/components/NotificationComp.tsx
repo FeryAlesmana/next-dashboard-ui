@@ -69,7 +69,9 @@ export default function NotificationBell() {
       {open && (
         <div className="absolute right-0 mt-2 w-72 bg-white shadow-lg rounded-md p-3 z-50">
           {notifications.length === 0 ? (
-            <p className="text-sm text-gray-500">Tidak ada notifikasi</p>
+            <p className="text-sm text-gray-400 text-center">
+              Tidak ada notifikasi saat ini
+            </p>
           ) : (
             <ul className="space-y-2 max-h-64 overflow-y-auto">
               {notifications.map((n) => {

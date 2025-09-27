@@ -16,7 +16,7 @@ export default function PaymentListClient({
   role,
   relatedData,
   options,
-  gradeLevel
+  gradeLevel,
 }: BaseListClientProps & { gradeLevel: number }) {
   const [selected, setSelected] = useState<string[]>([]);
   const [localData, setLocalData] = useState(data); // 👈 keep a client copy
@@ -64,7 +64,10 @@ export default function PaymentListClient({
     classOptions = [],
     gradeOptions = [],
     pStatusOptions = [],
+    paymentTypeOptions = [],
   } = options || {};
+
+  
 
   const generateSemesters = (gradeLevel: number): Semester[] => {
     const now = new Date();
@@ -114,6 +117,11 @@ export default function PaymentListClient({
                   name: "status",
                   label: "Status Pembayaran",
                   options: pStatusOptions,
+                },
+                {
+                  name: "paymentType",
+                  label: "Tipe Pembayaran",
+                  options: paymentTypeOptions,
                 },
                 {
                   name: "semester",

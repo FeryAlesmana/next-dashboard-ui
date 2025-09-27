@@ -4,6 +4,7 @@ import Announcements from "@/components/Announcements";
 import CountChartCountainer from "@/components/CountChartCountainer";
 import AttendanceChartContainer from "@/components/AttendanceChartContainer";
 import EventCalendarContainer from "@/components/EventCalendarContainer";
+import prisma from "@/lib/prisma";
 
 interface AdminPageProps {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -15,6 +16,79 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   Object.entries(sp ?? {}).forEach(([k, v]) => {
     normalized[k] = Array.isArray(v) ? v[0] : v;
   });
+  const now = new Date();
+  const startOfYear = new Date(now.getFullYear(), 0, 1);
+
+  // Fetch all payments for this year
+  const payments = await prisma.paymentLog.findMany({
+    where: {
+      OR: [{ paidAt: { gte: startOfYear } }, { dueDate: { gte: startOfYear } }],
+    },
+    select: {
+      amount: true,
+      status: true,
+      paidAt: true,
+      dueDate: true,
+      paymentInstallments: {
+        select: { amount: true },
+      },
+    },
+  });
+
+  // Initialize monthly buckets
+  const months = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "Mei",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+
+  const monthlyData = months.map((name, index) => ({
+    name,
+    lunas: 0,
+    belum_lunas: 0,
+    sebagian_dibayar: 0,
+  }));
+
+  for (const payment of payments) {
+    let date: Date | null = null;
+
+    if (
+      (payment.status === "PAID" || payment.status === "PARTIALLY_PAID") &&
+      payment.paidAt
+    ) {
+      // use paidAt when fully or partially paid
+      date = payment.paidAt;
+    } else if (payment.dueDate) {
+      // fallback to dueDate for pending/overdue
+      date = payment.dueDate;
+    }
+
+    if (date) {
+      const monthIdx = date.getMonth();
+
+      if (payment.status === "PAID") {
+        monthlyData[monthIdx].lunas += payment.amount;
+      } else if (payment.status === "PARTIALLY_PAID") {
+        // add all installment amounts
+        const installmentTotal = payment.paymentInstallments.reduce(
+          (sum, inst) => sum + inst.amount,
+          0
+        );
+        monthlyData[monthIdx].sebagian_dibayar += installmentTotal;
+      } else {
+        monthlyData[monthIdx].belum_lunas += payment.amount;
+      }
+    }
+  }
 
   return (
     <div className="p-4 flex gap-4 flex-col md:flex-row">
@@ -35,7 +109,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           </div>
         </div>
         <div className="w-full h-[500px]">
-          <FinanceChart />
+          <FinanceChart chartData={monthlyData} />
         </div>
       </div>
       {/* RIGHT */}

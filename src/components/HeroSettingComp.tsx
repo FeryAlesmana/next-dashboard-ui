@@ -117,7 +117,7 @@ const HeroSettings = () => {
                 <Image
                   src={item.imageUrl}
                   alt="hero"
-                  className="w-full h-24 object-cover rounded"
+                  className="w-full h-48 object-contain rounded bg-gray-100"
                   width={160}
                   height={160}
                 />
