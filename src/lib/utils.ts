@@ -3,6 +3,162 @@ import prisma from "./prisma";
 
 import crypto from "crypto";
 
+export function buildStudentLessonAttendance(attendances: Attendance[]) {
+  const statusCounts = {
+    HADIR: 0,
+    SAKIT: 0,
+    ABSEN: 0,
+  };
+
+  attendances.forEach((att) => {
+    if (att.status && statusCounts[att.status] !== undefined) {
+      statusCounts[att.status]++;
+    }
+  });
+
+  return [
+    { status: "Hadir", count: statusCounts.HADIR },
+    { status: "Sakit", count: statusCounts.SAKIT },
+    { status: "Absen", count: statusCounts.ABSEN },
+  ];
+}
+
+export const FIELD_MAP: Record<string, string> = {
+  // Required
+  name: "name",
+  nama: "name",
+  "nama guru": "name",
+
+  phone: "phone",
+  telepon: "phone",
+  nohp: "phone",
+  "nomor telepon": "phone",
+  "no. telepon": "phone",
+  "nomor hp": "phone",
+  "no. hp": "phone",
+
+  address: "address",
+  alamat: "address",
+  "alamat lengkap": "address",
+
+  // Optional
+  username: "username",
+  password: "password",
+
+  email: "email",
+  rw: "rw",
+  rt: "rt",
+  kelurahan: "kelurahan",
+  kecamatan: "kecamatan",
+  kota: "kota",
+  religion: "religion",
+  agama: "religion",
+  img: "img",
+  sex: "sex",
+  jenis_kelamin: "sex",
+  gender: "sex",
+  "jenis kelamin": "sex",
+
+  birthday: "birthday",
+  tanggal_lahir: "birthday",
+  "tanggal lahir": "birthday",
+  ttl: "birthday",
+};
+
+export function normalizeRow(row: any) {
+  const normalized: any = {};
+
+  for (const key in row) {
+    if (!key) continue;
+    const lowerKey = key.toString().trim().toLowerCase();
+    const mappedKey = FIELD_MAP[lowerKey];
+    if (mappedKey) {
+      normalized[mappedKey] = row[key];
+    }
+  }
+
+  return normalized;
+}
+
+// Normalize "agama" field
+export function normalizeAgama(
+  value: any
+): "Islam" | "Kristen" | "Buddha" | "Lainnya" {
+  if (!value) return "Islam"; // default
+
+  const v = String(value).trim().toLowerCase();
+
+  if (["islam", "muslim", "moslem"].includes(v)) return "Islam";
+  if (["kristen", "protestan", "katolik", "nasrani"].includes(v))
+    return "Kristen";
+  if (["buddha", "budha"].includes(v)) return "Buddha";
+
+  return "Lainnya";
+}
+
+// Normalize "sex" field
+export function normalizeSex(value: any): "MALE" | "FEMALE" {
+  if (!value) return "MALE"; // default
+
+  const v = String(value).trim().toLowerCase();
+
+  if (["male", "laki-laki", "laki", "pria", "lelaki"].includes(v))
+    return "MALE";
+  if (["female", "perempuan", "wanita", "cewe", "cewek"].includes(v))
+    return "FEMALE";
+
+  return "MALE"; // fallback
+}
+
+import { parse, isValid, format, subDays, addDays } from "date-fns";
+import { id as localeID } from "date-fns/locale";
+import { Attendance, resTypes } from "@prisma/client";
+export function normalizeBirthday(value: any): string {
+  if (!value) return "2000-01-01";
+
+  let date: Date | null = null;
+
+  // Case 1: Already a Date
+  if (value instanceof Date && !isNaN(value.getTime())) {
+    date = value;
+  }
+
+  // Case 2: Excel serial number (days since 1900)
+  else if (typeof value === "number") {
+    date = new Date(1900, 0, value - 1);
+  }
+
+  // Case 3: String parsing
+  else if (typeof value === "string") {
+    const formats = [
+      "dd/MM/yyyy",
+      "dd-MM-yyyy",
+      "dd MMMM yyyy", // full Indonesian month
+      "dd MMM yyyy", // abbreviated month
+      "yyyy-MM-dd",
+    ];
+    for (const fmt of formats) {
+      const parsed =
+        fmt === "dd MMMM yyyy"
+          ? parse(value, fmt, new Date(), { locale: localeID })
+          : parse(value, fmt, new Date());
+
+      if (isValid(parsed)) {
+        date = parsed;
+        break;
+      }
+    }
+  }
+
+  // Fallback if still null
+  if (!date || !isValid(date)) {
+    return "2000-01-01";
+  }
+
+  // ✅ Always return YYYY-MM-DD string
+  return format(date, "yyyy-MM-dd");
+}
+
 const ALGORITHM = "aes-256-cbc";
 const SECRET_KEY = crypto
   .createHash("sha256")
@@ -145,6 +301,268 @@ export const getProfileByClerkIdAndRole = async (
       return { name: "Admin", img: defaultImg };
   }
 };
+
+// Admin: Fetch new PPDB entries within last 7 days
+export async function getAdminNotifications() {
+  const oneWeekAgo = subDays(new Date(), 7);
+
+  const ppdbItems = await prisma.pPDB.findMany({
+    where: { createdAt: { gte: oneWeekAgo } },
+    select: { id: true, name: true, createdAt: true },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return ppdbItems.map((item) => ({
+    id: item.id,
+    type: "ppdb",
+    message: `Pendaftar baru: ${item.name}`,
+    createdAt: item.createdAt,
+  }));
+}
+export async function getParentNotifications(parentId: string) {
+  const now = new Date();
+  const upcoming = addDays(now, 3);
+  const since = addDays(now, -7);
+
+  // 1. Announcements
+  const announcements = await prisma.announcement.findMany({
+    where: {
+      class: { students: { some: { parentId } } },
+      date: { gte: since },
+    },
+    select: { id: true, title: true, description: true, date: true },
+    orderBy: { date: "desc" },
+  });
+
+  const announcementNotifications = announcements.map((a) => ({
+    id: `announcement-${a.id}`,
+    type: "announcement",
+    message: `Pengumuman: ${a.title} - ${a.description.substring(0, 50)}...`,
+    createdAt: a.date,
+  }));
+
+  // 2. Events
+  const events = await prisma.event.findMany({
+    where: { startTime: { gte: now, lte: upcoming } },
+    select: { id: true, description: true, startTime: true },
+    orderBy: { startTime: "asc" },
+  });
+
+  const eventNotifications = events.map((e) => ({
+    id: `event-${e.id}`,
+    type: "event",
+    message: `Acara "${
+      e.description
+    }" akan berlangsung pada ${e.startTime.toLocaleDateString("id-ID")}`,
+    createdAt: e.startTime,
+  }));
+
+  // 3. New Results (last 7 days)
+  const results = await prisma.result.findMany({
+    where: {
+      student: {
+        OR: [
+          { parentId }, // main parent
+          { secondParentId: parentId },
+          { guardianId: parentId },
+        ],
+      },
+      createdAt: { gte: since },
+    },
+    select: {
+      id: true,
+      score: true,
+      resultType: true,
+      createdAt: true,
+      student: { select: { name: true, id: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+  const resultTypelabel: Record<resTypes, string> = {
+    UJIAN_HARIAN: "Ujian Harian",
+    UJIAN_TENGAH_SEMESTER: "Ujian Tengah Semester",
+    UJIAN_AKHIR_SEMESTER: "Ujian Akhir Semester",
+    PEKERJAAN_RUMAH: "Pekerjaan Rumah",
+    TUGAS_AKHIR: "Tugas Akhir",
+    TUGAS_HARIAN: "Tugas Harian",
+  };
+
+  const resultNotifications = results.map((r) => {
+    const readableLabel =
+      resultTypelabel[r.resultType as resTypes] ?? r.resultType;
+
+    return {
+      id: `result-${r.id}`,
+      studentId: r.student?.id,
+      type: "result",
+      message: `Nilai baru untuk ${r.student?.name}: ${readableLabel} = ${r.score}`,
+      createdAt: r.createdAt,
+    };
+  });
+
+  // 4. New Attendance (last 7 days)
+  const attendances = await prisma.attendance.findMany({
+    where: {
+      student: {
+        OR: [
+          { parentId },
+          { secondParentId: parentId },
+          { guardianId: parentId },
+        ],
+      },
+      date: { gte: since },
+    },
+    select: {
+      id: true,
+      date: true,
+      status: true,
+      student: { select: { name: true, id: true } },
+      meeting: {
+        select: {
+          meetingNo: true,
+          lesson: {
+            select: { id: true, name: true, class: { select: { name: true } } },
+          },
+          id: true,
+        },
+      },
+    },
+    orderBy: { date: "desc" },
+  });
+
+  const attendanceNotifications = attendances.map((a) => ({
+    id: `attendance-${a.id}`,
+    type: "attendance",
+    message: `Absensi ${a.student?.name} pada ${a.meeting?.lesson.name} (pertemuan-${a.meeting?.meetingNo}): ${a.status}`,
+    createdAt: a.date,
+    className: a.meeting?.lesson.class?.name,
+    studentId: a.student?.id,
+    meetingId: a.meeting?.id,
+    lessonId: a.meeting?.lesson.id,
+  }));
+
+  // Merge all
+  const notifications = [
+    ...announcementNotifications,
+    ...eventNotifications,
+    ...resultNotifications,
+    ...attendanceNotifications,
+  ].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
+  return notifications;
+}
+
+export async function getTeacherNotifications(teacherId: string) {
+  const now = new Date();
+  const upcoming = addDays(now, 3);
+  const announcements = await prisma.announcement.findMany({
+    where: {
+      class: { students: { some: { id: teacherId } } },
+      date: { gte: addDays(now, -7) }, // last 7 days
+    },
+    select: { id: true, title: true, description: true, date: true },
+    orderBy: { date: "desc" },
+  });
+
+  const announcementNotifications = announcements.map((a) => ({
+    id: `announcement-${a.id}`,
+    type: "announcement",
+    message: `Pengumuman: ${a.title} - ${a.description.substring(0, 50)}...`,
+    createdAt: a.date,
+  }));
+
+  // Events
+  const events = await prisma.event.findMany({
+    where: {
+      startTime: { gte: now, lte: upcoming },
+    },
+    select: { id: true, description: true, startTime: true },
+    orderBy: { startTime: "asc" },
+  });
+
+  const eventNotifications = events.map((e) => ({
+    id: `event-${e.id}`,
+    type: "event",
+    message: `Acara "${
+      e.description
+    }" akan berlangsung pada ${e.startTime.toLocaleDateString("id-ID")}`,
+    createdAt: e.startTime,
+  }));
+  const notifications = [
+    ...announcementNotifications,
+    ...eventNotifications,
+  ].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+
+  return notifications;
+}
+// Student: Assignments near due date (next 3 days)
+export async function getStudentNotifications(studentId: string) {
+  const now = new Date();
+  const upcoming = addDays(now, 3);
+
+  // Assignments
+  const assignments = await prisma.assignment.findMany({
+    where: {
+      lesson: { class: { students: { some: { id: studentId } } } },
+      dueDate: { gte: now, lte: upcoming },
+    },
+    select: { id: true, title: true, dueDate: true },
+    orderBy: { dueDate: "asc" },
+  });
+
+  const assignmentNotifications = assignments.map((a) => ({
+    id: `assignment-${a.id}`,
+    type: "assignment",
+    message: `Tugas "${
+      a.title
+    }" mendekati Deadline (${a.dueDate.toLocaleDateString("id-ID")})`,
+    createdAt: a.dueDate,
+  }));
+
+  // Announcements
+  const announcements = await prisma.announcement.findMany({
+    where: {
+      class: { students: { some: { id: studentId } } },
+      date: { gte: addDays(now, -7) }, // last 7 days
+    },
+    select: { id: true, title: true, description: true, date: true },
+    orderBy: { date: "desc" },
+  });
+
+  const announcementNotifications = announcements.map((a) => ({
+    id: `announcement-${a.id}`,
+    type: "announcement",
+    message: `Pengumuman: ${a.title} - ${a.description.substring(0, 50)}...`,
+    createdAt: a.date,
+  }));
+
+  // Events
+  const events = await prisma.event.findMany({
+    where: {
+      startTime: { gte: now, lte: upcoming },
+    },
+    select: { id: true, description: true, startTime: true },
+    orderBy: { startTime: "asc" },
+  });
+
+  const eventNotifications = events.map((e) => ({
+    id: `event-${e.id}`,
+    type: "event",
+    message: `Acara "${
+      e.description
+    }" akan berlangsung pada ${e.startTime.toLocaleDateString("id-ID")}`,
+    createdAt: e.startTime,
+  }));
+
+  // Merge all notifications and sort by createdAt
+  const notifications = [
+    ...assignmentNotifications,
+    ...announcementNotifications,
+    ...eventNotifications,
+  ].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+
+  return notifications;
+}
 
 const currentWorkWeek = () => {
   const today = new Date();

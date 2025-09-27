@@ -50,7 +50,7 @@ export default function AssignmentTableClient({
         <td>{data.lesson.class.name}</td>
         <td className="hidden md:table-cell">
           {data.lesson.teacher
-            ? `${data.lesson.teacher.name} ${data.lesson.teacher.namalengkap}`
+            ? `${data.lesson.teacher.name} `
             : "Tidak ada guru"}
         </td>
         <td className="hidden md:table-cell">

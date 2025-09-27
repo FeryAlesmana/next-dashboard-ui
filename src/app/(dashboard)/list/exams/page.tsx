@@ -12,6 +12,8 @@ import { getCurrentUser, normalizeSearchParams } from "@/lib/utils";
 import { Class, Exam, exTypes, Prisma, Subject, Teacher } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
+import ParentExamViewSemester from "@/components/client/ParentExamViewSemester";
+import z from "zod";
 
 type ExamList = Exam & {
   lesson: { subject: Subject; class: Class; teacher: Teacher };
@@ -57,6 +59,11 @@ const ExamListPage = async ({
       className: "hidden md:table-cell",
     },
     {
+      header: "Tanggal",
+      accessor: "date",
+      className: "hidden md:table-cell",
+    },
+    {
       header: "Waktu Mulai",
       accessor: "startTime",
       className: "hidden md:table-cell",
@@ -82,17 +89,36 @@ const ExamListPage = async ({
   ];
 
   const query: Prisma.ExamWhereInput = {};
+  let orderBy: Prisma.ExamOrderByWithRelationInput | undefined;
 
   query.lesson = {};
+
+  const semesterSchema = z.object({
+    start: z.string().datetime(),
+    end: z.string().datetime(),
+  });
   if (queryParams) {
     for (const [key, value] of Object.entries(queryParams)) {
-      if (value !== undefined)
+      if (value !== undefined && value !== "")
         switch (key) {
           case "teacherId":
             query.lesson.teacherId = value;
             break;
           case "classId":
             query.lesson.classId = parseInt(value);
+            break;
+          case "semester":
+            try {
+              const parsed = semesterSchema.parse(JSON.parse(value as string));
+              query.lesson = {
+                is: {
+                  startTime: { gte: new Date(parsed.start) },
+                  endTime: { lte: new Date(parsed.end) },
+                },
+              };
+            } catch {
+              query.id = -1; // block tampered values
+            }
             break;
           case "search":
             query.OR = [
@@ -112,6 +138,24 @@ const ExamListPage = async ({
                 },
               },
             ];
+          case "sort":
+            switch (value) {
+              case "az":
+                orderBy = { title: "asc" };
+                break;
+              case "za":
+                orderBy = { title: "desc" };
+                break;
+              case "id_asc":
+                orderBy = { id: "asc" };
+                break;
+              case "id_desc":
+                orderBy = { id: "desc" };
+                break;
+              case "dl":
+                orderBy = { date: "asc" }; // or "desc" if preferred
+                break;
+            }
             break;
           default:
             break;
@@ -120,6 +164,7 @@ const ExamListPage = async ({
   }
 
   // ROLE CONDITIONS
+  let gradeLevel = 3;
   let students: any[] = [];
   switch (role) {
     case "admin":
@@ -128,6 +173,12 @@ const ExamListPage = async ({
       query.lesson.teacherId = userId!;
       break;
     case "student":
+      const student = await prisma.student.findUnique({
+        where: { id: userId! },
+        select: { class: { select: { grade: { select: { level: true } } } } },
+      });
+
+      gradeLevel = student?.class?.grade?.level ?? 3;
       query.lesson.class = {
         students: {
           some: {
@@ -145,7 +196,14 @@ const ExamListPage = async ({
             { guardianId: userId! },
           ],
         },
-        select: { classId: true, name: true, id: true },
+        select: {
+          classId: true,
+          name: true,
+          id: true,
+          class: {
+            select: { name: true, grade: { select: { level: true } } },
+          },
+        },
       });
 
       const classIds = children
@@ -171,8 +229,10 @@ const ExamListPage = async ({
             include: {
               exams: true,
               subject: true,
-              class: true,
-              teacher: { select: { name: true, namalengkap: true } },
+              class: {
+                select: { grade: { select: { level: true } }, name: true },
+              },
+              teacher: { select: { name: true } },
             },
           });
 
@@ -182,21 +242,31 @@ const ExamListPage = async ({
               subjectName: lesson.subject?.name || "-",
               className: lesson.class?.name || "-",
               teacherName: lesson.teacher
-                ? `${lesson.teacher.name} ${lesson.teacher.namalengkap}`
+                ? `${lesson.teacher.name}`
                 : "Tidak ada guru",
               startTime: exam.startTime,
               endTime: exam.endTime,
-              exTypes: exam.exType,
+              exType: exam.exType,
             }))
           );
 
-          return { id: child.id, name: child.name, exams };
+          return { ...child, exams };
         })
       );
 
       students = studentsWithExams;
 
-      return <ParentExamView students={students} columns={columns} />;
+      return (
+        // <ParentExamView students={students} columns={columns} />
+        <ParentExamViewSemester
+          userId={userId!}
+          gradeLevel={students.map((s) => ({
+            studentId: s.id,
+            gradeLevel: s.class?.grade?.level,
+          }))}
+          columns={columns}
+        />
+      );
     default:
       break;
   }
@@ -208,7 +278,7 @@ const ExamListPage = async ({
         lesson: {
           select: {
             subject: { select: { name: true } },
-            teacher: { select: { name: true, namalengkap: true } },
+            teacher: { select: { name: true } },
             class: { select: { name: true } },
           },
         },
@@ -272,6 +342,7 @@ const ExamListPage = async ({
             role={role!}
             columns={columns}
             relatedData={relatedData}
+            gradeLevel={gradeLevel}
             options={options}
           />
         </div>

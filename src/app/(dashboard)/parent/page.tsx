@@ -1,12 +1,22 @@
 import Announcements from "@/components/Announcements";
 import BigCalendarContainer from "@/components/BigCalendarContainer";
+import EventCalendarContainer from "@/components/EventCalendarContainer";
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 
-const ParentPage = async () => {
+const ParentPage = async ({
+  searchParams,
+}: {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}) => {
+  const sp = await searchParams; // resolve the Promise
+  const normalized: { [k: string]: string | undefined } = {};
+  Object.entries(sp ?? {}).forEach(([k, v]) => {
+    normalized[k] = Array.isArray(v) ? v[0] : v;
+  });
   const { userId } = await getCurrentUser();
 
   const students = await prisma.student.findMany({
@@ -16,6 +26,10 @@ const ParentPage = async () => {
         { secondParentId: userId! },
         { guardianId: userId! },
       ],
+    },
+    include: {
+      student_details: true,
+      class: true,
     },
   });
   return (
@@ -27,7 +41,7 @@ const ParentPage = async () => {
             <div className="h-full bg-white p-4 rounded-md">
               <div className="flex flex-row justify-between">
                 <h2 className="text-xl font-semibold mb-4">
-                  Jadwal {student.name}
+                  Jadwal {student.name} (Kelas {student.class?.name || "-"})
                 </h2>
                 <Link href={`/list/students/${student.id}`}>
                   <Image
@@ -47,6 +61,7 @@ const ParentPage = async () => {
 
       {/* RIGHT */}
       <div className="w-full xl:w-1/3 flex flex-col gap-8">
+        <EventCalendarContainer searchParams={normalized} />
         <Announcements></Announcements>
       </div>
     </div>

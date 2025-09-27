@@ -1,11 +1,21 @@
 import Announcements from "@/components/Announcements";
 import BigCalendarContainer from "@/components/BigCalendarContainer";
+import EventCalendarContainer from "@/components/EventCalendarContainer";
 import EventCalender from "@/components/EventCalender";
 import prisma from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 
-const StudentPage = async () => {
+const StudentPage = async ({
+  searchParams,
+}: {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}) => {
+  const sp = await searchParams; // resolve the Promise
+  const normalized: { [k: string]: string | undefined } = {};
+  Object.entries(sp ?? {}).forEach(([k, v]) => {
+    normalized[k] = Array.isArray(v) ? v[0] : v;
+  });
   const { userId } = await auth();
 
   const classItem = await prisma.class.findMany({
@@ -33,7 +43,7 @@ const StudentPage = async () => {
       </div>
       {/* RIGHT */}
       <div className="w-full xl:w-1/3 flex flex-col gap-8">
-        <EventCalender></EventCalender>
+        <EventCalendarContainer searchParams={normalized} />
         <Announcements></Announcements>
       </div>
     </div>

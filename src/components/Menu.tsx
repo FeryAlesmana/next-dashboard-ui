@@ -92,7 +92,7 @@ export default function Menu() {
           icon: "/finance.png",
           label: "Pembayaran",
           href: "/list/payment",
-          visible: ["admin", "teacher", "student", "parent"],
+          visible: ["admin", "student", "parent"],
         },
         {
           icon: "/calendar.png",
@@ -100,12 +100,12 @@ export default function Menu() {
           href: "/list/events",
           visible: ["admin", "teacher", "student", "parent"],
         },
-        // {
-        //   icon: "/message.png",
-        //   label: "Pesan",
-        //   href: "/list/messages",
-        //   visible: ["admin", "teacher", "student", "parent"],
-        // },
+        {
+          icon: "/profile.png",
+          label: "User",
+          href: "/list/users",
+          visible: ["admin"],
+        },
         {
           icon: "/announcement.png",
           label: "Pemberitahuan",
@@ -115,7 +115,7 @@ export default function Menu() {
       ],
     },
     {
-      title: "OTHER",
+      title: "LAINNYA",
       items: [
         {
           icon: "/profile.png",
@@ -127,7 +127,7 @@ export default function Menu() {
           icon: "/setting.png",
           label: "Settings",
           href: "/settings",
-          visible: ["admin", "teacher", "student", "parent"],
+          visible: ["admin"],
         },
         {
           icon: "/logout.png",

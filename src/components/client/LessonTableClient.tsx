@@ -51,9 +51,7 @@ export default function LessonTableClient({
         </td>
         <td>{data.day}</td>
         <td className="hidden md:table-cell">
-          {data.teacher
-            ? `${data.teacher.name} ${data.teacher.namalengkap}`
-            : "Tidak ada guru"}
+          {data.teacher ? `${data.teacher.name} ` : "Tidak ada guru"}
         </td>
         <td>
           <Link href={`/list/attendance/${data.class.name}/${data.id}`}>

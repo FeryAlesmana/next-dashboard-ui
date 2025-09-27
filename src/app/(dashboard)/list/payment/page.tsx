@@ -5,17 +5,10 @@ import Pagination from "@/components/Pagination";
 import ParentPaymentView from "@/components/client/ParentPaymentView";
 import PaymentListClient from "@/components/client/PaymentListClient";
 import StudentPaymentView from "@/components/client/StudentPaymentView";
-import Table from "@/components/Table";
-import TableSearch from "@/components/TableSearch";
 import prisma from "@/lib/prisma";
-import { ITEM_PER_PAGE } from "@/lib/setting";
 import { getCurrentUser, normalizeSearchParams } from "@/lib/utils";
 import { PaymentLog, PaymentType, Prisma, Student } from "@prisma/client";
-import Image from "next/image";
-
-// type PaymentLogList = PaymentLog & {
-//   student: Student;
-// };
+import z from "zod";
 
 const PaymentLogListPage = async ({
   searchParams,
@@ -83,7 +76,7 @@ const PaymentLogListPage = async ({
 
   const query: Prisma.PaymentLogWhereInput = {};
   let orderBy: Prisma.PaymentLogOrderByWithRelationInput | undefined;
-
+  let gradeLevel = 3;
   // ROLE CONDITION
   switch (role) {
     case "admin":
@@ -96,7 +89,7 @@ const PaymentLogListPage = async ({
         select: {
           id: true,
           name: true,
-          namalengkap: true,
+
           class: {
             select: { name: true, grade: { select: { level: true } } },
           },
@@ -133,7 +126,7 @@ const PaymentLogListPage = async ({
         select: {
           id: true,
           name: true,
-          namalengkap: true,
+
           class: {
             select: { name: true, grade: { select: { level: true } } },
           },
@@ -190,7 +183,10 @@ const PaymentLogListPage = async ({
     default:
       break;
   }
-
+  const semesterSchema = z.object({
+    start: z.string().datetime(),
+    end: z.string().datetime(),
+  });
   if (queryParams) {
     for (const [key, value] of Object.entries(queryParams)) {
       if (value !== undefined && value !== "")
@@ -200,7 +196,6 @@ const PaymentLogListPage = async ({
               ...(query.student ?? {}),
               OR: [
                 { name: { contains: value, mode: "insensitive" } },
-                { namalengkap: { contains: value, mode: "insensitive" } },
                 {
                   student_details: {
                     nisn: {
@@ -211,6 +206,9 @@ const PaymentLogListPage = async ({
                 },
               ],
             } as Prisma.StudentWhereInput;
+            break;
+          case "id":
+            query.id = parseInt(value);
             break;
           case "status":
             query.status = value as any;
@@ -223,6 +221,17 @@ const PaymentLogListPage = async ({
             break;
           case "paymentType":
             query.paymentType = value as PaymentType;
+            break;
+          case "semester":
+            try {
+              const parsed = semesterSchema.parse(JSON.parse(value as string));
+              query.createdAt = {
+                gte: new Date(parsed.start),
+                lte: new Date(parsed.end),
+              };
+            } catch {
+              query.id = -1; // block tampered values
+            }
             break;
           case "sort":
             switch (value) {
@@ -245,7 +254,7 @@ const PaymentLogListPage = async ({
         }
     }
   }
-  const [data, count, classesData, studentData, gradeData] =
+  const [data, count, classesData, studentData, gradeData, installment] =
     await prisma.$transaction([
       prisma.paymentLog.findMany({
         where: query,
@@ -254,7 +263,6 @@ const PaymentLogListPage = async ({
           student: {
             select: {
               name: true,
-              namalengkap: true,
               img: true,
               class: {
                 select: {
@@ -279,7 +287,6 @@ const PaymentLogListPage = async ({
         select: {
           id: true,
           name: true,
-          namalengkap: true,
         },
       }),
       prisma.grade.findMany({
@@ -288,12 +295,20 @@ const PaymentLogListPage = async ({
           level: true,
         },
       }),
+      prisma.paymentInstallment.findMany({
+        select: {
+          id: true,
+          amount: true,
+          paymentLogId: true, // assuming relation
+        },
+      }),
     ]);
   let relatedData = {};
   relatedData = {
     studentData: studentData,
     classData: classesData,
     gradeData: gradeData,
+    installment,
   };
 
   const classOptions = classesData.map((cls) => ({
@@ -312,17 +327,24 @@ const PaymentLogListPage = async ({
       label: level.toString(),
       value: level,
     }));
-  const pStatusOptions = Array.from(new Set(data.map((pt) => pt.status))).map(
-    (type) => ({
-      label: type,
-      value: type,
-    })
-  );
-
+  const pStatusOptions = [
+    { label: "Menunggu Pembayaran", value: "PENDING" },
+    { label: "Lunas", value: "PAID" },
+    { label: "Terlambat", value: "OVERDUE" },
+    { label: "Dibayar Sebagian", value: "PARTIALLY_PAID" },
+  ];
+  const paymentTypeOptions = [
+    { label: "SPP", value: "TUITION" },
+    { label: "Ekstrakurikuler", value: "EXTRACURRICULAR" },
+    { label: "Seragam", value: "UNIFORM" },
+    { label: "Buku", value: "BOOKS" },
+    { label: "Lainnya", value: "OTHER" },
+  ];
   let options = {
     classOptions,
     gradeOptions,
     pStatusOptions,
+    paymentTypeOptions,
   };
   return (
     <ClientPageWrapper key={key} role={role!}>
@@ -335,6 +357,7 @@ const PaymentLogListPage = async ({
             columns={columns}
             relatedData={relatedData}
             options={options}
+            gradeLevel={gradeLevel}
           />
         </div>
         {/* PAGINATION */}

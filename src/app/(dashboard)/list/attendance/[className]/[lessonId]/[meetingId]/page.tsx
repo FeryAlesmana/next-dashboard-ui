@@ -55,6 +55,7 @@ export default async function MeetingAttendancePage({
           data={{
             lessonId: meeting.lessonId,
             meetingId: meetingId,
+            meetingNo: meeting.meetingNo,
             attendance: Object.fromEntries(attendanceMap.entries()), // Pass full attendance map to the form
           }}
         />

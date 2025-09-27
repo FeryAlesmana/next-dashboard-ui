@@ -88,11 +88,6 @@ export default function ParentPaymentView({
     []
   );
 
-  // useEffect(() => {
-  //   if (Object.keys(selectedSemesters).length > 0) {
-  //     fetchPayments();
-  //   }
-  // }, [selectedSemesters, fetchPayments]);
   useEffect(() => {
     setHydrated(true);
   }, []);
@@ -128,6 +123,7 @@ export default function ParentPaymentView({
     fetchPayments(studentId, semester);
   };
   if (!hydrated) return null;
+  console.log(studentsWithPayments, "student in payment");
   return (
     <div className="w-full mx-auto p-6">
       <h1 className="text-2xl font-bold mb-6">Pembayaran Anak</h1>
@@ -142,7 +138,7 @@ export default function ParentPaymentView({
           <div key={studentId} className="mb-12">
             <div className="flex justify-between items-center mb-2">
               <h2 className="text-xl font-semibold">
-                {student?.name || "Murid"} {student?.namalengkap || ""}
+                {student?.name || "Murid"}
               </h2>
               <SemesterSelect
                 semesters={semesters}

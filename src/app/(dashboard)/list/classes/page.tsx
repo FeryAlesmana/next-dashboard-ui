@@ -113,6 +113,9 @@ const ClassListPage = async ({
       orderBy,
       include: {
         supervisor: true,
+        _count: {
+          select: { students: true },
+        },
       },
       take: perPage,
       skip: perPage ? perPage * (p - 1) : undefined,
@@ -128,14 +131,13 @@ const ClassListPage = async ({
       select: {
         id: true,
         name: true,
-        namalengkap: true,
       },
     }),
   ]);
 
   const teacherOptions = classTeacher.map((teacher) => ({
     value: teacher.id,
-    label: `${teacher.name} - ${teacher.namalengkap}`,
+    label: `${teacher.name}`,
   }));
 
   const gradeOptions = classGrades.map((grade) => ({

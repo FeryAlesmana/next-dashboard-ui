@@ -95,7 +95,6 @@ async function main() {
         username: `teacher${i}`,
         password: encryptPassword(`teacherPass${i}`),
         name: `TName${i}`,
-        namalengkap: `Tnamalengkap ${i}`,
         email: `teacher${i}@example.com`,
         phone: `123-456-789${i}`,
         address: `Address${i}`,
@@ -148,7 +147,6 @@ async function main() {
         username: `parentId${i}`,
         password: encryptPassword(`parenttPass${i}`),
         name: `PName ${i}`,
-        namalengkap: `Pnamalengkap ${i}`,
         sex: i % 2 === 0 ? UserSex.MALE : UserSex.FEMALE,
         email: `parent${i}@example.com`,
         phone: `123-456-789${i}`,
@@ -192,7 +190,6 @@ async function main() {
         username: `student${i}`,
         password: encryptPassword(`studentPass${i}`),
         name: `SName${i}`,
-        namalengkap: `Snamalengkap ${i}`,
         email: `student${i}@example.com`,
         phone: `987-654-321${i}`,
         address: `Address${i}`,
@@ -268,6 +265,7 @@ async function main() {
     await prisma.exam.create({
       data: {
         title: `Exam ${i}`,
+        date: new Date(),
         startTime: new Date(new Date().setHours(new Date().getHours() + 1)),
         endTime: new Date(new Date().setHours(new Date().getHours() + 2)),
         lessonId: (i % 30) + 1,
@@ -354,7 +352,6 @@ async function main() {
 const ppdbDummyData = [
   {
     name: "Budi",
-    namalengkap: "Santoso",
     birthday: new Date("2015-05-10T00:00:00.000Z"),
     birthPlace: "Jakarta",
     sex: "MALE" as UserSex,
@@ -418,7 +415,6 @@ const ppdbDummyData = [
   },
   {
     name: "Ani",
-    namalengkap: "Wijaya",
     birthday: new Date("2015-08-15T00:00:00.000Z"),
     birthPlace: "Bandung",
     sex: "FEMALE" as UserSex,
@@ -482,7 +478,6 @@ const ppdbDummyData = [
   },
   {
     name: "Joko",
-    namalengkap: "Susilo",
     birthday: new Date("2015-12-20T00:00:00.000Z"),
     birthPlace: "Surabaya",
     sex: "MALE" as UserSex,

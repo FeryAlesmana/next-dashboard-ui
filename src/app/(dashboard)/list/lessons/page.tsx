@@ -14,6 +14,9 @@ import Link from "next/link";
 import { LessonWithRelations } from "../attendance/page";
 import ParentLessonView from "@/components/client/ParentLessonView";
 import LessonListClient from "@/components/client/LessonListClient";
+import ParentLessonViewSemester from "@/components/client/ParentLessonViewSemester";
+import StudentLessonViewSemester from "@/components/client/StudentLessonView";
+import z from "zod";
 
 // type LessonList = Lesson & { subject: Subject } & { class: Class } & {
 //   teacher: Teacher;
@@ -38,6 +41,14 @@ const LessonListPage = async ({
 
   const { role, userId } = await getCurrentUser();
   const columns = [
+    ...(role === "admin"
+      ? [
+          {
+            header: "Select",
+            accessor: "checkbox",
+          },
+        ]
+      : []),
     {
       header: "ID Jadwal",
       accessor: "lessonId",
@@ -116,7 +127,7 @@ const LessonListPage = async ({
       <td>{item.day}</td>
       <td className="hidden md:table-cell">
         {item.teacher
-          ? `${item.teacher.name} ${item.teacher.namalengkap}`
+          ? `${item.teacher.name}`
           : "Tidak ada guru"}
       </td>
       <td>
@@ -149,7 +160,10 @@ const LessonListPage = async ({
 
   const query: Prisma.LessonWhereInput = {};
   let orderBy: Prisma.LessonOrderByWithRelationInput = {};
-
+  const semesterSchema = z.object({
+    start: z.string().datetime(),
+    end: z.string().datetime(),
+  });
   if (queryParams) {
     for (const [key, value] of Object.entries(queryParams)) {
       if (value !== undefined && value !== "")
@@ -169,7 +183,15 @@ const LessonListPage = async ({
               },
             };
             break;
-
+          case "semester":
+            try {
+              const parsed = semesterSchema.parse(JSON.parse(value as string));
+              query.startTime = { gte: new Date(parsed.start) };
+              query.endTime = { lte: new Date(parsed.end) };
+            } catch (e) {
+              query.id = -1; // block tampered values
+            }
+            break;
           case "day":
             if (Object.values(Day).includes(value as Day)) {
               query.day = value as Day;
@@ -212,6 +234,7 @@ const LessonListPage = async ({
   let lessons: LessonWithRelations[] = [];
   let teacherLesson: any[] = [];
   let students: any[] = [];
+  let gradeLevel = 3;
   switch (role) {
     case "admin":
       break;
@@ -230,7 +253,7 @@ const LessonListPage = async ({
               where: { classId: cls.id },
               include: {
                 subject: { select: { name: true } },
-                teacher: { select: { name: true, namalengkap: true } },
+                teacher: { select: { name: true } },
               },
             });
             return { ...cls, lessons };
@@ -243,7 +266,7 @@ const LessonListPage = async ({
             include: {
               subject: { select: { name: true } },
               class: { select: { name: true, gradeId: true } },
-              teacher: { select: { name: true, namalengkap: true } },
+              teacher: { select: { name: true } },
             },
             take: ITEM_PER_PAGE,
             skip: ITEM_PER_PAGE * (p - 1),
@@ -301,7 +324,7 @@ const LessonListPage = async ({
                               </td>
                               <td className="p-2">
                                 {lesson.teacher
-                                  ? `${lesson.teacher.name} ${lesson.teacher.namalengkap}`
+                                  ? `${lesson.teacher.name}`
                                   : "-"}
                               </td>
                             </tr>
@@ -340,14 +363,37 @@ const LessonListPage = async ({
       break;
     }
     case "student":
-      query.class = {
-        students: {
-          some: {
-            id: userId!,
-          },
+      const student = await prisma.student.findUnique({
+        where: {
+          id: userId!,
         },
-      };
-      break;
+        select: {
+          id: true,
+          name: true,
+
+          class: {
+            select: { name: true, grade: { select: { level: true } } },
+          },
+          student_details: { select: { nisn: true } },
+        },
+      });
+      if (!student) {
+        return (
+          <div className="p-8 text-center text-gray-500">
+            Tidak ada data murid terkait akun Anda.
+          </div>
+        );
+      }
+      // ✅ TypeScript now knows student is defined below
+      const gradeLevel = student.class?.grade?.level;
+      return (
+        <>
+          <StudentLessonViewSemester
+            userId={userId!}
+            gradeLevel={gradeLevel!}
+          ></StudentLessonViewSemester>
+        </>
+      );
     case "parent": {
       const children = await prisma.student.findMany({
         where: {
@@ -357,7 +403,15 @@ const LessonListPage = async ({
             { guardianId: userId! },
           ],
         },
-        select: { classId: true, name: true, id: true },
+
+        select: {
+          classId: true,
+          name: true,
+          id: true,
+          class: {
+            select: { name: true, grade: { select: { level: true } } },
+          },
+        },
       });
 
       const classIds = children
@@ -382,12 +436,12 @@ const LessonListPage = async ({
                 include: {
                   subject: true,
                   class: true,
-                  teacher: { select: { name: true, namalengkap: true } },
+                  teacher: { select: { name: true } },
                 },
               })
             : [];
 
-          return { id: child.id, name: child.name, lessons };
+          return { ...child, lessons };
         })
       );
 
@@ -399,7 +453,16 @@ const LessonListPage = async ({
         }))
       );
 
-      return <ParentLessonView columns={columns} students={students} />;
+      // <ParentLessonView columns={columns} students={students} />
+      return (
+        <ParentLessonViewSemester
+          userId={userId!}
+          gradeLevel={studentsWithLessons.map((s) => ({
+            studentId: s.id,
+            gradeLevel: s.class?.grade?.level,
+          }))}
+        />
+      );
     }
     default:
       break;
@@ -412,7 +475,7 @@ const LessonListPage = async ({
       include: {
         subject: { select: { name: true } },
         class: { select: { name: true, gradeId: true } },
-        teacher: { select: { name: true, namalengkap: true } },
+        teacher: { select: { name: true } },
       },
       take: perPage,
       skip: perPage ? perPage * (p - 1) : undefined,
@@ -438,7 +501,6 @@ const LessonListPage = async ({
     select: {
       id: true,
       name: true,
-      namalengkap: true,
     },
   });
 
@@ -481,6 +543,7 @@ const LessonListPage = async ({
             role={role!}
             relatedData={relatedData}
             options={options}
+            gradeLevel={gradeLevel}
           />
         </div>
         {/* PAGINATION*/}

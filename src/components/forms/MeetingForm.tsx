@@ -151,7 +151,7 @@ const MeetingForm = ({
 
       {showConfirm && formData && (
         <ConfirmDialog
-          message={`Apakah Anda yakin ingin menambahkan pertemuan ke-${formData.meetingCount}?`}
+          message={`Apakah Anda yakin ingin menambahkan ${formData.meetingCount} pertemuan?`}
           onConfirm={submitForm}
           onCancel={() => setShowConfirm(false)}
         />

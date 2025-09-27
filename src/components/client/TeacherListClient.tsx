@@ -7,6 +7,7 @@ import { BaseListClientProps } from "./AssignmentListClient";
 import FilterSortToggle from "../FilterSortToggle";
 import TableSearch from "../TableSearch";
 import FormModal from "../FormModal";
+import { Teacher } from "@prisma/client";
 
 export default function TeacherListClient({
   columns,
@@ -39,13 +40,21 @@ export default function TeacherListClient({
       }
     });
   };
-  const handleManyChanged = (items: any[]) => {
-    setLocalData((prev) =>
-      prev.map((p) => {
-        const updated = items.find((u) => u.id === p.id);
-        return updated ? { ...p, ...updated } : p;
-      })
-    );
+  const handleManyChanged = (newItems: Teacher[]) => {
+    setLocalData((prev) => {
+      const updated = [...prev];
+
+      newItems.forEach((item) => {
+        const index = updated.findIndex((p) => p.id === item.id);
+        if (index > -1) {
+          updated[index] = item; // update existing
+        } else {
+          updated.unshift(item); // add new
+        }
+      });
+
+      return updated;
+    });
   };
   const { classOptions = [], subjectOptions = [] } = options || {};
   return (
@@ -77,12 +86,19 @@ export default function TeacherListClient({
               ]}
             />
             {role === "admin" && (
-              <FormModal
-                table="teacher"
-                type="create"
-                relatedData={relatedData}
-                onChanged={handleChanged}
-              ></FormModal>
+              <>
+                <FormModal
+                  table="teacher"
+                  type="create"
+                  relatedData={relatedData}
+                  onChanged={handleChanged}
+                ></FormModal>
+                <FormModal
+                  table="importTeachers"
+                  type="createMany"
+                  onChanged={handleManyChanged}
+                />
+              </>
             )}
           </div>
         </div>
@@ -113,17 +129,29 @@ export default function TeacherListClient({
           )}
           {/* other headers */}
         </tr>
-        {localData.map((row) => (
-          <TeacherTableClient
-            key={row.id}
-            data={row}
-            role={role}
-            selected={selected}
-            onToggle={toggleSelection}
-            onDeleted={handleDeleteOptimistic}
-            onChanged={handleChanged}
-          />
-        ))}
+        {localData.length === 0 ? (
+          <tr>
+            <td
+              colSpan={columns.length + (role === "admin" ? 1 : 0)}
+              className="text-center text-gray-500 py-6"
+            >
+              Tidak ada data untuk table ini
+            </td>
+          </tr>
+        ) : (
+          localData.map((row) => (
+            <TeacherTableClient
+              key={row.id}
+              data={row}
+              role={role}
+              selected={selected}
+              onToggle={toggleSelection}
+              relatedData={relatedData}
+              onDeleted={handleDeleteOptimistic}
+              onChanged={handleChanged}
+            />
+          ))
+        )}
       </Table>
     </div>
   );

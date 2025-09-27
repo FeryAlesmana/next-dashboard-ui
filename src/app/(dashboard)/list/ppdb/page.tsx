@@ -28,6 +28,14 @@ const PpdbPage = async ({
   const perPage = limit === "all" ? undefined : parseInt(limit ?? "10");
 
   const columns = [
+    ...(role === "admin"
+      ? [
+          {
+            header: "Select",
+            accessor: "checkbox",
+          },
+        ]
+      : []),
     {
       header: "No",
       accessor: "nomor",
@@ -63,6 +71,9 @@ const PpdbPage = async ({
     for (const [key, value] of Object.entries(queryParams)) {
       if (value !== undefined && value !== "")
         switch (key) {
+          case "id":
+            query.id = parseInt(value);
+            break;
           case "search":
             query.name = { contains: value, mode: "insensitive" };
             break;

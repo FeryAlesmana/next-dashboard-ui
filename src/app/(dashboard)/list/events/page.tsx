@@ -1,13 +1,16 @@
+import { Semester } from "@/components/client/StudentPaymentView";
 import ClientPageWrapper from "@/components/ClientWrapper";
+import FilterSortToggle from "@/components/FilterSortToggle";
 import FormContainer from "@/components/FormContainer";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
 import prisma from "@/lib/prisma";
-import { ITEM_PER_PAGE } from "@/lib/setting";
 import { getCurrentUser, normalizeSearchParams } from "@/lib/utils";
 import { Class, Event, Prisma } from "@prisma/client";
 import Image from "next/image";
+import Link from "next/link";
+import z from "zod";
 
 type EventList = Event & { class: Class };
 
@@ -17,7 +20,7 @@ const EventListPage = async ({
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) => {
   const sp = await normalizeSearchParams(searchParams);
-  const { page, ...queryParams } = sp;
+  const { page, limit, ...queryParams } = sp;
   const key = new URLSearchParams(
     Object.entries(sp).reduce((acc, [k, v]) => {
       if (v !== undefined) acc[k] = v;
@@ -25,6 +28,7 @@ const EventListPage = async ({
     }, {} as Record<string, string>)
   ).toString();
   const p = page ? parseInt(page) : 1;
+  const perPage = limit === "all" ? undefined : parseInt(limit ?? "10");
 
   const { role, userId } = await getCurrentUser();
   const columns = [
@@ -103,6 +107,11 @@ const EventListPage = async ({
 
         <td>
           <div className="flex items-center gap-2">
+            <Link href={`events/${item.id}`}>
+              <button className="w-7 h-7 flex items-center justify-center rounded-full bg-lamaSky shadow-md">
+                <Image src="/view.png" alt="" width={16} height={16} />
+              </button>
+            </Link>
             {canEdit && (
               <>
                 <FormContainer
@@ -124,6 +133,11 @@ const EventListPage = async ({
   };
 
   const query: Prisma.EventWhereInput = {};
+  let orderBy: Prisma.EventOrderByWithRelationInput | undefined;
+  const semesterSchema = z.object({
+    start: z.string().datetime(),
+    end: z.string().datetime(),
+  });
 
   if (queryParams) {
     for (const [key, value] of Object.entries(queryParams)) {
@@ -131,13 +145,137 @@ const EventListPage = async ({
         switch (key) {
           case "search":
             query.title = { contains: value, mode: "insensitive" };
+          case "id":
+            query.id = parseInt(value);
+          case "classId":
+            query.classId = parseInt(value);
+            break;
+          case "gradeId":
+            query.class = { gradeId: parseInt(value) };
+            break;
+          case "semester":
+            try {
+              const parsed = semesterSchema.parse(JSON.parse(value as string));
+              query.startTime = { gte: new Date(parsed.start) };
+              query.endTime = { lte: new Date(parsed.end) };
+            } catch {
+              query.id = -1; // block tampered values
+            }
+            break;
+
+          case "sort":
+            switch (value) {
+              case "az":
+                orderBy = { title: "asc" };
+                break;
+              case "za":
+                orderBy = { title: "desc" };
+                break;
+              case "id_asc":
+                orderBy = { id: "asc" };
+                break;
+              case "id_desc":
+                orderBy = { id: "desc" };
+                break;
+            }
+            break;
           default:
             break;
         }
     }
   }
-  // ROLE CONDITIONS
 
+  const generateSemesters = (
+    createdAt: Date,
+    gradeLevel: number
+  ): Semester[] => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+
+    // Start from either enrollment year OR calculated grade start year
+    const startYear = Math.max(
+      createdAt.getFullYear(),
+      currentYear - (gradeLevel - 1)
+    );
+
+    const generated: Semester[] = [];
+
+    for (let year = startYear; year <= currentYear; year++) {
+      generated.push({
+        label: `Ganjil ${year}/${year + 1}`,
+        start: new Date(`${year}-07-01`),
+        end: new Date(`${year}-12-31`),
+      });
+      generated.push({
+        label: `Genap ${year}/${year + 1}`,
+        start: new Date(`${year + 1}-01-01`),
+        end: new Date(`${year + 1}-06-30`),
+      });
+    }
+
+    return generated.reverse();
+  };
+  // ROLE CONDITIONS
+  let semesters: Semester[] = [];
+
+  if (role === "student") {
+    const student = await prisma.student.findUnique({
+      where: { id: userId! },
+      select: { createdAt: true, grade: { select: { level: true } } },
+    });
+
+    if (student) {
+      semesters = generateSemesters(
+        student.createdAt,
+        student.grade?.level ?? 1
+      );
+    }
+  }
+
+  if (role === "parent") {
+    const parent = await prisma.parent.findUnique({
+      where: { id: userId! },
+      select: {
+        students: {
+          select: { createdAt: true, grade: { select: { level: true } } },
+        },
+        secondaryStudents: {
+          select: { createdAt: true, grade: { select: { level: true } } },
+        },
+        guardianStudents: {
+          select: { createdAt: true, grade: { select: { level: true } } },
+        },
+      },
+    });
+
+    const all = [
+      ...(parent?.students || []),
+      ...(parent?.secondaryStudents || []),
+      ...(parent?.guardianStudents || []),
+    ];
+
+    if (all.length > 0) {
+      // Pick the child with the **highest grade level**
+      const highest = all.reduce((a, b) =>
+        (a.grade?.level ?? 0) > (b.grade?.level ?? 0) ? a : b
+      );
+      semesters = generateSemesters(
+        highest.createdAt,
+        highest.grade?.level ?? 1
+      );
+    }
+  }
+
+  if (role === "admin") {
+    const oldest = await prisma.student.findFirst({
+      orderBy: { createdAt: "asc" },
+      select: { createdAt: true, grade: { select: { level: true } } },
+    });
+
+    if (oldest) {
+      semesters = generateSemesters(oldest.createdAt, oldest.grade?.level ?? 1);
+    }
+  }
   const roleConditions = {
     teacher: { lessons: { some: { teacherId: userId! } } },
     student: { students: { some: { id: userId! } } },
@@ -161,20 +299,34 @@ const EventListPage = async ({
     ];
   }
 
-  const [data, count] = await prisma.$transaction([
+  const [data, count, classes, grades] = await prisma.$transaction([
     prisma.event.findMany({
-      orderBy: {
-        startTime: "asc",
-      },
+      orderBy,
       where: query,
       include: {
         class: true,
       },
-      take: ITEM_PER_PAGE,
-      skip: ITEM_PER_PAGE * (p - 1),
+      take: perPage,
+      skip: perPage ? perPage * (p - 1) : undefined,
     }),
     prisma.event.count({ where: query }),
+    prisma.class.findMany({}),
+    prisma.grade.findMany({
+      select: {
+        id: true,
+        level: true,
+      },
+    }),
   ]);
+
+  const classOptions = classes.map((cls) => ({
+    label: cls?.name ?? "Unknown Class",
+    value: cls?.id?.toString() ?? "",
+  }));
+  const gradeOptions = grades.map((grade) => ({
+    label: grade.level.toString(),
+    value: grade.id,
+  }));
 
   return (
     <ClientPageWrapper key={key} role={role!}>
@@ -185,12 +337,43 @@ const EventListPage = async ({
           <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
             <TableSearch></TableSearch>
             <div className="flex items-center gap-4 self-end">
-              <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
-                <Image src="/filter.png" alt="" width={14} height={14}></Image>
-              </button>
-              <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
-                <Image src="/sort.png" alt="" width={14} height={14}></Image>
-              </button>
+              <FilterSortToggle
+                filterFields={[
+                  {
+                    name: "classId",
+                    label: "Kelas",
+                    options: classOptions,
+                  },
+                  {
+                    name: "gradeId",
+                    label: "Tingkat",
+                    options: gradeOptions,
+                  },
+                  {
+                    name: "semester",
+                    label: "Semester",
+                    options: semesters.map((sem) => ({
+                      label: sem.label,
+                      value: JSON.stringify({
+                        start: sem.start.toISOString(),
+                        end: sem.end.toISOString(),
+                      }),
+                    })),
+                  },
+                ]}
+                sortOptions={[
+                  { label: "A-Z", value: "az" },
+                  { label: "Z-A", value: "za" },
+                  { label: "ID Asc", value: "id_asc" },
+                  { label: "ID Desc", value: "id_desc" },
+                ]}
+              />
+              {role === "admin" && (
+                <FormContainer
+                  table="announcement"
+                  type="create"
+                ></FormContainer>
+              )}
               {(role === "admin" || role === "teacher") && (
                 <FormContainer table="event" type="create"></FormContainer>
               )}
@@ -199,7 +382,13 @@ const EventListPage = async ({
         </div>
         {/* LIST */}
         <div className="">
-          <Table columns={columns} renderRow={renderRow} data={data}></Table>
+          {data.length === 0 ? (
+            <div className="text-center py-6 text-gray-500">
+              Tidak ada Kegiatan.
+            </div>
+          ) : (
+            <Table columns={columns} renderRow={renderRow} data={data} />
+          )}
         </div>
         {/* PAGINATION*/}
         <div className="">

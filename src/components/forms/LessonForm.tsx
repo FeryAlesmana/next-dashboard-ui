@@ -156,9 +156,9 @@ const LessonForm = ({
     label: `${kelas.name}`,
   }));
   const teacherOptions = teachers.map(
-    (teacher: { id: string; name: string; namalengkap: string }) => ({
+    (teacher: { id: string; name: string }) => ({
       value: teacher.id,
-      label: `${teacher.name} ${teacher.namalengkap}`,
+      label: `${teacher.name} `,
     })
   );
 
@@ -186,6 +186,7 @@ const LessonForm = ({
             defaultValue={data?.name}
             register={register}
             error={errors?.name}
+            placeholder="Masukkan nama"
           />
           <div className="flex flex-col gap-2 w-full md:w-1/4">
             <label className="text-xs text-gray-400">Mata Pelajaran</label>

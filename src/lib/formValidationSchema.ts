@@ -43,7 +43,6 @@ export const teacherSchema = z.object({
     .or(z.literal(""))
     .optional(),
   name: z.string().min(1, { message: "Nama depan wajib diisi!" }),
-  namalengkap: z.string().min(1, { message: "Nama belakang wajib diisi!" }),
   email: z
     .string()
     .email({ message: "Email anda Tidak valid!" })
@@ -81,6 +80,44 @@ export const createTeacherSchema = teacherSchema.extend({
 
 export type CreateteacherSchema = z.infer<typeof createTeacherSchema>;
 
+export const importTeacherSchema = z.object({
+  file: z
+    .instanceof(File, {
+      message: "Yang anda upload bukan file!",
+    })
+    .refine((file) => file.size <= 5 * 1024 * 1024, {
+      message: "Ukuran file harus kurang dari 5MB",
+    })
+    .refine(
+      (file) =>
+        file.type ===
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+        file.type === "application/vnd.ms-excel",
+      {
+        message: "Format file harus .xlsx atau .xls",
+      }
+    ),
+});
+export type ImportTeacherSchema = z.infer<typeof importTeacherSchema>;
+export const importstudentSchema = z.object({
+  file: z
+    .instanceof(File, {
+      message: "Yang anda upload bukan file!",
+    })
+    .refine((file) => file.size <= 5 * 1024 * 1024, {
+      message: "Ukuran file harus kurang dari 5MB",
+    })
+    .refine(
+      (file) =>
+        file.type ===
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+        file.type === "application/vnd.ms-excel",
+      {
+        message: "Format file harus .xlsx atau .xls",
+      }
+    ),
+});
+export type ImportStudentSchema = z.infer<typeof importstudentSchema>;
 // For update — password is optional or empty string
 export const updateTeacherSchema = teacherSchema.extend({
   password: z
@@ -100,7 +137,6 @@ export const studentSchema = z.object({
     .min(3, { message: "Username harus lebih dari 3 karakter!" })
     .max(64, { message: "Username harus kurang dari 64 karakter!" }),
   name: z.string().min(1, { message: "Nama depan wajib diisi!" }),
-  namalengkap: z.string().min(1, { message: "Nama belakang wajib diisi!" }),
   email: z
     .string()
     .email({ message: "Email anda Tidak valid!" })
@@ -235,8 +271,9 @@ export type UpdatestudentSchema = z.infer<typeof updateStudentSchema>;
 export const examSchema = z.object({
   id: z.coerce.number().optional(),
   title: z.string().min(2, { message: "Nama Ujian wajib diisi!" }),
-  startTime: z.coerce.date({ message: "Waktu mulai Ujian harus diisi" }),
-  endTime: z.coerce.date({ message: "Waktu selesai Ujian wajib diisi!" }),
+  date: z.coerce.date({ message: "Tanggal wajib diisi!" }),
+  startTime: z.string().min(1, { message: "Waktu mulai wajib diisi!" }), // dulu: z.coerce.date()
+  endTime: z.string().min(1, { message: "Waktu selesai wajib diisi!" }),
   lessonId: z.coerce.number({ message: "Id pelajaran wajib di isi" }),
   exType: z.nativeEnum(exTypes, { message: "Tipe Ujian wajib di isi" }),
 });
@@ -295,7 +332,6 @@ export const parentSchema = z.object({
     .optional(),
   email: z.string().email({ message: "Email anda Tidak valid!" }),
   name: z.string().min(1, { message: "Nama depan wajib diisi!" }),
-  namalengkap: z.string().min(1, { message: "Nama belakang wajib diisi!" }),
   sex: z.nativeEnum(UserSex, {
     message: " Jenis Kelamin Calon Siswa wajib diisi!",
   }),
@@ -378,13 +414,6 @@ export const ppdbSchema = z.object({
   name: z.string({
     message: " nama Calon Siswa wajib diisi!",
   }),
-  namalengkap: z
-    .string({
-      message: " nama Calon Siswa wajib diisi!",
-    })
-    .optional()
-    .nullable()
-    .or(z.literal("")),
   birthday: z.string({
     message: " Tanggal lahir Calon Siswa wajib diisi!",
   }),
@@ -399,14 +428,16 @@ export const ppdbSchema = z.object({
   }),
   phone: z
     .string({ message: " No telepon Calon Siswa wajib diisi!" })
-    .length(11)
+    .min(10, { message: " No telepon Calon Siswa Minimal 10 karakter!" })
+    .max(13, { message: " No telepon Calon Siswa Maksimal 13 karakter!" })
     .regex(/^\d+$/),
   asalSekolah: z
     .string({ message: " Asal sekoolah Calon Siswa wajib diisi!" })
     .min(1),
   npsn: z
     .string({ message: " NPSN Calon Siswa wajib diisi!" })
-    .length(8)
+    .min(8, { message: " NPSN Calon Siswa Minimal 8 karakter!" })
+    .max(10, { message: " NPSNCalon Siswa Maksimal 10 karakter!" })
     .regex(/^\d+$/),
   nisn: z
     .string({ message: " NISN Calon Siswa wajib diisi!" })
@@ -668,7 +699,6 @@ export type PpdbSchema = z.infer<typeof ppdbSchema>;
 
 export const fieldLabelMap: Record<string, string> = {
   name: "Nama Calon Siswa",
-  namalengkap: "Nama Panggilan",
   birthday: "Tanggal Lahir",
   birthPlace: "Tempat Lahir",
   sex: "Jenis Kelamin",
@@ -740,6 +770,9 @@ export const attendanceSchema = z.object({
   meetingId: z.coerce
     .number({ message: "Id pertemuan wajib di isi" })
     .optional(),
+  meetingNo: z.coerce
+    .number({ message: "Id pertemuan wajib di isi" })
+    .optional(),
   meetingCount: z.coerce
     .number({ message: "Banyak pertemuan wajib di isi" })
     .min(1, { message: "Banyak pertemuan wajib di isi minimal 1" })
@@ -772,61 +805,116 @@ export type AttendanceSchema = z.infer<typeof attendanceSchema>;
 export const attendanceStatusEnum = z.enum(["HADIR", "SAKIT", "ABSEN"]);
 export type AttendanceStatus = z.infer<typeof attendanceStatusEnum>;
 
-export const paymentLogSchema = z.object({
-  id: z.coerce.number().optional(),
-  // studentId: z.string().min(1, { message: "Nama murid wajib diisi!" }),
-  paymentType: z.enum([
-    "TUITION",
-    "EXTRACURRICULAR",
-    "UNIFORM",
-    "BOOKS",
-    "OTHER",
-  ]),
-  amount: z.number().min(1, "Jumlah harus lebih dari 0"),
-  dueDate: z.string().min(1, "Tenggat waktu wajib diisi"),
-  status: z.enum(["PENDING", "PAID", "OVERDUE", "PARTIALLY_PAID"]),
-  description: z.string().optional(),
-  paymentMethod: z.string().optional(),
-  receiptNumber: z.string().optional(),
-  recipientType: z.enum(["student", "class", "grade"]),
-  recipientId: z.string().min(1, "Penerima wajib dipilih"),
-});
+export const paymentLogSchema = z
+  .object({
+    id: z.coerce.number().optional(),
+    // studentId: z.string().min(1, { message: "Nama murid wajib diisi!" }),
+    paymentType: z.enum([
+      "TUITION",
+      "EXTRACURRICULAR",
+      "UNIFORM",
+      "BOOKS",
+      "OTHER",
+    ]),
+    amount: z.number().min(1, "Jumlah harus lebih dari 0"),
+    dueDate: z.string().min(1, "Tenggat waktu wajib diisi"),
+    status: z.enum(["PENDING", "PAID", "OVERDUE", "PARTIALLY_PAID"]),
+    description: z.string().optional(),
+    paymentMethod: z.string().optional(),
+    receiptNumber: z.string().optional(),
+    recipientType: z.enum(["student", "class", "grade"]),
+    recipientId: z.string().min(1, "Penerima wajib dipilih"),
+
+    paidAt: z.string().optional(), // ISO date
+    amountPaid: z.number().optional(),
+  })
+  .refine(
+    (data) =>
+      ["PAID", "PARTIALLY_PAID"].includes(data.status) ? !!data.paidAt : true,
+    {
+      message: "Tanggal pembayaran wajib diisi",
+      path: ["paidAt"],
+    }
+  )
+  .refine(
+    (data) =>
+      data.status !== "PAID" ||
+      (data.amountPaid !== undefined && data.amountPaid === data.amount),
+    {
+      message: "Jumlah dibayar harus sama dengan total saat status Lunas",
+      path: ["amountPaid"],
+    }
+  )
+  .refine(
+    (data) =>
+      data.status !== "PARTIALLY_PAID" ||
+      (data.amountPaid !== undefined && data.amountPaid < data.amount),
+    {
+      message:
+        "Jumlah dibayar harus lebih kecil dari total saat Sebagian Dibayar",
+      path: ["amountPaid"],
+    }
+  );
 
 export type PaymentLogSchema = z.infer<typeof paymentLogSchema>;
 
-export const mPaymentLogSchema = z.object({
-  ids: z.array(z.number().min(1)),
-  paymentType: z
-    .enum(["TUITION", "EXTRACURRICULAR", "UNIFORM", "BOOKS", "OTHER"])
-    .or(z.literal(""))
-    .optional(),
-  amount: z
-    .number()
-    .min(1, "Jumlah harus lebih dari 0")
-    .or(z.literal(""))
-    .optional(),
-  dueDate: z
-    .string()
-    .min(1, "Tenggat waktu wajib diisi")
-    .or(z.literal(""))
-    .optional(),
-  status: z
-    .enum(["PENDING", "PAID", "OVERDUE", "PARTIALLY_PAID"])
-    .or(z.literal(""))
-    .optional(),
-  description: z.string().or(z.literal("")).optional(),
-  paymentMethod: z.string().or(z.literal("")).optional(),
-  receiptNumber: z.string().or(z.literal("")).optional(),
-  recipientType: z
-    .enum(["student", "class", "grade"])
-    .or(z.literal(""))
-    .optional(),
-  recipientId: z
-    .string()
-    .min(1, "Penerima wajib dipilih")
-    .or(z.literal(""))
-    .optional(),
-});
+export const mPaymentLogSchema = z
+  .object({
+    ids: z.array(z.number().min(1)),
+    paymentType: z
+      .enum(["TUITION", "EXTRACURRICULAR", "UNIFORM", "BOOKS", "OTHER"])
+      .or(z.literal(""))
+      .optional(),
+    amount: z
+      .number()
+      .min(1, "Jumlah harus lebih dari 0")
+      .or(z.literal(""))
+      .optional(),
+    dueDate: z
+      .string()
+      .min(1, "Tenggat waktu wajib diisi")
+      .or(z.literal(""))
+      .optional(),
+    status: z
+      .enum(["PENDING", "PAID", "OVERDUE", "PARTIALLY_PAID"])
+      .or(z.literal(""))
+      .optional(),
+    description: z.string().or(z.literal("")).optional(),
+    paymentMethod: z.string().or(z.literal("")).optional(),
+    receiptNumber: z.string().or(z.literal("")).optional(),
+
+    paidAt: z.string().optional(), // ISO date
+    amountPaid: z.number().optional(),
+  })
+  .refine(
+    (data) =>
+      ["PAID", "PARTIALLY_PAID"].includes(data.status!) ? !!data.paidAt : true,
+    {
+      message: "Tanggal pembayaran wajib diisi",
+      path: ["paidAt"],
+    }
+  )
+  .refine(
+    (data) =>
+      data.status !== "PAID" ||
+      (data.amountPaid !== undefined && data.amountPaid === data.amount),
+    {
+      message: "Jumlah dibayar harus sama dengan total saat status Lunas",
+      path: ["amountPaid"],
+    }
+  )
+  .refine(
+    (data) =>
+      data.status !== "PARTIALLY_PAID" ||
+      (typeof data.amountPaid === "number" &&
+        typeof data.amount === "number" &&
+        data.amountPaid < data.amount),
+    {
+      message:
+        "Jumlah dibayar harus lebih kecil dari total saat Sebagian Dibayar",
+      path: ["amountPaid"],
+    }
+  );
 
 export type MpaymentLogSchema = z.infer<typeof mPaymentLogSchema>;
 
@@ -925,3 +1013,32 @@ export const mexamSchema = z.object({
 });
 
 export type MexamSchema = z.infer<typeof mexamSchema>;
+
+export const userSchema = z.object({
+  id: z.string().optional(),
+  username: z.string().min(1, { message: "Nama User wajib diisi!" }),
+  password: z
+    .string()
+    .min(8, { message: "Password harus mempunyai 8 karakter!" })
+    .or(z.literal(""))
+    .optional(),
+  email: z
+    .string()
+    .email({ message: "Email anda Tidak valid!" })
+    .optional()
+    .or(z.literal("")),
+  role: z.enum(["student", "teacher", "parent", "admin"], {
+    message: "Role Akun wajib diisi!",
+  }),
+  userId: z.string({ message: "Id User wajib di isi" }),
+});
+
+export type UserSchema = z.infer<typeof userSchema>;
+
+export const eskulSchema = z.object({
+  id: z.coerce.number().optional(),
+  name: z.string().min(1, { message: "Nama Eskul wajib diisi!" }),
+  imageUrl: z.string({ message: "Image Eskul wajib di isi" }),
+});
+
+export type EskulSchema = z.infer<typeof eskulSchema>;

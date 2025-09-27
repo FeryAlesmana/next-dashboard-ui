@@ -50,9 +50,9 @@ const UpdateManyParentForm = ({
   const { students = [] } = relatedData ?? {};
   console.log(students, "isi Mata pelajaran");
   const studentOptions = students.map(
-    (student: { id: string; name: string; namalengkap: string }) => ({
+    (student: { id: string; name: string }) => ({
       value: student.id,
-      label: `${student.name} ${student.namalengkap}`,
+      label: `${student.name} `,
     })
   );
   const initialState = { success: false, error: false, message: "" };

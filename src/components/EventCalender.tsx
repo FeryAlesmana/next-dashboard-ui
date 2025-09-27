@@ -11,13 +11,13 @@ const EventCalender = () => {
   const [value, onChange] = useState<Value>(new Date());
 
   const router = useRouter();
-  
+
   useEffect(() => {
     if (value instanceof Date) {
       router.push(`?date=${value.toLocaleDateString("en-US")}`);
     }
   }, [value, router]);
-  return <Calendar onChange={onChange} value={value}/>;
+  return <Calendar onChange={onChange} value={value} locale="en-US" />;
 };
 
 export default EventCalender;

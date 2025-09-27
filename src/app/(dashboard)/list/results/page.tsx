@@ -8,6 +8,10 @@ import TableSearch from "@/components/TableSearch";
 import prisma from "@/lib/prisma";
 import { getCurrentUser, normalizeSearchParams } from "@/lib/utils";
 import { Prisma, resTypes } from "@prisma/client";
+import StudentResultView from "@/components/client/StudentResultView";
+import ParentLessonViewSemester from "@/components/client/ParentLessonViewSemester";
+import ParentResultViewSemester from "@/components/client/ParentResultViewSemester";
+import z from "zod";
 
 const ResultListPage = async ({
   searchParams,
@@ -50,7 +54,10 @@ const ResultListPage = async ({
 
   const query: Prisma.ResultWhereInput = {};
   let orderBy: Prisma.ResultOrderByWithRelationInput | undefined;
-
+  const semesterSchema = z.object({
+    start: z.string().datetime(),
+    end: z.string().datetime(),
+  });
   if (queryParams) {
     for (const [key, value] of Object.entries(queryParams)) {
       if (value !== undefined && value !== "")
@@ -66,6 +73,32 @@ const ResultListPage = async ({
               },
               { student: { name: { contains: value, mode: "insensitive" } } },
             ];
+            break;
+          case "semester":
+            try {
+              const parsed = semesterSchema.parse(JSON.parse(value as string));
+
+              query.OR = [
+                {
+                  exam: {
+                    lesson: {
+                      startTime: { gte: new Date(parsed.start) },
+                      endTime: { lte: new Date(parsed.end) },
+                    },
+                  },
+                },
+                {
+                  assignment: {
+                    lesson: {
+                      startTime: { gte: new Date(parsed.start) },
+                      endTime: { lte: new Date(parsed.end) },
+                    },
+                  },
+                },
+              ];
+            } catch (e) {
+              query.id = -1; // block tampered values
+            }
             break;
           case "classId":
             query.OR = [
@@ -141,6 +174,7 @@ const ResultListPage = async ({
     }
   }
   //ROLE CONDITIONS
+  let gradeLevel = 3;
   switch (role) {
     case "admin":
       break;
@@ -150,9 +184,58 @@ const ResultListPage = async ({
         { assignment: { lesson: { teacherId: userId! } } },
       ];
       break;
-    case "student":
-      query.studentId = userId!;
-      break;
+    case "student": {
+      const results = await prisma.result.findMany({
+        where: { studentId: userId! },
+        include: {
+          exam: {
+            include: {
+              lesson: {
+                select: {
+                  class: { select: { name: true } },
+                  teacher: { select: { name: true } },
+                  subject: true,
+                },
+              },
+            },
+          },
+          assignment: {
+            include: {
+              lesson: {
+                select: {
+                  class: { select: { name: true } },
+                  teacher: { select: { name: true } },
+                  subject: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      const mappedResults = results
+        .map((item) => {
+          const source = item.exam ?? item.assignment;
+          const lesson = source?.lesson;
+
+          if (!source || !lesson) return null;
+
+          return {
+            id: item.id,
+            title: source.title,
+            subject: lesson.subject?.name || "-",
+            teacher: lesson.teacher ? `${lesson.teacher.name} ` : "-",
+            class: lesson.class?.name || "-",
+            score: item.score,
+            type: item.exam ? "Ujian" : "Tugas",
+            resultType: item.resultType ?? null,
+          };
+        })
+        .filter(Boolean);
+
+      return <StudentResultView results={mappedResults} />;
+    }
+
     case "parent": {
       const children = await prisma.student.findMany({
         where: {
@@ -162,7 +245,13 @@ const ResultListPage = async ({
             { guardianId: userId! },
           ],
         },
-        select: { name: true, id: true },
+        select: {
+          name: true,
+          id: true,
+          class: {
+            select: { name: true, grade: { select: { level: true } } },
+          },
+        },
       });
 
       const studentIds = children.map((child) => child.id);
@@ -178,13 +267,13 @@ const ResultListPage = async ({
       const results = await prisma.result.findMany({
         where: { studentId: { in: studentIds } },
         include: {
-          student: { select: { name: true, namalengkap: true, id: true } },
+          student: { select: { name: true, id: true } },
           exam: {
             include: {
               lesson: {
                 select: {
                   class: { select: { name: true } },
-                  teacher: { select: { name: true, namalengkap: true } },
+                  teacher: { select: { name: true } },
                   subject: true,
                 },
               },
@@ -195,7 +284,7 @@ const ResultListPage = async ({
               lesson: {
                 select: {
                   class: { select: { name: true } },
-                  teacher: { select: { name: true, namalengkap: true } },
+                  teacher: { select: { name: true } },
                   subject: true,
                 },
               },
@@ -218,9 +307,7 @@ const ResultListPage = async ({
               id: item.id,
               title: source.title,
               subject: lesson.subject?.name || "-",
-              teacher: lesson.teacher
-                ? `${lesson.teacher.name} ${lesson.teacher.namalengkap}`
-                : "-",
+              teacher: lesson.teacher ? `${lesson.teacher.name}` : "-",
               class: lesson.class?.name || "-",
               score: item.score,
               type: item.exam ? "Ujian" : "Tugas",
@@ -236,12 +323,78 @@ const ResultListPage = async ({
         };
       });
 
+      const studentsWithResults = await Promise.all(
+        children.map(async (child) => {
+          const results = await prisma.result.findMany({
+            where: { studentId: child.id },
+            include: {
+              student: { select: { name: true, id: true } },
+              exam: {
+                include: {
+                  lesson: {
+                    select: {
+                      class: { select: { name: true } },
+                      teacher: { select: { name: true } },
+                      subject: true,
+                    },
+                  },
+                },
+              },
+              assignment: {
+                include: {
+                  lesson: {
+                    select: {
+                      class: { select: { name: true } },
+                      teacher: { select: { name: true } },
+                      subject: true,
+                    },
+                  },
+                },
+              },
+            },
+            orderBy: { createdAt: "desc" },
+          });
+          const childResults = results.filter((r) => r.studentId === child.id);
+
+          const mappedResults = childResults
+            .map((item) => {
+              const source = item.exam ?? item.assignment;
+              const lesson = source?.lesson;
+
+              if (!source || !lesson) return null;
+
+              return {
+                id: item.id,
+                title: source.title,
+                subject: lesson.subject?.name || "-",
+                teacher: lesson.teacher ? `${lesson.teacher.name} ` : "-",
+                class: lesson.class?.name || "-",
+                score: item.score,
+                type: item.exam ? "Ujian" : "Tugas",
+                resultType: item.resultType ?? null, // ✅ ADD THIS LINE
+              };
+            })
+            .filter(Boolean);
+          return {
+            ...child,
+            results: mappedResults,
+          };
+        })
+      );
+
       return (
         <>
-          <ParentResultView
+          {/* <ParentResultView
             groupedByStudent={groupedByStudent!}
             role={role!}
-          ></ParentResultView>
+          ></ParentResultView> */}
+          <ParentResultViewSemester
+            gradeLevel={studentsWithResults.map((s) => ({
+              studentId: s.id,
+              gradeLevel: s.class?.grade?.level,
+            }))}
+            userId={userId!}
+          />
         </>
       );
     }
@@ -255,13 +408,13 @@ const ResultListPage = async ({
       prisma.result.findMany({
         where: query,
         include: {
-          student: { select: { name: true, namalengkap: true } },
+          student: { select: { name: true } },
           exam: {
             include: {
               lesson: {
                 select: {
                   class: { select: { name: true, gradeId: true } },
-                  teacher: { select: { name: true, namalengkap: true } },
+                  teacher: { select: { name: true } },
                   subject: true,
                 },
               },
@@ -272,7 +425,7 @@ const ResultListPage = async ({
               lesson: {
                 select: {
                   class: { select: { name: true, gradeId: true } },
-                  teacher: { select: { name: true, namalengkap: true } },
+                  teacher: { select: { name: true } },
                   subject: true,
                 },
               },
@@ -287,7 +440,6 @@ const ResultListPage = async ({
         select: {
           id: true,
           name: true,
-          namalengkap: true,
           classId: true,
         },
       }),
@@ -339,12 +491,8 @@ const ResultListPage = async ({
         title: source.title,
         subject: lesson.subject?.name || "-",
         studentId: item.studentId || "",
-        student: item.student
-          ? `${item.student.name} ${item.student.namalengkap}`
-          : "-",
-        teacher: lesson.teacher
-          ? `${lesson.teacher.name} ${lesson.teacher.namalengkap}`
-          : "-",
+        student: item.student ? `${item.student.name}` : "-",
+        teacher: lesson.teacher ? `${lesson.teacher.name} ` : "-",
         score: item.score,
         class: lesson.class?.name || "-",
         selectedType: isExam ? "Ujian" : "Tugas",
@@ -380,6 +528,7 @@ const ResultListPage = async ({
             relatedData={relatedData}
             options={options}
             searchParams={sp}
+            gradeLevel={gradeLevel}
           />
         </div>
         {/* PAGINATION*/}

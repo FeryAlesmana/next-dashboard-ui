@@ -17,8 +17,21 @@ export type FormContainerProps = {
     | "event"
     | "announcement"
     | "ppdb"
-    | "paymentLog";
-  type: "create" | "update" | "delete" | "deleteMany" | "updateMany";
+    | "paymentLog"
+    | "importTeachers"
+    | "importStudents"
+    | "user"
+    | "eskul"
+    | "hero"
+    | "gallery";
+  type:
+    | "create"
+    | "update"
+    | "delete"
+    | "deleteMany"
+    | "updateMany"
+    | "createMany";
+
   data?: any;
   id?: number | string;
   ids?: string[] | number[]; // For bulk delete
@@ -47,7 +60,6 @@ const FormContainer = async ({
           select: {
             id: true,
             name: true,
-            namalengkap: true,
           },
         });
         relatedData = { teachers: subjectTeachers };
@@ -57,7 +69,6 @@ const FormContainer = async ({
           select: {
             id: true,
             name: true,
-            namalengkap: true,
           },
         });
         relatedData = { students: parentStudents };
@@ -73,7 +84,6 @@ const FormContainer = async ({
           select: {
             id: true,
             name: true,
-            namalengkap: true,
           },
         });
         relatedData = { teachers: classTeacher, grades: classGrades };
@@ -119,7 +129,6 @@ const FormContainer = async ({
           select: {
             id: true,
             name: true,
-            namalengkap: true,
           },
         });
 
@@ -254,7 +263,6 @@ const FormContainer = async ({
           select: {
             id: true,
             name: true,
-            namalengkap: true,
           },
         });
 
@@ -269,7 +277,7 @@ const FormContainer = async ({
           select: {
             id: true,
             name: true,
-            namalengkap: true,
+
             classId: true,
           },
         });
@@ -318,7 +326,6 @@ const FormContainer = async ({
           select: {
             id: true,
             name: true,
-            namalengkap: true,
           },
         });
 
@@ -339,6 +346,7 @@ const FormContainer = async ({
             day: true,
             startTime: true,
             endTime: true,
+            subject: { select: { name: true } },
           },
         });
         // Only fetch students in the class of the meeting/lesson
@@ -357,7 +365,7 @@ const FormContainer = async ({
               select: {
                 id: true,
                 name: true,
-                namalengkap: true,
+
                 class: {
                   select: {
                     name: true,
@@ -366,10 +374,19 @@ const FormContainer = async ({
               },
             })
           : [];
+        const idLesson = parseInt(data?.lessonId);
+
+        const meeting = data?.lessonId
+          ? await prisma.meeting.findFirst({
+              where: { lessonId: idLesson },
+              select: { meetingNo: true },
+            })
+          : null;
 
         relatedData = {
           lessons: attendanceLessons,
           students: classStudents,
+          meetingNo: meeting?.meetingNo,
         };
         break;
       case "paymentLog":
@@ -377,7 +394,6 @@ const FormContainer = async ({
           select: {
             id: true,
             name: true,
-            namalengkap: true,
           },
         });
         const classData = await prisma.class.findMany({
@@ -397,6 +413,57 @@ const FormContainer = async ({
           studentData: studentData,
           classData: classData,
           gradeData: gradeData,
+        };
+        break;
+      case "user":
+        let foundUser = undefined;
+
+        if (id) {
+          const stringId = String(id);
+
+          const studentUser = await prisma.student.findUnique({
+            where: { id: stringId },
+            select: { id: true, name: true },
+          });
+
+          const teacherUser = await prisma.teacher.findUnique({
+            where: { id: stringId },
+            select: { id: true, name: true },
+          });
+
+          const parentUser = await prisma.parent.findUnique({
+            where: { id: stringId },
+            select: { id: true, name: true },
+          });
+
+          foundUser = studentUser || teacherUser || parentUser || undefined;
+        }
+        // for dropdown options
+        const students = await prisma.student.findMany({
+          select: { id: true, name: true },
+        });
+
+        const teachers = await prisma.teacher.findMany({
+          select: { id: true, name: true },
+        });
+
+        const parents = await prisma.parent.findMany({
+          select: { id: true, name: true },
+        });
+
+        const usersData = [
+          ...students.map((s) => ({
+            id: s.id,
+            name: s.name,
+            type: "student",
+          })),
+          ...teachers.map((t) => ({ id: t.id, name: t.name, type: "teacher" })),
+          ...parents.map((p) => ({ id: p.id, name: p.name, type: "parent" })),
+        ];
+
+        relatedData = {
+          foundUser,
+          usersData,
         };
         break;
       default:
