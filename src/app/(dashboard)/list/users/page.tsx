@@ -1,5 +1,6 @@
 "use server";
 import ClientPageWrapper from "@/components/ClientWrapper";
+import FilterSortToggle from "@/components/FilterSortToggle";
 import FormContainer from "@/components/FormContainer";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
@@ -20,7 +21,7 @@ const UserListPage = async ({
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) => {
   const sp = await normalizeSearchParams(searchParams);
-  const { page, ...queryParams } = sp;
+  const { page, limit, ...queryParams } = sp;
   const key = new URLSearchParams(
     Object.entries(sp).reduce((acc, [k, v]) => {
       if (v !== undefined) acc[k] = v;
@@ -28,6 +29,7 @@ const UserListPage = async ({
     }, {} as Record<string, string>)
   ).toString();
   const p = page ? parseInt(page) : 1;
+  const perPage = limit === "all" ? undefined : parseInt(limit ?? "10");
 
   const { role } = await getCurrentUser();
 
@@ -46,10 +48,10 @@ const UserListPage = async ({
 
   const client = await clerkClient();
   const { data, totalCount } = await client.users.getUserList({
-    limit: ITEM_PER_PAGE,
-    offset: (p - 1) * ITEM_PER_PAGE,
     // optional fuzzy search across name/email/username:
     query: typeof sp.search === "string" && sp.search ? sp.search : undefined,
+    limit: perPage, // match your pagination
+    offset: perPage ? perPage * (p - 1) : (p - 1) * 10,
   });
 
   const rows = [];
@@ -147,6 +149,8 @@ const UserListPage = async ({
     );
   };
 
+  // Apply pagination here
+
   return (
     <ClientPageWrapper key={key} role={role!}>
       <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
@@ -158,12 +162,27 @@ const UserListPage = async ({
           <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
             <TableSearch />
             <div className="flex items-center gap-4 self-end">
-              <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
-                <Image src="/filter.png" alt="" width={14} height={14} />
-              </button>
-              <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
-                <Image src="/sort.png" alt="" width={14} height={14} />
-              </button>
+              <FilterSortToggle
+                filterFields={[
+                  {
+                    name: "search",
+                    label: "Role",
+                    options: [
+                      { label: "Admin", value: "admin" },
+                      { label: "Teacher", value: "teacher" },
+                      { label: "Student", value: "student" },
+                      { label: "Parent", value: "parent" },
+                    ],
+                  },
+                ]}
+                sortOptions={[
+                  { label: "A-Z", value: "az" },
+                  { label: "Z-A", value: "za" },
+                  { label: "ID Asc", value: "id_asc" },
+                  { label: "ID Desc", value: "id_desc" },
+                ]}
+              />
+
               {role === "admin" && (
                 <FormContainer table="user" type="create"></FormContainer>
               )}
@@ -171,8 +190,14 @@ const UserListPage = async ({
           </div>
         </div>
         {/* LIST */}
-        <div>
-          <Table columns={columns} renderRow={renderRow} data={rows} />
+        <div className="">
+          {rows.length === 0 ? (
+            <div className="text-center py-6 text-gray-500">
+              Tidak ada User.
+            </div>
+          ) : (
+            <Table columns={columns} renderRow={renderRow} data={rows} />
+          )}
         </div>
         {/* PAGINATION */}
         <div>

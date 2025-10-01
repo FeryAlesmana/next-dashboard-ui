@@ -249,7 +249,6 @@ const FormulirPendaftaran = ({
   const router = useRouter();
 
   useEffect(() => {
-    console.log("state.success:", state.success);
     if (state.success) {
       const updatedItem = state.data ?? data; // <- depends on what your action returns
 

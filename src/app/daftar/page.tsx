@@ -4,13 +4,16 @@ import { FaSchool, FaLaptop, FaPrint } from "react-icons/fa";
 import { useRef, useState } from "react";
 import FormModal from "@/components/FormModal";
 import { EmailVerificationGate } from "@/components/EmailVerificationGate";
+import { useUser } from "@clerk/nextjs";
 
 export default function PPDBPage() {
   const formRef = useRef<HTMLDivElement>(null);
   const [selectedMethod, setSelectedMethod] = useState<
     "offline" | "online" | null
   >(null);
-
+  const [skipVerification, setSkipVerification] = useState(false);
+  const { user } = useUser();
+  const role = user?.publicMetadata.role as string | undefined;
   const scrollToForm = () => {
     if (formRef.current) {
       formRef.current.scrollIntoView({ behavior: "smooth" });
@@ -106,7 +109,26 @@ export default function PPDBPage() {
             <h3 className="text-xl font-semibold mb-4 text-white">
               Formulir Pendaftaran Online
             </h3>
-            <EmailVerificationGate />
+            {role === "admin" ? (
+              <>
+                {!skipVerification ? (
+                  <>
+                    <EmailVerificationGate />
+                    <button
+                      type="button"
+                      onClick={() => setSkipVerification(true)}
+                      className="mt-4 px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+                    >
+                      Lewati Verifikasi (Admin)
+                    </button>
+                  </>
+                ) : (
+                  <FormModal type="create" table="ppdb" />
+                )}
+              </>
+            ) : (
+              <EmailVerificationGate />
+            )}
           </div>
         )}
       </div>

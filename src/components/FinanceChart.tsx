@@ -77,14 +77,14 @@ const FinanceChart = ({ chartData }: { chartData: FinanceData[] }) => {
             type="monotone"
             name="Lunas"
             dataKey="lunas"
-            stroke="#8884d8"
+            stroke="#4caf50"
             strokeWidth={5}
           />
           <Line
             type="monotone"
             name="Belum Lunas"
             dataKey="belum_lunas"
-            stroke="#82ca9d"
+            stroke="#8884d8"
             strokeWidth={5}
           />
           <Line
