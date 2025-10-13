@@ -27,12 +27,14 @@ export default function PpdbTableClient({
           </td>
         )}
 
-        <td className="flex items-center p-4 gap-4">{data.id}</td>
+        <td className=" items-center p-4 gap-4 hidden md:table-cell">
+          {data.id}
+        </td>
         <td>{data?.name || "-"}</td>
         <td className="hidden md:table-cell">
           {new Intl.DateTimeFormat("en-US").format(data.createdAt)}
         </td>
-        <td className="hidden md:table-cell ">
+        <td>
           {data.isvalid ? (
             <FaCheckCircle className="text-green-500" title="Valid" />
           ) : (

@@ -63,7 +63,7 @@ export default function ClientPageWrapper({
               >
                 <div className="col-span-2 h-4 bg-gray-300 rounded"></div>
                 <div className="col-span-2 h-4 bg-gray-300 rounded"></div>
-                <div className="col-span-2 h-4 bg-gray-300 rounded"></div>
+                {/* <div className="col-span-2 h-4 bg-gray-300 rounded"></div> */}
                 <div className="col-span-2 h-4 bg-gray-300 rounded hidden md:block"></div>
                 <div className="col-span-2 h-4 bg-gray-300 rounded hidden md:block"></div>
                 <div className="col-span-2 flex gap-2">

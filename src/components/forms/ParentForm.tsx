@@ -67,6 +67,7 @@ const ParentForm = ({
       success: false,
       error: false,
       message: "",
+      field: ""
     }
   );
 
@@ -77,18 +78,26 @@ const ParentForm = ({
   const router = useRouter();
 
   useEffect(() => {
-    if (!state.success && !state.error) return;
+    if (!state.success && state.error) {
+      toast.error(state.message || "Terjadi kesalahan.");
+    }
     setIsSubmitting(false);
-  }, [state.success, state.error]);
+  }, [state]);
 
   // Submit final setelah konfirmasi
-  const handleSubmitForm = () => {
+  const handleSubmitForm = handleSubmit(async (data) => {
     setIsSubmitting(true);
-    setShowConfirm(false);
-    startTransition(() => {
-      formAction(getValues()); // kirim data dari form
-    });
-  };
+    console.log(data, "data in parentForm");
+
+    try {
+      startTransition(() => {
+        formAction(data);
+      }); // ✅ wait for server action
+    } finally {
+      setIsSubmitting(false);
+      setShowConfirm(false);
+    }
+  });
 
   // Submit awal: validasi → kalau valid munculkan dialog
   const onSubmit = async (e: React.FormEvent) => {
@@ -96,9 +105,7 @@ const ParentForm = ({
     const valid = await trigger();
     if (valid) {
       // Ambil data form jika valid dan tampilkan dialog konfirmasi
-      handleSubmit((data) => {
-        setShowConfirm(true);
-      })();
+      setShowConfirm(true);
     } else {
       setShowConfirm(false);
     }
@@ -122,7 +129,9 @@ const ParentForm = ({
     if (state.success) {
       const updatedItem = state.data ?? data;
       toast(
-        `Orang tua telah berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`
+        `Wali Murid telah berhasil di ${
+          type === "create" ? "Tambah!" : "Edit!"
+        }`
       );
       setOpen(false);
       if (onChanged && updatedItem) {
@@ -130,7 +139,6 @@ const ParentForm = ({
       } else {
         router.refresh(); // fallback if no handler passed
       }
-      router.refresh();
     }
   }, [state, type, setOpen, router, data, reset, onChanged]);
 
@@ -381,7 +389,7 @@ const ParentForm = ({
             {isSubmitting
               ? "Memproses..."
               : type === "create"
-              ? "Tambah Orang Tua"
+              ? "Tambah Wali Murid"
               : "Update dan Simpan"}
           </button>
         </div>

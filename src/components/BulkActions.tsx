@@ -28,7 +28,8 @@ export default function BulkActions({
     | "event"
     | "announcement"
     | "ppdb"
-    | "paymentLog";
+    | "paymentLog"
+    | "user";
   onReset: () => void;
   onDeleted?: (ids: (string | number)[]) => void;
   handleChanged?: (item: any) => void;
@@ -45,6 +46,7 @@ export default function BulkActions({
     "announcement",
     "subject",
     "lesson",
+    "user",
   ]; // extend later if needed
   return (
     <AnimatePresence>
@@ -69,6 +71,13 @@ export default function BulkActions({
               ids={selectedIds}
               onDeleted={() => onDeleted?.(selectedIds)}
             />
+            {["student", "teacher", "parent"].includes(table) && (
+              <FormModal
+                type="activateAccount"
+                table={table}
+                ids={selectedIds}
+              />
+            )}
             {/* Show Update or UpdateMany based on count */}
             {selectedIds.length === 1 ? (
               <FormModal

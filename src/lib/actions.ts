@@ -1,6 +1,6 @@
 "use server";
 import { v2 as cloudinary } from "cloudinary";
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 
 cloudinary.config({
   cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME!,
@@ -53,12 +53,17 @@ import extractCloudinaryPublicId, {
 import { Agama, Degree, parents, Prisma } from "@prisma/client";
 import { encryptPassword } from "./utils";
 import { randomUUID } from "crypto";
+import { Readable } from "stream";
+import { error } from "console";
 
 export type CurrentState = {
   success: boolean;
   error: boolean;
   message?: string;
   id?: string;
+  field?: string;
+  failed?: string[];
+  deleted?: string[];
   data?: any;
 };
 const client = await clerkClient();
@@ -276,13 +281,36 @@ export const createTeacher = async (
   data: CreateteacherSchema
 ) => {
   try {
-    const user = await client.users.createUser({
-      username: data.username,
-      password: data.password,
-      firstName: data.name,
+    let user;
+    try {
+      user = await client.users.createUser({
+        username: data.username,
+        password: data.password,
+        firstName: data.name,
 
-      publicMetadata: { role: "teacher" },
-    });
+        publicMetadata: { role: "teacher" },
+      });
+      if (user) {
+        console.log("✅ User Sucessfully created:", user.id);
+      } else {
+        console.warn(
+          "⚠️ Clerk returned no user info. User may already be created?"
+        );
+      }
+    } catch (err: any) {
+      console.error("❌ Clerk error:", err);
+
+      const message = err?.errors?.[0]?.message || "Terjadi kesalahan";
+
+      if (message.toLowerCase().includes("username")) {
+        return { success: false, field: "username", message, error: true };
+      }
+      if (message.toLowerCase().includes("password")) {
+        return { success: false, field: "password", message, error: true };
+      }
+
+      return { success: false, field: undefined, message, error: true };
+    }
     await new Promise((resolve) => setTimeout(resolve, 1000));
     const createdTeacher = await prisma.teacher.create({
       data: {
@@ -354,35 +382,62 @@ export const importTeachers = async (
     return { success: false, error: true, message: "No file uploaded" };
   }
 
-  const buffer = Buffer.from(await file.arrayBuffer());
-  const workbook = XLSX.read(buffer, { type: "buffer" });
-  const sheetName = workbook.SheetNames[0];
-  const sheet = XLSX.utils.sheet_to_json<any>(workbook.Sheets[sheetName]);
+  const arrayBuffer = await file.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer); // directly from ArrayBuffer
+  const workbook = new ExcelJS.Workbook();
 
-  const teachers = sheet.map((rawRow) => {
-    const row = normalizeRow(rawRow);
-    if (!row.name || !row.phone || !row.address) {
+  // Create a single-chunk readable stream from the buffer
+  const stream = Readable.from([buffer]);
+
+  // Use the stream-based reader (avoids the Buffer typing issue)
+  await workbook.xlsx.read(stream);
+
+  const worksheet = workbook.worksheets[0];
+  if (!worksheet) {
+    return { success: false, error: true, message: "Workbook has no sheets" };
+  }
+
+  // Read headers from the first row
+  const headers: string[] = [];
+  worksheet.getRow(1).eachCell({ includeEmpty: true }, (cell, colNumber) => {
+    headers[colNumber - 1] = (cell.value ?? "").toString().trim();
+  });
+
+  const teachers: any[] = [];
+
+  worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+    if (rowNumber === 1) return; // skip header
+
+    const rawRow: Record<string, any> = {};
+    row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+      const key = headers[colNumber - 1] ?? `col${colNumber}`;
+      rawRow[key] = cell.value ?? "";
+    });
+
+    const normRow = normalizeRow(rawRow);
+    if (!normRow.name || !normRow.phone || !normRow.address) {
       throw new Error(
         "Tolong pastikan file anda memiliki kolom wajib! (Nama, Alamat, No. Telepon)"
       );
     }
-    return {
+
+    teachers.push({
       id: randomUUID(),
-      username: row.username || row.name,
-      password: encryptPassword(row.password || row.email), // default password
-      name: row.name,
-      email: row.email || null,
-      phone: row.phone.toString(),
-      address: row.address,
-      rt: row.rt?.toString() || "-",
-      rw: row.rw?.toString() || "-",
-      kelurahan: row.kelurahan || "-",
-      kecamatan: row.kecamatan || "-",
-      kota: row.kota || "-",
-      religion: normalizeAgama(row.religion),
-      sex: normalizeSex(row.sex), // must match enum UserSex
-      birthday: new Date(normalizeBirthday(row.birthday)),
-    };
+      username: normRow.username || normRow.name,
+      password: encryptPassword(normRow.password || normRow.email), // default password
+      name: normRow.name,
+      email: normRow.email || null,
+      phone: normRow.phone.toString(),
+      address: normRow.address,
+      rt: normRow.rt?.toString() || "-",
+      rw: normRow.rw?.toString() || "-",
+      kelurahan: normRow.kelurahan || "-",
+      kecamatan: normRow.kecamatan || "-",
+      kota: normRow.kota || "-",
+      religion: normalizeAgama(normRow.religion),
+      sex: normalizeSex(normRow.sex),
+      birthday: new Date(normalizeBirthday(normRow.birthday)),
+    });
   });
   try {
     await prisma.teacher.createMany({
@@ -432,7 +487,7 @@ export const updateTeacher = async (
     }
     let user;
     try {
-      const user = await client.users.updateUser(data.id, {
+      user = await client.users.updateUser(data.id, {
         username: data.username,
         ...(data.password !== "" && {
           password: data.password,
@@ -707,20 +762,37 @@ export const createStudent = async (
     return { success: false, error: true };
   }
   try {
-    const user = await client.users.createUser({
-      username: data.username,
-      password: data.password,
-      firstName: data.name,
+    let user;
+    try {
+      user = await client.users.createUser({
+        username: data.username,
+        password: data.password,
+        firstName: data.name,
 
-      publicMetadata: { role: "student" },
-    });
-    console.log("Trying to createUser");
+        publicMetadata: { role: "student" },
+      });
+      if (user) {
+        console.log("✅ User Sucessfully created:", user.id);
+      } else {
+        console.warn(
+          "⚠️ Clerk returned no user info. User may already be created?"
+        );
+      }
+    } catch (err: any) {
+      console.error("❌ Clerk error:", err);
 
-    // if (!user || !user.id) {
-    //   return { success: false, error: true, message: "Failed to create user" };
-    // }
+      const message = err?.errors?.[0]?.message || "Terjadi kesalahan";
 
-    console.log(user.id, "userId in createStudent");
+      if (message.toLowerCase().includes("username")) {
+        return { success: false, field: "username", message, error: true };
+      }
+      if (message.toLowerCase().includes("password")) {
+        return { success: false, field: "password", message, error: true };
+      }
+
+      return { success: false, field: undefined, message, error: true };
+    }
+
     await new Promise((resolve) => setTimeout(resolve, 1000));
     const createdStudent = await prisma.student.create({
       data: {
@@ -811,42 +883,79 @@ export const importStudents = async (
     return { success: false, error: true, message: "No file uploaded" };
   }
 
-  const buffer = Buffer.from(await file.arrayBuffer());
-  const workbook = XLSX.read(buffer, { type: "buffer" });
-  const sheetName = workbook.SheetNames[0];
-  const sheet = XLSX.utils.sheet_to_json<any>(workbook.Sheets[sheetName]);
+  const arrayBuffer = await file.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer); // directly from ArrayBuffer
+  const workbook = new ExcelJS.Workbook();
 
-  const students = sheet.map((rawRow) => {
-    const row = normalizeRow(rawRow);
-    if (!row.name || !row.phone || !row.address) {
+  // Create a single-chunk readable stream from the buffer
+  const stream = Readable.from([buffer]);
+
+  // Use the stream-based reader (avoids the Buffer typing issue)
+  await workbook.xlsx.read(stream);
+
+  const worksheet = workbook.worksheets[0];
+  if (!worksheet) {
+    return { success: false, error: true, message: "Workbook has no sheets" };
+  }
+
+  // Read headers from the first row
+  const headers: string[] = [];
+  worksheet.getRow(1).eachCell({ includeEmpty: true }, (cell, colNumber) => {
+    headers[colNumber - 1] = (cell.value ?? "").toString().trim();
+  });
+
+  const students: any[] = [];
+  const studentDetails: any[] = [];
+
+  worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+    if (rowNumber === 1) return; // skip header
+
+    const rawRow: Record<string, any> = {};
+    row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+      const key = headers[colNumber - 1] ?? `col${colNumber}`;
+      rawRow[key] = cell.value ?? "";
+    });
+
+    const normRow = normalizeRow(rawRow);
+    if (!normRow.name || !normRow.phone || !normRow.address) {
       throw new Error(
         "Tolong pastikan file anda memiliki kolom wajib! (Nama, Alamat, No. Telepon)"
       );
     }
-    return {
-      id: randomUUID(),
-      username: row.username || row.name,
-      password: encryptPassword(row.password || row.email), // default password
-      name: row.name,
-
-      email: row.email || null,
-      phone: row.phone.toString(),
-      address: row.address,
-      rt: row.rt?.toString() || "-",
-      rw: row.rw?.toString() || "-",
-      kelurahan: row.kelurahan || "-",
-      kecamatan: row.kecamatan || "-",
-      kota: row.kota || "-",
-      religion: normalizeAgama(row.religion),
-      sex: normalizeSex(row.sex), // must match enum UserSex
-      birthday: new Date(normalizeBirthday(row.birthday)),
-    };
+    const studentId = randomUUID();
+    students.push({
+      id: studentId,
+      username: normRow.username || normRow.name,
+      password: encryptPassword(normRow.password || normRow.email), // default password
+      name: normRow.name,
+      email: normRow.email || null,
+      phone: normRow.phone.toString(),
+      address: normRow.address,
+      rt: normRow.rt?.toString() || "-",
+      rw: normRow.rw?.toString() || "-",
+      kelurahan: normRow.kelurahan || "-",
+      kecamatan: normRow.kecamatan || "-",
+      kota: normRow.kota || "-",
+      religion: normalizeAgama(normRow.religion),
+      sex: normalizeSex(normRow.sex), // must match enum UserSex
+      birthday: new Date(normalizeBirthday(normRow.birthday)),
+    });
+    studentDetails.push({
+      studentId: studentId,
+      nisn: normRow.nisn?.toString() || "-",
+    });
   });
+
   try {
     await prisma.student.createMany({
       data: students,
 
       skipDuplicates: true, // skip if unique constraints fail
+    });
+
+    await prisma.student_details.createMany({
+      data: studentDetails,
+      skipDuplicates: true,
     });
     const importedStudents = await prisma.student.findMany({
       where: {
@@ -1764,49 +1873,65 @@ export const createParent = async (
   data: CreateparentSchema
 ) => {
   try {
-    const user = await client.users.createUser({
-      username: data.username,
-      password: data.password,
-      firstName: data.name,
+    let user;
+    try {
+      user = await client.users.createUser({
+        username: data.username,
+        password: data.password,
+        firstName: data.name,
+        publicMetadata: { role: "parent" },
+      });
+      if (user) {
+        console.log("✅ User Sucessfully created:", user.id);
+      } else {
+        console.warn(
+          "⚠️ Clerk returned no user info. User may already be created?"
+        );
+      }
+    } catch (err: any) {
+      console.error("❌ Clerk error:", err);
 
-      publicMetadata: { role: "parent" },
-    });
-    if (user) {
-      console.log("✅ User Sucessfully created:", user.id);
-    } else {
-      console.warn(
-        "⚠️ Clerk returned no user info. User may already be created?"
-      );
+      const message = err?.errors?.[0]?.message || "Terjadi kesalahan";
+
+      if (message.toLowerCase().includes("username")) {
+        return { success: false, field: "username", message, error: true };
+      }
+      if (message.toLowerCase().includes("password")) {
+        return { success: false, field: "password", message, error: true };
+      }
+
+      return { success: false, field: undefined, message, error: true };
     }
 
     let studentField;
+    if (data.students!) {
+      switch (data.waliMurid) {
+        case "AYAH":
+          studentField = {
+            students: {
+              connect: data.students.map((studentId) => ({ id: studentId })),
+            },
+          };
+          break;
+        case "IBU":
+          studentField = {
+            secondaryStudents: {
+              connect: data.students.map((studentId) => ({ id: studentId })),
+            },
+          };
+          break;
+        case "WALI":
+          studentField = {
+            guardianStudents: {
+              connect: data.students.map((studentId) => ({ id: studentId })),
+            },
+          };
+          break;
 
-    switch (data.waliMurid) {
-      case "AYAH":
-        studentField = {
-          students: {
-            connect: data.students.map((studentId) => ({ id: studentId })),
-          },
-        };
-        break;
-      case "IBU":
-        studentField = {
-          secondaryStudents: {
-            connect: data.students.map((studentId) => ({ id: studentId })),
-          },
-        };
-        break;
-      case "WALI":
-        studentField = {
-          guardianStudents: {
-            connect: data.students.map((studentId) => ({ id: studentId })),
-          },
-        };
-        break;
-
-      default:
-        studentField = {};
-        break;
+        default:
+          studentField = {};
+          break;
+      }
     }
     await new Promise((resolve) => setTimeout(resolve, 1000));
     const createdParent = await prisma.parent.create({
@@ -1845,7 +1970,13 @@ export const createParent = async (
         },
       },
     });
-    return { success: true, error: false, id: user.id, data: createdParent };
+    return {
+      success: true,
+      error: false,
+      id: user.id,
+      data: createdParent,
+      field: undefined,
+    };
   } catch (error: any) {
     console.log(error + " Di server action");
 
@@ -1878,8 +2009,9 @@ export const updateParent = async (
       return { success: false, error: true, message: "Missing teacher ID" };
     }
     let user;
+    let clerkUserId = data.id;
     try {
-      const user = await client.users.updateUser(data.id, {
+      user = await client.users.updateUser(data.id, {
         username: data.username,
         ...(data.password !== "" && {
           password: data.password,
@@ -1888,8 +2020,8 @@ export const updateParent = async (
       });
       if (user) {
         console.log("✅ User Sucessfully Updated:", user.id);
+        clerkUserId = user.id;
       }
-      return { success: true, error: false };
     } catch (error) {
       console.warn(
         "⚠️ Clerk returned no user info. Attempting to create user..."
@@ -1905,43 +2037,46 @@ export const updateParent = async (
 
       if (user) {
         console.log("✅ New User Created:", user.id);
+        clerkUserId = user.id;
       } else {
         console.error("❌ Failed to create Clerk user.");
         return {
           success: false,
           error: true,
           message: "Failed to create user in Clerk",
+          id: clerkUserId,
         };
       }
     }
     let studentField;
+    if (data.students!) {
+      switch (data.waliMurid) {
+        case "AYAH":
+          studentField = {
+            students: {
+              set: data.students.map((studentId) => ({ id: studentId })),
+            },
+          };
+          break;
+        case "IBU":
+          studentField = {
+            secondaryStudents: {
+              set: data.students.map((studentId) => ({ id: studentId })),
+            },
+          };
+          break;
+        case "WALI":
+          studentField = {
+            guardianStudents: {
+              set: data.students.map((studentId) => ({ id: studentId })),
+            },
+          };
+          break;
 
-    switch (data.waliMurid) {
-      case "AYAH":
-        studentField = {
-          students: {
-            set: data.students.map((studentId) => ({ id: studentId })),
-          },
-        };
-        break;
-      case "IBU":
-        studentField = {
-          secondaryStudents: {
-            set: data.students.map((studentId) => ({ id: studentId })),
-          },
-        };
-        break;
-      case "WALI":
-        studentField = {
-          guardianStudents: {
-            set: data.students.map((studentId) => ({ id: studentId })),
-          },
-        };
-        break;
-
-      default:
-        studentField = {};
-        break;
+        default:
+          studentField = {};
+          break;
+      }
     }
     await new Promise((resolve) => setTimeout(resolve, 1000));
     await prisma.parent.update({
@@ -1955,7 +2090,9 @@ export const updateParent = async (
           password: encryptPassword(data.password!),
         }),
         name: data.name,
-
+        job: data.job,
+        income: data.income,
+        degree: data.degree,
         birthday: new Date(data.birthday),
         email: data.email,
         phone: data.phone,
@@ -2134,9 +2271,9 @@ export const deleteParent = async (
       console.warn(
         "⚠️ Clerk returned no user info. User may already be deleted?"
       );
+      return { success: true, error: true };
     }
-    revalidatePath("/list/parents");
-
+    // revalidatePath("/list/parents");
     return { success: true, error: false };
   } catch (error) {
     const message =
@@ -2201,7 +2338,7 @@ export const createLesson = async (
   data: LessonSchema
 ) => {
   try {
-    await prisma.lesson.create({
+    const createdLesson = await prisma.lesson.create({
       data: {
         name: data.name,
         startTime: data.startTime,
@@ -2211,8 +2348,13 @@ export const createLesson = async (
         classId: data.classId,
         teacherId: data.teacherId,
       },
+      include: {
+        subject: { select: { name: true } },
+        class: { select: { name: true, gradeId: true } },
+        teacher: { select: { name: true } },
+      },
     });
-    return { success: true, error: false };
+    return { success: true, error: false, data: createdLesson };
   } catch (error) {
     console.error("Create Jadwal error: ", error);
     return { success: false, error: true };
@@ -2238,7 +2380,16 @@ export const updateLesson = async (
         teacherId: data.teacherId,
       },
     });
-    return { success: true, error: false };
+
+    const updatedLesson = await prisma.lesson.findUnique({
+      where: { id: data.id },
+      include: {
+        subject: { select: { name: true } },
+        class: { select: { name: true, gradeId: true } },
+        teacher: { select: { name: true } },
+      },
+    });
+    return { success: true, error: false, data: updatedLesson };
   } catch (error) {
     const message =
       error instanceof Error
@@ -3734,5 +3885,185 @@ export const deleteUser = async (
     }
 
     return { success: false, error: true, message };
+  }
+};
+
+export const activateManyStudents = async (ids: string[]) => {
+  const created: string[] = [];
+  const skipped: string[] = [];
+  const failed: string[] = [];
+
+  for (const id of ids) {
+    try {
+      const student = await prisma.student.findUnique({ where: { id } });
+      if (!student) continue;
+
+      // 🔍 Check Clerk by externalId (using Prisma ID as externalId)
+      const existing = await client.users.getUserList({ externalId: [id] });
+
+      if (existing.totalCount > 0) {
+        skipped.push(student.username);
+        continue;
+      }
+
+      const user = await client.users.createUser({
+        externalId: id, // 💡 this is how you map to Prisma
+        username: student.username,
+        password: student.password,
+        firstName: student.name,
+        publicMetadata: { role: "student" },
+      });
+
+      if (user) {
+        await prisma.student.update({
+          where: { id },
+          data: { id: user.id },
+        });
+        created.push(student.username);
+      }
+    } catch (err) {
+      console.error("❌ Failed:", err);
+      failed.push(id);
+    }
+  }
+
+  return {
+    success: true,
+    created,
+    skipped,
+    failed,
+ message: `✅ ${created.length} Di Aktifkan, ⚠️ ${skipped.length} Di Lewati, ❌ ${failed.length} Gagal.`,  };
+};
+export const activateManyTeachers = async (ids: string[]) => {
+  const created: string[] = [];
+  const skipped: string[] = [];
+  const failed: string[] = [];
+
+  for (const id of ids) {
+    try {
+      const teacher = await prisma.teacher.findUnique({ where: { id } });
+      if (!teacher) continue;
+
+      // 🔍 Check Clerk by externalId (using Prisma ID as externalId)
+      const existing = await client.users.getUserList({ externalId: [id] });
+
+      if (existing.totalCount > 0) {
+        skipped.push(teacher.username);
+        continue;
+      }
+
+      const user = await client.users.createUser({
+        externalId: id, // 💡 this is how you map to Prisma
+        username: teacher.username,
+        password: teacher.password,
+        firstName: teacher.name,
+        publicMetadata: { role: "teacher" },
+      });
+
+      if (user) {
+        await prisma.teacher.update({
+          where: { id },
+          data: { id: user.id },
+        });
+        created.push(teacher.username);
+      }
+    } catch (err) {
+      console.error("❌ Gagal:", err);
+      failed.push(id);
+    }
+  }
+
+  return {
+    success: true,
+    created,
+    skipped,
+    failed,
+    message: `✅ ${created.length} Di Aktifkan, ⚠️ ${skipped.length} Di Lewati, ❌ ${failed.length} Gagal.`,
+  };
+};
+export const activateManyParents = async (ids: string[]) => {
+  const created: string[] = [];
+  const skipped: string[] = [];
+  const failed: string[] = [];
+
+  for (const id of ids) {
+    try {
+      const parent = await prisma.parent.findUnique({ where: { id } });
+      if (!parent) continue;
+
+      // 🔍 Check Clerk by externalId (using Prisma ID as externalId)
+      const existing = await client.users.getUserList({ externalId: [id] });
+
+      if (existing.totalCount > 0) {
+        skipped.push(parent.username);
+        continue;
+      }
+
+      const user = await client.users.createUser({
+        externalId: id, // 💡 this is how you map to Prisma
+        username: parent.username,
+        password: parent.password,
+        firstName: parent.name,
+        publicMetadata: { role: "parent" },
+      });
+
+      if (user) {
+        await prisma.parent.update({
+          where: { id },
+          data: { id: user.id },
+        });
+        created.push(parent.username);
+      }
+    } catch (err) {
+      console.error("❌ Failed:", err);
+      failed.push(id);
+    }
+  }
+
+  return {
+    success: true,
+    created,
+    skipped,
+    failed,
+ message: `✅ ${created.length} Di Aktifkan, ⚠️ ${skipped.length} Di Lewati, ❌ ${failed.length} Gagal.`,  };
+};
+
+export const deleteManyUsers = async (
+  currentState: CurrentState,
+  formData: FormData
+): Promise<CurrentState> => {
+  const ids = formData.getAll("ids") as string[];
+
+  if (!ids || ids.length === 0) {
+    return { success: false, error: true, message: "No student IDs provided." };
+  }
+  try {
+    const deleted: string[] = [];
+    const failed: string[] = [];
+
+    for (const id of ids) {
+      try {
+        await client.users.deleteUser(id);
+        deleted.push(id);
+      } catch (err) {
+        console.error("Failed to delete user", id, err);
+        failed.push(id);
+      }
+    }
+
+    return {
+      success: true,
+      message: `✅ ${deleted.length} deleted, ❌ ${failed.length} failed.`,
+      deleted,
+      failed,
+      error: false,
+    };
+  } catch (err: any) {
+    console.error(err);
+    return {
+      success: false,
+      error: true,
+      message: err.message || "Unknown error",
+    };
   }
 };

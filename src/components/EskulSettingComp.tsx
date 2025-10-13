@@ -45,10 +45,11 @@ const EskulSettings = () => {
       );
 
       const uploadData = await uploadRes.json();
-
+      // 🔥 Remove file extension from name
+      const nameWithoutExt = file.name.replace(/\.[^/.]+$/, "");
       uploaded.push({
         imageUrl: uploadData.secure_url,
-        name: file.name,
+        name: nameWithoutExt,
       });
     }
 

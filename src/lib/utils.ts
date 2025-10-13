@@ -28,6 +28,8 @@ export const FIELD_MAP: Record<string, string> = {
   name: "name",
   nama: "name",
   "nama guru": "name",
+  "nama siswa": "name",
+  "nama murid": "name",
 
   phone: "phone",
   telepon: "phone",
@@ -36,6 +38,7 @@ export const FIELD_MAP: Record<string, string> = {
   "no. telepon": "phone",
   "nomor hp": "phone",
   "no. hp": "phone",
+  nisn: "nisn",
 
   address: "address",
   alamat: "address",
@@ -293,7 +296,7 @@ export const getProfileByClerkIdAndRole = async (
         select: { name: true },
       });
       return {
-        name: parent?.name ?? "Orang Tua",
+        name: parent?.name ?? "Wali Murid",
         img: defaultImg,
       };
 

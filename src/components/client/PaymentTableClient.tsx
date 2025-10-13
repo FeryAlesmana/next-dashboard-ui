@@ -43,7 +43,13 @@ export default function PaymenTableClient({
         <td className="hidden md:table-cell">
           {data.student.student_details?.nisn || "—"}
         </td>
-        <td>{data.paymentType}</td>
+        <td>
+          {data.paymentType === "TUITION" && "SPP"}
+          {data.paymentType === "EXTRACURRICULAR" && "Ekstrakulikuler"}
+          {data.paymentType === "UNIFORM" && "Seragam"}
+          {data.paymentType === "BOOKS" && "Buku"}
+          {data.paymentType === "OTHER" && "Lainnya"}
+        </td>
         <td className="hidden md:table-cell">
           {data.amount.toLocaleString("id-ID", {
             style: "currency",

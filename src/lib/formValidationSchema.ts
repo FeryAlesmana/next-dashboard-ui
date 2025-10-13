@@ -345,7 +345,7 @@ export const parentSchema = z.object({
   }),
   income: z.coerce.number().min(1, { message: "Pendapatan Ortu wajib diisi!" }),
   address: z.string().min(1, { message: "Alamat wajib diisi!" }),
-  students: z.array(z.string()).min(1, "Pilih minimal satu siswa"),
+  students: z.array(z.string()).or(z.literal("")).optional(),
 });
 
 export type ParentSchema = z.infer<typeof parentSchema>;

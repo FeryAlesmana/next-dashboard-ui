@@ -51,7 +51,7 @@ const NavbarHome: React.FC = () => {
               <NavLink href="/#kontak" icon={<FaEnvelope />}>
                 Kontak
               </NavLink>
-              <NavLink href="/#daftar" icon={<FaUserPlus />}>
+              <NavLink href="/daftar" icon={<FaUserPlus />}>
                 Daftar
               </NavLink>
               {isSignedIn ? (

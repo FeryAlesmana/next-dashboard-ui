@@ -15,6 +15,7 @@ const FilterSortBar = ({
   filterFields,
   sortOptions = defaultSortOptions,
   className = "",
+  hideperPage,
 }: {
   filterFields: {
     label: string;
@@ -24,6 +25,7 @@ const FilterSortBar = ({
   }[];
   sortOptions?: { label: string; value: string }[];
   className?: string;
+  hideperPage?: boolean;
 }) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -133,21 +135,21 @@ const FilterSortBar = ({
             ))}
           </select>
         )}
-
-        {/* Items Per Page Selector */}
-        <select
-          className="border px-2 py-1 rounded-md text-sm"
-          value={limit}
-          onChange={(e) => {
-            setLimit(e.target.value);
-            updateQuery("limit", e.target.value);
-          }}
-        >
-          <option value="10">Show 10</option>
-          <option value="20">Show 20</option>
-          <option value="30">Show 30</option>
-          <option value="all">Show All</option>
-        </select>
+        {hideperPage === false && (
+          <select
+            className="border px-2 py-1 rounded-md text-sm"
+            value={limit}
+            onChange={(e) => {
+              setLimit(e.target.value);
+              updateQuery("limit", e.target.value);
+            }}
+          >
+            <option value="10">Show 10</option>
+            <option value="20">Show 20</option>
+            <option value="30">Show 30</option>
+            <option value="all">Show All</option>
+          </select>
+        )}
       </div>
     </div>
   );

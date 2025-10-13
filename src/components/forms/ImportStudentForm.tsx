@@ -118,8 +118,8 @@ const ImportStudentsForm = ({
         </ul>
 
         <p className="mt-2 text-xs text-gray-500">
-          Pastikan minimal kolom <span className="font-medium">Nama Siswa</span>,{" "}
-          <span className="font-medium">Nomor Telepon</span>, dan{" "}
+          Pastikan minimal kolom <span className="font-medium">Nama Siswa</span>
+          , <span className="font-medium">Nomor Telepon</span>, dan{" "}
           <span className="font-medium">Alamat</span> ada agar data bisa
           ditambahkan.
         </p>
@@ -161,7 +161,7 @@ const ImportStudentsForm = ({
           {isSubmitting && (
             <span className="animate-spin inline-block w-5 h-5 border-2 border-white border-t-blue-400 rounded-full"></span>
           )}
-          {isSubmitting ? "Memproses..." : "Import Guru"}
+          {isSubmitting ? "Memproses..." : "Import Murid"}
         </button>
       </div>
     </form>

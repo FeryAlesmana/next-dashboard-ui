@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 import FormModal from "@/components/FormModal";
 import { EmailVerificationGate } from "@/components/EmailVerificationGate";
 import { useUser } from "@clerk/nextjs";
+import { VerificationGate } from "@/components/VerificationGate";
 
 export default function PPDBPage() {
   const formRef = useRef<HTMLDivElement>(null);
@@ -113,7 +114,7 @@ export default function PPDBPage() {
               <>
                 {!skipVerification ? (
                   <>
-                    <EmailVerificationGate />
+                    <VerificationGate />
                     <button
                       type="button"
                       onClick={() => setSkipVerification(true)}
@@ -127,7 +128,8 @@ export default function PPDBPage() {
                 )}
               </>
             ) : (
-              <EmailVerificationGate />
+              // <EmailVerificationGate />
+              <VerificationGate />
             )}
           </div>
         )}

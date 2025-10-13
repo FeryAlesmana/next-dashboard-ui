@@ -144,7 +144,10 @@ const SingleStudentPage = async ({
             </div>
             <div className="w-2/3 flex flex-col justify-between gap-4">
               <div className="flex items-center gap-4">
-                <h1 className="text-xl font-semibold">{student.name}</h1>
+                <h1 className="text-xl font-semibold">{student.name} </h1>
+                <span className="px-2 py-0.5 text-xs font-medium rounded bg-gray-100 text-gray-700">
+                  NISN: {student.student_details?.nisn}
+                </span>
                 {role === "admin" && (
                   <FormContainer
                     table="student"
@@ -155,7 +158,13 @@ const SingleStudentPage = async ({
               </div>
 
               <p className="text-sm text-gray-500">
-                Lorem ipsum dolor sit amet consectetur adipisicing elit.
+                {student.address}
+                {student.rt && student.rw
+                  ? `, RT ${student.rt}/RW ${student.rw}`
+                  : ""}
+                {student.kelurahan ? `, Kel. ${student.kelurahan}` : ""}
+                {student.kecamatan ? `, Kec. ${student.kecamatan}` : ""}
+                {student.kota ? `, ${student.kota}` : ""}
               </p>
               <div className="flex items-center justify-between gap-2 flex-wrap text-xs font-medium">
                 {/* <div className="w-full md:w-1/3 flex items- gap-2 ">

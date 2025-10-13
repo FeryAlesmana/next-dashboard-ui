@@ -368,12 +368,6 @@ const EventListPage = async ({
                   { label: "ID Desc", value: "id_desc" },
                 ]}
               />
-              {role === "admin" && (
-                <FormContainer
-                  table="announcement"
-                  type="create"
-                ></FormContainer>
-              )}
               {(role === "admin" || role === "teacher") && (
                 <FormContainer table="event" type="create"></FormContainer>
               )}

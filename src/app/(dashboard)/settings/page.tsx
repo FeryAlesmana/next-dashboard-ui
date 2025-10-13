@@ -62,10 +62,10 @@ const Settings = () => {
       );
 
       const uploadData = await uploadRes.json();
-
+      const nameWithoutExt = file.name.replace(/\.[^/.]+$/, "");
       uploaded.push({
         imageUrl: uploadData.secure_url,
-        caption: file.name, // optional, you can change later
+        caption: nameWithoutExt, // optional, you can change later
       });
     }
 

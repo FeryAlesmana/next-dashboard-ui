@@ -13,6 +13,7 @@ import {
   deleteExams,
   deleteLesson,
   deleteLessons,
+  deleteManyUsers,
   deleteParent,
   deleteParents,
   deletePaymentLog,
@@ -51,6 +52,7 @@ import UpdateManyAssignmentsForm from "./forms/UpdateManyAssignments";
 import UpdateManyExamsForm from "./forms/UpdateManyExams";
 import ImportTeachersForm from "./forms/ImportTeachersForm";
 import ImportStudentsForm from "./forms/ImportStudentForm";
+import ActivateAccountForm from "./forms/ActivateAccountForm";
 // import StudentForm from "./forms/StudentForm";
 // import TeacherForm from "./forms/TeacherForm";
 
@@ -105,7 +107,7 @@ const bulkDeleteMap = {
   announcement: deleteStudents,
   ppdb: deletePPDBs,
   paymentLog: deletePaymentLogs,
-  user: deleteStudents,
+  user: deleteManyUsers,
 };
 
 const TeacherForm = dynamic(() => import("./forms/TeacherForm"), {
@@ -440,6 +442,42 @@ const FormModal = ({
         onChanged={onChanged}
       />
     ); // Skip rendering
+  if (type === "activateAccount") {
+    return (
+      <>
+        <div className="">
+          <button
+            onClick={() => setOpen(true)}
+            className="flex items-center justify-center rounded-full hover:bg-lamaYellow transition w-7 h-7"
+          >
+            <Image
+              src="/attendance.png"
+              alt="Aktivasi Akun"
+              width={16}
+              height={16}
+            />
+          </button>
+        </div>
+        {open && (
+          <div className="w-screen h-screen absolute left-0 top-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">
+            <div className="bg-white p-4 rounded-md relative w-[700px] h-auto">
+              <ActivateAccountForm
+                setOpen={setOpen}
+                table={table}
+                ids={ids as string[]}
+              />
+              <div
+                className="absolute top-4 right-4 cursor-pointer"
+                onClick={() => setOpen(false)}
+              >
+                <Image src="/close.png" width={14} height={14} alt="Tutup" />
+              </div>
+            </div>
+          </div>
+        )}
+      </>
+    );
+  }
   if (table === "attendance" && type === "create")
     return (
       <>

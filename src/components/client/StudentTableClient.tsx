@@ -36,11 +36,11 @@ export default function StudentTableClient({
           />
           <div className="flex flex-col">
             <h3 className="font-semibold">{data.name}</h3>
-            <p className="text-xs text-gray-500">{data.class.name}</p>
+            <p className="text-xs text-gray-500">{data.class?.name || "-"}</p>
           </div>
         </td>
         <td className="hidden md:table-cell">{data.student_details.nisn}</td>
-        <td className="hidden md:table-cell">{data.grade.level}</td>
+        <td className="hidden md:table-cell">{data.grade?.level || "-"}</td>
         <td className="hidden md:table-cell">
           {data.student_details.noWA ?? data.phone}
         </td>

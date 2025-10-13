@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
@@ -20,7 +20,7 @@ model Student {
   password  String   @unique
   name      String
   email     String?  @unique
-  phone     String?  @unique
+  phone     String?
   address   String
   rw        String
   rt        String
@@ -83,7 +83,7 @@ model Parent {
   sex               UserSex
   birthday          DateTime
   email             String?   @unique
-  phone             String    @unique
+  phone             String?
   address           String
   job               String
   income            Int
@@ -105,23 +105,23 @@ model student_details {
   id                 Int       @id @default(autoincrement())
   studentId          String    @unique
   student            Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  asalSekolah        String
-  birthPlace         String
+  asalSekolah        String?
+  birthPlace         String?
   noWa               String?
-  nisn               String    @unique
-  npsn               String    @unique
-  no_ijz             String    @unique
-  nik                String    @unique
+  nisn               String?   @unique
+  npsn               String?   @unique
+  no_ijz             String?   @unique
+  nik                String?   @unique
   kps                KPS?
   no_kps             String?   @unique
-  height             Int
-  weight             Int
-  transportation     String
-  tempat_tinggal     TTinggal
-  distance_from_home Int
-  time_from_home     Int //in minutes 
-  number_of_siblings Int
-  postcode           Int
+  height             Int?
+  weight             Int?
+  transportation     String?
+  tempat_tinggal     TTinggal?
+  distance_from_home Int?
+  time_from_home     Int? //in minutes 
+  number_of_siblings Int?
+  postcode           Int?
   awards             String?
   awards_lvl         Awards?
   awards_date        DateTime?

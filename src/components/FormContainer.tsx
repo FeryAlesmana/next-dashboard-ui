@@ -30,7 +30,8 @@ export type FormContainerProps = {
     | "delete"
     | "deleteMany"
     | "updateMany"
-    | "createMany";
+    | "createMany"
+    | "activateAccount";
 
   data?: any;
   id?: number | string;

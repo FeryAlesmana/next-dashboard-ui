@@ -39,6 +39,7 @@ const PpdbPage = async ({
     {
       header: "No",
       accessor: "nomor",
+      className: "hidden md:table-cell",
     },
     {
       header: "Nama Calon siswa",
@@ -52,7 +53,7 @@ const PpdbPage = async ({
     {
       header: "Status Formulir",
       accessor: "isvalid",
-      className: "hidden md:table-cell",
+      
     },
     ...(role === "admin"
       ? [

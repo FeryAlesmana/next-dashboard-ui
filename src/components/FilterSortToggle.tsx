@@ -16,6 +16,7 @@ interface FilterSortToggleProps {
   iconSrc?: string;
   className?: string;
   sortOptions?: { label: string; value: string }[];
+  hideperPage?: boolean;
 }
 
 export default function FilterSortToggle({
@@ -23,6 +24,7 @@ export default function FilterSortToggle({
   iconSrc = "/filter.png",
   className = "",
   sortOptions,
+  hideperPage = false,
 }: FilterSortToggleProps) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -57,6 +59,7 @@ export default function FilterSortToggle({
           <FilterSortBar
             filterFields={filterFields}
             sortOptions={sortOptions}
+            hideperPage={hideperPage}
           />
         </div>
       )}

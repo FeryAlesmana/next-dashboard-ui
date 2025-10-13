@@ -282,7 +282,7 @@ const UserForm = ({
             {isSubmitting
               ? "Memproses..."
               : type === "create"
-              ? "Tambah kelas"
+              ? "Tambah User"
               : "Update dan Simpan"}
           </button>
         </div>

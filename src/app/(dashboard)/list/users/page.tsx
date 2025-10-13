@@ -1,4 +1,5 @@
 "use server";
+import UserListClient from "@/components/client/UserListClient";
 import ClientPageWrapper from "@/components/ClientWrapper";
 import FilterSortToggle from "@/components/FilterSortToggle";
 import FormContainer from "@/components/FormContainer";
@@ -34,8 +35,21 @@ const UserListPage = async ({
   const { role } = await getCurrentUser();
 
   const columns = [
+    ...(role === "admin"
+      ? [
+          {
+            header: "Select",
+            accessor: "checkbox",
+          },
+        ]
+      : []),
     { header: "Username dan Role", accessor: "name" },
-    { header: "Email", accessor: "email" },
+    { header: "Email", accessor: "email", className: "hidden md:table-cell" },
+    {
+      header: "User di database",
+      accessor: "dbUser",
+      className: "hidden md:table-cell",
+    },
     ...(role === "admin"
       ? [
           {
@@ -100,7 +114,8 @@ const UserListPage = async ({
     rows.push({
       id: u.id,
       img: foundUser?.img ?? "",
-      name: u.username || "(no name)",
+      name: u.username || "-",
+      dbName: foundUser?.name || "-",
       email: foundUser?.email ?? "—",
       role: (u.publicMetadata?.role as string | undefined) ?? "—",
       password: foundUser?.password ? decryptPassword(foundUser.password) : "", // ← pulled from student/teacher/parent table
@@ -127,7 +142,8 @@ const UserListPage = async ({
             <p className="text-xs text-gray-500">{item.role}</p>
           </div>
         </td>
-        <td>{item.email}</td>
+        <td className="hidden md:table-cell">{item.email}</td>
+        <td className="hidden md:table-cell">{item.dbName}</td>
         <td>
           {canEdit && (
             <div className="flex items-center gap-2">
@@ -169,9 +185,9 @@ const UserListPage = async ({
                     label: "Role",
                     options: [
                       { label: "Admin", value: "admin" },
-                      { label: "Teacher", value: "teacher" },
-                      { label: "Student", value: "student" },
-                      { label: "Parent", value: "parent" },
+                      { label: "Guru", value: "teacher" },
+                      { label: "Murid", value: "student" },
+                      { label: "Wali Murid", value: "parent" },
                     ],
                   },
                 ]}
@@ -181,6 +197,7 @@ const UserListPage = async ({
                   { label: "ID Asc", value: "id_asc" },
                   { label: "ID Desc", value: "id_desc" },
                 ]}
+                hideperPage={true}
               />
 
               {role === "admin" && (
@@ -196,7 +213,8 @@ const UserListPage = async ({
               Tidak ada User.
             </div>
           ) : (
-            <Table columns={columns} renderRow={renderRow} data={rows} />
+            // <Table columns={columns} renderRow={renderRow} data={rows} />
+            <UserListClient rows={rows} role={role!} columns={columns} />
           )}
         </div>
         {/* PAGINATION */}
