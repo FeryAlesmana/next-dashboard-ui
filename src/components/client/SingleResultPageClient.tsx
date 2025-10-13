@@ -7,7 +7,7 @@ import { useState } from "react";
 import Select from "react-select";
 
 type SingleStudent = Student & {
-  student_details: { nisn: string } | null;
+  student_details: { nisn: string |null } |null;
   class: {
     lessons: { subject: Subject | null; teacher: Teacher | null }[];
     name: string;
