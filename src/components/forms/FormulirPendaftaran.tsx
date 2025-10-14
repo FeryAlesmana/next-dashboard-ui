@@ -344,9 +344,9 @@ const FormulirPendaftaran = ({
             )}
           </div>
 
-          <div className="flex gap-4">
+          <div className="flex flex-col md:flex-row gap-4">
             {/* Tempat Lahir */}
-            <div className="w-1/2">
+            <div className="w-full md:w-1/2">
               <label className="block mb-1 font-medium">Tempat Lahir</label>
               <input
                 {...register("birthPlace")}
@@ -359,7 +359,7 @@ const FormulirPendaftaran = ({
             </div>
 
             {/* Tanggal Lahir */}
-            <div className="w-1/2">
+            <div className="w-full md:w-1/2">
               <label className="block mb-1 font-medium">Tanggal Lahir</label>
               <input
                 type="date"
@@ -372,9 +372,9 @@ const FormulirPendaftaran = ({
             </div>
           </div>
 
-          <div className="flex gap-4">
+          <div className="flex flex-col md:flex-row gap-4">
             {/* Jenis Kelamin */}
-            <div className="w-1/2">
+            <div className="w-full md:w-1/2">
               <label className="block mb-1 font-medium">Jenis Kelamin</label>
               <select
                 {...register("sex")}
@@ -390,7 +390,7 @@ const FormulirPendaftaran = ({
             </div>
 
             {/* Agama */}
-            <div className="w-1/2">
+            <div className="w-full md:w-1/2">
               <label className="block mb-1 font-medium">Agama</label>
               <select
                 {...register("religion")}
@@ -421,9 +421,9 @@ const FormulirPendaftaran = ({
             )}
           </div>
 
-          <div className="flex gap-4">
+          <div className="flex flex-col md:flex-row gap-4">
             {/* NPSN */}
-            <div className="w-1/2">
+            <div className="w-full md:w-1/2">
               <label className="block mb-1 font-medium">NPSN</label>
               <input
                 type="text"
@@ -438,7 +438,7 @@ const FormulirPendaftaran = ({
             </div>
 
             {/* NISN */}
-            <div className="w-1/2">
+            <div className="w-full md:w-1/2">
               <label className="block mb-1 font-medium">NISN</label>
               <input
                 type="text"
@@ -481,9 +481,9 @@ const FormulirPendaftaran = ({
             {errors.nik && <p className="text-red-600">{errors.nik.message}</p>}
           </div>
 
-          <div className="flex gap-4">
+          <div className="flex flex-col md:flex-row gap-4">
             {/* Alamat */}
-            <div className="w-2/3">
+            <div className="w-full md:w-2/3">
               <label className="block mb-1 font-medium">Alamat</label>
               <textarea
                 {...register("address")}
@@ -496,7 +496,7 @@ const FormulirPendaftaran = ({
             </div>
 
             {/* Kode Pos */}
-            <div className="w-1/3">
+            <div className="w-full md:w-1/3">
               <label className="block mb-1 font-medium">Kode Pos</label>
               <input
                 type="text"
@@ -511,9 +511,9 @@ const FormulirPendaftaran = ({
             </div>
           </div>
 
-          {/* RT */}
-          <div className="flex gap-4">
-            <div className="w-1/4">
+          {/* RT / RW / Kelurahan */}
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="w-full md:w-1/4">
               <label className="block mb-1 font-medium">RT</label>
               <input
                 type="text"
@@ -525,8 +525,7 @@ const FormulirPendaftaran = ({
               {errors.rt && <p className="text-red-600">{errors.rt.message}</p>}
             </div>
 
-            {/* RW */}
-            <div className="w-1/4">
+            <div className="w-full md:w-1/4">
               <label className="block mb-1 font-medium">RW</label>
               <input
                 type="text"
@@ -538,8 +537,7 @@ const FormulirPendaftaran = ({
               {errors.rw && <p className="text-red-600">{errors.rw.message}</p>}
             </div>
 
-            {/* Kelurahan */}
-            <div className="w-2/4">
+            <div className="w-full md:w-2/4">
               <label className="block mb-1 font-medium">Kelurahan</label>
               <input
                 {...register("kelurahan")}
@@ -552,9 +550,9 @@ const FormulirPendaftaran = ({
             </div>
           </div>
 
-          {/* Kecamatan */}
-          <div className="flex gap-4">
-            <div className="w-2/4">
+          {/* Kecamatan / Kota */}
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="w-full md:w-2/4">
               <label className="block mb-1 font-medium">Kecamatan</label>
               <input
                 {...register("kecamatan")}
@@ -566,8 +564,7 @@ const FormulirPendaftaran = ({
               )}
             </div>
 
-            {/* Kota */}
-            <div className="w-2/4">
+            <div className="w-full md:w-2/4">
               <label className="block mb-1 font-medium">Kota</label>
               <input
                 {...register("kota")}
@@ -580,13 +577,13 @@ const FormulirPendaftaran = ({
             </div>
           </div>
 
-          {/* No. Telepon */}
-          <div className="flex gap-4">
-            <div className="w-2/4">
+          {/* No. Telepon / No. Whatsapp */}
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="w-full md:w-2/4">
               <label className="block mb-1 font-medium">No. Telepon</label>
               <input
                 type="text"
-                maxLength={11}
+                maxLength={13}
                 {...register("phone")}
                 className="w-full border rounded px-3 py-2"
                 placeholder="Masukkan nomor telepon (10-13 digit)"
@@ -596,8 +593,7 @@ const FormulirPendaftaran = ({
               )}
             </div>
 
-            {/* No. Whatsapp */}
-            <div className="w-2/4">
+            <div className="w-full md:w-2/4">
               <label className="block mb-1 font-medium">No. Whatsapp</label>
               <input
                 type="text"
@@ -612,9 +608,9 @@ const FormulirPendaftaran = ({
             </div>
           </div>
 
-          {/* Alat Transportasi */}
-          <div className="flex gap-4">
-            <div className="w-2/4">
+          {/* Alat Transportasi / Tempat Tinggal */}
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="w-full md:w-2/4">
               <label className="block mb-1 font-medium">
                 Alat Transportasi
               </label>
@@ -628,8 +624,7 @@ const FormulirPendaftaran = ({
               )}
             </div>
 
-            {/* Tempat Tinggal */}
-            <div className="w-2/4">
+            <div className="w-full md:w-2/4">
               <label className="block mb-1 font-medium">Tempat Tinggal</label>
               <select
                 {...register("tempat_tinggal")}
@@ -664,8 +659,8 @@ const FormulirPendaftaran = ({
           </div>
 
           {/* Penerima KPS */}
-          <div className="flex gap-4">
-            <div className="w-1/2">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="w-full md:w-1/2">
               <label className="block mb-1 font-medium">
                 Penerima KPS (KIP/KIS/KKS)
               </label>
@@ -683,8 +678,7 @@ const FormulirPendaftaran = ({
               )}
             </div>
 
-            {/* Nomor KPS */}
-            <div className="w-1/2">
+            <div className="w-full md:w-1/2">
               <label className="block mb-1 font-medium">Nomor KPS</label>
               <input
                 {...register("no_kps")}
@@ -697,9 +691,9 @@ const FormulirPendaftaran = ({
             </div>
           </div>
 
-          {/* Tinggi Badan */}
-          <div className="flex gap-4">
-            <div className="w-1/2">
+          {/* Tinggi Badan / Berat Badan */}
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="w-full md:w-1/2">
               <label className="block mb-1 font-medium">
                 Tinggi Badan (cm)
               </label>
@@ -713,8 +707,7 @@ const FormulirPendaftaran = ({
               )}
             </div>
 
-            {/* Berat Badan */}
-            <div className="w-1/2">
+            <div className="w-full md:w-1/2">
               <label className="block mb-1 font-medium">Berat Badan (kg)</label>
               <input
                 {...register("weight")}
@@ -728,8 +721,8 @@ const FormulirPendaftaran = ({
           </div>
 
           {/* Jarak Rumah ke Sekolah */}
-          <div className="flex gap-4">
-            <div className="w-1/2">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="w-full md:w-1/2">
               <label className="block mb-1 font-medium">
                 Jarak ke Sekolah (km)
               </label>
@@ -745,8 +738,7 @@ const FormulirPendaftaran = ({
               )}
             </div>
 
-            {/* Waktu Tempuh */}
-            <div className="w-1/2">
+            <div className="w-full md:w-1/2">
               <label className="block mb-1 font-medium">
                 Waktu Tempuh (menit)
               </label>
@@ -779,7 +771,6 @@ const FormulirPendaftaran = ({
           </div>
 
           {/* Prestasi */}
-
           <div>
             <label className="block mb-1 font-medium">Jenis Prestasi</label>
             <input
@@ -792,8 +783,8 @@ const FormulirPendaftaran = ({
             )}
           </div>
 
-          <div className="flex gap-4">
-            <div className="w-1/2">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="w-full md:w-1/2">
               <label className="block mb-1 font-medium">Tingkat Prestasi</label>
               <select
                 {...register("awards_lvl")}
@@ -811,7 +802,7 @@ const FormulirPendaftaran = ({
                 <p className="text-red-600">{errors.awards_lvl.message}</p>
               )}
             </div>
-            <div className="w-1/2">
+            <div className="w-full md:w-1/2">
               <label className="block mb-1 font-medium">Tahun Prestasi</label>
               <input
                 type="date"
@@ -825,8 +816,8 @@ const FormulirPendaftaran = ({
           </div>
 
           {/* Beasiswa */}
-          <div className="flex gap-4">
-            <div className="w-1/2">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="w-full md:w-1/3">
               <label className="block mb-1 font-medium">Beasiswa</label>
               <input
                 {...register("scholarship")}
@@ -837,7 +828,7 @@ const FormulirPendaftaran = ({
                 <p className="text-red-600">{errors.scholarship.message}</p>
               )}
             </div>
-            <div className="w-1/2">
+            <div className="w-full md:w-1/3">
               <label className="block mb-1 font-medium">Sumber Beasiswa</label>
               <input
                 {...register("scholarship_detail")}
@@ -850,7 +841,7 @@ const FormulirPendaftaran = ({
                 </p>
               )}
             </div>
-            <div className="w-1/3">
+            <div className="w-full md:w-1/3">
               <label className="block mb-1 font-medium">Tahun Beasiswa</label>
               <input
                 type="date"
@@ -869,7 +860,6 @@ const FormulirPendaftaran = ({
           <h2 className="text-lg font-semibold text-center mt-6">
             Data Ayah Kandung
           </h2>
-
           <div>
             <label className="block mb-1 font-medium">Nama Ayah</label>
             <input
@@ -882,8 +872,8 @@ const FormulirPendaftaran = ({
             )}
           </div>
 
-          <div className="flex gap-4">
-            <div className="w-1/2">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="w-full md:w-1/3">
               <label className="block mb-1 font-medium">Tahun Lahir Ayah</label>
               <input
                 type="date"
@@ -894,7 +884,7 @@ const FormulirPendaftaran = ({
                 <p className="text-red-600">{errors.tahunLahirAyah.message}</p>
               )}
             </div>
-            <div className="w-1/2">
+            <div className="w-full md:w-1/3">
               <label className="block mb-1 font-medium">Pekerjaan Ayah</label>
               <input
                 {...register("pekerjaanAyah")}
@@ -905,7 +895,7 @@ const FormulirPendaftaran = ({
                 <p className="text-red-600">{errors.pekerjaanAyah.message}</p>
               )}
             </div>
-            <div className="w-1/2">
+            <div className="w-full md:w-1/3">
               <label className="block mb-1 font-medium">Pendidikan Ayah</label>
               <select
                 {...register("pendidikanAyah")}
@@ -927,8 +917,8 @@ const FormulirPendaftaran = ({
             </div>
           </div>
 
-          <div className="flex gap-4">
-            <div className="w-1/2">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="w-full md:w-1/2">
               <label className="block mb-1 font-medium">
                 Penghasilan Ayah (Rp. Perbulan)
               </label>
@@ -941,7 +931,7 @@ const FormulirPendaftaran = ({
                 <p className="text-red-600">{errors.penghasilanAyah.message}</p>
               )}
             </div>
-            <div className="w-1/2">
+            <div className="w-full md:w-1/2">
               <label className="block mb-1 font-medium">No. Telp/HP Ayah</label>
               <input
                 {...register("telpAyah")}
@@ -958,7 +948,6 @@ const FormulirPendaftaran = ({
           <h2 className="text-lg font-semibold text-center mt-6">
             Data Ibu Kandung
           </h2>
-
           <div>
             <label className="block mb-1 font-medium">Nama Ibu</label>
             <input
@@ -971,8 +960,8 @@ const FormulirPendaftaran = ({
             )}
           </div>
 
-          <div className="flex gap-4">
-            <div className="w-1/2">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="w-full md:w-1/3">
               <label className="block mb-1 font-medium">Tahun Lahir Ibu</label>
               <input
                 type="date"
@@ -983,7 +972,7 @@ const FormulirPendaftaran = ({
                 <p className="text-red-600">{errors.tahunLahirIbu.message}</p>
               )}
             </div>
-            <div className="w-1/2">
+            <div className="w-full md:w-1/3">
               <label className="block mb-1 font-medium">Pekerjaan Ibu</label>
               <input
                 {...register("pekerjaanIbu")}
@@ -994,7 +983,7 @@ const FormulirPendaftaran = ({
                 <p className="text-red-600">{errors.pekerjaanIbu.message}</p>
               )}
             </div>
-            <div className="w-1/2">
+            <div className="w-full md:w-1/3">
               <label className="block mb-1 font-medium">Pendidikan Ibu</label>
               <select
                 {...register("pendidikanIbu")}
@@ -1016,8 +1005,8 @@ const FormulirPendaftaran = ({
             </div>
           </div>
 
-          <div className="flex gap-4">
-            <div className="w-1/2">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="w-full md:w-1/2">
               <label className="block mb-1 font-medium">
                 Penghasilan Ibu (Rp. Perbulan)
               </label>
@@ -1030,7 +1019,7 @@ const FormulirPendaftaran = ({
                 <p className="text-red-600">{errors.penghasilanIbu.message}</p>
               )}
             </div>
-            <div className="w-1/2">
+            <div className="w-full md:w-1/2">
               <label className="block mb-1 font-medium">No. Telp/HP Ibu</label>
               <input
                 {...register("telpIbu")}
@@ -1045,7 +1034,6 @@ const FormulirPendaftaran = ({
 
           {/* ==== DATA WALI ==== */}
           <h2 className="text-lg font-semibold text-center mt-6">Data Wali</h2>
-
           <div>
             <label className="block mb-1 font-medium">Nama Wali</label>
             <input
@@ -1058,8 +1046,8 @@ const FormulirPendaftaran = ({
             )}
           </div>
 
-          <div className="flex gap-4">
-            <div className="w-1/2">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="w-full md:w-1/3">
               <label className="block mb-1 font-medium">Tahun Lahir Wali</label>
               <input
                 type="date"
@@ -1070,7 +1058,7 @@ const FormulirPendaftaran = ({
                 <p className="text-red-600">{errors.tahunLahirWali.message}</p>
               )}
             </div>
-            <div className="w-1/2">
+            <div className="w-full md:w-1/3">
               <label className="block mb-1 font-medium">Pekerjaan Wali</label>
               <input
                 {...register("pekerjaanWali")}
@@ -1081,7 +1069,7 @@ const FormulirPendaftaran = ({
                 <p className="text-red-600">{errors.pekerjaanWali.message}</p>
               )}
             </div>
-            <div className="w-1/2">
+            <div className="w-full md:w-1/3">
               <label className="block mb-1 font-medium">Pendidikan Wali</label>
               <select
                 {...register("pendidikanWali")}
@@ -1103,8 +1091,8 @@ const FormulirPendaftaran = ({
             </div>
           </div>
 
-          <div className="flex gap-4">
-            <div className="w-1/2">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="w-full md:w-1/2">
               <label className="block mb-1 font-medium">
                 Penghasilan Wali (Rp. Perbulan)
               </label>
@@ -1117,7 +1105,7 @@ const FormulirPendaftaran = ({
                 <p className="text-red-600">{errors.penghasilanWali.message}</p>
               )}
             </div>
-            <div className="w-1/2">
+            <div className="w-full md:w-1/2">
               <label className="block mb-1 font-medium">No. Telp/HP Wali</label>
               <input
                 {...register("telpWali")}
@@ -1129,12 +1117,11 @@ const FormulirPendaftaran = ({
               )}
             </div>
           </div>
+
           {/* ========== Upload Dokumen ========== */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full mb-4">
             <div className="flex flex-col gap-2">
               <label className="font-medium">Fotokopi Ijazah / STTB</label>
-
-              {/* Upload input (only shown if no file yet) */}
               {!dokumen.ijazah &&
                 !data?.dokumenIjazah &&
                 (uploadingField === "ijazah" ? (
@@ -1171,8 +1158,6 @@ const FormulirPendaftaran = ({
                     className="block w-full text-sm text-white file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-600 file:text-white"
                   />
                 ))}
-
-              {/* Show preview if file exists in local state */}
               {dokumen.ijazah && (
                 <div className="flex items-center justify-between bg-white/10 p-2 rounded shadow">
                   <a
@@ -1194,8 +1179,6 @@ const FormulirPendaftaran = ({
                   </button>
                 </div>
               )}
-
-              {/* Show preview if file exists in DB but not in local state */}
               {!dokumen.ijazah && data?.dokumenIjazah && (
                 <div className="flex items-center justify-between bg-white/10 p-2 rounded shadow">
                   <a
@@ -1220,8 +1203,6 @@ const FormulirPendaftaran = ({
             </div>
             <div className="flex flex-col gap-2">
               <label className="font-medium">Fotokopi Akte Kelahiran</label>
-
-              {/* Upload input (only shown if no file yet) */}
               {!dokumen.akte &&
                 !data?.dokumenAkte &&
                 (uploadingField === "akte" ? (
@@ -1258,8 +1239,6 @@ const FormulirPendaftaran = ({
                     className="block w-full text-sm text-white file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-600 file:text-white"
                   />
                 ))}
-
-              {/* Show preview if file exists in local state */}
               {dokumen.akte && (
                 <div className="flex items-center justify-between bg-white/10 p-2 rounded shadow">
                   <a
@@ -1281,8 +1260,6 @@ const FormulirPendaftaran = ({
                   </button>
                 </div>
               )}
-
-              {/* Show preview if file exists in DB but not in local state */}
               {!dokumen.akte && data?.dokumenAkte && (
                 <div className="flex items-center justify-between bg-white/10 p-2 rounded shadow">
                   <a
@@ -1309,8 +1286,6 @@ const FormulirPendaftaran = ({
               <label className="font-medium ">
                 Fotokopi KK, KTP Orang Tua, SKTM / KIP
               </label>
-
-              {/* Upload input (only shown if no file yet) */}
               {!dokumen.kk_ktp_sktm &&
                 !data?.dokumenKKKTP &&
                 (uploadingField === "kk_ktp_sktm" ? (
@@ -1347,8 +1322,6 @@ const FormulirPendaftaran = ({
                     className="block w-full text-sm text-white file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-600 file:text-white"
                   />
                 ))}
-
-              {/* Show preview if file exists in local state */}
               {dokumen.kk_ktp_sktm && (
                 <div className="flex items-center justify-between bg-white/10 p-2 rounded shadow">
                   <a
@@ -1373,8 +1346,6 @@ const FormulirPendaftaran = ({
                   </button>
                 </div>
               )}
-
-              {/* Show preview if file exists in DB but not in local state */}
               {!dokumen.kk_ktp_sktm && data?.dokumenKKKTP && (
                 <div className="flex items-center justify-between bg-white/10 p-2 rounded shadow">
                   <a
@@ -1402,8 +1373,6 @@ const FormulirPendaftaran = ({
             </div>
             <div className="flex flex-col gap-2">
               <label className="font-medium">Foto Siswa</label>
-
-              {/* Upload input */}
               {!dokumen.pasfoto &&
                 !data?.dokumenPasfoto &&
                 (uploadingField === "pasfoto" ? (
@@ -1440,8 +1409,6 @@ const FormulirPendaftaran = ({
                     className="block w-full text-sm text-white file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-600 file:text-white"
                   />
                 ))}
-
-              {/* Local preview */}
               {dokumen.pasfoto && (
                 <div className="flex items-center justify-between bg-white/10 p-2 rounded shadow">
                   <a
@@ -1463,8 +1430,6 @@ const FormulirPendaftaran = ({
                   </button>
                 </div>
               )}
-
-              {/* DB preview */}
               {!dokumen.pasfoto && data?.dokumenPasfoto && (
                 <div className="flex items-center justify-between bg-white/10 p-2 rounded shadow">
                   <a
@@ -1507,7 +1472,7 @@ const FormulirPendaftaran = ({
                 {/* Email feedback section */}
                 {watchedValues.isvalid ? (
                   <div>
-                    <div className="flex flex-row gap-4 mb-2">
+                    <div className="flex flex-col md:flex-row gap-4 mb-2">
                       <div className="flex-1 min-w-[120px]">
                         <label className="text-xs text-gray-400 mb-1 block">
                           Tingkat
@@ -1615,7 +1580,6 @@ const FormulirPendaftaran = ({
             <input hidden type="number" {...register("id")} value={data.id} />
           )}
           {errors.id && <p className="text-red-600">{errors.id.message}</p>}
-
           {(state.error || Object.keys(errors).length > 0) && (
             <span className="text-red-500">
               Terjadi Kesalahan! {state.message ?? ""}

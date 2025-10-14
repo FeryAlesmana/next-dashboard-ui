@@ -14,6 +14,7 @@ import Footer from "../components/landing/Footer";
 import NavbarHome from "@/components/NavbarHome";
 import { toast } from "react-toastify";
 import { useUser } from "@clerk/nextjs";
+import LocationMap from "@/components/landing/LocationMap";
 
 export default function Home() {
   const { user } = useUser();
@@ -67,6 +68,7 @@ export default function Home() {
           />
           <Fasilitas />
           <Gallery DBimages={homeData?.gallery} role={role!} />
+          <LocationMap />
           <Kontak />
           <Pendaftaran />
           <CTA />

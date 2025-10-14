@@ -14,7 +14,7 @@ const EventCalendarContainer = async ({
       <EventCalender />
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold my-4">Kegiatan</h1>
-        <Link href="list/events">
+        <Link href="list/events" className="hover:bg-lamaPurpleLight rounded-md p-2">
           <Image src="/moreDark.png" alt="" width={20} height={20}></Image>
         </Link>
       </div>

@@ -215,7 +215,7 @@ const SingleStudentPage = async ({
               ></Image>
               <div className="">
                 <h1 className="text-xl font-semibold">
-                  {student.class?.name.charAt(0)}
+                  {student.class?.name.charAt(0) || "-"}
                 </h1>
                 <span className="text-sm text-gray-400">Tingkat</span>
               </div>
@@ -231,7 +231,7 @@ const SingleStudentPage = async ({
               ></Image>
               <div className="">
                 <h1 className="text-xl font-semibold">
-                  {student.class?._count.lessons}
+                  {student.class?._count.lessons || "-"}
                 </h1>
                 <span className="text-sm text-gray-400">Mata Pelajaran</span>
               </div>
@@ -246,7 +246,9 @@ const SingleStudentPage = async ({
                 className="w-6 h-6"
               ></Image>
               <div className="">
-                <h1 className="text-xl font-semibold">{student.class?.name}</h1>
+                <h1 className="text-xl font-semibold">
+                  {student.class?.name || "-"}
+                </h1>
                 <span className="text-sm text-gray-400"> Kelas</span>
               </div>
             </div>
@@ -297,7 +299,7 @@ const SingleStudentPage = async ({
         </div>
         <div className="my-6 p-4 bg-white rounded shadow">
           <h2 className="text-lg font-semibold mb-2">
-            Kehadiran (Semester {currentSemester?.label})
+            Kehadiran (Semester {currentSemester?.label || "-"})
           </h2>
           <StudentLessonChart data={chartArray} />
         </div>
