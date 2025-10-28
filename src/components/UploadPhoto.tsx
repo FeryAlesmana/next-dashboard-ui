@@ -9,7 +9,7 @@ type UploadPreviewProps = {
 const UploadPhoto = ({ imageUrl, onUpload }: UploadPreviewProps) => {
   return (
     <CldUploadWidget
-      uploadPreset="SMPI SERUA"
+      uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}
       onSuccess={(result, { widget }) => {
         const info = result?.info as { secure_url?: string };
         if (info?.secure_url) {

@@ -6,6 +6,7 @@ import BulkActions from "@/components/BulkActions";
 import { toast } from "react-toastify";
 import Image from "next/image";
 import FormModal from "../FormModal";
+import Link from "next/link";
 
 type User = {
   id: string;
@@ -100,6 +101,56 @@ export default function UserListClient({
             <td className="hidden md:table-cell">{row.dbName}</td>
             <td>
               <div className="flex items-center gap-2">
+                {/* 👁️ VIEW BUTTON LOGIC */}
+                {row.role === "admin" ? (
+                  // Admins → view disabled
+                  <button
+                    className="w-7 h-7 flex items-center justify-center rounded-full bg-gray-200 cursor-not-allowed"
+                    title="Admin profile unavailable"
+                    disabled
+                  >
+                    <Image
+                      src="/view.png"
+                      alt=""
+                      width={16}
+                      height={16}
+                      className="opacity-50"
+                    />
+                  </button>
+                ) : row.dbName === "-" ? (
+                  // Any role with empty dbName → view disabled
+                  <button
+                    className="w-7 h-7 flex items-center justify-center rounded-full bg-gray-200 cursor-not-allowed"
+                    title="Profile unavailable"
+                    disabled
+                  >
+                    <Image
+                      src="/view.png"
+                      alt=""
+                      width={16}
+                      height={16}
+                      className="opacity-50"
+                    />
+                  </button>
+                ) : row.role === "parent" ? (
+                  // Parent → redirect to /list/parents?search=dbName
+                  <Link
+                    href={`/list/parents?search=${encodeURIComponent(
+                      row.dbName
+                    )}`}
+                  >
+                    <button className="w-7 h-7 flex items-center justify-center rounded-full bg-lamaSky shadow-lg hover:bg-lamaSky/80">
+                      <Image src="/view.png" alt="" width={16} height={16} />
+                    </button>
+                  </Link>
+                ) : (
+                  // Teacher & Student → direct to /list/[role]s/[id]
+                  <Link href={`/list/${row.role}s/${row.id}`}>
+                    <button className="w-7 h-7 flex items-center justify-center rounded-full bg-lamaSky shadow-lg hover:bg-lamaSky/80">
+                      <Image src="/view.png" alt="" width={16} height={16} />
+                    </button>
+                  </Link>
+                )}
                 {role === "admin" && (
                   <>
                     <FormModal

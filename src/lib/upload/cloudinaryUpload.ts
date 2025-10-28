@@ -1,7 +1,7 @@
 export const cloudinaryUpload = async (file: File, folder = "ppdb") => {
   const formData = new FormData();
   formData.append("file", file);
-  formData.append("upload_preset", "SMPI SERUA"); // Your preset
+  formData.append("upload_preset", `${process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}`); // Your preset
   formData.append("folder", folder);
 
   // Pick resource type based on file type

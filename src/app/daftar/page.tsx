@@ -69,7 +69,7 @@ export default function PPDBPage() {
             </h2>
             <ul className="list-disc list-inside text-lg space-y-1">
               <li>Isi email valid</li>
-              <li>Validasi email & klik link/masukkan OTP</li>
+              <li>Validasi email & masukkan OTP atau Validasi via Captcha</li>
               <li>Isi Formulir dan Unggah dokumen yang dibutuhkan</li>
               <li>Tekan tombol submit</li>
               <li>Tunggu validasi Formulir dari email</li>
