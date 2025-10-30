@@ -8,6 +8,7 @@ export function buildStudentLessonAttendance(attendances: Attendance[]) {
     HADIR: 0,
     SAKIT: 0,
     ABSEN: 0,
+    IZIN: 0,
   };
 
   attendances.forEach((att) => {
@@ -20,6 +21,7 @@ export function buildStudentLessonAttendance(attendances: Attendance[]) {
     { status: "Hadir", count: statusCounts.HADIR },
     { status: "Sakit", count: statusCounts.SAKIT },
     { status: "Absen", count: statusCounts.ABSEN },
+    { status: "Izin", count: statusCounts.IZIN },
   ];
 }
 
@@ -83,6 +85,37 @@ export function normalizeRow(row: any) {
   return normalized;
 }
 
+export const generateSemesters = (
+  createdAt: Date,
+  gradeLevel: number
+): Semester[] => {
+  const now = new Date();
+  const currentYear = now.getFullYear();
+
+  // Start from either enrollment year OR calculated grade start year
+  const startYear = Math.max(
+    createdAt.getFullYear(),
+    currentYear - (gradeLevel - 1)
+  );
+
+  const generated: Semester[] = [];
+
+  for (let year = startYear; year <= currentYear; year++) {
+    generated.push({
+      label: `Ganjil ${year}/${year + 1}`,
+      start: new Date(`${year}-07-01`),
+      end: new Date(`${year}-12-31`),
+    });
+    generated.push({
+      label: `Genap ${year}/${year + 1}`,
+      start: new Date(`${year + 1}-01-01`),
+      end: new Date(`${year + 1}-06-30`),
+    });
+  }
+
+  return generated.reverse();
+};
+
 // Normalize "agama" field
 export function normalizeAgama(
   value: any
@@ -116,6 +149,7 @@ export function normalizeSex(value: any): "MALE" | "FEMALE" {
 import { parse, isValid, format, subDays, addDays } from "date-fns";
 import { id as localeID } from "date-fns/locale";
 import { Attendance, resTypes } from "@prisma/client";
+import { Semester } from "@/components/client/StudentPaymentView";
 export function normalizeBirthday(value: any): string {
   if (!value) return "2000-01-01";
 

@@ -9,7 +9,7 @@ import React, {
   useState,
 } from "react";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "react-toastify";
 import ConfirmDialog from "../ConfirmDialog";
@@ -20,6 +20,7 @@ import {
   updatePaymentLog,
 } from "@/lib/actions";
 import { BaseFormProps } from "./AssignmentForm";
+import Select from "react-select";
 
 const FORM_KEY = "payment_log_draft_form";
 
@@ -40,6 +41,7 @@ export default function CreatePaymentLogPage({
     trigger,
     formState: { errors },
     getValues,
+    control,
   } = useForm<PaymentLogSchema>({
     resolver: zodResolver(paymentLogSchema),
     defaultValues: {
@@ -356,30 +358,61 @@ export default function CreatePaymentLogPage({
 
           <div>
             <label className="block mb-1 font-medium">Penerima</label>
-            <select
-              {...register("recipientId")}
-              className="w-full border rounded px-3 py-2"
-            >
-              <option value="">Pilih Penerima</option>
-              {watchedValues.recipientType === "student" &&
-                studentData.map((student: { id: string; name: string }) => (
-                  <option key={student.id} value={student.id}>
-                    {student.name}
-                  </option>
-                ))}
-              {watchedValues.recipientType === "class" &&
-                classData.map((kelas: { id: number; name: string }) => (
-                  <option key={kelas.id} value={kelas.id}>
-                    {kelas.name}
-                  </option>
-                ))}
-              {watchedValues.recipientType === "grade" &&
-                gradeData.map((grade: { id: number; level: number }) => (
-                  <option key={grade.id} value={grade.id}>
-                    Angkatan {grade.level}
-                  </option>
-                ))}
-            </select>
+
+            {watchedValues.recipientType === "student" ? (
+              <Controller
+                name="recipientId"
+                control={control}
+                defaultValue={data?.recipientId || ""}
+                render={({ field }) => (
+                  <Select
+                    {...field}
+                    options={studentData.map(
+                      (student: { id: string; name: string }) => ({
+                        value: student.id,
+                        label: student.name,
+                      })
+                    )}
+                    className="text-sm"
+                    classNamePrefix="select"
+                    placeholder="Cari Siswa..."
+                    onChange={(selectedOption) =>
+                      field.onChange(selectedOption?.value ?? "")
+                    }
+                    value={
+                      studentData
+                        .map((student: { id: string; name: string }) => ({
+                          value: student.id,
+                          label: student.name,
+                        }))
+                        .find((opt: any) => opt.value === field.value) || null
+                    }
+                    isClearable
+                    isSearchable
+                  />
+                )}
+              />
+            ) : (
+              <select
+                {...register("recipientId")}
+                className="w-full border rounded px-3 py-2"
+              >
+                <option value="">Pilih Penerima</option>
+                {watchedValues.recipientType === "class" &&
+                  classData.map((kelas: { id: number; name: string }) => (
+                    <option key={kelas.id} value={kelas.id}>
+                      {kelas.name}
+                    </option>
+                  ))}
+                {watchedValues.recipientType === "grade" &&
+                  gradeData.map((grade: { id: number; level: number }) => (
+                    <option key={grade.id} value={grade.id}>
+                      Angkatan {grade.level}
+                    </option>
+                  ))}
+              </select>
+            )}
+
             {errors.recipientId && (
               <p className="text-red-600">{errors.recipientId.message}</p>
             )}

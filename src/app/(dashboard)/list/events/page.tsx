@@ -368,7 +368,7 @@ const EventListPage = async ({
                   { label: "ID Desc", value: "id_desc" },
                 ]}
               />
-              {(role === "admin" || role === "teacher") && (
+              {role === "admin"  && (
                 <FormContainer table="event" type="create"></FormContainer>
               )}
             </div>

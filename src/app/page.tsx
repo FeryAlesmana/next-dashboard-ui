@@ -29,7 +29,6 @@ export default function Home() {
       if (res.ok) {
         const data = await res.json();
         setHomeData(data);
-        console.log(data, " data in homePage");
       } else {
         toast.error("Fetch Home Data gagal");
       }

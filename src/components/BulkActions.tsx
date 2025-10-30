@@ -38,8 +38,6 @@ export default function BulkActions({
   relatedData?: any;
 }) {
   if (selectedIds.length === 0) return null;
-
-  console.log(selectedIds, "ids in baction");
   const noUpdateManyTables = [
     "class",
     "event",
@@ -101,6 +99,7 @@ export default function BulkActions({
               )
             )}
             <button
+              title="Batal"
               onClick={onReset}
               className="flex items-center justify-center rounded-full hover:bg-gray-300 transition w-7 h-7"
             >

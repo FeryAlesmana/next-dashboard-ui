@@ -108,7 +108,7 @@ const SingleStudentPage = async ({
     _count: { _all: true },
   });
 
-  const baseStats = { HADIR: 0, SAKIT: 0, ABSEN: 0 };
+  const baseStats = { HADIR: 0, SAKIT: 0, ABSEN: 0, IZIN: 0 };
 
   const stats = attendanceStats.reduce((acc, item) => {
     acc[item.status] = item._count._all;

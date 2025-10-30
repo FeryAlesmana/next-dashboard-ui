@@ -69,6 +69,7 @@ export default function DeleteManyForm({
           type="submit"
           className="bg-red-600 w-1/4 text-white font-semibold px-6 py-3 rounded hover:bg-gray-700 flex items-center justify-center gap-2"
           disabled={isSubmitting}
+          title="Hapus Banyak"
         >
           {isSubmitting && (
             <span className="animate-spin inline-block w-3 h-3 border-2 border-white border-t-blue-400 rounded-full mr-2"></span>

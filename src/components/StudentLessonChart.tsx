@@ -19,6 +19,7 @@ const StudentLessonChart = ({ data }: StudentLessonChartProps) => {
     HADIR: "#22c55e", // green
     SAKIT: "#eab308", // yellow
     ABSEN: "#ef4444", // red
+    IZIN : "#4caf50"
   };
   return (
     <ResponsiveContainer width="100%" height={300}>

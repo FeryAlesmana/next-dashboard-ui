@@ -15,7 +15,8 @@ export default function TeacherListClient({
   role,
   relatedData,
   options,
-}: BaseListClientProps) {
+  count,
+}: BaseListClientProps & { count: number }) {
   const [selected, setSelected] = useState<string[]>([]);
   const [localData, setLocalData] = useState(data); // 👈 keep a client copy
 
@@ -61,7 +62,9 @@ export default function TeacherListClient({
     <div className="space-y-4 mt-3">
       {/* TOP */}
       <div className="flex items-center justify-between">
-        <h1 className="hidden md:block text-lg font-semibold">Semua Guru</h1>
+        <h1 className="hidden md:block text-lg font-semibold">
+          Semua Guru ({count} Guru)
+        </h1>
         <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
           <TableSearch></TableSearch>
           <div className="flex items-center gap-4 self-end">

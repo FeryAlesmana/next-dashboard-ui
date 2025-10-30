@@ -6,7 +6,7 @@ import {
   normalizeSearchParams,
 } from "@/lib/utils";
 import Link from "next/link";
-import { Prisma } from "@prisma/client";
+import { AttendanceStatus, Prisma } from "@prisma/client";
 import { ITEM_PER_PAGE } from "@/lib/setting";
 import FormContainer from "@/components/FormContainer";
 import Table from "@/components/Table";
@@ -27,7 +27,7 @@ interface AttendanceDetailPageProps {
   }>;
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }
-
+type AttendanceCount = Record<AttendanceStatus, number>;
 export default async function AttendanceDetailPage({
   params,
   searchParams,
@@ -287,14 +287,19 @@ export default async function AttendanceDetailPage({
   const chartData = attendanceStats.reduce((acc, item) => {
     const studentId = item.studentId!;
     if (!acc[studentId]) {
-      acc[studentId] = { HADIR: 0, SAKIT: 0, ABSEN: 0 };
+      acc[studentId] = {
+        HADIR: 0,
+        SAKIT: 0,
+        ABSEN: 0,
+        IZIN: 0,
+      } as AttendanceCount;
     }
 
     // ✅ count comes from _all, since you grouped by status
     acc[studentId][item.status] = (item._count as { _all: number })._all;
 
     return acc;
-  }, {} as Record<string, { HADIR: number; SAKIT: number; ABSEN: number }>);
+  }, {} as Record<string, AttendanceCount>);
 
   return (
     <ClientPageWrapper key={key} role={role!}>
@@ -350,6 +355,7 @@ export default async function AttendanceDetailPage({
               HADIR: 0,
               SAKIT: 0,
               ABSEN: 0,
+              IZIN: 0,
             };
             const chartArray = Object.entries(studentStats).map(
               ([status, count]) => ({

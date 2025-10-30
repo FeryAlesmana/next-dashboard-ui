@@ -55,7 +55,7 @@ export default function ResultTableClient({
 
         <td>
           <div className="flex items-center gap-2">
-            {role === "admin" && (
+            {(role === "admin" || role === "teacher") && (
               <>
                 <FormModal
                   table="result"

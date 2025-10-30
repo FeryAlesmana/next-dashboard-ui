@@ -1,3 +1,4 @@
+import { AttendanceStatus } from "@prisma/client";
 import React from "react";
 
 export default function AttendanceMeetingCard({
@@ -13,11 +14,11 @@ export default function AttendanceMeetingCard({
   };
   student?: { name: string };
   attendance?: {
-    status: "HADIR" | "SAKIT" | "ABSEN";
+    status: AttendanceStatus;
     date?: Date | null;
   };
 }) {
-  const getStatusLabel = (status?: "HADIR" | "SAKIT" | "ABSEN") => {
+  const getStatusLabel = (status?: AttendanceStatus) => {
     switch (status) {
       case "HADIR":
         return <span className="text-green-600">Hadir</span>;
@@ -25,6 +26,8 @@ export default function AttendanceMeetingCard({
         return <span className="text-yellow-500">Sakit</span>;
       case "ABSEN":
         return <span className="text-red-600">Absen</span>;
+      case "IZIN":
+        return <span className="text-blue-600">Izin</span>;
       default:
         return <span className="text-gray-400">Belum Diisi</span>;
     }

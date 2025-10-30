@@ -7,6 +7,7 @@ import {
   activateManyStudents,
   activateManyTeachers,
 } from "@/lib/actions";
+import { useRouter } from "next/navigation";
 
 type ActivateAccountFormProps = {
   setOpen: Dispatch<SetStateAction<boolean>>;
@@ -40,7 +41,7 @@ export default function ActivateAccountForm({
   ids,
 }: ActivateAccountFormProps) {
   const [loading, setLoading] = useState(false);
-
+  const router = useRouter();
   const handleActivate = async () => {
     setLoading(true);
 
@@ -60,11 +61,21 @@ export default function ActivateAccountForm({
           throw new Error("Unsupported table for activation");
       }
 
-      if (res.success) {
-        toast.success(res.message);
-      } else {
-        toast.error("Gagal dalam mengaktifasi Akun");
+      // ✅ Always show summary first
+      toast[res.success ? "success" : "error"](res.message);
+
+      // ✅ If there are failed items, show them one by one
+      if (Array.isArray(res.failed) && res.failed.length > 0) {
+        res.failed.forEach((f: any) => {
+          toast.error(
+            `${f.username || "(unknown)"} gagal${
+              f.field ? ` karena ${f.field}` : ""
+            }: ${f.message}`,
+            { autoClose: false }
+          );
+        });
       }
+      router.refresh();
     } catch (err: any) {
       toast.error(err.message || "Terjadi Kesalahan!");
     } finally {

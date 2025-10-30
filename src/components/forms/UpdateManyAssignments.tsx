@@ -131,7 +131,7 @@ const UpdateManyAssignmentsForm = ({
         ))} */}
         <input type="hidden" {...register("ids")} />
         <span className="text-center font-medium">
-          {ids.length} Nilai akan diperbarui.
+          {ids.length} Tugas akan diperbarui.
         </span>
         <div className="flex justify-between flex-wrap gap-4 m-4">
           <InputField

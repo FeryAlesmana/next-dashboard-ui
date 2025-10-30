@@ -115,9 +115,10 @@ async function generateFormulirPDF(ppdb: any) {
   y -= 20;
   page.drawLine({ start: { x: 50, y }, end: { x: 545, y }, thickness: 1 });
 
+  const currentYear = new Date().getFullYear();
   // Title
   y -= 30;
-  page.drawText("Formulir Penerimaan Peserta Didik Baru Tahun 2023", {
+  page.drawText(`Formulir Penerimaan Peserta Didik Baru Tahun ${currentYear}`, {
     x: 120,
     y,
     size: 12,
@@ -364,7 +365,8 @@ async function generateFormulirPDF(ppdb: any) {
 }
 
 export async function POST(req: Request) {
-  const { email, message } = await req.json();
+  const { email, message, isValid } = await req.json();
+  console.log(email, message, isValid, "json in api");
 
   if (!email || !message) {
     return NextResponse.json(
@@ -383,8 +385,10 @@ export async function POST(req: Request) {
   }
 
   // Generate PDF
-  const pdfBytes = await generateFormulirPDF(ppdb);
-
+  let pdfBytes: Uint8Array<ArrayBufferLike> | undefined;
+  if (isValid) {
+    pdfBytes = await generateFormulirPDF(ppdb);
+  }
   // Nodemailer setup
   const transporter = nodemailer.createTransport({
     service: "gmail",
@@ -414,19 +418,25 @@ export async function POST(req: Request) {
   `;
 
   try {
-    await transporter.sendMail({
+    const mailOptions: any = {
       from: `"PPDB Sekolah" <${process.env.SMTP_USER}>`,
       to: email,
       subject: "Notifikasi Formulir PPDB",
       html: htmlContent,
-      attachments: [
+    };
+
+    // Tambahkan attachment hanya jika isValid === true
+    if (isValid && pdfBytes) {
+      mailOptions.attachments = [
         {
           filename: `formulir-ppdb-${ppdb.id}.pdf`,
           content: Buffer.from(pdfBytes),
           contentType: "application/pdf",
         },
-      ],
-    });
+      ];
+    }
+
+    await transporter.sendMail(mailOptions);
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (err) {

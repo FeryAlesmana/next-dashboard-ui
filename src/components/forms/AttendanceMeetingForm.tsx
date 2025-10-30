@@ -13,8 +13,8 @@ import { toast } from "react-toastify";
 import { attendanceSchema, AttendanceSchema } from "@/lib/formValidationSchema";
 import { useRouter } from "next/navigation";
 import { CurrentState, updateAttendance } from "@/lib/actions";
-import { AttendanceStatus } from "@/lib/formValidationSchema";
 import ConfirmDialog from "../ConfirmDialog";
+import { AttendanceStatus } from "@prisma/client";
 
 export type AttendanceData = Record<string, { status: AttendanceStatus }>;
 
@@ -34,7 +34,7 @@ const AttendanceMeetingForm = ({
   const { students = [], lessons = [], meetingNo } = relatedData || {};
   const attendanceData = (data?.attendance || {}) as AttendanceData;
 
-  const statuses: AttendanceStatus[] = ["HADIR", "SAKIT", "ABSEN"];
+  const statuses: AttendanceStatus[] = ["HADIR", "SAKIT", "ABSEN", "IZIN"];
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [formData, setFormData] = useState<AttendanceSchema | null>(null);

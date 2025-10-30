@@ -339,8 +339,8 @@ const FormModal = ({
     const rawIds = formData.getAll("ids");
     const ids = rawIds as string[];
 
-    console.log(ids, " ids in delete handler");
-    console.log(table, " table in delete handler");
+    // console.log(ids, " ids in delete handler");
+    // console.log(table, " table in delete handler");
 
     if (!table || !Array.isArray(ids)) {
       return { success: false, error: true, message: "Invalid data" };
@@ -390,7 +390,7 @@ const FormModal = ({
         router.refresh();
       }
     }, [state, router]);
-    console.log(relatedData, " relatedData in form Modal");
+    // console.log(relatedData, " relatedData in form Modal");
 
     return type === "delete" && id ? (
       <form
@@ -408,6 +408,7 @@ const FormModal = ({
           <button
             type="submit"
             className="bg-red-600 w-1/4 text-white font-semibold px-6 py-3 rounded hover:bg-gray-700 flex items-center justify-center gap-2"
+            title="Hapus Item"
             disabled={isSubmitting}
           >
             {isSubmitting && (
@@ -449,6 +450,7 @@ const FormModal = ({
           <button
             onClick={() => setOpen(true)}
             className="flex items-center justify-center rounded-full hover:bg-lamaYellow transition w-7 h-7"
+            title="Aktivasi Akun"
           >
             <Image
               src="/attendance.png"
@@ -635,6 +637,7 @@ const FormModal = ({
               <button
                 onClick={() => setOpen(true)}
                 className="flex items-center justify-center rounded-full hover:bg-lamaYellow transition w-7 h-7"
+                title="Update Banyak"
               >
                 <Image
                   src="/updateDark.png"
@@ -678,6 +681,7 @@ const FormModal = ({
               <button
                 onClick={() => setOpen(true)}
                 className="flex items-center justify-center rounded-full hover:bg-lamaYellow transition w-7 h-7"
+                title="Update Banyak"
               >
                 <Image
                   src="/updateDark.png"
@@ -722,6 +726,7 @@ const FormModal = ({
               <button
                 onClick={() => setOpen(true)}
                 className="flex items-center justify-center rounded-full hover:bg-lamaYellow transition w-7 h-7"
+                title="Update Banyak"
               >
                 <Image
                   src="/updateDark.png"
@@ -766,6 +771,7 @@ const FormModal = ({
               <button
                 onClick={() => setOpen(true)}
                 className="flex items-center justify-center rounded-full hover:bg-lamaYellow transition w-7 h-7"
+                title="Update Banyak"
               >
                 <Image
                   src="/updateDark.png"
@@ -810,6 +816,7 @@ const FormModal = ({
               <button
                 onClick={() => setOpen(true)}
                 className="flex items-center justify-center rounded-full hover:bg-lamaYellow transition w-7 h-7"
+                title="Update Banyak"
               >
                 <Image
                   src="/updateDark.png"
@@ -853,6 +860,7 @@ const FormModal = ({
               <button
                 onClick={() => setOpen(true)}
                 className="flex items-center justify-center rounded-full hover:bg-lamaYellow transition w-7 h-7"
+                title="Update Banyak"
               >
                 <Image
                   src="/updateDark.png"
@@ -896,6 +904,7 @@ const FormModal = ({
               <button
                 onClick={() => setOpen(true)}
                 className="flex items-center justify-center rounded-full hover:bg-lamaYellow transition w-7 h-7"
+                title="Update Banyak"
               >
                 <Image
                   src="/updateDark.png"
@@ -937,11 +946,19 @@ const FormModal = ({
         break;
     }
   }
-  console.log(table, " table in form modal");
 
   return (
     <>
       <button
+        title={
+          type === "create"
+            ? "Tambah Data"
+            : type === "update"
+            ? "Perbarui Data"
+            : type === "deleteMany"
+            ? "Hapus Banyak"
+            : ""
+        }
         className={`
     ${size} flex items-center justify-center rounded-full transition
     ${

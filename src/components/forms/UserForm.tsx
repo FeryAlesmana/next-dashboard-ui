@@ -14,10 +14,10 @@ import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import {
   createClass,
-  createUser,
+  createUserDB,
   CurrentState,
   updateClass,
-  updateUser,
+  updateUserDB,
 } from "@/lib/actions";
 import {
   classSchema,
@@ -42,6 +42,7 @@ const UserForm = ({
     trigger,
     control,
     formState: { errors },
+    setError,
   } = useForm<UserSchema>({
     resolver: zodResolver(userSchema),
   });
@@ -50,14 +51,14 @@ const UserForm = ({
     prevState: CurrentState,
     payload: UserSchema
   ): Promise<CurrentState> => {
-    return await createUser(prevState, payload);
+    return await createUserDB(prevState, payload);
   };
 
   const updateUserHandler = async (
     prevState: CurrentState,
     payload: UserSchema
   ): Promise<CurrentState> => {
-    return await updateUser(prevState, payload);
+    return await updateUserDB(prevState, payload);
   };
 
   const [state, formAction] = useActionState(
@@ -74,9 +75,17 @@ const UserForm = ({
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
-    if (!state.success && !state.error) return;
+    if (!state.success && state.error) {
+      if (state.field) {
+        setError(state.field as any, { message: state.message });
+      } else {
+        // General (non-field) error
+        // router.refresh();
+        toast.error(state.message || "Terjadi kesalahan.");
+      }
+    }
     setIsSubmitting(false);
-  }, [state.success, state.error]);
+  }, [state, setError]);
 
   const handleSubmitForm = () => {
     if (!formData) return;
@@ -100,6 +109,7 @@ const UserForm = ({
       setShowConfirm(false);
     }
   };
+  // console.log(data, "data in user form");
 
   const router = useRouter();
 
@@ -119,11 +129,11 @@ const UserForm = ({
     }
   }, [state, type, setOpen, router, onChanged, formData]);
 
-  const { foundUser, usersData = [] } = relatedData ?? {};
+  const { usersData = [] } = relatedData ?? {};
 
   const usersOptions = usersData.map((user: any) => ({
     value: user.id,
-    label: `${user.name} - ${user.type}`,
+    label: `${user.name} - ${user.role}`,
   }));
 
   return (
@@ -141,10 +151,7 @@ const UserForm = ({
           {type === "create" ? "Tambah User baru" : "Edit User"}
         </h1>
         <span className="text-xs text-gray-400 font-medium">
-          Informasi Kelas
-        </span>
-        <span className="text-xs text-gray-400 font-medium">
-          Informasi Autentikasi
+          Informasi User
         </span>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
           <div>
@@ -219,7 +226,7 @@ const UserForm = ({
             <Controller
               name="userId"
               control={control}
-              defaultValue={foundUser?.id || ""}
+              defaultValue={data?.id || ""}
               render={({ field }) => {
                 return (
                   <Select
@@ -227,7 +234,7 @@ const UserForm = ({
                     options={usersOptions}
                     className="text-sm"
                     classNamePrefix="select"
-                    placeholder="Cari User..."
+                    placeholder="Hubungkan User..."
                     onChange={(selectedOption) =>
                       field.onChange(selectedOption?.value)
                     }

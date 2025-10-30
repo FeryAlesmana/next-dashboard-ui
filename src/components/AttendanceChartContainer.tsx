@@ -32,13 +32,18 @@ const AttendanceChartContainer = async () => {
   const daysOfWeek = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat"];
 
   const attendanceMap: {
-    [key: string]: { HADIR: number; SAKIT: number; ABSEN: number };
+    [key: string]: {
+      HADIR: number;
+      SAKIT: number;
+      ABSEN: number;
+      IZIN: number;
+    };
   } = {
-    Senin: { HADIR: 0, SAKIT: 0, ABSEN: 0 },
-    Selasa: { HADIR: 0, SAKIT: 0, ABSEN: 0 },
-    Rabu: { HADIR: 0, SAKIT: 0, ABSEN: 0 },
-    Kamis: { HADIR: 0, SAKIT: 0, ABSEN: 0 },
-    Jumat: { HADIR: 0, SAKIT: 0, ABSEN: 0 },
+    Senin: { HADIR: 0, SAKIT: 0, ABSEN: 0, IZIN: 0 },
+    Selasa: { HADIR: 0, SAKIT: 0, ABSEN: 0, IZIN: 0 },
+    Rabu: { HADIR: 0, SAKIT: 0, ABSEN: 0, IZIN: 0 },
+    Kamis: { HADIR: 0, SAKIT: 0, ABSEN: 0, IZIN: 0 },
+    Jumat: { HADIR: 0, SAKIT: 0, ABSEN: 0, IZIN: 0 },
   };
 
   resData.forEach((item) => {
@@ -58,6 +63,7 @@ const AttendanceChartContainer = async () => {
     hadir: attendanceMap[day].HADIR,
     sakit: attendanceMap[day].SAKIT,
     absen: attendanceMap[day].ABSEN,
+    izin: attendanceMap[day].IZIN,
   }));
 
   return (

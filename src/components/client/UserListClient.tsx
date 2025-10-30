@@ -22,10 +22,12 @@ export default function UserListClient({
   columns,
   rows,
   role,
+  relatedData,
 }: {
   columns: any[];
   rows: User[];
   role: string;
+  relatedData: any;
 }) {
   const [selected, setSelected] = useState<string[]>([]);
   const [localData, setLocalData] = useState(rows);
@@ -120,7 +122,7 @@ export default function UserListClient({
                 ) : row.dbName === "-" ? (
                   // Any role with empty dbName → view disabled
                   <button
-                    className="w-7 h-7 flex items-center justify-center rounded-full bg-gray-200 cursor-not-allowed"
+                    className="w-7 h-7 items-center justify-center rounded-full bg-gray-200 cursor-not-allowed hidden"
                     title="Profile unavailable"
                     disabled
                   >
@@ -139,14 +141,20 @@ export default function UserListClient({
                       row.dbName
                     )}`}
                   >
-                    <button className="w-7 h-7 flex items-center justify-center rounded-full bg-lamaSky shadow-lg hover:bg-lamaSky/80">
+                    <button
+                      className="w-7 h-7 flex items-center justify-center rounded-full bg-lamaSky shadow-lg hover:bg-lamaSky/80"
+                      title="Profil User"
+                    >
                       <Image src="/view.png" alt="" width={16} height={16} />
                     </button>
                   </Link>
                 ) : (
                   // Teacher & Student → direct to /list/[role]s/[id]
                   <Link href={`/list/${row.role}s/${row.id}`}>
-                    <button className="w-7 h-7 flex items-center justify-center rounded-full bg-lamaSky shadow-lg hover:bg-lamaSky/80">
+                    <button
+                      className="w-7 h-7 flex items-center justify-center rounded-full bg-lamaSky shadow-lg hover:bg-lamaSky/80"
+                      title="Profil User"
+                    >
                       <Image src="/view.png" alt="" width={16} height={16} />
                     </button>
                   </Link>
@@ -156,7 +164,9 @@ export default function UserListClient({
                     <FormModal
                       table="user"
                       type="update"
-                      data={rows}
+                      id={row.id}
+                      data={row}
+                      relatedData={relatedData}
                     ></FormModal>
                     <FormModal
                       table="user"

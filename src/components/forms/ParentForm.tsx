@@ -17,7 +17,12 @@ import {
   useState,
 } from "react";
 import { useRouter } from "next/navigation";
-import { createParent, CurrentState, updateParent } from "@/lib/actions";
+import {
+  activateManyParents,
+  createParent,
+  CurrentState,
+  updateParent,
+} from "@/lib/actions";
 import { toast } from "react-toastify";
 import Select from "react-select";
 import z from "zod";
@@ -41,6 +46,8 @@ const ParentForm = ({
     formState: { errors },
     getValues,
     trigger,
+    setError,
+    clearErrors,
   } = useForm<
     typeof schema extends z.ZodTypeAny ? z.infer<typeof schema> : never
   >({
@@ -67,31 +74,43 @@ const ParentForm = ({
       success: false,
       error: false,
       message: "",
-      field: ""
+      field: "",
+      code: "",
     }
   );
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showActivateDialog, setShowActivateDialog] = useState(false);
+  const [pendingData, setPendingData] = useState<any>(null);
+  const [withUser, setWithUser] = useState(true); // default: true (Clerk enabled)
   const selectedSex = watch("sex");
 
   const router = useRouter();
 
   useEffect(() => {
     if (!state.success && state.error) {
-      toast.error(state.message || "Terjadi kesalahan.");
+      if (state.field) {
+        setError(state.field as any, { message: state.message });
+      } else if (state.code === "USER_NOT_FOUND") {
+        setShowActivateDialog(true);
+        setPendingData(getValues()); // store form data for retry
+      } else {
+        // General (non-field) error
+        // router.refresh();
+        toast.error(state.message || "Terjadi kesalahan.");
+      }
     }
     setIsSubmitting(false);
-  }, [state]);
+  }, [state, setError, getValues]);
 
   // Submit final setelah konfirmasi
   const handleSubmitForm = handleSubmit(async (data) => {
     setIsSubmitting(true);
-    console.log(data, "data in parentForm");
-
+    const payload: any = { ...data, withUser };
     try {
       startTransition(() => {
-        formAction(data);
+        formAction(payload);
       }); // ✅ wait for server action
     } finally {
       setIsSubmitting(false);
@@ -151,6 +170,7 @@ const ParentForm = ({
   );
   const [showPassword, setShowPassword] = useState(false);
 
+  // console.log(data, "data in parentForm");
   return (
     <>
       <form className="flex flex-col gap-8 " onSubmit={onSubmit}>
@@ -404,6 +424,42 @@ const ParentForm = ({
           }
           onConfirm={handleSubmitForm}
           onCancel={() => setShowConfirm(false)}
+        />
+      )}
+      {showActivateDialog && (
+        <ConfirmDialog
+          message={state.message || "Aktifkan Akun?"}
+          onConfirm={async () => {
+            clearErrors();
+            // Call a new server action to activate/create the Clerk user
+            const result = await activateManyParents([pendingData.id]); // ✅ pass as array
+            const failed = result.failed?.[0]; // only one expected
+            if (result.success) {
+              toast.success(result.message);
+            } else if (failed) {
+              if (failed.field) {
+                setError(failed.field as any, { message: failed.message });
+              }
+              toast.error(
+                `${failed.field ? `${failed.field}: ` : ""}${failed.message}`
+              );
+            } else {
+              toast.error(result.message || "Terjadi kesalahan.");
+            }
+            setShowActivateDialog(false);
+            // setOpen(false);
+            // router.refresh();
+          }}
+          onCancel={async () => {
+            clearErrors();
+            setWithUser(false);
+            formAction({
+              ...pendingData,
+              withUser: false, // tell server to skip Clerk
+            });
+            setShowActivateDialog(false);
+            router.refresh();
+          }}
         />
       )}
     </>

@@ -10,7 +10,12 @@ import {
   updateStudentSchema,
 } from "@/lib/formValidationSchema";
 import { startTransition, useActionState, useEffect, useState } from "react";
-import { createStudent, CurrentState, updateStudent } from "@/lib/actions";
+import {
+  activateManyStudents,
+  createStudent,
+  CurrentState,
+  updateStudent,
+} from "@/lib/actions";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import Select from "react-select";
@@ -33,6 +38,9 @@ const StudentForm = ({
     control,
     trigger,
     formState: { errors },
+    setError,
+    clearErrors,
+    getValues,
   } = useForm<
     typeof schema extends z.ZodTypeAny ? z.infer<typeof schema> : never
   >({
@@ -51,6 +59,9 @@ const StudentForm = ({
   const [uploadingField, setUploadingField] = useState<
     keyof typeof dokumen | null
   >(null);
+  const [pendingData, setPendingData] = useState<any>(null);
+  const [withUser, setWithUser] = useState(true); // default: true (Clerk enabled)
+  const [showActivateDialog, setShowActivateDialog] = useState(false);
   const createStudentHandler = async (
     prevState: CurrentState,
     payload: CreatestudentSchema
@@ -98,10 +109,19 @@ const StudentForm = ({
 
   useEffect(() => {
     if (!state.success && state.error) {
-      toast.error(state.message || "Terjadi kesalahan.");
+      if (state.field) {
+        setError(state.field as any, { message: state.message });
+      } else if (state.code === "USER_NOT_FOUND") {
+        setShowActivateDialog(true);
+        setPendingData(getValues()); // store form data for retry
+      } else {
+        // General (non-field) error
+        // router.refresh();
+        toast.error(state.message || "Terjadi kesalahan.");
+      }
     }
     setIsSubmitting(false);
-  }, [state]);
+  }, [state, getValues, setError]);
 
   const handleSubmitForm = handleSubmit(async (data) => {
     setIsSubmitting(true);
@@ -113,6 +133,9 @@ const StudentForm = ({
       dokumenIjazah: dokumen.ijazah,
       dokumenAkte: dokumen.akte,
       dokumenKKKTP: dokumen.kk_ktp_sktm,
+      withUser,
+      classId: data.classId ? parseInt(data.classId) : null,
+      gradeId: data.gradeId ? parseInt(data.gradeId) : null,
     };
 
     startTransition(() => {
@@ -879,7 +902,7 @@ const StudentForm = ({
               defaultValue={data?.gradeId}
             >
               {grades.map((grade: { id: number; level: number }) => (
-                <option value={grade.id} key={grade.id}>
+                <option value={grade.level} key={grade.id}>
                   {grade.level}
                 </option>
               ))}
@@ -949,12 +972,65 @@ const StudentForm = ({
       {showConfirm && (
         <ConfirmDialog
           message={
-            type === "create"
-              ? "Tambah Pengumuman baru?"
-              : "Simpan perubahan Pengumuman?"
+            type === "create" ? "Tambah Murid baru?" : "Simpan perubahan Murid?"
           }
           onConfirm={handleSubmitForm}
           onCancel={() => setShowConfirm(false)}
+        />
+      )}
+      {showActivateDialog && (
+        <ConfirmDialog
+          message={state.message || "Aktifkan Akun?"}
+          onConfirm={async () => {
+            clearErrors();
+            // Call a new server action to activate/create the Clerk user
+            const result = await activateManyStudents([pendingData.id]); // ✅ pass as array
+            const failed = result.failed?.[0]; // only one expected
+            if (result.success) {
+              toast.success(result.message);
+            } else if (failed) {
+              if (failed.field) {
+                setError(failed.field as any, { message: failed.message });
+              }
+              toast.error(
+                `${failed.field ? `${failed.field}: ` : ""}${failed.message}`
+              );
+            } else {
+              toast.error(result.message || "Terjadi kesalahan.");
+            }
+            setShowActivateDialog(false);
+            // setOpen(false);
+            // router.refresh();
+          }}
+          onCancel={async () => {
+            clearErrors();
+            setWithUser(false);
+            formAction({
+              ...pendingData,
+              withUser: false,
+              img: img?.secure_url,
+              awards_date: data.awards_date ? new Date(data.awards_date) : null,
+              dokumenIjazah: dokumen.ijazah,
+              dokumenAkte: dokumen.akte,
+              dokumenKKKTP: dokumen.kk_ktp_sktm,
+              classId: data.classId ? parseInt(data.classId) : null,
+              gradeId: data.gradeId ? parseInt(data.gradeId) : null,
+              height: data.height ? parseInt(data.height) : null,
+              weight: data.weight ? parseInt(data.weight) : null,
+              distance_from_home: data.distance_from_home
+                ? parseInt(data.distance_from_home)
+                : null,
+              time_from_home: data.time_from_home
+                ? parseInt(data.time_from_home)
+                : null,
+              number_of_siblings: data.number_of_siblings
+                ? parseInt(data.number_of_siblings)
+                : null,
+              postcode: data.postcode ? parseInt(data.postcode) : null,
+            });
+            setShowActivateDialog(false);
+            router.refresh();
+          }}
         />
       )}
     </>

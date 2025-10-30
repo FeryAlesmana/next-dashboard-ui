@@ -4,7 +4,7 @@ import FormContainer from "@/components/FormContainer";
 import Pagination from "@/components/Pagination";
 import ParentPaymentView from "@/components/client/ParentPaymentView";
 import PaymentListClient from "@/components/client/PaymentListClient";
-import StudentPaymentView from "@/components/client/StudentPaymentView";
+import StudentPaymentView, { Semester } from "@/components/client/StudentPaymentView";
 import prisma from "@/lib/prisma";
 import { getCurrentUser, normalizeSearchParams } from "@/lib/utils";
 import { PaymentLog, PaymentType, Prisma, Student } from "@prisma/client";
@@ -77,6 +77,7 @@ const PaymentLogListPage = async ({
   const query: Prisma.PaymentLogWhereInput = {};
   let orderBy: Prisma.PaymentLogOrderByWithRelationInput | undefined;
   let gradeLevel = 3;
+  let semesters: Semester[] = [];
   // ROLE CONDITION
   switch (role) {
     case "admin":
@@ -155,10 +156,6 @@ const PaymentLogListPage = async ({
           };
         })
       );
-
-      const gradeLevels = children
-        .map((child: any) => child.class?.grade?.level)
-        .filter(Boolean);
 
       return (
         <>

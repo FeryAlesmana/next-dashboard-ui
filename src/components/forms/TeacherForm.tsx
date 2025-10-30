@@ -20,7 +20,12 @@ import {
 } from "@/lib/formValidationSchema";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
-import { createTeacher, CurrentState, updateTeacher } from "@/lib/actions";
+import {
+  activateManyTeachers,
+  createTeacher,
+  CurrentState,
+  updateTeacher,
+} from "@/lib/actions";
 import Select from "react-select";
 import { Day } from "@prisma/client";
 import UploadPhoto from "../UploadPhoto";
@@ -43,6 +48,9 @@ const TeacherForm = ({
     control,
     reset,
     formState: { errors },
+    getValues,
+    setError,
+    clearErrors,
   } = useForm<
     typeof schema extends z.ZodTypeAny ? z.infer<typeof schema> : never
   >({
@@ -82,11 +90,23 @@ const TeacherForm = ({
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showActivateDialog, setShowActivateDialog] = useState(false);
+  const [pendingData, setPendingData] = useState<any>(null);
+  const [withUser, setWithUser] = useState(true); // default: true (Clerk enabled)
 
   useEffect(() => {
-    if (!state.success && !state.error) return;
+    if (!state.success && state.error) {
+      if (state.field) {
+        setError(state.field as any, { message: state.message });
+      } else if (state.code === "USER_NOT_FOUND") {
+        setShowActivateDialog(true);
+        setPendingData(getValues()); // store form data for retry
+      } else {
+        toast.error(state.message || "Terjadi kesalahan.");
+      }
+    }
     setIsSubmitting(false);
-  }, [state.success, state.error]);
+  }, [state, setError, getValues]);
 
   const handleSubmitForm = handleSubmit((data) => {
     setIsSubmitting(true);
@@ -94,8 +114,8 @@ const TeacherForm = ({
     const payload = {
       ...data,
       img: img?.secure_url,
+      withUser,
     };
-    console.log(payload, "isi Payload");
 
     startTransition(() => {
       formAction(payload);
@@ -223,11 +243,12 @@ const TeacherForm = ({
         />
         <div className="flex justify-between flex-wrap gap-4">
           <InputField
-            label="Nama depan"
+            label="Nama Lengkap"
             name="name"
             defaultValue={data?.name}
             register={register}
             error={errors?.name}
+            placeholder="Masukkan Nama Lengkap Guru"
           ></InputField>
           <InputField
             label="No. Telepon"
@@ -243,7 +264,7 @@ const TeacherForm = ({
             defaultValue={data?.address}
             register={register}
             error={errors?.address}
-            placeholder="Masukkan nomor WhatsApp (10-13 digit)"
+            placeholder="Masukkan Alamat Guru"
           ></InputField>
           <InputField
             label="RT"
@@ -497,6 +518,43 @@ const TeacherForm = ({
           message={type === "create" ? "Tambah Guru baru?" : "Ubah Guru?"}
           onConfirm={handleSubmitForm}
           onCancel={() => setShowConfirm(false)}
+        />
+      )}
+      {showActivateDialog && (
+        <ConfirmDialog
+          message={state.message || "Aktifkan Akun?"}
+          onConfirm={async () => {
+            clearErrors();
+            // Call a new server action to activate/create the Clerk user
+            const result = await activateManyTeachers([pendingData.id]); // ✅ pass as array
+            const failed = result.failed?.[0]; // only one expected
+            if (result.success) {
+              toast.success(result.message);
+            } else if (failed) {
+              if (failed.field) {
+                setError(failed.field as any, { message: failed.message });
+              }
+              toast.error(
+                `${failed.field ? `${failed.field}: ` : ""}${failed.message}`
+              );
+            } else {
+              toast.error(result.message || "Terjadi kesalahan.");
+            }
+            setShowActivateDialog(false);
+            // setOpen(false);
+            // router.refresh();
+          }}
+          onCancel={async () => {
+            clearErrors();
+            setWithUser(false);
+            formAction({
+              ...pendingData,
+              img: img?.secure_url,
+              withUser: false, // tell server to skip Clerk
+            });
+            setShowActivateDialog(false);
+            router.refresh();
+          }}
         />
       )}
     </>

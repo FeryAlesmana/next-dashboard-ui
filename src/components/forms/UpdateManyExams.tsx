@@ -82,7 +82,7 @@ const UpdateManyExamsForm = ({
   useEffect(() => {
     setValue("ids", ids!);
     if (state.success) {
-      toast(`Tugas telah berhasil di Edit!`);
+      toast(`Ujian telah berhasil di Edit!`);
       if (state.data && onChanged) {
         onChanged(state.data);
       }
@@ -115,7 +115,7 @@ const UpdateManyExamsForm = ({
   return (
     <>
       <form action="" className="flex flex-col gap-8" onSubmit={onSubmit}>
-        <h1 className="text-xl font-semibold">Edit Tugas Banyak</h1>
+        <h1 className="text-xl font-semibold">Edit Ujian Banyak</h1>
         <input type="hidden" name="table" value={table} />
         {/* {ids.map((id: number) => (
           <input key={id} type="hidden" value={id} {...register("ids")} />
@@ -201,7 +201,7 @@ const UpdateManyExamsForm = ({
       </form>
       {showConfirm && (
         <ConfirmDialog
-          message="Edit Tugas ini akan mengubah data yang ada. Apakah Anda yakin?"
+          message="Edit Ujian ini akan mengubah data yang ada. Apakah Anda yakin?"
           onConfirm={handleSubmitForm}
           onCancel={() => setShowConfirm(false)}
         />

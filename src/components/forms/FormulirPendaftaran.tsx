@@ -299,7 +299,7 @@ const FormulirPendaftaran = ({
     setSendingFeedback(true);
     let message = "";
     if (isValid) {
-      message = `Selamat formulir anda valid, silahkan bawa dokumen2 yang diminta ke sekolah.\n${
+      message = `Selamat formulir anda valid, silahkan bawa dokumen-dokumen yang diminta ke sekolah.\n${
         watchedValues.reason || ""
       }`;
     } else {
@@ -312,7 +312,7 @@ const FormulirPendaftaran = ({
       const res = await fetch("/api/send-ppdb-feedback", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: watchedValues.email, message }),
+        body: JSON.stringify({ email: watchedValues.email, message, isValid }),
       });
       if (res.ok) {
         toast.success("Notifikasi email telah dikirim!");

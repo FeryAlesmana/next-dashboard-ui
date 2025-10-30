@@ -198,6 +198,7 @@ const TeacherListPage = async ({
             data={data}
             role={role!}
             columns={columns}
+            count={count}
             relatedData={relatedData}
             options={options}
           />
@@ -206,7 +207,6 @@ const TeacherListPage = async ({
         <div className="">
           <Pagination page={p} count={count}></Pagination>
         </div>
-        
       </div>
     </ClientPageWrapper>
   );

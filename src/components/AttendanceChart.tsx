@@ -14,7 +14,13 @@ import {
 const AttendanceChart = ({
   data,
 }: {
-  data: { name: string; hadir: number; sakit: number; absen: number }[];
+  data: {
+    name: string;
+    hadir: number;
+    sakit: number;
+    absen: number;
+    izin: number;
+  }[];
 }) => {
   const daysOfWeek = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat"];
   const today = new Date();
@@ -90,6 +96,13 @@ const AttendanceChart = ({
           dataKey="absen"
           fill="#f44336"
           name="Absen"
+          legendType="circle"
+          radius={[5, 5, 0, 0]}
+        />
+        <Bar
+          dataKey="izin"
+          fill="#8884d8"
+          name="Izin"
           legendType="circle"
           radius={[5, 5, 0, 0]}
         />

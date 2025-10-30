@@ -1,6 +1,7 @@
 import {
   Agama,
   assTypes,
+  AttendanceStatus,
   Awards,
   Degree,
   exTypes,
@@ -33,6 +34,7 @@ export type ClassSchema = z.infer<typeof classSchema>;
 
 export const teacherSchema = z.object({
   id: z.string().optional(),
+  withUser: z.boolean().optional().default(true),
   username: z
     .string()
     .min(3, { message: "Username harus lebih dari 3 karakter!" })
@@ -132,6 +134,7 @@ export type UpdateteacherSchema = z.infer<typeof updateTeacherSchema>;
 export const studentSchema = z.object({
   id: z.string().optional(),
   sdId: z.string({ message: "Student details Id harus diisi!" }),
+  withUser: z.boolean().optional().default(true),
   username: z
     .string()
     .min(3, { message: "Username harus lebih dari 3 karakter!" })
@@ -336,7 +339,7 @@ export const parentSchema = z.object({
     message: " Jenis Kelamin Calon Siswa wajib diisi!",
   }),
   waliMurid: z.nativeEnum(parents, { message: "Wali murid wajib diisi" }),
-
+  withUser: z.boolean().optional().default(true),
   phone: z.string().min(1, { message: "Nomor telepon wajib diisi!" }),
   birthday: z.coerce.date({ message: "Tanggal lahir Ortu wajib disii!" }),
   job: z.string().min(1, { message: "Pekerjaan Ortu wajib diisi!" }),
@@ -793,17 +796,14 @@ export const attendanceSchema = z.object({
   attendance: z
     .record(
       z.object({
-        status: z.enum(["HADIR", "SAKIT", "ABSEN"], {
-          required_error: "Status wajib diisi",
+        status: z.nativeEnum(AttendanceStatus, {
+          required_error: "Status Kehadiran wajib diisi",
         }),
       })
     )
     .optional(),
 });
 export type AttendanceSchema = z.infer<typeof attendanceSchema>;
-
-export const attendanceStatusEnum = z.enum(["HADIR", "SAKIT", "ABSEN"]);
-export type AttendanceStatus = z.infer<typeof attendanceStatusEnum>;
 
 export const paymentLogSchema = z
   .object({

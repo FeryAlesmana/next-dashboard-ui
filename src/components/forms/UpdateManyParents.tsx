@@ -67,7 +67,7 @@ const UpdateManyParentForm = ({
 
   useEffect(() => {
     if (state.success) {
-      toast("Berhasil memperbarui Guru-guru.");
+      toast("Berhasil memperbarui Wali Murid.");
       if (state.data && onChanged) {
         onChanged(state.data);
       }
@@ -95,7 +95,7 @@ const UpdateManyParentForm = ({
       ))}
 
       <span className="text-center font-medium">
-        {ids.length} Guru akan diperbarui. <br />
+        {ids.length} Wali Murid akan diperbarui. <br />
         Silakan pilih Mata Pelajaran dan Jadwal baru:
       </span>
       <div className="grid grid-cols-2 gap-4 max-h-[500px] overflow-y-auto p-4 border rounded-xl shadow-inner bg-gray-50">

@@ -121,52 +121,42 @@ const UserListPage = async ({
       password: foundUser?.password ? decryptPassword(foundUser.password) : "", // ← pulled from student/teacher/parent table
     });
   }
-  const renderRow = (item: any) => {
-    const canEdit = role === "admin";
-
-    return (
-      <tr
-        key={item.id}
-        className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight"
-      >
-        <td className="flex items-center p-4 gap-4">
-          <Image
-            src={item.img || "/noAvatar.png"}
-            alt=""
-            width={40}
-            height={40}
-            className="md:hidden xl:block w-10 h-10 rounded-full object-cover"
-          />
-          <div className="flex flex-col">
-            <h3 className="font-semibold">{item.name}</h3>
-            <p className="text-xs text-gray-500">{item.role}</p>
-          </div>
-        </td>
-        <td className="hidden md:table-cell">{item.email}</td>
-        <td className="hidden md:table-cell">{item.dbName}</td>
-        <td>
-          {canEdit && (
-            <div className="flex items-center gap-2">
-              <FormContainer
-                table="user"
-                type="update"
-                id={item.id}
-                data={item}
-              ></FormContainer>
-              <FormContainer
-                table="user"
-                type="delete"
-                id={item.id}
-              ></FormContainer>
-            </div>
-          )}
-        </td>
-      </tr>
-    );
-  };
-
+  if (sp.sort) {
+    switch (sp.sort) {
+      case "az":
+        rows.sort((a, b) => a.name.localeCompare(b.name));
+        break;
+      case "za":
+        rows.sort((a, b) => b.name.localeCompare(a.name));
+        break;
+      case "id_asc":
+        rows.sort((a, b) => a.id.localeCompare(b.id));
+        break;
+      case "id_desc":
+        rows.sort((a, b) => b.id.localeCompare(a.id));
+        break;
+    }
+  }
   // Apply pagination here
+  const students = await prisma.student.findMany({
+    select: { id: true, name: true },
+  });
 
+  const teachers = await prisma.teacher.findMany({
+    select: { id: true, name: true },
+  });
+
+  const parents = await prisma.parent.findMany({
+    select: { id: true, name: true },
+  });
+
+  // Combine them all into one
+  const usersData = [
+    ...students.map((s) => ({ id: s.id, name: s.name, role: "student" })),
+    ...teachers.map((t) => ({ id: t.id, name: t.name, role: "teacher" })),
+    ...parents.map((p) => ({ id: p.id, name: p.name, role: "parent" })),
+  ];
+  let relatedData = { usersData };
   return (
     <ClientPageWrapper key={key} role={role!}>
       <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
@@ -214,7 +204,12 @@ const UserListPage = async ({
             </div>
           ) : (
             // <Table columns={columns} renderRow={renderRow} data={rows} />
-            <UserListClient rows={rows} role={role!} columns={columns} />
+            <UserListClient
+              rows={rows}
+              role={role!}
+              columns={columns}
+              relatedData={relatedData}
+            />
           )}
         </div>
         {/* PAGINATION */}
