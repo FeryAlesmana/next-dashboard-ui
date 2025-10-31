@@ -165,6 +165,12 @@ const StudentForm = ({
         `Siswa telah berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`
       );
       setOpen(false);
+      if (type === "create") {
+        setTimeout(
+          () => router.push(`/list/students${state.id}`),
+          3000
+        );
+      }
       if (onChanged && updatedItem) {
         onChanged(updatedItem); // 🔥 notify parent so it can update localData
       } else {

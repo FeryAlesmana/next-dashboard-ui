@@ -171,6 +171,12 @@ const TeacherForm = ({
         router.refresh(); // fallback if no handler passed
       }
       setOpen(false);
+      if (type === "create") {
+        setTimeout(
+          () => router.push(`/list/teachers${state.id}`),
+          3000
+        );
+      }
       
     }
   }, [state, type, setOpen, router, data, reset, img, onChanged, withUser]);

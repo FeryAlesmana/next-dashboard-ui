@@ -152,11 +152,14 @@ const ParentForm = ({
           type === "create" ? "Tambah!" : "Edit!"
         }`
       );
-      setOpen(false);
       if (onChanged && updatedItem) {
         onChanged(updatedItem); // 🔥 notify parent so it can update localData
       } else {
         router.refresh(); // fallback if no handler passed
+      }
+      setOpen(false);
+      if (type === "create") {
+        setTimeout(() => router.push(`/list/parents?id=${state.id}`), 3000);
       }
     }
   }, [state, type, setOpen, router, data, reset, onChanged]);
