@@ -60,7 +60,7 @@ const StudentForm = ({
     keyof typeof dokumen | null
   >(null);
   const [pendingData, setPendingData] = useState<any>(null);
-  const [withUser, setWithUser] = useState(true); // default: true (Clerk enabled)
+  const [withUser, setWithUser] = useState(true);
   const [showActivateDialog, setShowActivateDialog] = useState(false);
   const createStudentHandler = async (
     prevState: CurrentState,
@@ -80,6 +80,7 @@ const StudentForm = ({
     success: false,
     error: false,
     message: "",
+    field: "",
   };
   const [state, formAction] = useActionState(
     type === "create" ? createStudentHandler : updateStudentHandler,
@@ -164,19 +165,13 @@ const StudentForm = ({
         `Siswa telah berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`
       );
       setOpen(false);
-      if (type === "create") {
-        setTimeout(
-          () => router.push(`/list/students/student/${state.id}`),
-          3000
-        );
-      }
       if (onChanged && updatedItem) {
         onChanged(updatedItem); // 🔥 notify parent so it can update localData
       } else {
         router.refresh(); // fallback if no handler passed
       }
     }
-  }, [state, type, setOpen, router, onChanged, data]);
+  }, [state, type, setOpen, router, onChanged, data, withUser]);
   const { grades, classes, parents } = relatedData;
 
   //  console.log(data, "data in studentForm");
@@ -984,10 +979,14 @@ const StudentForm = ({
           onConfirm={async () => {
             clearErrors();
             // Call a new server action to activate/create the Clerk user
-            const result = await activateManyStudents([pendingData.id]); // ✅ pass as array
+            const result = await activateManyStudents([pendingData.id], true); // ✅ pass as array
             const failed = result.failed?.[0]; // only one expected
             if (result.success) {
               toast.success(result.message);
+              setTimeout(
+                () => router.push(`/list/students/${result.id}`),
+                3000
+              );
             } else if (failed) {
               if (failed.field) {
                 setError(failed.field as any, { message: failed.message });

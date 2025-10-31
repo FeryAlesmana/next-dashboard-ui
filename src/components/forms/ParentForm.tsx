@@ -432,10 +432,14 @@ const ParentForm = ({
           onConfirm={async () => {
             clearErrors();
             // Call a new server action to activate/create the Clerk user
-            const result = await activateManyParents([pendingData.id]); // ✅ pass as array
+            const result = await activateManyParents([pendingData.id], true); // ✅ pass as array
             const failed = result.failed?.[0]; // only one expected
             if (result.success) {
               toast.success(result.message);
+              setTimeout(
+                () => router.push(`/list/parents?id=${result.id}`),
+                3000
+              );
             } else if (failed) {
               if (failed.field) {
                 setError(failed.field as any, { message: failed.message });

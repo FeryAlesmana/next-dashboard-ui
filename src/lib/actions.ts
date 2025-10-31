@@ -356,7 +356,7 @@ export const createTeacher = async (
       },
     });
 
-    return { success: true, error: false, data: createdTeacher };
+    return { success: true, error: false, data: createdTeacher, id: user.id };
   } catch (error: any) {
     let message = "Unknown error";
     // Handle Clerk API errors properly
@@ -1096,7 +1096,7 @@ export const updateStudent = async (
       updatedStudent.password = decryptPassword(updatedStudent.password);
     }
 
-    return { success: true, error: false, id: user?.id, data: updatedStudent };
+    return { success: true, error: false, data: updatedStudent };
   } catch (error) {
     const message =
       error instanceof Error
@@ -3851,7 +3851,7 @@ export const updateUserDB = async (
       message = error.message;
     }
 
-    return { success: false, error: true, message, field:field };
+    return { success: false, error: true, message, field: field };
   }
 };
 
@@ -3883,11 +3883,15 @@ export const deleteUser = async (
   }
 };
 
-export const activateManyStudents = async (ids: string[]) => {
+export const activateManyStudents = async (
+  ids: string[],
+  form: boolean = false
+) => {
   const created: string[] = [];
   const skipped: string[] = [];
   const failed: { username: string; field?: string; message: string }[] = [];
 
+  let createdStudentId: string | undefined = undefined;
   for (const id of ids) {
     try {
       const student = await prisma.student.findUnique({ where: { id } });
@@ -3916,6 +3920,10 @@ export const activateManyStudents = async (ids: string[]) => {
             data: { id: user.id },
           });
           created.push(student.username);
+          if (form && !createdStudentId) {
+            // ✅ only set once (for single form mode)
+            createdStudentId = user.id;
+          }
         }
       } catch (err: any) {
         console.error("❌ Clerk error:", err);
@@ -3948,14 +3956,18 @@ export const activateManyStudents = async (ids: string[]) => {
     created,
     skipped,
     failed,
+    id: createdStudentId,
     message: `✅ ${created.length} Di Aktifkan, ⚠️ ${skipped.length} Di Lewati, ❌ ${failed.length} Gagal.`,
   };
 };
-export const activateManyTeachers = async (ids: string[]) => {
+export const activateManyTeachers = async (
+  ids: string[],
+  form: boolean = false
+) => {
   const created: string[] = [];
   const skipped: string[] = [];
   const failed: { username: string; field?: string; message: string }[] = [];
-
+  let createdTeacherId: string | undefined = undefined;
   for (const id of ids) {
     try {
       const teacher = await prisma.teacher.findUnique({ where: { id } });
@@ -3983,6 +3995,10 @@ export const activateManyTeachers = async (ids: string[]) => {
             data: { id: user.id },
           });
           created.push(teacher.username);
+          if (form && !createdTeacherId) {
+            // ✅ only set once (for single form mode)
+            createdTeacherId = user.id;
+          }
         }
       } catch (err: any) {
         console.error("❌ Clerk error:", err);
@@ -4015,14 +4031,18 @@ export const activateManyTeachers = async (ids: string[]) => {
     created,
     skipped,
     failed,
+    id: createdTeacherId,
     message: `✅ ${created.length} Di Aktifkan, ⚠️ ${skipped.length} Di Lewati, ❌ ${failed.length} Gagal.`,
   };
 };
-export const activateManyParents = async (ids: string[]) => {
+export const activateManyParents = async (
+  ids: string[],
+  form: boolean = false
+) => {
   const created: string[] = [];
   const skipped: string[] = [];
   const failed: { username: string; field?: string; message: string }[] = [];
-
+  let createdParentId: string | undefined = undefined;
   for (const id of ids) {
     try {
       const parent = await prisma.parent.findUnique({ where: { id } });
@@ -4051,6 +4071,10 @@ export const activateManyParents = async (ids: string[]) => {
             data: { id: user.id },
           });
           created.push(parent.username);
+          if (form && !createdParentId) {
+            // ✅ only set once (for single form mode)
+            createdParentId = user.id;
+          }
         }
       } catch (err: any) {
         console.error("❌ Clerk error:", err);
@@ -4083,6 +4107,7 @@ export const activateManyParents = async (ids: string[]) => {
     created,
     skipped,
     failed,
+    id: createdParentId,
     message: `✅ ${created.length} Di Aktifkan, ⚠️ ${skipped.length} Di Lewati, ❌ ${failed.length} Gagal.`,
   };
 };

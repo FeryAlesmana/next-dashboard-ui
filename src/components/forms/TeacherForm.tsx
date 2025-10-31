@@ -171,11 +171,9 @@ const TeacherForm = ({
         router.refresh(); // fallback if no handler passed
       }
       setOpen(false);
-      setTimeout(() => {
-        router.refresh();
-      }, 800); // 0.8s delay
+      
     }
-  }, [state, type, setOpen, router, data, reset, img, onChanged]);
+  }, [state, type, setOpen, router, data, reset, img, onChanged, withUser]);
   const [showPassword, setShowPassword] = useState(false);
   return (
     <>
@@ -526,10 +524,14 @@ const TeacherForm = ({
           onConfirm={async () => {
             clearErrors();
             // Call a new server action to activate/create the Clerk user
-            const result = await activateManyTeachers([pendingData.id]); // ✅ pass as array
+            const result = await activateManyTeachers([pendingData.id], true); // ✅ pass as array
             const failed = result.failed?.[0]; // only one expected
             if (result.success) {
               toast.success(result.message);
+               setTimeout(
+                () => router.push(`/list/teachers/${result.id}`),
+                3000
+              );
             } else if (failed) {
               if (failed.field) {
                 setError(failed.field as any, { message: failed.message });

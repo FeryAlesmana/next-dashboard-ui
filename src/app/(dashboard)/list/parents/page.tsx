@@ -83,6 +83,9 @@ const ParentsListPage = async ({
     for (const [key, value] of Object.entries(queryParams)) {
       if (value !== undefined && value !== "")
         switch (key) {
+          case "id":
+            query.id = value
+            break;
           case "search":
             query.OR = [
               { name: { contains: value, mode: "insensitive" } },
