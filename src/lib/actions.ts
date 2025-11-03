@@ -810,7 +810,7 @@ export const createStudent = async (
         img: data.img || null,
         sex: data.sex,
         birthday: data.birthday,
-        gradeId: data.gradeId,
+        // gradeId: data.gradeId,
         classId: data.classId,
         parentId: data.parentId,
         student_details: {
@@ -1048,7 +1048,7 @@ export const updateStudent = async (
         ...(data.img && { img: data.img }),
         sex: data.sex,
         birthday: new Date(data.birthday),
-        gradeId: data.gradeId,
+        // gradeId: data.gradeId,
         classId: data.classId,
         parentId: data.parentId,
       },
@@ -2981,7 +2981,7 @@ export const updatePpdb = async (
         dokumenAkte: data.dokumenAkte ?? null,
         dokumenPasfoto: data.dokumenPasfoto ?? null,
         dokumenKKKTP: data.dokumenKKKTP ?? null,
-        gradeId: data.gradeId ?? 1, // You may want to set this properly
+        // gradeId: data.gradeId ?? 1, // You may want to set this properly
         classId: data.classId ?? 1, // You may want to set this properly
         parentId: null,
         withUser: false,

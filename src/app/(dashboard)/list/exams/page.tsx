@@ -8,7 +8,11 @@ import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/setting";
-import { getCurrentUser, normalizeSearchParams } from "@/lib/utils";
+import {
+  generateSemesters,
+  getCurrentUser,
+  normalizeSearchParams,
+} from "@/lib/utils";
 import { Class, Exam, exTypes, Prisma, Subject, Teacher } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
@@ -166,16 +170,60 @@ const ExamListPage = async ({
   // ROLE CONDITIONS
   let gradeLevel = 3;
   let students: any[] = [];
+  let semesterOptions: any = [];
   switch (role) {
     case "admin":
+      const oldest = await prisma.student.findFirst({
+        orderBy: { createdAt: "asc" },
+        select: { createdAt: true, grade: { select: { level: true } } },
+      });
+      // 2️⃣ Get the highest grade level
+      const highest = await prisma.grade.aggregate({
+        _max: { level: true },
+      });
+      if (oldest) {
+        semesterOptions = generateSemesters(
+          oldest.createdAt,
+          highest._max.level ?? 3,
+          role
+        );
+      }
       break;
     case "teacher":
       query.lesson.teacherId = userId!;
+      const teacher = await prisma.teacher.findUnique({
+        where: { id: userId! },
+        select: {
+          classes: {
+            select: {
+              students: {
+                select: { createdAt: true, grade: { select: { level: true } } },
+              },
+            },
+          },
+        },
+      });
+
+      const Murid = teacher?.classes.flatMap((kelas) => kelas.students) ?? [];
+      if (Murid.length > 0) {
+        const highest = Murid.reduce((a, b) =>
+          (a.grade?.level ?? 0) > (b.grade?.level ?? 0) ? a : b
+        );
+
+        semesterOptions = generateSemesters(
+          highest.createdAt,
+          highest.grade?.level ?? 1,
+          role
+        );
+      }
       break;
     case "student":
       const student = await prisma.student.findUnique({
         where: { id: userId! },
-        select: { class: { select: { grade: { select: { level: true } } } } },
+        select: {
+          class: { select: { grade: { select: { level: true } } } },
+          createdAt: true,
+        },
       });
 
       gradeLevel = student?.class?.grade?.level ?? 3;
@@ -186,6 +234,14 @@ const ExamListPage = async ({
           },
         },
       };
+
+      if (student) {
+        semesterOptions = generateSemesters(
+          student.createdAt,
+          gradeLevel,
+          role
+        );
+      }
       break;
     case "parent":
       const children = await prisma.student.findMany({
@@ -203,6 +259,7 @@ const ExamListPage = async ({
           class: {
             select: { name: true, grade: { select: { level: true } } },
           },
+          createdAt: true,
         },
       });
 
@@ -263,6 +320,7 @@ const ExamListPage = async ({
           gradeLevel={students.map((s) => ({
             studentId: s.id,
             gradeLevel: s.class?.grade?.level,
+            createdAt: s.createdAt,
           }))}
           columns={columns}
         />
@@ -330,6 +388,7 @@ const ExamListPage = async ({
   options = {
     classOptions: classOptions,
     gradeOptions: gradeOptions,
+    semesterOptions,
   };
   return (
     <ClientPageWrapper key={key} role={role!}>

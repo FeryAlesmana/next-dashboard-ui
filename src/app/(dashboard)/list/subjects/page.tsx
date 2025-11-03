@@ -2,7 +2,11 @@ import SubjectListClient from "@/components/client/SubjectListClient";
 import ClientPageWrapper from "@/components/ClientWrapper";
 import Pagination from "@/components/Pagination";
 import prisma from "@/lib/prisma";
-import { getCurrentUser, normalizeSearchParams } from "@/lib/utils";
+import {
+  generateSemesters,
+  getCurrentUser,
+  normalizeSearchParams,
+} from "@/lib/utils";
 import { Prisma, Subject, Teacher } from "@prisma/client";
 import z from "zod";
 
@@ -59,7 +63,22 @@ const SubjectListPage = async ({
   const query: Prisma.SubjectWhereInput = {};
   let orderBy: Prisma.SubjectOrderByWithRelationInput | undefined;
   let gradeLevel = 3;
-
+  let semesterOptions: any = [];
+  const oldest = await prisma.student.findFirst({
+    orderBy: { createdAt: "asc" },
+    select: { createdAt: true, grade: { select: { level: true } } },
+  });
+  // 2️⃣ Get the highest grade level
+  const highest = await prisma.grade.aggregate({
+    _max: { level: true },
+  });
+  if (oldest) {
+    semesterOptions = generateSemesters(
+      oldest.createdAt,
+      highest._max.level ?? 3,
+      "admin"
+    );
+  }
   const semesterSchema = z.object({
     start: z.string().datetime(),
     end: z.string().datetime(),
@@ -140,7 +159,6 @@ const SubjectListPage = async ({
       select: {
         id: true,
         name: true,
-      
       },
     }),
     prisma.class.findMany({
@@ -176,6 +194,7 @@ const SubjectListPage = async ({
     classOptions,
     gradeOptions,
     teacherOptions,
+    semesterOptions,
   };
 
   let relatedData = { teachers };
@@ -190,7 +209,6 @@ const SubjectListPage = async ({
             data={data}
             role={role!}
             relatedData={relatedData}
-            gradeLevel={gradeLevel}
             options={options}
           />
         </div>

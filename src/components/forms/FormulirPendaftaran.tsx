@@ -1473,29 +1473,6 @@ const FormulirPendaftaran = ({
                 {watchedValues.isvalid ? (
                   <div>
                     <div className="flex flex-col md:flex-row gap-4 mb-2">
-                      <div className="flex-1 min-w-[120px]">
-                        <label className="text-xs text-gray-400 mb-1 block">
-                          Tingkat
-                        </label>
-                        <select
-                          className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
-                          {...register("gradeId")}
-                          defaultValue={data?.gradeId}
-                        >
-                          {grades.map(
-                            (grade: { id: number; level: number }) => (
-                              <option value={grade.id} key={grade.id}>
-                                {grade.level}
-                              </option>
-                            )
-                          )}
-                        </select>
-                        {errors.gradeId?.message && (
-                          <p className="text-xs text-red-400 mt-1">
-                            {errors.gradeId.message.toString()}
-                          </p>
-                        )}
-                      </div>
                       <div className="flex-1 min-w-[180px]">
                         <label className="text-xs text-gray-400 mb-1 block">
                           Kelas

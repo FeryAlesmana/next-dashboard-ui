@@ -49,29 +49,11 @@ export default function ExamListClient({
       })
     );
   };
-  const { classOptions = [], gradeOptions = [] } = options || {};
-  const generateSemesters = (gradeLevel: number): Semester[] => {
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    const startYear = currentYear - (gradeLevel - 1);
-
-    const generated: Semester[] = [];
-
-    for (let year = startYear; year <= currentYear; year++) {
-      generated.push({
-        label: `Ganjil ${year}/${year + 1}`,
-        start: new Date(`${year}-07-01`),
-        end: new Date(`${year}-12-31`),
-      });
-      generated.push({
-        label: `Genap ${year}/${year + 1}`,
-        start: new Date(`${year + 1}-01-01`),
-        end: new Date(`${year + 1}-06-30`),
-      });
-    }
-
-    return generated.reverse();
-  };
+  const {
+    classOptions = [],
+    gradeOptions = [],
+    semesterOptions = [],
+  } = options || {};
 
   return (
     <div className="space-y-4 mt-3">
@@ -96,7 +78,7 @@ export default function ExamListClient({
                 {
                   name: "semester",
                   label: "Semester",
-                  options: generateSemesters(gradeLevel).map((sem) => ({
+                  options: semesterOptions.map((sem: any) => ({
                     label: sem.label,
                     value: JSON.stringify({
                       start: sem.start.toISOString(),

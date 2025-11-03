@@ -1,13 +1,11 @@
 import ClientPageWrapper from "@/components/ClientWrapper";
-import FilterSortToggle from "@/components/FilterSortToggle";
-import FormContainer from "@/components/FormContainer";
 import Pagination from "@/components/Pagination";
-import ParentAssignmentView from "@/components/client/ParentAssignmentView";
-import Table from "@/components/Table";
-import TableSearch from "@/components/TableSearch";
 import prisma from "@/lib/prisma";
-import { ITEM_PER_PAGE } from "@/lib/setting";
-import { getCurrentUser, normalizeSearchParams } from "@/lib/utils";
+import {
+  generateSemesters,
+  getCurrentUser,
+  normalizeSearchParams,
+} from "@/lib/utils";
 import {
   Assignment,
   assTypes,
@@ -16,8 +14,6 @@ import {
   Subject,
   Teacher,
 } from "@prisma/client";
-import Image from "next/image";
-import Link from "next/link";
 import AssignmentListClient from "@/components/client/AssignmentListClient";
 import ParentAssignmentViewSemester from "@/components/client/ParentAssigmentViewSemester";
 import z from "zod";
@@ -156,8 +152,25 @@ const AssignmentListPage = async ({
   const hasTeacherIdParam = query.lesson.teacherId !== undefined;
   let gradeLevel = 3;
   let students: any[] = [];
+  let semesterOptions: any = [];
   switch (role) {
     case "admin":
+      const oldest = await prisma.student.findFirst({
+        orderBy: { createdAt: "asc" },
+        select: { createdAt: true, grade: { select: { level: true } } },
+      });
+      // 2️⃣ Get the highest grade level
+      const highest = await prisma.grade.aggregate({
+        _max: { level: true },
+      });
+      if (oldest) {
+        semesterOptions = generateSemesters(
+          oldest.createdAt,
+          highest._max.level ?? 3,
+          role
+        );
+      }
+
       break;
     case "teacher":
       if (!hasTeacherIdParam) {
@@ -172,11 +185,39 @@ const AssignmentListPage = async ({
           in: classIds,
         };
       }
+      const teacher = await prisma.teacher.findUnique({
+        where: { id: userId! },
+        select: {
+          classes: {
+            select: {
+              students: {
+                select: { createdAt: true, grade: { select: { level: true } } },
+              },
+            },
+          },
+        },
+      });
+
+      const Murid = teacher?.classes.flatMap((kelas) => kelas.students) ?? [];
+      if (Murid.length > 0) {
+        const highest = Murid.reduce((a, b) =>
+          (a.grade?.level ?? 0) > (b.grade?.level ?? 0) ? a : b
+        );
+
+        semesterOptions = generateSemesters(
+          highest.createdAt,
+          highest.grade?.level ?? 1,
+          role
+        );
+      }
       break;
     case "student":
       const student = await prisma.student.findUnique({
         where: { id: userId! },
-        select: { class: { select: { grade: { select: { level: true } } } } },
+        select: {
+          class: { select: { grade: { select: { level: true } } } },
+          createdAt: true,
+        },
       });
 
       gradeLevel = student?.class?.grade?.level ?? 3;
@@ -187,6 +228,14 @@ const AssignmentListPage = async ({
           },
         },
       };
+
+      if (student) {
+        semesterOptions = generateSemesters(
+          student.createdAt,
+          gradeLevel,
+          role
+        );
+      }
       break;
     case "parent": {
       const children = await prisma.student.findMany({
@@ -204,6 +253,7 @@ const AssignmentListPage = async ({
           class: {
             select: { name: true, grade: { select: { level: true } } },
           },
+          createdAt: true,
         },
       });
 
@@ -263,6 +313,7 @@ const AssignmentListPage = async ({
           gradeLevel={students.map((s) => ({
             studentId: s.id,
             gradeLevel: s.class?.grade?.level,
+            createdAt: s.createdAt,
           }))}
         />
       );
@@ -361,6 +412,7 @@ const AssignmentListPage = async ({
     classOptions: classOptions,
     gradeOptions: gradeOptions,
     teacherOptions: teacherOptions,
+    semesterOptions,
   };
 
   return (
@@ -373,7 +425,6 @@ const AssignmentListPage = async ({
             columns={columns}
             role={role!}
             relatedData={relatedData}
-            gradeLevel={gradeLevel}
             options={options}
           />
         </div>

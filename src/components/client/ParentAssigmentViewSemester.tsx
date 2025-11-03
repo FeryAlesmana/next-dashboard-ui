@@ -38,27 +38,38 @@ export default function ParentAssignmentViewSemester({
 
   const assignmentCache = useRef<{ [key: string]: any[] }>({}); // key = `${studentId}_${semester.label}`
 
-  const generateSemesters = (gradeLevel: number): Semester[] => {
+  const generateSemesters = (
+    createdAt: Date,
+    gradeLevel: number
+  ): Semester[] => {
     const now = new Date();
     const currentYear = now.getFullYear();
-    const startYear = currentYear - (gradeLevel - 1);
 
-    const semesters: Semester[] = [];
+    // Start from either enrollment year OR calculated grade start year
+    const startYear = Math.min(
+      createdAt.getFullYear(),
+      currentYear - (gradeLevel - 1)
+    );
 
-    for (let year = startYear; year <= currentYear; year++) {
-      semesters.push({
+    const graduationYear = startYear + (gradeLevel - 1);
+    const generated: Semester[] = [];
+    const limitStart = Math.max(startYear, currentYear - 2);
+    const limitEnd = Math.min(graduationYear, currentYear);
+
+    for (let year = limitStart; year <= limitEnd; year++) {
+      generated.push({
         label: `Ganjil ${year}/${year + 1}`,
         start: new Date(`${year}-07-01`),
         end: new Date(`${year}-12-31`),
       });
-      semesters.push({
+      generated.push({
         label: `Genap ${year}/${year + 1}`,
         start: new Date(`${year + 1}-01-01`),
         end: new Date(`${year + 1}-06-30`),
       });
     }
 
-    return semesters.reverse();
+    return generated.reverse();
   };
 
   const fetchAssignment = useCallback(
@@ -84,7 +95,7 @@ export default function ParentAssignmentViewSemester({
 
         // Cache it
         assignmentCache.current[cacheKey] = studentData;
-        console.log(studentData, "student in assignments");
+        // console.log(studentData, "student in assignments");
         setStudentsWithAssignment((prev) => {
           const other = prev.filter((p) => p.id !== studentId);
           return [...other, studentData];
@@ -108,12 +119,9 @@ export default function ParentAssignmentViewSemester({
 
     const initialSemesters: { [studentId: string]: Semester } = {};
 
-    gradeLevel.forEach(({ studentId, gradeLevel }) => {
-      const semesters = generateSemesters(gradeLevel);
-      const savedLabel = parsed?.[studentId]?.label;
-
-      const matchedSemester = semesters.find((s) => s.label === savedLabel);
-      const selected = matchedSemester || semesters[0];
+    gradeLevel.forEach(({ studentId, gradeLevel, createdAt }) => {
+      const semesters = generateSemesters(createdAt, gradeLevel);
+      const selected = semesters[0];
 
       initialSemesters[studentId] = selected;
       fetchAssignment(studentId, selected);
@@ -143,7 +151,7 @@ export default function ParentAssignmentViewSemester({
     };
 
     setSelectedSemesters(updated);
-    localStorage.setItem("selectedSemesters", JSON.stringify(updated));
+    // localStorage.setItem("selectedSemesters", JSON.stringify(updated));
     fetchAssignment(studentId, semester);
   };
 
@@ -154,15 +162,17 @@ export default function ParentAssignmentViewSemester({
   } as const;
 
   if (!hydrated) return null;
-  console.log(gradeLevel, "gradelevel in exam");
+  console.log(gradeLevel, "student in pas");
 
   return (
     <div className="w-full mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6">Hasil Ujian & Tugas Anak</h1>
-      {gradeLevel.map(({ studentId, gradeLevel: gLevel }) => {
+      <h1 className="text-2xl font-bold mb-6">Tugas Anak</h1>
+      {gradeLevel.map(({ studentId, gradeLevel: gLevel, createdAt }) => {
         const student = studentsWithAssignment.find((s) => s.id === studentId);
         const semester = selectedSemesters[studentId];
-        const semesters = generateSemesters(gLevel);
+        const semesters = generateSemesters(createdAt, gLevel);
+        // console.log(createdAt, "semester Option");
+
         const isLoading = loadingMap[studentId];
         return (
           <div

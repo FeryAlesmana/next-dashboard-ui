@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import Perfomance from "@/components/Perfomance";
 import BigCalendarContainer from "@/components/BigCalendarContainer";
-import { decryptPassword, getCurrentUser } from "@/lib/utils";
+import { decryptPassword, generateSemesters, getCurrentUser } from "@/lib/utils";
 import { Class, Student, student_details } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
@@ -58,37 +58,7 @@ const SingleStudentPage = async ({
     ...student,
     password: student?.password ? decryptPassword(student.password) : "",
   };
-  const generateSemesters = (
-    createdAt: Date,
-    gradeLevel: number
-  ): Semester[] => {
-    const now = new Date();
-    const currentYear = now.getFullYear();
-
-    // Start from either enrollment year OR calculated grade start year
-    const startYear = Math.max(
-      createdAt.getFullYear(),
-      currentYear - (gradeLevel - 1)
-    );
-
-    const generated: Semester[] = [];
-
-    for (let year = startYear; year <= currentYear; year++) {
-      generated.push({
-        label: `Ganjil ${year}/${year + 1}`,
-        start: new Date(`${year}-07-01`),
-        end: new Date(`${year}-12-31`),
-      });
-      generated.push({
-        label: `Genap ${year}/${year + 1}`,
-        start: new Date(`${year + 1}-01-01`),
-        end: new Date(`${year + 1}-06-30`),
-      });
-    }
-
-    return generated.reverse();
-  };
-
+  
   const semesters = generateSemesters(
     student ? student.createdAt : new Date(),
     student?.grade?.level!

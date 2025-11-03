@@ -2,32 +2,8 @@ import { getCurrentUser, normalizeSearchParams } from "@/lib/utils";
 import { notFound } from "next/navigation";
 import prisma from "@/lib/prisma";
 import { Prisma, resTypes } from "@prisma/client";
-import PrintButton from "@/components/PrintButton";
 import z from "zod";
 import SingleResultPageClient from "@/components/client/SingleResultPageClient";
-
-const resultTypelabel = {
-  UJIAN_HARIAN: "Ujian Harian",
-  UJIAN_TENGAH_SEMESTER: "Ujian Tengah Semester",
-  UJIAN_AKHIR_SEMESTER: "Ujian Akhir Semester",
-  PEKERJAAN_RUMAH: "Pekerjaan Rumah",
-  TUGAS_AKHIR: "Tugas Akhir",
-  TUGAS_HARIAN: "Tugas Harian",
-} as const;
-
-const getScore = (
-  results: any[],
-  lessonId: number,
-  types: resTypes[]
-): number => {
-  const matching = results.filter((res) => {
-    const source = res.exam ?? res.assignment;
-    return source?.lessonId === lessonId && types.includes(res.resultType);
-  });
-  if (matching.length === 0) return 0;
-  const total = matching.reduce((sum, res) => sum + (res.score ?? 0), 0);
-  return Math.round(total / matching.length);
-};
 
 const SingleResultPage = async ({
   params,
@@ -126,17 +102,7 @@ const SingleResultPage = async ({
   const lessons = student.class.lessons;
   const gradeLevel = student.grade.level;
   // Group results by subject-teacher pair
-  const groupedResults = new Map<
-    string,
-    {
-      subjectName: string;
-      teacherName: string;
-      tugas: number;
-      uts: number;
-      uas: number;
-      avg: number;
-    }
-  >();
+  const createdAt = student.createdAt;
 
   return (
     <SingleResultPageClient
@@ -144,6 +110,7 @@ const SingleResultPage = async ({
       lessons={lessons}
       results={results}
       student={student}
+      createdAt={createdAt}
     />
   );
 };

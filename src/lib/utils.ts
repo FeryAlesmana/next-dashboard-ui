@@ -87,20 +87,42 @@ export function normalizeRow(row: any) {
 
 export const generateSemesters = (
   createdAt: Date,
-  gradeLevel: number
+  gradeLevel: number,
+  role: "admin" | "teacher" | "student" | "parent" = "student"
 ): Semester[] => {
   const now = new Date();
   const currentYear = now.getFullYear();
 
   // Start from either enrollment year OR calculated grade start year
-  const startYear = Math.max(
+  const startYear = Math.min(
     createdAt.getFullYear(),
     currentYear - (gradeLevel - 1)
   );
 
-  const generated: Semester[] = [];
+  const graduationYear = startYear + (gradeLevel - 1);
+  if (role === "admin") {
+    const generated: Semester[] = [];
 
-  for (let year = startYear; year <= currentYear; year++) {
+    for (let year = startYear; year <= currentYear; year++) {
+      generated.push({
+        label: `Ganjil ${year}/${year + 1}`,
+        start: new Date(`${year}-07-01`),
+        end: new Date(`${year}-12-31`),
+      });
+      generated.push({
+        label: `Genap ${year}/${year + 1}`,
+        start: new Date(`${year + 1}-01-01`),
+        end: new Date(`${year + 1}-06-30`),
+      });
+    }
+    return generated.reverse();
+  }
+  // For non-admin → only until graduation (max 3 years)
+  const generated: Semester[] = [];
+  const limitStart = Math.max(startYear, currentYear - 2);
+  const limitEnd = Math.min(graduationYear, currentYear);
+
+  for (let year = limitStart; year <= limitEnd; year++) {
     generated.push({
       label: `Ganjil ${year}/${year + 1}`,
       start: new Date(`${year}-07-01`),

@@ -15,8 +15,7 @@ export default function SubjectListClient({
   role,
   relatedData,
   options,
-  gradeLevel,
-}: BaseListClientProps & { gradeLevel: number }) {
+}: BaseListClientProps) {
   const [selected, setSelected] = useState<string[]>([]);
   const [localData, setLocalData] = useState(data); // 👈 keep a client copy
 
@@ -54,30 +53,9 @@ export default function SubjectListClient({
     classOptions = [],
     gradeOptions = [],
     teacherOptions = [],
+    semesterOptions = [],
   } = options || {};
 
-  const generateSemesters = (gradeLevel: number): Semester[] => {
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    const startYear = currentYear - (gradeLevel - 1);
-
-    const generated: Semester[] = [];
-
-    for (let year = startYear; year <= currentYear; year++) {
-      generated.push({
-        label: `Ganjil ${year}/${year + 1}`,
-        start: new Date(`${year}-07-01`),
-        end: new Date(`${year}-12-31`),
-      });
-      generated.push({
-        label: `Genap ${year}/${year + 1}`,
-        start: new Date(`${year + 1}-01-01`),
-        end: new Date(`${year + 1}-06-30`),
-      });
-    }
-
-    return generated.reverse();
-  };
   return (
     <div className="space-y-4 mt-3">
       {/* TOP */}
@@ -108,7 +86,7 @@ export default function SubjectListClient({
                 {
                   name: "semester",
                   label: "Semester",
-                  options: generateSemesters(gradeLevel).map((sem) => ({
+                  options: semesterOptions.map((sem: any) => ({
                     label: sem.label,
                     value: JSON.stringify({
                       start: sem.start.toISOString(),

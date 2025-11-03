@@ -6,7 +6,11 @@ import ParentResultView from "@/components/client/ParentResultView";
 import ResultListClient from "@/components/client/ResultListClient";
 import TableSearch from "@/components/TableSearch";
 import prisma from "@/lib/prisma";
-import { getCurrentUser, normalizeSearchParams } from "@/lib/utils";
+import {
+  generateSemesters,
+  getCurrentUser,
+  normalizeSearchParams,
+} from "@/lib/utils";
 import { Prisma, resTypes } from "@prisma/client";
 import StudentResultView from "@/components/client/StudentResultView";
 import ParentLessonViewSemester from "@/components/client/ParentLessonViewSemester";
@@ -175,14 +179,55 @@ const ResultListPage = async ({
   }
   //ROLE CONDITIONS
   let gradeLevel = 3;
+  let semesterOptions: any = [];
   switch (role) {
     case "admin":
+      const oldest = await prisma.student.findFirst({
+        orderBy: { createdAt: "asc" },
+        select: { createdAt: true, grade: { select: { level: true } } },
+      });
+
+      const highest = await prisma.grade.aggregate({
+        _max: { level: true },
+      });
+      if (oldest) {
+        semesterOptions = generateSemesters(
+          oldest.createdAt,
+          highest._max.level ?? 3,
+          role
+        );
+      }
       break;
     case "teacher":
       query.OR = [
         { exam: { lesson: { teacherId: userId! } } },
         { assignment: { lesson: { teacherId: userId! } } },
       ];
+      const teacher = await prisma.teacher.findUnique({
+        where: { id: userId! },
+        select: {
+          classes: {
+            select: {
+              students: {
+                select: { createdAt: true, grade: { select: { level: true } } },
+              },
+            },
+          },
+        },
+      });
+
+      const Murid = teacher?.classes.flatMap((kelas) => kelas.students) ?? [];
+      if (Murid.length > 0) {
+        const highest = Murid.reduce((a, b) =>
+          (a.grade?.level ?? 0) > (b.grade?.level ?? 0) ? a : b
+        );
+
+        semesterOptions = generateSemesters(
+          highest.createdAt,
+          highest.grade?.level ?? 1,
+          role
+        );
+      }
       break;
     case "student": {
       const results = await prisma.result.findMany({
@@ -251,6 +296,7 @@ const ResultListPage = async ({
           class: {
             select: { name: true, grade: { select: { level: true } } },
           },
+          createdAt: true,
         },
       });
 
@@ -291,36 +337,6 @@ const ResultListPage = async ({
             },
           },
         },
-      });
-
-      const groupedByStudent = children.map((child) => {
-        const childResults = results.filter((r) => r.studentId === child.id);
-
-        const mappedResults = childResults
-          .map((item) => {
-            const source = item.exam ?? item.assignment;
-            const lesson = source?.lesson;
-
-            if (!source || !lesson) return null;
-
-            return {
-              id: item.id,
-              title: source.title,
-              subject: lesson.subject?.name || "-",
-              teacher: lesson.teacher ? `${lesson.teacher.name}` : "-",
-              class: lesson.class?.name || "-",
-              score: item.score,
-              type: item.exam ? "Ujian" : "Tugas",
-              resultType: item.resultType ?? null, // ✅ ADD THIS LINE
-            };
-          })
-          .filter(Boolean);
-
-        return {
-          id: child.id,
-          name: child.name,
-          results: mappedResults,
-        };
       });
 
       const studentsWithResults = await Promise.all(
@@ -384,14 +400,11 @@ const ResultListPage = async ({
 
       return (
         <>
-          {/* <ParentResultView
-            groupedByStudent={groupedByStudent!}
-            role={role!}
-          ></ParentResultView> */}
           <ParentResultViewSemester
             gradeLevel={studentsWithResults.map((s) => ({
               studentId: s.id,
               gradeLevel: s.class?.grade?.level,
+              createdAt: s.createdAt,
             }))}
             userId={userId!}
           />
@@ -514,6 +527,7 @@ const ResultListPage = async ({
   let options = {
     classOptions,
     gradeOptions,
+    semesterOptions,
   };
   return (
     <ClientPageWrapper key={key} role={role!}>

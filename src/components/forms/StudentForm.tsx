@@ -136,7 +136,6 @@ const StudentForm = ({
       dokumenKKKTP: dokumen.kk_ktp_sktm,
       withUser,
       classId: data.classId ? parseInt(data.classId) : null,
-      gradeId: data.gradeId ? parseInt(data.gradeId) : null,
     };
 
     startTransition(() => {
@@ -166,10 +165,7 @@ const StudentForm = ({
       );
       setOpen(false);
       if (type === "create") {
-        setTimeout(
-          () => router.push(`/list/students${state.id}`),
-          3000
-        );
+        setTimeout(() => router.push(`/list/students${state.id}`), 3000);
       }
       if (onChanged && updatedItem) {
         onChanged(updatedItem); // 🔥 notify parent so it can update localData
@@ -895,25 +891,28 @@ const StudentForm = ({
               </p>
             )}
           </div>
-          <div className="flex flex-col gap-2 w-full md:w-1/4">
-            <label className="text-xs text-gray-400">Tingkat</label>
-            <select
-              className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
-              {...register("gradeId")}
-              defaultValue={data?.gradeId}
-            >
-              {grades.map((grade: { id: number; level: number }) => (
-                <option value={grade.level} key={grade.id}>
-                  {grade.level}
-                </option>
-              ))}
-            </select>
-            {errors.gradeId?.message && (
-              <p className="text-xs text-red-400">
-                {errors.gradeId.message.toString()}
-              </p>
-            )}
-          </div>
+          {/* {type !== "create" && (
+            <div className="flex flex-col gap-2 w-full md:w-1/4">
+              <label className="text-xs text-gray-400">Tingkat</label>
+              <select
+                className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
+                {...register("gradeId")}
+                defaultValue={data?.gradeId}
+                disabled
+              >
+                {grades.map((grade: { id: number; level: number }) => (
+                  <option value={grade.level} key={grade.id}>
+                    {grade.level}
+                  </option>
+                ))}
+              </select>
+              {errors.gradeId?.message && (
+                <p className="text-xs text-red-400">
+                  {errors.gradeId.message.toString()}
+                </p>
+              )}
+            </div>
+          )} */}
           <div className="flex flex-col gap-2 w-full md:w-1/4">
             <label className="text-xs text-gray-400">Kelas</label>
             <select
@@ -1019,7 +1018,6 @@ const StudentForm = ({
               dokumenAkte: dokumen.akte,
               dokumenKKKTP: dokumen.kk_ktp_sktm,
               classId: data.classId ? parseInt(data.classId) : null,
-              gradeId: data.gradeId ? parseInt(data.gradeId) : null,
               height: data.height ? parseInt(data.height) : null,
               weight: data.weight ? parseInt(data.weight) : null,
               distance_from_home: data.distance_from_home

@@ -4,9 +4,15 @@ import FormContainer from "@/components/FormContainer";
 import Pagination from "@/components/Pagination";
 import ParentPaymentView from "@/components/client/ParentPaymentView";
 import PaymentListClient from "@/components/client/PaymentListClient";
-import StudentPaymentView, { Semester } from "@/components/client/StudentPaymentView";
+import StudentPaymentView, {
+  Semester,
+} from "@/components/client/StudentPaymentView";
 import prisma from "@/lib/prisma";
-import { getCurrentUser, normalizeSearchParams } from "@/lib/utils";
+import {
+  generateSemesters,
+  getCurrentUser,
+  normalizeSearchParams,
+} from "@/lib/utils";
 import { PaymentLog, PaymentType, Prisma, Student } from "@prisma/client";
 import z from "zod";
 
@@ -76,11 +82,25 @@ const PaymentLogListPage = async ({
 
   const query: Prisma.PaymentLogWhereInput = {};
   let orderBy: Prisma.PaymentLogOrderByWithRelationInput | undefined;
-  let gradeLevel = 3;
-  let semesters: Semester[] = [];
+  let semesterOptions: any = [];
   // ROLE CONDITION
   switch (role) {
     case "admin":
+      const oldest = await prisma.student.findFirst({
+        orderBy: { createdAt: "asc" },
+        select: { createdAt: true, grade: { select: { level: true } } },
+      });
+      // 2️⃣ Get the highest grade level
+      const highest = await prisma.grade.aggregate({
+        _max: { level: true },
+      });
+      if (oldest) {
+        semesterOptions = generateSemesters(
+          oldest.createdAt,
+          highest._max.level ?? 3,
+          role
+        );
+      }
       break;
     case "student":
       const student = await prisma.student.findUnique({
@@ -95,6 +115,7 @@ const PaymentLogListPage = async ({
             select: { name: true, grade: { select: { level: true } } },
           },
           student_details: { select: { nisn: true } },
+          createdAt: true,
         },
       });
       if (!student) {
@@ -107,11 +128,13 @@ const PaymentLogListPage = async ({
 
       // ✅ TypeScript now knows student is defined below
       const gradeLevel = student.class?.grade?.level;
+      const createdAt = student.createdAt;
       return (
         <>
           <StudentPaymentView
             userId={userId!}
             gradeLevel={gradeLevel!}
+            createdAt={createdAt}
           ></StudentPaymentView>
         </>
       );
@@ -127,11 +150,11 @@ const PaymentLogListPage = async ({
         select: {
           id: true,
           name: true,
-
           class: {
             select: { name: true, grade: { select: { level: true } } },
           },
           student_details: { select: { nisn: true } },
+          createdAt: true,
         },
       });
 
@@ -165,6 +188,7 @@ const PaymentLogListPage = async ({
             gradeLevel={studentsWithPayments.map((s) => ({
               studentId: s.id,
               gradeLevel: s.class?.grade?.level,
+              createdAt: s.createdAt,
             }))}
           ></ParentPaymentView>
         </>
@@ -342,6 +366,7 @@ const PaymentLogListPage = async ({
     gradeOptions,
     pStatusOptions,
     paymentTypeOptions,
+    semesterOptions
   };
   return (
     <ClientPageWrapper key={key} role={role!}>
@@ -354,7 +379,6 @@ const PaymentLogListPage = async ({
             columns={columns}
             relatedData={relatedData}
             options={options}
-            gradeLevel={gradeLevel}
           />
         </div>
         {/* PAGINATION */}

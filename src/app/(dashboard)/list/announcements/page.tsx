@@ -7,7 +7,11 @@ import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/setting";
-import { getCurrentUser, normalizeSearchParams } from "@/lib/utils";
+import {
+  generateSemesters,
+  getCurrentUser,
+  normalizeSearchParams,
+} from "@/lib/utils";
 import { Announcement, Class, Prisma } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
@@ -145,36 +149,7 @@ const AnnouncementListPage = async ({
         }
     }
   }
-  const generateSemesters = (
-    createdAt: Date,
-    gradeLevel: number
-  ): Semester[] => {
-    const now = new Date();
-    const currentYear = now.getFullYear();
 
-    // Start from either enrollment year OR calculated grade start year
-    const startYear = Math.max(
-      createdAt.getFullYear(),
-      currentYear - (gradeLevel - 1)
-    );
-
-    const generated: Semester[] = [];
-
-    for (let year = startYear; year <= currentYear; year++) {
-      generated.push({
-        label: `Ganjil ${year}/${year + 1}`,
-        start: new Date(`${year}-07-01`),
-        end: new Date(`${year}-12-31`),
-      });
-      generated.push({
-        label: `Genap ${year}/${year + 1}`,
-        start: new Date(`${year + 1}-01-01`),
-        end: new Date(`${year + 1}-06-30`),
-      });
-    }
-
-    return generated.reverse();
-  };
   // ROLE CONDITIONS
   let semesters: Semester[] = [];
 
@@ -231,9 +206,16 @@ const AnnouncementListPage = async ({
       orderBy: { createdAt: "asc" },
       select: { createdAt: true, grade: { select: { level: true } } },
     });
-
-    if (oldest) {
-      semesters = generateSemesters(oldest.createdAt, oldest.grade?.level ?? 1);
+    // 2️⃣ Get the highest grade level
+    const highest = await prisma.grade.aggregate({
+      _max: { level: true },
+    });
+  if (oldest) {
+      semesters = generateSemesters(
+        oldest.createdAt,
+        highest._max.level ?? 3,
+        role
+      );
     }
   }
   const roleConditions = {

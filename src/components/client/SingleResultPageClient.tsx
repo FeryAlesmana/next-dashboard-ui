@@ -7,7 +7,7 @@ import { useState } from "react";
 import Select from "react-select";
 
 type SingleStudent = Student & {
-  student_details: { nisn: string |null } |null;
+  student_details: { nisn: string | null } | null;
   class: {
     lessons: { subject: Subject | null; teacher: Teacher | null }[];
     name: string;
@@ -19,11 +19,13 @@ const SingleResultPageClient = ({
   lessons,
   results,
   gradeLevel,
+  createdAt,
 }: {
   student: SingleStudent;
   lessons: any[];
   results: any[];
   gradeLevel: number;
+  createdAt: any;
 }) => {
   const getScore = (
     results: any[],
@@ -41,14 +43,25 @@ const SingleResultPageClient = ({
 
   const avgList: number[] = [];
 
-  const generateSemesters = (gradeLevel: number): Semester[] => {
+  const generateSemesters = (
+    createdAt: Date,
+    gradeLevel: number
+  ): Semester[] => {
     const now = new Date();
     const currentYear = now.getFullYear();
-    const startYear = currentYear - (gradeLevel - 1);
 
+    // Start from either enrollment year OR calculated grade start year
+    const startYear = Math.min(
+      createdAt.getFullYear(),
+      currentYear - (gradeLevel - 1)
+    );
+
+    const graduationYear = startYear + (gradeLevel - 1);
     const generated: Semester[] = [];
+    const limitStart = Math.max(startYear, currentYear - 2);
+    const limitEnd = Math.min(graduationYear, currentYear);
 
-    for (let year = startYear; year <= currentYear; year++) {
+    for (let year = limitStart; year <= limitEnd; year++) {
       generated.push({
         label: `Ganjil ${year}/${year + 1}`,
         start: new Date(`${year}-07-01`),
@@ -87,13 +100,15 @@ const SingleResultPageClient = ({
     router.push(`${pathname}?${params.toString()}`);
   };
 
-  const semesterOptions = generateSemesters(gradeLevel).map((sem) => ({
-    label: sem.label,
-    value: JSON.stringify({
-      start: sem.start.toISOString(),
-      end: sem.end.toISOString(),
-    }),
-  }));
+  const semesterOptions = generateSemesters(createdAt, gradeLevel).map(
+    (sem) => ({
+      label: sem.label,
+      value: JSON.stringify({
+        start: sem.start.toISOString(),
+        end: sem.end.toISOString(),
+      }),
+    })
+  );
 
   const selectedValue = filters["semester"]?.toString() || "";
   return (

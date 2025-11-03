@@ -242,7 +242,6 @@ export const studentSchema = z.object({
   dokumenAkte: z.string().optional().nullable(),
   dokumenPasfoto: z.string().optional().nullable(),
   dokumenKKKTP: z.string().optional().nullable(),
-  gradeId: z.coerce.number().min(1, { message: "Id tingkatan wajib diisi!" }),
   classId: z.coerce.number().min(1, { message: "Id kelas wajib diisi!" }),
   parentId: z
     .string()
@@ -686,11 +685,6 @@ export const ppdbSchema = z.object({
   dokumenKKKTP: z.string().optional().nullable(),
   isvalid: z.boolean().default(false).optional(),
   reason: z.string().optional().nullable(),
-  gradeId: z.coerce
-    .number()
-    .min(1, { message: "Id tingkatan wajib diisi!" })
-    .optional()
-    .nullable(),
   classId: z.coerce
     .number()
     .min(1, { message: "Id kelas wajib diisi!" })

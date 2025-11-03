@@ -19,9 +19,11 @@ type Semester = {
 export default function StudentLessonViewSemester({
   gradeLevel,
   userId,
+  createdAt,
 }: {
   userId: string;
   gradeLevel: number; // [{ studentId, gradeLevel }]
+  createdAt: any;
 }) {
   const [selectedSemesters, setSelectedSemesters] = useState<Semester | null>(
     null
@@ -30,27 +32,38 @@ export default function StudentLessonViewSemester({
   const [lesson, setLesson] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const generateSemesters = (gradeLevel: number): Semester[] => {
+  const generateSemesters = (
+    createdAt: Date,
+    gradeLevel: number
+  ): Semester[] => {
     const now = new Date();
     const currentYear = now.getFullYear();
-    const startYear = currentYear - (gradeLevel - 1);
 
-    const semesters: Semester[] = [];
+    // Start from either enrollment year OR calculated grade start year
+    const startYear = Math.min(
+      createdAt.getFullYear(),
+      currentYear - (gradeLevel - 1)
+    );
 
-    for (let year = startYear; year <= currentYear; year++) {
-      semesters.push({
+    const graduationYear = startYear + (gradeLevel - 1);
+    const generated: Semester[] = [];
+    const limitStart = Math.max(startYear, currentYear - 2);
+    const limitEnd = Math.min(graduationYear, currentYear);
+
+    for (let year = limitStart; year <= limitEnd; year++) {
+      generated.push({
         label: `Ganjil ${year}/${year + 1}`,
         start: new Date(`${year}-07-01`),
         end: new Date(`${year}-12-31`),
       });
-      semesters.push({
+      generated.push({
         label: `Genap ${year}/${year + 1}`,
         start: new Date(`${year + 1}-01-01`),
         end: new Date(`${year + 1}-06-30`),
       });
     }
 
-    return semesters.reverse();
+    return generated.reverse();
   };
 
   const fetchLessons = useCallback(async () => {
@@ -73,15 +86,15 @@ export default function StudentLessonViewSemester({
   }, [selectedSemesters, userId]);
 
   useEffect(() => {
-    const sems = generateSemesters(gradeLevel);
+    const sems = generateSemesters(createdAt, gradeLevel);
     setSemesters(sems);
     setSelectedSemesters(sems[0]);
-  }, [gradeLevel]);
+  }, [gradeLevel, createdAt]);
 
   useEffect(() => {
     fetchLessons();
   }, [fetchLessons]);
-  console.log(lesson, "lesson in SLV");
+  // console.log(lesson, "lesson in SLV");
 
   return (
     <div className="w-full mx-auto p-6">
@@ -155,9 +168,7 @@ export default function StudentLessonViewSemester({
 
                   <td>{lsn.day}</td>
                   <td className="hidden md:table-cell">
-                    {lsn.teacherId
-                      ? `${lsn.teacher?.name}`
-                      : "Tidak ada guru"}
+                    {lsn.teacherId ? `${lsn.teacher?.name}` : "Tidak ada guru"}
                   </td>
                   <td className="text-center lg:text-left ">
                     <Link

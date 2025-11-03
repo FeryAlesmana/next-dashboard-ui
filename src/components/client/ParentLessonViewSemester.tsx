@@ -30,27 +30,38 @@ export default function ParentLessonViewSemester({
 
   const lessonsCache = useRef<{ [key: string]: any[] }>({});
 
-  const generateSemesters = (gradeLevel: number): Semester[] => {
+  const generateSemesters = (
+    createdAt: Date,
+    gradeLevel: number
+  ): Semester[] => {
     const now = new Date();
     const currentYear = now.getFullYear();
-    const startYear = currentYear - (gradeLevel - 1);
 
-    const semesters: Semester[] = [];
+    // Start from either enrollment year OR calculated grade start year
+    const startYear = Math.min(
+      createdAt.getFullYear(),
+      currentYear - (gradeLevel - 1)
+    );
 
-    for (let year = startYear; year <= currentYear; year++) {
-      semesters.push({
+    const graduationYear = startYear + (gradeLevel - 1);
+    const generated: Semester[] = [];
+    const limitStart = Math.max(startYear, currentYear - 2);
+    const limitEnd = Math.min(graduationYear, currentYear);
+
+    for (let year = limitStart; year <= limitEnd; year++) {
+      generated.push({
         label: `Ganjil ${year}/${year + 1}`,
         start: new Date(`${year}-07-01`),
         end: new Date(`${year}-12-31`),
       });
-      semesters.push({
+      generated.push({
         label: `Genap ${year}/${year + 1}`,
         start: new Date(`${year + 1}-01-01`),
         end: new Date(`${year + 1}-06-30`),
       });
     }
 
-    return semesters.reverse();
+    return generated.reverse();
   };
 
   const fetchLessons = useCallback(
@@ -99,8 +110,8 @@ export default function ParentLessonViewSemester({
 
     const initialSemesters: { [studentId: string]: Semester } = {};
 
-    gradeLevel.forEach(({ studentId, gradeLevel }) => {
-      const semesters = generateSemesters(gradeLevel);
+    gradeLevel.forEach(({ studentId, gradeLevel, createdAt }) => {
+      const semesters = generateSemesters(createdAt, gradeLevel);
       const savedLabel = parsed?.[studentId]?.label;
 
       const matchedSemester = semesters.find((s) => s.label === savedLabel);
@@ -126,10 +137,10 @@ export default function ParentLessonViewSemester({
     <div className="w-full mx-auto p-6">
       <h1 className="text-2xl font-bold mb-6">Daftar Pelajaran</h1>
 
-      {gradeLevel.map(({ studentId, gradeLevel: gLevel }) => {
+      {gradeLevel.map(({ studentId, gradeLevel: gLevel, createdAt }) => {
         const student = studentsWithLessons.find((s) => s.id === studentId);
         const semester = selectedSemesters[studentId];
-        const semesters = generateSemesters(gLevel);
+        const semesters = generateSemesters(createdAt, gLevel);
         const isLoading = loadingMap[studentId];
 
         return (

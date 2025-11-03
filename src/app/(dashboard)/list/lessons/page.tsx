@@ -7,7 +7,11 @@ import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/setting";
-import { getCurrentUser, normalizeSearchParams } from "@/lib/utils";
+import {
+  generateSemesters,
+  getCurrentUser,
+  normalizeSearchParams,
+} from "@/lib/utils";
 import { Day, Prisma } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
@@ -126,9 +130,7 @@ const LessonListPage = async ({
       </td>
       <td>{item.day}</td>
       <td className="hidden md:table-cell">
-        {item.teacher
-          ? `${item.teacher.name}`
-          : "Tidak ada guru"}
+        {item.teacher ? `${item.teacher.name}` : "Tidak ada guru"}
       </td>
       <td>
         <Link href={`/list/attendance/${item.class.name}/${item.id}`}>
@@ -231,12 +233,26 @@ const LessonListPage = async ({
   // ROLE CONDITION
 
   const hasTeacherIdParam = query.teacherId !== undefined;
-  let lessons: LessonWithRelations[] = [];
   let teacherLesson: any[] = [];
-  let students: any[] = [];
   let gradeLevel = 3;
+  let semesterOptions: any = [];
   switch (role) {
     case "admin":
+      const oldest = await prisma.student.findFirst({
+        orderBy: { createdAt: "asc" },
+        select: { createdAt: true, grade: { select: { level: true } } },
+      });
+      // 2️⃣ Get the highest grade level
+      const highest = await prisma.grade.aggregate({
+        _max: { level: true },
+      });
+      if (oldest) {
+        semesterOptions = generateSemesters(
+          oldest.createdAt,
+          highest._max.level ?? 3,
+          role
+        );
+      }
       break;
     case "teacher": {
       if (!hasTeacherIdParam) {
@@ -370,7 +386,7 @@ const LessonListPage = async ({
         select: {
           id: true,
           name: true,
-
+          createdAt: true,
           class: {
             select: { name: true, grade: { select: { level: true } } },
           },
@@ -386,11 +402,13 @@ const LessonListPage = async ({
       }
       // ✅ TypeScript now knows student is defined below
       const gradeLevel = student.class?.grade?.level;
+      const createdAt = student.createdAt;
       return (
         <>
           <StudentLessonViewSemester
             userId={userId!}
             gradeLevel={gradeLevel!}
+            createdAt={createdAt}
           ></StudentLessonViewSemester>
         </>
       );
@@ -411,6 +429,7 @@ const LessonListPage = async ({
           class: {
             select: { name: true, grade: { select: { level: true } } },
           },
+          createdAt: true,
         },
       });
 
@@ -445,21 +464,13 @@ const LessonListPage = async ({
         })
       );
 
-      students = studentsWithLessons;
-      const parentLessons = studentsWithLessons.flatMap((student) =>
-        student.lessons.map((lesson) => ({
-          ...lesson,
-          studentName: student.name, // optional if you want to display child name
-        }))
-      );
-
-      // <ParentLessonView columns={columns} students={students} />
       return (
         <ParentLessonViewSemester
           userId={userId!}
           gradeLevel={studentsWithLessons.map((s) => ({
             studentId: s.id,
             gradeLevel: s.class?.grade?.level,
+            createdAt: s.createdAt,
           }))}
         />
       );
@@ -530,6 +541,7 @@ const LessonListPage = async ({
   let options = {
     classOptions,
     gradeOptions,
+    semesterOptions,
   };
   return (
     <ClientPageWrapper key={key} role={role!}>
