@@ -43,3 +43,5 @@ next-env.d.ts
 to-do-list.docx
 ~$-do-list.docx
 ~WRL0003.tmp
+Dockerfile
+production.env

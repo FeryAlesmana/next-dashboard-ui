@@ -15,7 +15,12 @@ import NavbarHome from "@/components/NavbarHome";
 import { toast } from "react-toastify";
 import { useUser } from "@clerk/nextjs";
 import LocationMap from "@/components/landing/LocationMap";
-
+import AboutUs from "./about/page";
+interface TeamMember {
+  name: string;
+  job: string;
+  photo: string; // URL to photo
+}
 export default function Home() {
   const { user } = useUser();
   const role = user?.publicMetadata.role as string | undefined;
@@ -36,6 +41,18 @@ export default function Home() {
 
     fetchHomeData();
   }, []);
+  const team: TeamMember[] = [
+    {
+      name: "Fery Ale Lesmana",
+      job: "Mahasiswa Teknik Informatika S1",
+      photo: "/Ale.jpg", // Ganti dengan foto asli
+    },
+    {
+      name: "Ivan Ramadhan",
+      job: "Mahasiswa Teknik Informatika S1",
+      photo: "/import.png", // Ganti dengan foto asli
+    },
+  ];
   return (
     <div className="relative font-sans min-h-screen">
       {/* Background Gradien + Pola Geometris (Full Width) */}
@@ -71,6 +88,7 @@ export default function Home() {
           <Kontak />
           <Pendaftaran />
           <CTA />
+          <AboutUs team={team} />
         </div>
 
         {/* Footer Full Width */}

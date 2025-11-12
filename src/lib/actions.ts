@@ -944,15 +944,26 @@ export const importStudents = async (
   });
 
   try {
-    await prisma.student.createMany({
-      data: students,
+    await prisma.$transaction(async (tx) => {
+      // 1. Buat semua student dulu
+      const createdStudents = await tx.student.createMany({
+        data: students,
+        skipDuplicates: false, // Kita tangani sendiri
+      });
 
-      skipDuplicates: true, // skip if unique constraints fail
-    });
+      // 2. Ambil ID yang benar-benar berhasil dibuat
+      const createdStudentIds = students.map((s) => s.id);
 
-    await prisma.student_details.createMany({
-      data: studentDetails,
-      skipDuplicates: true,
+      // 3. Filter studentDetails hanya untuk ID yang pasti ada
+      const validStudentDetails = studentDetails.filter((detail) =>
+        createdStudentIds.includes(detail.studentId)
+      );
+
+      // 4. Buat student_details
+      await tx.student_details.createMany({
+        data: validStudentDetails,
+        skipDuplicates: true, // aman karena ID sudah pasti ada
+      });
     });
     const importedStudents = await prisma.student.findMany({
       where: {

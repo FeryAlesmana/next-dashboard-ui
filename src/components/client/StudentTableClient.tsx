@@ -39,10 +39,12 @@ export default function StudentTableClient({
             <p className="text-xs text-gray-500">{data.class?.name || "-"}</p>
           </div>
         </td>
-        <td className="hidden md:table-cell">{data.student_details.nisn}</td>
+        <td className="hidden md:table-cell">
+          {data.student_details?.nisn || "-"}
+        </td>
         <td className="hidden md:table-cell">{data.grade?.level || "-"}</td>
         <td className="hidden md:table-cell">
-          {data.student_details.noWA ?? data.phone}
+          {data.student_details?.noWA ?? (data.phone || "-")}
         </td>
         <td className="hidden md:table-cell">{data.address}</td>
         <td>

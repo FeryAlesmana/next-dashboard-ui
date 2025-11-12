@@ -19,7 +19,6 @@ import { FaMosque } from "react-icons/fa6";
 
 const NavbarHome: React.FC = () => {
   const [showMenu, setShowMenu] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
   const { isSignedIn, user } = useUser();
   const { signOut, openSignIn } = useClerk();
   const router = useRouter();

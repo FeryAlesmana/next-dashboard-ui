@@ -1,14 +1,14 @@
-'use client';
-import React from 'react';
-import { FaClipboardCheck, FaCheck } from 'react-icons/fa';
+"use client";
+import React from "react";
+import { FaClipboardCheck, FaCheck } from "react-icons/fa";
 
 const syaratPendaftaran: string[] = [
-  'Mengisi formulir pendaftaran.',
-  'Lulus Sekolah Dasar (SD) atau Madrasah Ibtidaiyah (MI).',
-  'Melampirkan fotokopi Ijazah atau STTB terakhir yang telah dilegalisir.',
-  'Melampirkan fotokopi akta kelahiran atau surat lahir.',
-  'Menyerahkan pas foto ukuran 3x4 sebanyak 4 lembar dan 2x3 sebanyak 4 lembar.',
-  'Menyerahkan fotokopi: Kartu Keluarga (KK), KTP orang tua (ayah dan ibu), KIP/KIS/KKS/PKH/SKTM (bagi yang memiliki).',
+  "Mengisi formulir pendaftaran.",
+  "Lulus Sekolah Dasar (SD) atau Madrasah Ibtidaiyah (MI).",
+  "Melampirkan fotokopi Ijazah atau STTB terakhir yang telah dilegalisir.",
+  "Melampirkan fotokopi akta kelahiran atau surat lahir.",
+  "Menyerahkan pas foto ukuran 3x4 sebanyak 4 lembar dan 2x3 sebanyak 4 lembar.",
+  "Menyerahkan fotokopi: Kartu Keluarga (KK), KTP orang tua (ayah dan ibu), KIP/KIS/KKS/PKH/SKTM (bagi yang memiliki).",
 ];
 
 const Pendaftaran: React.FC = () => {
@@ -21,7 +21,8 @@ const Pendaftaran: React.FC = () => {
           </div>
           <h2 className="text-4xl font-bold drop-shadow">Syarat Pendaftaran</h2>
           <p className="text-white/90 text-lg mt-4 max-w-2xl mx-auto leading-relaxed">
-            Silakan lengkapi semua dokumen dan persyaratan berikut untuk mendaftar sebagai siswa baru di SMP Islamiyyah:
+            Silakan lengkapi semua dokumen dan persyaratan berikut untuk
+            mendaftar sebagai siswa baru di SMP Islamiyyah:
           </p>
         </div>
 
