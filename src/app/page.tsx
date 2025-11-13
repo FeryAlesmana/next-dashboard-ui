@@ -15,7 +15,7 @@ import NavbarHome from "@/components/NavbarHome";
 import { toast } from "react-toastify";
 import { useUser } from "@clerk/nextjs";
 import LocationMap from "@/components/landing/LocationMap";
-import AboutUs from "./about/page";
+import AboutUs from "@/components/landing/AboutUs";
 interface TeamMember {
   name: string;
   job: string;
@@ -50,7 +50,7 @@ export default function Home() {
     {
       name: "Ivan Ramadhan",
       job: "Mahasiswa Teknik Informatika S1",
-      photo: "/import.png", // Ganti dengan foto asli
+      photo: "/ivan.jpg", // Ganti dengan foto asli
     },
   ];
   return (
