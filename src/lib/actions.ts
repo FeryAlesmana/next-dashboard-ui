@@ -791,6 +791,17 @@ export const createStudent = async (
     }
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    let gradeId: number | null = null;
+    if (data.classId) {
+      const cls = await prisma.class.findUnique({
+        where: { id: data.classId },
+        select: { gradeId: true },
+      });
+      if (cls?.gradeId) {
+        gradeId = cls.gradeId;
+      }
+    }
     const createdStudent = await prisma.student.create({
       data: {
         id: user.id,
@@ -810,7 +821,7 @@ export const createStudent = async (
         img: data.img || null,
         sex: data.sex,
         birthday: data.birthday,
-        // gradeId: data.gradeId,
+        gradeId,
         classId: data.classId,
         parentId: data.parentId,
         student_details: {
@@ -1036,6 +1047,16 @@ export const updateStudent = async (
       }
     }
     await new Promise((resolve) => setTimeout(resolve, 1000));
+    let gradeId: number | null = null;
+    if (data.classId) {
+      const cls = await prisma.class.findUnique({
+        where: { id: data.classId },
+        select: { gradeId: true },
+      });
+      if (cls?.gradeId) {
+        gradeId = cls.gradeId;
+      }
+    }
     await prisma.student.update({
       where: {
         id: data.id,
@@ -1059,7 +1080,7 @@ export const updateStudent = async (
         ...(data.img && { img: data.img }),
         sex: data.sex,
         birthday: new Date(data.birthday),
-        // gradeId: data.gradeId,
+        gradeId,
         classId: data.classId,
         parentId: data.parentId,
       },
@@ -3424,7 +3445,11 @@ export async function createPaymentLog(
       select: {
         id: true,
         classId: true,
-        gradeId: true,
+        class: {
+          select: {
+            gradeId: true,
+          },
+        },
       },
     });
 
@@ -3440,7 +3465,7 @@ export async function createPaymentLog(
         paymentMethod: paymentData.paymentMethod || null,
         receiptNumber: paymentData.receiptNumber || null,
         classId: student.classId,
-        gradeId: student.gradeId,
+        gradeId: student.class?.gradeId || null,
       })),
     });
     const createdPayments = await prisma.paymentLog.findMany({
@@ -3477,6 +3502,19 @@ export async function createPaymentLog(
   }
 }
 
+async function withSyncedGradeId(data: any) {
+  if (data.classId) {
+    const cls = await prisma.class.findUnique({
+      where: { id: data.classId },
+      select: { gradeId: true },
+    });
+    if (cls?.gradeId) data.gradeId = cls.gradeId;
+  }
+  return data;
+}
+
+export default withSyncedGradeId;
+
 // Update tagihan
 export async function updatePaymentLog(
   prevState: CurrentState,
@@ -3509,10 +3547,14 @@ export async function updatePaymentLog(
     } else if (recipientType === "student") {
       const student = await prisma.student.findUnique({
         where: { id: recipientId as string },
-        select: { classId: true, gradeId: true, id: true },
+        select: { classId: true, id: true, class: {
+      select: {
+        gradeId: true,
+      },
+    }, },
       });
       classId = student?.classId ?? null;
-      gradeId = student?.gradeId ?? null;
+      gradeId = student?.class?.gradeId ?? null;
     }
 
     const updatedPayment = await prisma.paymentLog.update({
@@ -3590,7 +3632,6 @@ export async function updatePaymentLogs(
       message: "Hanya admin yang dapat mengubah tagihan.",
     };
   }
-  console.log(data.ids, "Ids in actions");
   try {
     const { ids, ...paymentData } = data;
 

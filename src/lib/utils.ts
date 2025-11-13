@@ -25,6 +25,8 @@ export function buildStudentLessonAttendance(attendances: Attendance[]) {
   ];
 }
 
+
+
 export const FIELD_MAP: Record<string, string> = {
   // Required
   name: "name",
