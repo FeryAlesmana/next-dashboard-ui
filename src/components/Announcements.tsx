@@ -58,7 +58,7 @@ const Announcements = async () => {
     <div className="bg-white p-4 rounded-md">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">Pemberitahuan</h1>
-        <Link href="list/announcements">
+        <Link href="/list/announcements">
           <span className="text-xs text-gray-400 hover:bg-gray-200 rounded-sm p-1">
             Lihat Semua
           </span>
@@ -69,7 +69,7 @@ const Announcements = async () => {
           data.map((announcement, index) => (
             <Link
               key={announcement.id}
-              href={`list/announcements/${announcement.id}`}
+              href={`/list/announcements/${announcement.id}`}
               className={`${
                 cardColors[index % cardColors.length]
               } rounded-md p-4 block hover:opacity-90 transition`}

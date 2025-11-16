@@ -312,20 +312,25 @@ export default function CreatePaymentLogPage({
 
           <div>
             <label className="block mb-1 font-medium">Metode Pembayaran</label>
-            <input
-              type="text"
+
+            <select
               {...register("paymentMethod")}
-              hidden
-              className="w-full border rounded px-3 py-2"
-            />
+              className="w-full border rounded px-3 py-2 bg-white"
+              defaultValue=""
+            >
+              <option value="" disabled>
+                Pilih Metode
+              </option>
+              <option value="Tunai">Tunai</option>
+              <option value="Transfer">Transfer Bank</option>
+              <option value="QRIS">QRIS</option>
+              <option value="Debit">Debit</option>
+            </select>
+
             {errors.paymentMethod && (
               <p className="text-red-600">{errors.paymentMethod.message}</p>
             )}
           </div>
-          <span className="items-center justify-center text-center">
-            {" "}
-            TUNAI
-          </span>
 
           <div>
             <label className="block mb-1 font-medium">
@@ -424,27 +429,30 @@ export default function CreatePaymentLogPage({
           {errors.id && <p className="text-red-600">{errors.id.message}</p>}
 
           <div className="text-center pt-4">
-            <button
-              type="submit"
-              className="bg-blue-600 text-white font-semibold px-6 py-3 rounded hover:bg-blue-700 flex items-center justify-center gap-2"
-              disabled={isSubmitting}
-            >
-              {isSubmitting && (
-                <span className="animate-spin inline-block w-5 h-5 border-2 border-white border-t-blue-400 rounded-full mr-2"></span>
-              )}
-              {isSubmitting
-                ? "Memproses..."
-                : type === "create"
-                ? "Buat Tagihan"
-                : "Update Tagihan"}
-            </button>
-            <button
-              type="button"
-              onClick={() => setOpen(false)}
-              className="bg-gray-300 text-black font-semibold px-6 py-3 rounded hover:bg-gray-400 ml-4"
-            >
-              Batal
-            </button>
+            <div className="flex flex-col lg:flex-row items-center justify-center gap-3">
+              <button
+                type="submit"
+                className="bg-blue-600 text-white font-semibold px-6 py-3 rounded hover:bg-blue-700 w-full lg:w-auto flex items-center justify-center gap-2"
+                disabled={isSubmitting}
+              >
+                {isSubmitting && (
+                  <span className="animate-spin inline-block w-5 h-5 border-2 border-white border-t-blue-400 rounded-full"></span>
+                )}
+                {isSubmitting
+                  ? "Memproses..."
+                  : type === "create"
+                  ? "Buat Tagihan"
+                  : "Update Tagihan"}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="bg-gray-300 text-black font-semibold px-6 py-3 rounded hover:bg-gray-400 w-full lg:w-auto"
+              >
+                Batal
+              </button>
+            </div>
           </div>
         </form>
       </div>

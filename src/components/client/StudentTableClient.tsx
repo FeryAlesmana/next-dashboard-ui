@@ -32,10 +32,16 @@ export default function StudentTableClient({
             alt=""
             width={40}
             height={40}
-            className="md:hidden xl:block w-10 h-10 rounded-full object-cover"
+            className="hidden md:block w-10 h-10 rounded-full object-cover"
           />
           <div className="flex flex-col">
-            <h3 className="font-semibold">{data.name}</h3>
+            <h3
+              className="font-semibold max-w-full md:max-w-[300px] 
+               overflow-hidden text-ellipsis whitespace-nowrap"
+              title={data.name} // hover to show full name
+            >
+              {data.name || "Murid"}
+            </h3>
             <p className="text-xs text-gray-500">{data.class?.name || "-"}</p>
           </div>
         </td>

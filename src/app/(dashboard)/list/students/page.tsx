@@ -1,21 +1,12 @@
 import ClientPageWrapper from "@/components/ClientWrapper";
-import FilterSortToggle from "@/components/FilterSortToggle";
-import FormContainer from "@/components/FormContainer";
 import Pagination from "@/components/Pagination";
-import StudentTableClient from "@/components/client/StudentTableClient";
-import StudentTableServer from "@/components/client/StudentListClient";
-import Table from "@/components/Table";
-import TableSearch from "@/components/TableSearch";
 import prisma from "@/lib/prisma";
-import { ITEM_PER_PAGE } from "@/lib/setting";
 import {
   decryptPassword,
   getCurrentUser,
   normalizeSearchParams,
 } from "@/lib/utils";
 import { Class, Prisma, Student } from "@prisma/client";
-import Image from "next/image";
-import Link from "next/link";
 import React from "react";
 import StudentListClient from "@/components/client/StudentListClient";
 
@@ -53,6 +44,7 @@ const StudentsListPage = async ({
     {
       header: "Nama Siswa",
       accessor: "name",
+      className: "text-center md:text-left",
     },
     {
       header: "NISN",

@@ -33,9 +33,9 @@ export default function ResultTableClient({
           </td>
         )}
 
-        <td className="p-4">{data?.subject || "-"}</td>
+        <td className="p-4 hidden md:table-cell">{data?.subject || "-"}</td>
         <td>{data.student}</td>
-        <td className="hidden md:table-cell">{data.score}</td>
+        <td >{data.score}</td>
         <td className="hidden md:table-cell">{data.teacher}</td>
         <td className="hidden md:table-cell">{data.class}</td>
         <td className="hidden md:table-cell">

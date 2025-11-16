@@ -164,6 +164,9 @@ const PaymentForm = dynamic(() => import("./forms/PaymentForm"), {
 const UserForm = dynamic(() => import("./forms/UserForm"), {
   loading: () => <h1>Loading...</h1>,
 });
+const PPDBSettingForm = dynamic(() => import("./forms/PPDBSettingForm"), {
+  loading: () => <h1>Loading...</h1>,
+});
 
 const forms: {
   [key: string]: (
@@ -320,14 +323,16 @@ const FormModal = ({
   prefilEmail,
   onDeleted,
   onChanged,
-}: FormContainerProps & { relatedData?: any }) => {
+}: FormContainerProps & {
+  relatedData?: any;
+}) => {
   const size = type === "create" ? "w-8 h-8" : "w-7 h-7";
   const bgColor =
     type === "create"
       ? "bg-lamaYellow"
       : type === "update"
-      ? "bg-lamaSky"
-      : "bg-lamaPurple";
+      ? "bg-lamaBlue"
+      : "bg-lamaRed";
 
   const [open, setOpen] = useState(false);
 
@@ -339,7 +344,7 @@ const FormModal = ({
     const rawIds = formData.getAll("ids");
     const ids = rawIds as string[];
 
-    // console.log(ids, " ids in delete handler");
+    // console.log(ids, " ids in handler");
     // console.log(table, " table in delete handler");
 
     if (!table || !Array.isArray(ids)) {
@@ -548,6 +553,37 @@ const FormModal = ({
       </>
     );
   }
+
+  if (table === "ppdb-setting")
+    return (
+      <>
+        <button
+          className={`w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow hover:brightness-90 shadow-md transition`}
+          onClick={() => setOpen(true)}
+          title="Pengaturan"
+        >
+          <Image src={`/moreBlack.png`} alt="" width={15} height={16} />
+        </button>
+
+        {open && (
+          <div className="w-screen h-screen fixed left-0 top-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">
+            <div
+              className="bg-white p-4 rounded-md relative 
+                       w-[90%] md:w-[70%] lg:w-[60%] xl:w-[50%] 2xl:w-[40%]"
+            >
+              <PPDBSettingForm type={"update"} setOpen={setOpen} data={data} />
+
+              <div
+                className="absolute top-4 right-4 cursor-pointer"
+                onClick={() => setOpen(false)}
+              >
+                <Image src="/close.png" width={14} height={14} alt="" />
+              </div>
+            </div>
+          </div>
+        )}
+      </>
+    );
 
   if (type === "createMany") {
     switch (table) {
@@ -957,7 +993,7 @@ const FormModal = ({
             ? "Perbarui Data"
             : type === "deleteMany"
             ? "Hapus Banyak"
-            : ""
+            : "Hapus"
         }
         className={`
     ${size} flex items-center justify-center rounded-full transition
@@ -970,7 +1006,13 @@ const FormModal = ({
         onClick={() => setOpen(true)}
       >
         <Image
-          src={`/${type === "deleteMany" ? "deleteDark" : type}.png`}
+          src={
+            type === "deleteMany"
+              ? "/deleteDark.png"
+              : type === "delete"
+              ? "/deletefix.png"
+              : `/${type}.png`
+          }
           alt=""
           width={15}
           height={16}
@@ -978,28 +1020,36 @@ const FormModal = ({
       </button>
 
       {open && (
-        <div className="w-screen h-screen absolute left-0 top-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">
-          <div
-            className={`bg-white p-4 rounded-md relative w-[90%] md:w-[70%] lg:w-[60%] xl:w-[50%] 2xl:w-[40%] ${
-              ["delete", "deleteMany", "createMany"].includes(type)
-                ? "w-[350px] h-auto"
-                : [
-                    "student",
-                    "ppdb",
-                    "teacher",
-                    "paymentLog",
-                    "parent",
-                  ].includes(table)
-                ? "w-[95%] h-[95%] md:w-[90%] lg:w-[85%] xl:w-[80%] 2xl:w-[75%] overflow-y-auto"
-                : "w-[90%] md:w-[70%] lg:w-[60%] xl:w-[50%] 2xl:w-[40%]"
-            }`}
-          >
-            <Form />
+        <div
+          className={`
+    z-50 bg-black bg-opacity-60 flex items-center justify-center p-4
+    ${table === "lesson" ? "fixed inset-0" : "absolute inset-0"}
+  `}
+        >
+          <div className="max-h-[90vh] overflow-y-auto w-full flex justify-center">
             <div
-              className="absolute top-4 right-4 cursor-pointer"
-              onClick={() => setOpen(false)}
+              className={` bg-white p-4 rounded-md relative
+    w-[90%] md:w-[70%] lg:w-[60%] xl:w-[50%] 2xl:w-[40%]
+    max-h-[90vh] overflow-y-auto
+      ${
+        ["delete", "deleteMany", "createMany"].includes(type)
+          ? "w-[350px] h-auto"
+          : ["student", "ppdb", "teacher", "paymentLog", "parent"].includes(
+              table
+            )
+          ? "w-[95%] h-[95%] md:w-[90%] lg:w-[85%] xl:w-[80%] 2xl:w-[75%]"
+          : ""
+      }
+    `}
             >
-              <Image src="/close.png" width={14} height={14} alt=""></Image>
+              <Form />
+
+              <div
+                className="absolute top-4 right-4 cursor-pointer"
+                onClick={() => setOpen(false)}
+              >
+                <Image src="/close.png" width={14} height={14} alt="" />
+              </div>
             </div>
           </div>
         </div>

@@ -10,8 +10,6 @@ import {
 } from "@/lib/utils";
 import { Class, Prisma, Subject, Teacher } from "@prisma/client";
 
-type TeacherList = Teacher & { subjects: Subject[] } & { classes: Class[] };
-
 const TeacherListPage = async ({
   searchParams,
 }: {
@@ -38,8 +36,9 @@ const TeacherListPage = async ({
         ]
       : []),
     {
-      header: "Nama Guru dan Email Guru ",
+      header: "Nama Guru ",
       accessor: "info",
+      className: "text-center md:text-left",
     },
     {
       header: "ID Guru",

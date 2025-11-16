@@ -147,10 +147,17 @@ export default function ParentPaymentView({
 
         return (
           <div key={studentId} className="mb-12">
-            <div className="flex justify-between items-center mb-2">
-              <h2 className="text-xl font-semibold">
+            <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-2 gap-2">
+              {/* Name (truncate) */}
+              <h2
+                className="text-xl font-semibold max-w-full md:max-w-[300px] 
+               overflow-hidden text-ellipsis whitespace-nowrap"
+                title={student?.name} // hover to show full name
+              >
                 {student?.name || "Murid"}
               </h2>
+
+              {/* Semester Select (moves under name on mobile) */}
               <SemesterSelect
                 semesters={semesters}
                 selected={semester}
@@ -179,6 +186,7 @@ export default function ParentPaymentView({
                       <th className="px-4 py-3 text-center">Status</th>
                       <th className="px-4 py-3 text-center">Jatuh Tempo</th>
                       <th className="px-4 py-3 text-center">Dibayar Pada</th>
+                      <th className="px-4 py-3 text-center">Jumlah Dibayar</th>
                       <th className="px-4 py-3 text-center">Metode</th>
                       <th className="px-4 py-3 text-center">Deskripsi</th>
                     </tr>
@@ -189,7 +197,14 @@ export default function ParentPaymentView({
                         key={pay.id}
                         className="even:bg-slate-50 hover:bg-lamaPurpleLight"
                       >
-                        <td className="p-3">{pay.paymentType}</td>
+                        <td className="p-3">
+                          {pay.paymentType === "TUITION" && "SPP"}
+                          {pay.paymentType === "EXTRACURRICULAR" &&
+                            "Ekstrakulikuler"}
+                          {pay.paymentType === "UNIFORM" && "Seragam"}
+                          {pay.paymentType === "BOOKS" && "Buku"}
+                          {pay.paymentType === "OTHER" && "Lainnya"}
+                        </td>
                         <td className="p-3">
                           Rp {pay.amount.toLocaleString("id-ID")}
                         </td>
@@ -232,6 +247,25 @@ export default function ParentPaymentView({
                             ? new Date(pay.paidAt).toLocaleDateString("id-ID")
                             : "-"}
                         </td>
+                        <td className="p-3">
+                          {pay.paymentInstallments?.length > 0 ? (
+                            <div className="flex flex-col">
+                              <span className="font-medium">
+                                Rp{" "}
+                                {pay.paymentInstallments
+                                  .reduce(
+                                    (sum: any, i: any) =>
+                                      sum + Number(i.amount),
+                                    0
+                                  )
+                                  .toLocaleString("id-ID")}
+                              </span>
+                            </div>
+                          ) : (
+                            "-"
+                          )}
+                        </td>
+
                         <td className="p-3">{pay.paymentMethod || "-"}</td>
                         <td className="p-3">{pay.description || "-"}</td>
                       </tr>

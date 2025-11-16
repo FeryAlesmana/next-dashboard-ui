@@ -1,6 +1,8 @@
 "use client";
 import { assTypes } from "@prisma/client";
 import FormModal from "../FormModal";
+import ExpandableList from "../ExpandableList";
+import NameListPopover from "../NamePopover";
 export type BaseTableClientProps = {
   data: any;
   role: string;
@@ -33,10 +35,13 @@ export default function SubjectTableClient({
           </td>
         )}
 
-        <td className="text-center">{data.id}</td>
+        <td className="text-center hidden md:table-cell">{data.id}</td>
         <td className="p-4 gap-4 text-center">{data.name}</td>
         <td className="hidden md:table-cell">
-          {data.teachers.map((teacher: any) => teacher.name).join(",")}
+          <NameListPopover
+            items={data.teachers.map((t: any) => t.name)}
+            label="Guru"
+          />
         </td>
         <td>
           <div className="flex items-center gap-2">

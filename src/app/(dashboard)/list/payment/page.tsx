@@ -324,12 +324,25 @@ const PaymentLogListPage = async ({
         },
       }),
     ]);
+  // Convert Decimal → Number for paymentLog
+  const safeData = data.map((log) => ({
+    ...log,
+    amount: typeof log.amount === "object" ? log.amount.toNumber() : log.amount,
+  }));
+
+  // Convert Decimal → Number for installments
+  const safeInstallment = installment.map((inst) => ({
+    ...inst,
+    amount:
+      typeof inst.amount === "object" ? inst.amount.toNumber() : inst.amount,
+  }));
+
   let relatedData = {};
   relatedData = {
     studentData: studentData,
     classData: classesData,
     gradeData: gradeData,
-    installment,
+    installment: safeInstallment,
   };
 
   const classOptions = classesData.map((cls) => ({
@@ -366,7 +379,7 @@ const PaymentLogListPage = async ({
     gradeOptions,
     pStatusOptions,
     paymentTypeOptions,
-    semesterOptions
+    semesterOptions,
   };
   return (
     <ClientPageWrapper key={key} role={role!}>
@@ -374,7 +387,7 @@ const PaymentLogListPage = async ({
         {/* LIST */}
         <div className="">
           <PaymentListClient
-            data={data}
+            data={safeData}
             role={role!}
             columns={columns}
             relatedData={relatedData}

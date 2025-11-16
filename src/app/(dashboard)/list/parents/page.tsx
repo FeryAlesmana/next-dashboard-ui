@@ -1,20 +1,13 @@
 import ClientPageWrapper from "@/components/ClientWrapper";
-import FilterSortToggle from "@/components/FilterSortToggle";
-import FormContainer from "@/components/FormContainer";
 import Pagination from "@/components/Pagination";
 import ParentListClient from "@/components/client/ParentListClient";
-import Table from "@/components/Table";
-import TableSearch from "@/components/TableSearch";
 import prisma from "@/lib/prisma";
-import { ITEM_PER_PAGE } from "@/lib/setting";
 import {
   decryptPassword,
   getCurrentUser,
   normalizeSearchParams,
 } from "@/lib/utils";
 import { Parent, Prisma, Student } from "@prisma/client";
-import Image from "next/image";
-import Link from "next/link";
 
 type ParentList = Parent & { students: Student[] };
 
@@ -47,10 +40,12 @@ const ParentsListPage = async ({
     {
       header: "Info",
       accessor: "info",
+      className: "text-center",
     },
     {
       header: "Wali Murid",
       accessor: "waliMurid",
+      className: "hidden md:table-cell",
     },
     {
       header: "Nama Siswa",
@@ -84,7 +79,7 @@ const ParentsListPage = async ({
       if (value !== undefined && value !== "")
         switch (key) {
           case "id":
-            query.id = value
+            query.id = value;
             break;
           case "search":
             query.OR = [

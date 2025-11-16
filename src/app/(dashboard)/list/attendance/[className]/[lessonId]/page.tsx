@@ -305,33 +305,39 @@ export default async function AttendanceDetailPage({
     <ClientPageWrapper key={key} role={role!}>
       <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
         {/* TOP BAR */}
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-lg font-semibold">
-            <Link href={`/list/attendance/${className}/${lessonId}`}>
-              <span className="hidden md:inline">Daftar Pertemuan - </span>
-              {lesson?.subject?.name ?? "-"} ({lesson?.class?.name ?? "-"})
-            </Link>
-          </h1>
+        <div className="mb-4">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            {/* RIGHT SIDE: search + button (mobile: stacked, desktop: inline) */}
+            <div className="w-full md:w-auto order-1 md:order-2">
+              <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
+                {/* Search: full width on mobile, shrink to content on desktop */}
+                <div className="w-full md:w-[300px]">
+                  <TableSearch />
+                </div>
 
-          <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-            <TableSearch />
-            <div className="flex items-center gap-4 self-end">
-              {/* <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
-                <Image src="/filter.png" alt="" width={14} height={14} />
-              </button>
-              <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
-                <Image src="/sort.png" alt="" width={14} height={14} />
-              </button> */}
-              {role === "admin" && (
-                <FormContainer
-                  table="attendance"
-                  type="create"
-                  lessonId={idLesson!}
-                ></FormContainer>
-              )}
+                {/* Button: right-aligned on mobile, appears inline on desktop */}
+                <div className="flex justify-end md:justify-start md:ml-2">
+                  {role === "admin" && (
+                    <FormContainer
+                      table="attendance"
+                      type="create"
+                      lessonId={idLesson!}
+                    />
+                  )}
+                </div>
+              </div>
             </div>
+
+            {/* TITLE */}
+            <h1 className="text-lg font-semibold order-2 md:order-1">
+              <Link href={`/list/attendance/${className}/${lessonId}`}>
+                <span className="hidden md:inline">Daftar Pertemuan - </span>
+                {lesson?.subject?.name ?? "-"} ({lesson?.class?.name ?? "-"})
+              </Link>
+            </h1>
           </div>
         </div>
+
         {/* TABLE LIST */}
         <div>
           <Table columns={columns} renderRow={renderRow} data={data} />

@@ -121,6 +121,7 @@ export default function StudentPaymentView({
                 <th className="px-4 py-3 text-center">Status</th>
                 <th className="px-4 py-3 text-center">Jatuh Tempo</th>
                 <th className="px-4 py-3 text-center">Dibayar Pada</th>
+                <th className="px-4 py-3 text-center">Jumlah Dibayar</th>
                 <th className="px-4 py-3 text-center">Metode</th>
                 <th className="px-4 py-3 text-center">Deskripsi</th>
               </tr>
@@ -131,34 +132,39 @@ export default function StudentPaymentView({
                   key={pay.id}
                   className="even:bg-slate-50 hover:bg-lamaPurpleLight"
                 >
-                  <td className="p-3">{pay.paymentType}</td>
+                  <td className="p-3">
+                    {pay.paymentType === "TUITION" && "SPP"}
+                    {pay.paymentType === "EXTRACURRICULAR" && "Ekstrakulikuler"}
+                    {pay.paymentType === "UNIFORM" && "Seragam"}
+                    {pay.paymentType === "BOOKS" && "Buku"}
+                    {pay.paymentType === "OTHER" && "Lainnya"}
+                  </td>
                   <td className="p-3">
                     Rp {pay.amount.toLocaleString("id-ID")}
                   </td>
                   <td className="p-3">
                     <span
                       className={`px-2 py-1 rounded-full text-xs font-medium
-                        ${
-                          pay.status === "PENDING"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : ""
-                        }
-                        ${
-                          pay.status === "PAID"
-                            ? "bg-green-100 text-green-800"
-                            : ""
-                        }
-                        ${
-                          pay.status === "OVERDUE"
-                            ? "bg-red-100 text-red-800"
-                            : ""
-                        }
-                        ${
-                          pay.status === "PARTIALLY_PAID"
-                            ? "bg-blue-100 text-blue-800"
-                            : ""
-                        }
-                      `}
+                              ${
+                                pay.status === "PENDING"
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : ""
+                              }
+                              ${
+                                pay.status === "PAID"
+                                  ? "bg-green-100 text-green-800"
+                                  : ""
+                              }
+                              ${
+                                pay.status === "OVERDUE"
+                                  ? "bg-red-100 text-red-800"
+                                  : ""
+                              }
+                              ${
+                                pay.status === "PARTIALLY_PAID"
+                                  ? "bg-blue-100 text-blue-800"
+                                  : ""
+                              }`}
                     >
                       {pay.status === "PENDING" && "Belum Dibayar"}
                       {pay.status === "PAID" && "Lunas"}
@@ -174,6 +180,24 @@ export default function StudentPaymentView({
                       ? new Date(pay.paidAt).toLocaleDateString("id-ID")
                       : "-"}
                   </td>
+                  <td className="p-3">
+                    {pay.paymentInstallments?.length > 0 ? (
+                      <div className="flex flex-col">
+                        <span className="font-medium">
+                          Rp{" "}
+                          {pay.paymentInstallments
+                            .reduce(
+                              (sum: any, i: any) => sum + Number(i.amount),
+                              0
+                            )
+                            .toLocaleString("id-ID")}
+                        </span>
+                      </div>
+                    ) : (
+                      "-"
+                    )}
+                  </td>
+
                   <td className="p-3">{pay.paymentMethod || "-"}</td>
                   <td className="p-3">{pay.description || "-"}</td>
                 </tr>

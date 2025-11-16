@@ -89,6 +89,7 @@ const LessonListPage = async ({
     {
       header: "Pertemuan",
       accessor: "meeting",
+      className: "hidden md:table-cell",
     },
     ...(role === "admin"
       ? [

@@ -26,15 +26,37 @@ export default function PaymenTableClient({
         )}
 
         <td className="flex items-center p-4 gap-4">
-          <Image
-            src={data.student.img || "/noAvatar.png"}
-            alt=""
-            width={40}
-            height={40}
-            className="md:hidden xl:block w-10 h-10 rounded-full object-cover"
-          />
-          <div className="flex flex-col">
-            <h3 className="font-semibold">{data.student.name}</h3>
+          <div className="hidden md:block">
+            <Image
+              src={data.student.img || "/noAvatar.png"}
+              alt=""
+              width={40}
+              height={40}
+              className="w-10 h-10 rounded-full object-cover"
+            />
+          </div>
+          <div className="flex flex-col group relative">
+            {/* Name (truncated) */}
+            <h3 className="font-semibold truncate max-w-[140px]">
+              {data.student.name}
+            </h3>
+
+            {/* Tooltip on hover */}
+            <span
+              className="
+    absolute 
+    left-0 top-full mt-1
+    hidden group-hover:block 
+    bg-black text-white text-xs 
+    whitespace-nowrap 
+    px-2 py-1 rounded 
+    shadow-lg z-50
+  "
+            >
+              {data.student.name}
+            </span>
+
+            {/* Class */}
             <p className="text-xs text-gray-500">
               {data.student.class?.name || "—"}
             </p>

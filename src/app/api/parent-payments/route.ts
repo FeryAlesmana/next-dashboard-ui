@@ -38,6 +38,9 @@ export async function GET(req: NextRequest) {
         lte: new Date(endDate),
       },
     },
+    include: {
+      paymentInstallments: true,
+    },
   });
 
   return NextResponse.json({

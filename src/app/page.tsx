@@ -16,6 +16,7 @@ import { toast } from "react-toastify";
 import { useUser } from "@clerk/nextjs";
 import LocationMap from "@/components/landing/LocationMap";
 import AboutUs from "@/components/landing/AboutUs";
+import PromotionBanner from "@/components/PromotionBanner";
 interface TeamMember {
   name: string;
   job: string;
@@ -26,11 +27,14 @@ export default function Home() {
   const role = user?.publicMetadata.role as string | undefined;
 
   const [homeData, setHomeData] = useState<any>();
+  const [ppdbStatus, setPpdbStatus] = useState<any>();
   useEffect(() => {
     const fetchHomeData = async () => {
       const res = await fetch(`/api/homepage-data`, {
         cache: "no-store", // supaya selalu ambil fresh
       });
+      const ppdbRes = await fetch(`/api/ppdb-status`, { cache: "no-store" });
+      if (ppdbRes.ok) setPpdbStatus(await ppdbRes.json());
       if (res.ok) {
         const data = await res.json();
         setHomeData(data);
@@ -73,6 +77,16 @@ export default function Home() {
 
         {/* Container untuk Konten Lainnya */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {ppdbStatus && (
+            <PromotionBanner
+              open={ppdbStatus.open}
+              reason={ppdbStatus.reason}
+              startDate={ppdbStatus.startDate}
+              endDate={ppdbStatus.endDate}
+              quota={ppdbStatus.quota}
+              usedQuota={ppdbStatus.usedQuota}
+            />
+          )}
           <Hero slides={homeData?.heroSlides} role={role!} />
           <Features />
           <Profil />

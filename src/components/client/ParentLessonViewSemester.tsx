@@ -145,10 +145,17 @@ export default function ParentLessonViewSemester({
 
         return (
           <div key={studentId} className="mb-12">
-            <div className="flex justify-between items-center mb-2">
-              <h2 className="text-xl font-semibold">
+            <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-2 gap-2">
+              {/* Name (truncate) */}
+              <h2
+                className="text-xl font-semibold max-w-full md:max-w-[300px] 
+                          overflow-hidden text-ellipsis whitespace-nowrap"
+                title={student?.name} // hover to show full name
+              >
                 {student?.name || "Murid"}
               </h2>
+
+              {/* Semester Select (moves under name on mobile) */}
               <SemesterSelect
                 semesters={semesters}
                 selected={semester}

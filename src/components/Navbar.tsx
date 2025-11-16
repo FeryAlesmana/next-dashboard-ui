@@ -41,7 +41,11 @@ const Navbar = ({ onToggleMenu, userProfile }: NavbarProps) => {
         </div> */}
         <NotificationBell />
         <div className="flex flex-col">
-          <span className="text-xs leading-3 font-medium">
+          <span
+            className="text-xs leading-3 font-medium max-w-full md:max-w-[300px] 
+               overflow-hidden text-ellipsis whitespace-nowrap"
+            title={userProfile.name}
+          >
             {userProfile.name}
           </span>
           <span className="text-[10px] text-gray-500 text-right">

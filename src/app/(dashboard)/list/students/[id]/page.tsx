@@ -4,7 +4,11 @@ import Image from "next/image";
 import Link from "next/link";
 import Perfomance from "@/components/Perfomance";
 import BigCalendarContainer from "@/components/BigCalendarContainer";
-import { decryptPassword, generateSemesters, getCurrentUser } from "@/lib/utils";
+import {
+  decryptPassword,
+  generateSemesters,
+  getCurrentUser,
+} from "@/lib/utils";
 import { Class, Student, student_details } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
@@ -58,7 +62,7 @@ const SingleStudentPage = async ({
     ...student,
     password: student?.password ? decryptPassword(student.password) : "",
   };
-  
+
   const semesters = generateSemesters(
     student ? student.createdAt : new Date(),
     student?.grade?.level!
@@ -113,17 +117,24 @@ const SingleStudentPage = async ({
               ></Image>
             </div>
             <div className="w-2/3 flex flex-col justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <h1 className="text-xl font-semibold">{student.name} </h1>
+              <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
+                <h1
+                  className="text-xl font-semibold max-w-full md:max-w-[300px] 
+               overflow-hidden text-ellipsis whitespace-nowrap"
+                >
+                  {student.name}
+                </h1>
+
                 <span className="px-2 py-0.5 text-xs font-medium rounded bg-gray-100 text-gray-700">
                   NISN: {student.student_details?.nisn}
                 </span>
+
                 {role === "admin" && (
                   <FormContainer
                     table="student"
                     type="update"
                     data={studentWithDecryptedPassword}
-                  ></FormContainer>
+                  />
                 )}
               </div>
 
@@ -137,10 +148,6 @@ const SingleStudentPage = async ({
                 {student.kota ? `, ${student.kota}` : ""}
               </p>
               <div className="flex items-center justify-between gap-2 flex-wrap text-xs font-medium">
-                {/* <div className="w-full md:w-1/3 flex items- gap-2 ">
-                  <Image src="/blood.png" alt="" width={14} height={14}></Image>
-                  <span>A+</span>
-                </div> */}
                 <div className="w-full md:w-1/3 lg:w-full 2xl:w-1/3 flex items-center gap-2">
                   <Image src="/date.png" alt="" width={14} height={14}></Image>
                   <span>
@@ -169,10 +176,6 @@ const SingleStudentPage = async ({
               <Suspense fallback="Loading...">
                 <StudentAttendanceCard id={student.id}></StudentAttendanceCard>
               </Suspense>
-              {/* <div className="">
-                <h1 className="text-xl font-semibold">90%</h1>
-                <span className="text-sm text-gray-400">Attendance</span>
-              </div> */}
             </div>
             {/* CARD */}
             <div className="w-full bg-white p-4 rounded-md flex gap-4 md:w-[48%] xl:w-[45%] 2xl:w-[48%]">
@@ -225,9 +228,15 @@ const SingleStudentPage = async ({
           </div>
         </div>
         {/* BOTTOM */}
-        <div className="mt-4 bg-white rounded-md p-4 h-[800px] ">
-          <h1>Jadwal Murid</h1>
-          <BigCalendarContainer type="classId" id={classId!} />
+        <div className="w-full overflow-x-auto">
+          <div className="min-w-[823px]">
+            <div className="h-full bg-white p-4 rounded-md">
+              <h1 className="text-xl font-semibold">
+                Jadwal ({student.class?.name || "-"})
+              </h1>
+              {classId && <BigCalendarContainer type="classId" id={classId} />}
+            </div>
+          </div>
         </div>
       </div>
       {/* RIGHT */}

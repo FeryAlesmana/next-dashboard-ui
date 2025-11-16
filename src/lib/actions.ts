@@ -40,6 +40,7 @@ import {
   ImportStudentSchema,
   UserSchema,
   EskulSchema,
+  PPDBSettingSchema,
 } from "./formValidationSchema";
 import prisma from "./prisma";
 import { clerkClient } from "@clerk/nextjs/server";
@@ -57,6 +58,7 @@ import { randomUUID } from "crypto";
 import { Readable } from "stream";
 import { error } from "console";
 import { disconnect } from "process";
+import { Decimal } from "@prisma/client/runtime/library";
 
 export type CurrentState = {
   success: boolean;
@@ -3490,11 +3492,23 @@ export async function createPaymentLog(
         },
       },
     });
+    function safeDecimal(value: Decimal) {
+      return value && typeof value === "object" && value.toNumber
+        ? value.toNumber()
+        : value;
+    }
+    function safePaymentLogArray(payments: any) {
+      return payments.map((p: any) => ({
+        ...p,
+        amount: safeDecimal(p.amount),
+      }));
+    }
+    const safePayments = safePaymentLogArray(createdPayments);
     return {
       success: true,
       error: false,
       message: "Tagihan berhasil dibuat.",
-      data: createdPayments,
+      data: safePayments,
     };
   } catch (err) {
     console.error(err);
@@ -3547,14 +3561,52 @@ export async function updatePaymentLog(
     } else if (recipientType === "student") {
       const student = await prisma.student.findUnique({
         where: { id: recipientId as string },
-        select: { classId: true, id: true, class: {
-      select: {
-        gradeId: true,
-      },
-    }, },
+        select: {
+          classId: true,
+          id: true,
+          class: {
+            select: {
+              gradeId: true,
+            },
+          },
+        },
       });
       classId = student?.classId ?? null;
       gradeId = student?.class?.gradeId ?? null;
+    }
+
+    const existingInstallments = await prisma.paymentInstallment.findMany({
+      where: { paymentLogId: data.id },
+    });
+
+    const totalPaid = existingInstallments.reduce((sum, i) => {
+      const amountAsNumber =
+        i.amount instanceof Decimal ? i.amount.toNumber() : Number(i.amount);
+
+      return sum + amountAsNumber;
+    }, 0);
+
+    // remaining amount left to pay
+    const remainingAmount = paymentData.amount - totalPaid;
+
+    let installmentAction = undefined;
+
+    if (
+      paymentData.amountPaid &&
+      paymentData.amountPaid > 0 &&
+      remainingAmount > 0
+    ) {
+      const amountToCreate = Math.min(paymentData.amountPaid, remainingAmount);
+
+      // Prevent overpayment & stop when full
+      if (amountToCreate > 0) {
+        installmentAction = {
+          create: {
+            amount: amountToCreate,
+            paidAt: paymentData.paidAt ? new Date(paymentData.paidAt) : null,
+          },
+        };
+      }
     }
 
     const updatedPayment = await prisma.paymentLog.update({
@@ -3576,16 +3628,7 @@ export async function updatePaymentLog(
         paidAt: paymentData.paidAt ? new Date(paymentData.paidAt) : null,
 
         // handle installments (amountPaid lives here)
-        paymentInstallments: paymentData.amountPaid
-          ? {
-              create: {
-                amount: paymentData.amountPaid,
-                paidAt: paymentData.paidAt
-                  ? new Date(paymentData.paidAt)
-                  : null,
-              },
-            }
-          : undefined,
+        paymentInstallments: installmentAction,
       },
       include: {
         student: {
@@ -3603,12 +3646,22 @@ export async function updatePaymentLog(
         },
       },
     });
+    function safeDecimal(value: Decimal) {
+      return value && typeof value === "object" && value.toNumber
+        ? value.toNumber()
+        : value;
+    }
+
+    const safePayment = {
+      ...updatedPayment,
+      amount: safeDecimal(updatedPayment.amount),
+    };
 
     return {
       success: true,
       error: false,
       message: "Tagihan berhasil diperbarui.",
-      data: updatedPayment,
+      data: safePayment,
     };
   } catch (err) {
     console.error(err);
@@ -4203,3 +4256,51 @@ export const deleteManyUsers = async (
     };
   }
 };
+
+export async function updatePPDBSetting(
+  prevState: CurrentState,
+  data: PPDBSettingSchema
+): Promise<CurrentState> {
+  try {
+    const startDate = new Date(data.startDate);
+    const endDate = new Date(data.endDate);
+
+    // If PPDB setting table has only ONE ROW:
+    const existing = await prisma.pPDBSetting.findFirst();
+
+    if (!existing) {
+      // If not found, create a default row
+      await prisma.pPDBSetting.create({
+        data: {
+          startDate,
+          endDate,
+          quota: data.quota,
+        },
+      });
+    } else {
+      // Update existing setting
+      await prisma.pPDBSetting.update({
+        where: { id: existing.id },
+        data: {
+          startDate,
+          endDate,
+          quota: data.quota,
+        },
+      });
+    }
+
+    return {
+      success: true,
+      error: false,
+      message: "Pengaturan PPDB berhasil disimpan.",
+    };
+  } catch (err: any) {
+    console.error("Update PPDB Setting Error:", err);
+
+    return {
+      success: false,
+      error: true,
+      message: err?.message || "Terjadi kesalahan.",
+    };
+  }
+}

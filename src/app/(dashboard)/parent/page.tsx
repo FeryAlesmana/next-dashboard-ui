@@ -35,25 +35,53 @@ const ParentPage = async ({
   return (
     <div className="p-4 flex flex-1 gap-4 flex-col xl:flex-row">
       {/* left */}
-      <div className="w-full xl:w-2/3flex-col">
+      <div className="w-full xl:w-2/3flex-col ">
         {students.map((student) => (
-          <div className="" key={student.id}>
+          <div className="mb-8" key={student.id}>
             <div className="h-full bg-white p-4 rounded-md">
-              <div className="flex flex-row justify-between">
-                <h2 className="text-xl font-semibold mb-4">
-                  Jadwal {student.name} (Kelas {student.class?.name || "-"})
-                </h2>
-                <Link href={`/list/students/${student.id}`}>
-                  <Image
-                    src="/moreDark.png"
-                    alt=""
-                    width={35}
-                    height={35}
-                    className="text-right hover:bg-lamaPurple rounded-full p-2 "
-                  />
-                </Link>
+              <div className="flex flex-col gap-2">
+                {/* Name + More button inline */}
+                <div className="flex flex-row justify-between items-center">
+                  <h2
+                    className="text-xl font-semibold max-w-[200px] xl:max-w-none truncate"
+                    title={student.name}
+                  >
+                    {/* Desktop: Jadwal Name */}
+                    <span className="hidden xl:inline">
+                      Jadwal {student.name}
+                    </span>
+
+                    {/* Mobile: only Name */}
+                    <span className="xl:hidden">{student.name}</span>
+                  </h2>
+
+                  <Link href={`/list/students/${student.id}`}>
+                    <Image
+                      src="/morev.png"
+                      alt=""
+                      width={35}
+                      height={35}
+                      className="hover:bg-lamaPurple rounded-full p-2"
+                    />
+                  </Link>
+                </div>
+
+                {/* Class always below the name */}
+                <p className="text-sm text-gray-600">
+                  Kelas {student.class?.name || "-"}
+                </p>
               </div>
-              <BigCalendarContainer type="classId" id={student.classId!} />
+
+              <div className="w-full overflow-x-auto">
+                <div className="min-w-[823px]">
+                  <div className="h-full bg-white p-4 rounded-md">
+                    <BigCalendarContainer
+                      type="classId"
+                      id={student.classId!}
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         ))}

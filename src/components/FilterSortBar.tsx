@@ -147,7 +147,7 @@ const FilterSortBar = ({
             <option value="10">Show 10</option>
             <option value="20">Show 20</option>
             <option value="30">Show 30</option>
-            <option value="all">Show All</option>
+            <option value="50">Show 50</option>
           </select>
         )}
       </div>

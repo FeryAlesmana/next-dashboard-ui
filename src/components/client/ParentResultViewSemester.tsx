@@ -193,18 +193,17 @@ export default function ParentResultViewSemester({
             className={`mb-12 shadow-md rounded-md p-2 transition 
               ${highlightedId === studentId ? "ring-4 ring-yellow-400" : ""}`}
           >
-            <div className="flex justify-between items-center mb-2">
-              <h2 className="text-xl font-semibold flex flex-row">
-                <span className="">
-                  {student?.name || "Murid"}
-                  <hr />
-                </span>
-
-                <Link href={`/list/results/${studentId}`} className="ml-2">
-                  <Image src="/moreDark.png" alt="" width={20} height={20} />
-                </Link>
+            <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-2 gap-2">
+              {/* Name (truncate) */}
+              <h2
+                className="text-xl font-semibold max-w-full md:max-w-[300px] 
+                           overflow-hidden text-ellipsis whitespace-nowrap"
+                title={student?.name} // hover to show full name
+              >
+                {student?.name || "Murid"}
               </h2>
 
+              {/* Semester Select (moves under name on mobile) */}
               <SemesterSelect
                 semesters={semesters}
                 selected={semester}

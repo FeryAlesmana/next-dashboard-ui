@@ -31,7 +31,8 @@ type ActivateAccountFormProps = {
     | "user"
     | "eskul"
     | "hero"
-    | "gallery";
+    | "gallery"
+    | "ppdb-setting";
   ids: string[];
 };
 

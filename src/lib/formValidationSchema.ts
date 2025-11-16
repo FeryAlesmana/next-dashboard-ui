@@ -11,7 +11,7 @@ import {
   TTinggal,
   UserSex,
 } from "@prisma/client";
-import { isValid, z } from "zod";
+import { coerce, isValid, z } from "zod";
 
 export const subjectSchema = z.object({
   id: z.coerce.number().optional(),
@@ -1036,3 +1036,28 @@ export const eskulSchema = z.object({
 });
 
 export type EskulSchema = z.infer<typeof eskulSchema>;
+
+export const ppdbSettingSchema = z
+  .object({
+    startDate: z.string().min(1, "Tanggal mulai wajib diisi"),
+    endDate: z.string().min(1, "Tanggal berakhir wajib diisi"),
+    quota: z.coerce
+      .number({
+        required_error: "Kuota wajib diisi",
+        invalid_type_error: "Kuota harus berupa angka",
+      })
+      .min(1, "Kuota minimal 1"),
+  })
+  .refine(
+    (data) => {
+      const start = new Date(data.startDate);
+      const end = new Date(data.endDate);
+      return end >= start;
+    },
+    {
+      message: "Tanggal selesai tidak boleh lebih awal dari tanggal mulai",
+      path: ["endDate"],
+    }
+  );
+
+export type PPDBSettingSchema = z.infer<typeof ppdbSettingSchema>;

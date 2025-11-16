@@ -23,7 +23,8 @@ export type FormContainerProps = {
     | "user"
     | "eskul"
     | "hero"
-    | "gallery";
+    | "gallery"
+    | "ppdb-setting";
   type:
     | "create"
     | "update"

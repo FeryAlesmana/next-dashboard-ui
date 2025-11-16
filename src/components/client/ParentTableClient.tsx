@@ -1,5 +1,6 @@
 "use client";
 import FormModal from "../FormModal";
+import NameListPopover from "../NamePopover";
 import { BaseTableClientProps } from "./AssignmentTableClient";
 
 export default function ParentTableClient({
@@ -26,25 +27,26 @@ export default function ParentTableClient({
 
         <td className="flex items-center p-4 gap-4">
           <div className="flex flex-col">
-            <h3 className="font-semibold">{data.name}</h3>
+            <h3
+              className="font-semibold max-w-full md:max-w-[300px] 
+               overflow-hidden text-ellipsis whitespace-nowrap"
+              title={data.name} // hover to show full name
+            >
+              {data.name || "Wali Murid"}
+            </h3>
             <p className="text-xs text-gray-500">{data?.email}</p>
           </div>
         </td>
         <td className="hidden md:table-cell">{data.waliMurid || "-"}</td>
         <td className="hidden md:table-cell">
-          {[
-            ...data.students,
-            ...data.secondaryStudents,
-            ...data.guardianStudents,
-          ].length > 0
-            ? [
-                ...data.students,
-                ...data.secondaryStudents,
-                ...data.guardianStudents,
-              ]
-                .map((student: any) => student.name)
-                .join(", ")
-            : "-"}
+          <NameListPopover
+            items={[
+              ...data.students,
+              ...data.secondaryStudents,
+              ...data.guardianStudents,
+            ].map((student: any) => student.name)}
+            label="Murid"
+          />
         </td>
 
         <td className="hidden md:table-cell">{data.phone}</td>

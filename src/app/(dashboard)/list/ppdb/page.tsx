@@ -6,6 +6,7 @@ import prisma from "@/lib/prisma";
 import { getCurrentUser, normalizeSearchParams } from "@/lib/utils";
 import { Class, PPDB, Prisma } from "@prisma/client";
 import FilterSortToggle from "@/components/FilterSortToggle";
+import FormModal from "@/components/FormModal";
 
 type Ppdb = PPDB & { class: Class };
 
@@ -53,7 +54,6 @@ const PpdbPage = async ({
     {
       header: "Status Formulir",
       accessor: "isvalid",
-      
     },
     ...(role === "admin"
       ? [
@@ -155,7 +155,7 @@ const PpdbPage = async ({
     }
   }
 
-  const [data, count, newStudentGrades, newStudentClasses] =
+  const [data, count, newStudentGrades, newStudentClasses, settingData] =
     await prisma.$transaction([
       prisma.pPDB.findMany({
         where: query,
@@ -173,6 +173,7 @@ const PpdbPage = async ({
       prisma.class.findMany({
         include: { _count: { select: { students: true } } },
       }),
+      prisma.pPDBSetting.findFirst({}),
     ]);
   let relatedData = {};
   relatedData = {
@@ -224,6 +225,11 @@ const PpdbPage = async ({
                   { label: "ID Asc", value: "id_asc" },
                   { label: "ID Desc", value: "id_desc" },
                 ]}
+              />
+              <FormModal
+                table="ppdb-setting"
+                type="update"
+                data={settingData}
               />
             </div>
           </div>

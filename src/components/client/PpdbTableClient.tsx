@@ -12,7 +12,6 @@ export default function PpdbTableClient({
   onDeleted,
   onChanged,
 }: BaseTableClientProps) {
-
   return (
     <>
       <tr className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight">
@@ -29,7 +28,13 @@ export default function PpdbTableClient({
         <td className=" items-center p-4 gap-4 hidden md:table-cell">
           {data.id}
         </td>
-        <td>{data?.name || "-"}</td>
+        <td
+          className="font-semibold text-gray-600 max-w-full md:max-w-[300px] 
+               overflow-hidden text-ellipsis whitespace-nowrap"
+          title={data.name}
+        >
+          {data?.name || "-"}
+        </td>
         <td className="hidden md:table-cell">
           {new Intl.DateTimeFormat("en-US").format(data.createdAt)}
         </td>

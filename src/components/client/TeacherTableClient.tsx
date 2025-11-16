@@ -31,10 +31,16 @@ export default function TeacherTableClient({
             alt=""
             width={40}
             height={40}
-            className="md:hidden xl:block w-10 h-10 rounded-full object-cover"
+            className="hidden md:block w-10 h-10 rounded-full object-cover"
           ></Image>
           <div className="flex flex-col">
-            <h3 className="font-semibold">{data.name}</h3>
+            <h3
+              className="font-semibold max-w-full md:max-w-[300px] 
+               overflow-hidden text-ellipsis whitespace-nowrap"
+              title={data.name} // hover to show full name
+            >
+              {data.name || "Guru"}
+            </h3>
             <p className="text-xs text-gray-500">{data?.email || "-"}</p>
           </div>
         </td>
@@ -54,7 +60,7 @@ export default function TeacherTableClient({
         <td>
           <div className="flex items-center gap-2">
             <Link href={`/list/teachers/${data.id}`}>
-              <button className="w-7 h-7 flex items-center justify-center rounded-full bg-lamaSky">
+              <button className="w-7 h-7 flex items-center justify-center rounded-full bg-lamaSky shadow-lg">
                 <Image src="/view.png" alt="" width={16} height={16}></Image>
               </button>
             </Link>

@@ -43,13 +43,17 @@ const ResultListPage = async ({
           },
         ]
       : []),
-    { header: "Pelajaran", accessor: "subject" },
+    {
+      header: "Pelajaran",
+      accessor: "subject",
+      className: "hidden md:table-cell",
+    },
     ...(role === "admin" || role === "teacher"
       ? [{ header: "Murid", accessor: "Student" }]
       : []),
     { header: "Nilai", accessor: "score" },
     { header: "Guru", accessor: "teacher", className: "hidden md:table-cell" },
-    { header: "Kelas", accessor: "class" },
+    { header: "Kelas", accessor: "class", className: "hidden md:table-cell" },
     { header: "Tipe", accessor: "type", className: "hidden md:table-cell" },
     ...(role === "admin" || role === "teacher"
       ? [{ header: "Aksi", accessor: "action" }]

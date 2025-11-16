@@ -49,6 +49,7 @@ export default function FilterSortToggle({
         <button
           onClick={() => setOpen((prev) => !prev)}
           className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow hover:brightness-90 shadow-md transition"
+          title="Filter & Sort"
         >
           <Image src={iconSrc} alt="Filter" width={14} height={14} />
         </button>

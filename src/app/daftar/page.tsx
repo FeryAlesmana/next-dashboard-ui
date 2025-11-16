@@ -1,11 +1,12 @@
 "use client";
 import NavbarHome from "@/components/NavbarHome";
 import { FaSchool, FaLaptop, FaPrint } from "react-icons/fa";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import FormModal from "@/components/FormModal";
 import { EmailVerificationGate } from "@/components/EmailVerificationGate";
 import { useUser } from "@clerk/nextjs";
 import { VerificationGate } from "@/components/VerificationGate";
+import PPDBBanner from "@/components/PPDBBanner";
 
 export default function PPDBPage() {
   const formRef = useRef<HTMLDivElement>(null);
@@ -13,6 +14,19 @@ export default function PPDBPage() {
     "offline" | "online" | null
   >(null);
   const [skipVerification, setSkipVerification] = useState(false);
+  const [ppdbStatus, setPpdbStatus] = useState<{
+    open: boolean;
+    reason: string;
+  } | null>(null);
+
+  useEffect(() => {
+    async function fetchStatus() {
+      const res = await fetch("/api/ppdb-status");
+      const data = await res.json();
+      setPpdbStatus(data);
+    }
+    fetchStatus();
+  }, []);
   const { user } = useUser();
   const role = user?.publicMetadata.role as string | undefined;
   const scrollToForm = () => {
@@ -107,29 +121,37 @@ export default function PPDBPage() {
             ref={formRef}
             className="mt-12 bg-white/30 p-6 rounded-xl shadow-md backdrop-blur-md"
           >
-            <h3 className="text-xl font-semibold mb-4 text-white">
-              Formulir Pendaftaran Online
-            </h3>
-            {role === "admin" ? (
+            {!ppdbStatus ? (
+              <p className="text-white">Memeriksa status PPDB...</p>
+            ) : !ppdbStatus.open ? (
+              <PPDBBanner reason={ppdbStatus.reason} />
+            ) : (
               <>
-                {!skipVerification ? (
+                <h3 className="text-xl font-semibold mb-4 text-white">
+                  Formulir Pendaftaran Online
+                </h3>
+
+                {role === "admin" ? (
                   <>
-                    <VerificationGate />
-                    <button
-                      type="button"
-                      onClick={() => setSkipVerification(true)}
-                      className="mt-4 px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
-                    >
-                      Lewati Verifikasi (Admin)
-                    </button>
+                    {!skipVerification ? (
+                      <>
+                        <VerificationGate />
+                        <button
+                          type="button"
+                          onClick={() => setSkipVerification(true)}
+                          className="mt-4 px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+                        >
+                          Lewati Verifikasi (Admin)
+                        </button>
+                      </>
+                    ) : (
+                      <FormModal type="create" table="ppdb" />
+                    )}
                   </>
                 ) : (
-                  <FormModal type="create" table="ppdb" />
+                  <VerificationGate />
                 )}
               </>
-            ) : (
-              // <EmailVerificationGate />
-              <VerificationGate />
             )}
           </div>
         )}
