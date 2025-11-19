@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import SemesterSelect from "../SemesterSelect";
 import StudentParentTableSkeleton from "../StudentParentTableSkeleton";
+import PaymentInstallmentsPreview from "../PaymentInstallmentsPreview";
 
 type Semester = {
   label: string;
@@ -137,7 +138,7 @@ export default function ParentPaymentView({
   // console.log(studentsWithPayments, "student in payment");
   return (
     <div className="w-full mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6">Pembayaran Anak</h1>
+      <h1 className="text-2xl font-bold mb-6">Tagihan Anak</h1>
 
       {gradeLevel.map(({ studentId, gradeLevel: gLevel, createdAt }) => {
         const student = studentsWithPayments.find((s) => s.id === studentId);
@@ -179,14 +180,13 @@ export default function ParentPaymentView({
                 <table className="min-w-full divide-y divide-gray-200 text-sm">
                   <thead className="bg-gray-100">
                     <tr>
-                      <th className="px-4 py-3 text-center">
-                        Jenis Pembayaran
-                      </th>
+                      <th className="px-4 py-3 text-center">Jenis Tagihan</th>
                       <th className="px-4 py-3 text-center">Jumlah</th>
                       <th className="px-4 py-3 text-center">Status</th>
                       <th className="px-4 py-3 text-center">Jatuh Tempo</th>
-                      <th className="px-4 py-3 text-center">Dibayar Pada</th>
-                      <th className="px-4 py-3 text-center">Jumlah Dibayar</th>
+                      <th className="px-4 py-3 text-center">
+                        Jumlah Pembayaran
+                      </th>
                       <th className="px-4 py-3 text-center">Metode</th>
                       <th className="px-4 py-3 text-center">Deskripsi</th>
                     </tr>
@@ -243,27 +243,11 @@ export default function ParentPaymentView({
                           {new Date(pay.dueDate).toLocaleDateString("id-ID")}
                         </td>
                         <td className="p-3">
-                          {pay.paidAt
-                            ? new Date(pay.paidAt).toLocaleDateString("id-ID")
-                            : "-"}
-                        </td>
-                        <td className="p-3">
-                          {pay.paymentInstallments?.length > 0 ? (
-                            <div className="flex flex-col">
-                              <span className="font-medium">
-                                Rp{" "}
-                                {pay.paymentInstallments
-                                  .reduce(
-                                    (sum: any, i: any) =>
-                                      sum + Number(i.amount),
-                                    0
-                                  )
-                                  .toLocaleString("id-ID")}
-                              </span>
-                            </div>
-                          ) : (
-                            "-"
-                          )}
+                          <PaymentInstallmentsPreview
+                            installments={pay.paymentInstallments}
+                            totalAmount={Number(pay.amount)}
+                            limit={1}
+                          />
                         </td>
 
                         <td className="p-3">{pay.paymentMethod || "-"}</td>

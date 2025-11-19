@@ -820,33 +820,47 @@ export const paymentLogSchema = z
     recipientId: z.string().min(1, "Penerima wajib dipilih"),
 
     paidAt: z.string().optional(), // ISO date
-    amountPaid: z.number().optional(),
+    installmentCount: z.coerce.number().optional(),
+    installments: z
+      .array(
+        z.object({
+          amount: z.coerce.number().min(1, "Jumlah harus > 0"),
+          paidAt: z.string().min(1, "Tanggal harus diisi").optional(),
+        })
+      )
+      .optional(),
   })
   .refine(
     (data) =>
-      ["PAID", "PARTIALLY_PAID"].includes(data.status) ? !!data.paidAt : true,
+      ["PAID", "PARTIALLY_PAID"].includes(data.status)
+        ? (data.installments ?? []).length > 0
+        : true,
     {
-      message: "Tanggal pembayaran wajib diisi",
-      path: ["paidAt"],
+      message: "Minimal satu pembayaran wajib diisi",
+      path: ["installments"],
     }
   )
   .refine(
     (data) =>
-      data.status !== "PAID" ||
-      (data.amountPaid !== undefined && data.amountPaid === data.amount),
+      data.status === "PAID"
+        ? (data.installments ?? []).reduce((sum, i) => sum + i.amount, 0) ===
+          data.amount
+        : true,
     {
-      message: "Jumlah dibayar harus sama dengan total saat status Lunas",
-      path: ["amountPaid"],
+      message: "Jumlah pembayaran harus sama dengan total saat Lunas",
+      path: ["installments"],
     }
   )
   .refine(
     (data) =>
-      data.status !== "PARTIALLY_PAID" ||
-      (data.amountPaid !== undefined && data.amountPaid < data.amount),
+      data.status === "PARTIALLY_PAID"
+        ? (data.installments ?? []).reduce((sum, i) => sum + i.amount, 0) <
+          data.amount
+        : true,
     {
       message:
-        "Jumlah dibayar harus lebih kecil dari total saat Sebagian Dibayar",
-      path: ["amountPaid"],
+        "Jumlah pembayaran harus lebih kecil dari total saat Sebagian Dibayar",
+      path: ["installments"],
     }
   );
 
@@ -1061,3 +1075,53 @@ export const ppdbSettingSchema = z
   );
 
 export type PPDBSettingSchema = z.infer<typeof ppdbSettingSchema>;
+
+export const importPaymentsschema = z.object({
+  file: z
+    .instanceof(File, {
+      message: "Yang anda upload bukan file!",
+    })
+    .refine((file) => file.size <= 5 * 1024 * 1024, {
+      message: "Ukuran file harus kurang dari 5MB",
+    })
+    .refine(
+      (file) =>
+        file.type ===
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+        file.type === "application/vnd.ms-excel",
+      {
+        message: "Format file harus .xlsx atau .xls",
+      }
+    ),
+});
+export type ImportPaymentsSchema = z.infer<typeof importPaymentsschema>;
+
+export const exportPaymentsSchema = z
+  .object({
+    period: z.enum(["week", "month", "year", "range"]),
+    startDate: z.string().optional(),
+    endDate: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.period !== "range") return true;
+      return !!data.startDate && !!data.endDate;
+    },
+    {
+      message:
+        "Tanggal mulai dan tanggal akhir wajib diisi untuk Custom Range.",
+      path: ["startDate"], // show error under date fields
+    }
+  )
+  .refine(
+    (data) => {
+      if (data.period !== "range") return true;
+      return new Date(data.startDate!) <= new Date(data.endDate!);
+    },
+    {
+      message: "Tanggal mulai tidak boleh lebih besar dari tanggal akhir.",
+      path: ["startDate"],
+    }
+  );
+
+export type ExportPaymentsSchema = z.infer<typeof exportPaymentsSchema>;

@@ -164,9 +164,9 @@ export default async function AttendancePage({
                   Guru: {lesson.teacher?.name ?? "Belum ditentukan"}
                 </div>
               )}
-              <div className="text-sm text-gray-500">
+              {/* <div className="text-sm text-gray-500">
                 ID Jadwal: {lesson.id}
-              </div>
+              </div> */}
             </Link>
           ))}
         </div>
@@ -200,9 +200,9 @@ export default async function AttendancePage({
                   <div className="text-sm text-gray-500 mb-1">
                     Kelas: {lesson.class?.name}
                   </div>
-                  <div className="text-sm text-gray-500">
+                  {/* <div className="text-sm text-gray-500">
                     ID Jadwal: {lesson.id}
-                  </div>
+                  </div> */}
                 </Link>
               ))
             ) : (

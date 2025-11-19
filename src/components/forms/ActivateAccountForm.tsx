@@ -8,31 +8,11 @@ import {
   activateManyTeachers,
 } from "@/lib/actions";
 import { useRouter } from "next/navigation";
+import { TableName } from "../FormContainer";
 
 type ActivateAccountFormProps = {
   setOpen: Dispatch<SetStateAction<boolean>>;
-  table:
-    | "teacher"
-    | "student"
-    | "parent"
-    | "subject"
-    | "class"
-    | "lesson"
-    | "exam"
-    | "assignment"
-    | "result"
-    | "attendance"
-    | "event"
-    | "announcement"
-    | "ppdb"
-    | "paymentLog"
-    | "importTeachers"
-    | "importStudents"
-    | "user"
-    | "eskul"
-    | "hero"
-    | "gallery"
-    | "ppdb-setting";
+  table: TableName;
   ids: string[];
 };
 

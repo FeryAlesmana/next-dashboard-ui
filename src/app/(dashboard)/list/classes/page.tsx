@@ -19,7 +19,7 @@ const ClassListPage = async ({
     }, {} as Record<string, string>)
   ).toString();
   const p = page ? parseInt(page) : 1;
-  const perPage = limit === "all" ? undefined : parseInt(limit ?? "10");
+  const perPage = limit === "all" ? 50 : parseInt(limit ?? "10");
 
   const { role } = await getCurrentUser();
   const columns = [
@@ -38,6 +38,11 @@ const ClassListPage = async ({
     {
       header: "Kapasitas",
       accessor: "kapasitas",
+      className: "hidden md:table-cell",
+    },
+    {
+      header: "Murid",
+      accessor: "students",
       className: "hidden md:table-cell",
     },
     {
@@ -116,6 +121,7 @@ const ClassListPage = async ({
         _count: {
           select: { students: true },
         },
+        students: true,
       },
       take: perPage,
       skip: perPage ? perPage * (p - 1) : undefined,

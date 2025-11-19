@@ -1,5 +1,6 @@
 "use client";
 import FormModal from "../FormModal";
+import NameListPopover from "../NamePopover";
 import { BaseTableClientProps } from "./AssignmentTableClient";
 
 const ClassesTableClient = ({
@@ -31,7 +32,12 @@ const ClassesTableClient = ({
           ? `${data._count.students}/${data.capacity ?? 0}`
           : `0/${data.capacity ?? 0}`}
       </td>
-
+      <td className="hidden md:table-cell">
+        <NameListPopover
+          items={data.students.map((t: any) => t.name)}
+          label="Murid"
+        />
+      </td>
       <td className="hidden md:table-cell">{data.name[0]}</td>
       <td className="hidden md:table-cell">
         {data.supervisor ? `${data.supervisor.name ?? ""} `.trim() : "-"}

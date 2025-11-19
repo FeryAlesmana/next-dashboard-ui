@@ -53,6 +53,9 @@ import UpdateManyExamsForm from "./forms/UpdateManyExams";
 import ImportTeachersForm from "./forms/ImportTeachersForm";
 import ImportStudentsForm from "./forms/ImportStudentForm";
 import ActivateAccountForm from "./forms/ActivateAccountForm";
+import ImportPaymentsForm from "./forms/ImportPaymentsForm";
+import ExportPaymentsForm from "./forms/ExportPaymentsForm";
+import { createPortal } from "react-dom";
 // import StudentForm from "./forms/StudentForm";
 // import TeacherForm from "./forms/TeacherForm";
 
@@ -585,6 +588,53 @@ const FormModal = ({
       </>
     );
 
+  if (type === "readMany") {
+    switch (table) {
+      case "exportPayments":
+        {
+          return (
+            <>
+              <div className="">
+                <button
+                  onClick={() => setOpen(true)}
+                  className="flex items-center justify-center rounded-full bg-lamaYellow hover:brightness-90 shadow-md transition w-8 h-8"
+                >
+                  <Image
+                    src="/Export.png"
+                    alt="export"
+                    width={16}
+                    height={16}
+                  />
+                </button>
+              </div>
+              {open && (
+                <div className="w-screen h-screen absolute left-0 top-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">
+                  <div className="bg-white p-4 rounded-md relative w-[700px] h-auto">
+                    <ExportPaymentsForm setOpen={setOpen} />
+                    <div
+                      className="absolute top-4 right-4 cursor-pointer"
+                      onClick={() => setOpen(false)}
+                    >
+                      <Image
+                        src="/close.png"
+                        width={14}
+                        height={14}
+                        alt="Tutup"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
+          );
+        }
+        break;
+
+      default:
+        break;
+    }
+  }
+
   if (type === "createMany") {
     switch (table) {
       case "importTeachers": {
@@ -638,6 +688,42 @@ const FormModal = ({
               <div className="w-screen h-screen absolute left-0 top-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">
                 <div className="bg-white p-4 rounded-md relative w-[700px] h-auto">
                   <ImportStudentsForm
+                    setOpen={setOpen}
+                    data={data}
+                    onChanged={onChanged}
+                  />
+                  <div
+                    className="absolute top-4 right-4 cursor-pointer"
+                    onClick={() => setOpen(false)}
+                  >
+                    <Image
+                      src="/close.png"
+                      width={14}
+                      height={14}
+                      alt="Tutup"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
+        );
+      }
+      case "importPayments": {
+        return (
+          <>
+            <div className="">
+              <button
+                onClick={() => setOpen(true)}
+                className="flex items-center justify-center rounded-full bg-lamaYellow hover:brightness-90 shadow-md transition w-8 h-8"
+              >
+                <Image src="/import.png" alt="import" width={16} height={16} />
+              </button>
+            </div>
+            {open && (
+              <div className="w-screen h-screen absolute left-0 top-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">
+                <div className="bg-white p-4 rounded-md relative w-[700px] h-auto">
+                  <ImportPaymentsForm
                     setOpen={setOpen}
                     data={data}
                     onChanged={onChanged}
@@ -1019,16 +1105,17 @@ const FormModal = ({
         />
       </button>
 
-      {open && (
-        <div
-          className={`
-    z-50 bg-black bg-opacity-60 flex items-center justify-center p-4
-    ${table === "lesson" ? "fixed inset-0" : "absolute inset-0"}
-  `}
-        >
-          <div className="max-h-[90vh] overflow-y-auto w-full flex justify-center">
-            <div
-              className={` bg-white p-4 rounded-md relative
+      {open &&
+        createPortal(
+          <div
+            className={`
+        fixed inset-0 z-[9999] bg-black bg-opacity-60 
+        flex items-center justify-center p-4
+      `}
+          >
+            <div className="max-h-[90vh] overflow-y-auto w-full flex justify-center">
+              <div
+                className={` bg-white p-4 rounded-md relative
     w-[90%] md:w-[70%] lg:w-[60%] xl:w-[50%] 2xl:w-[40%]
     max-h-[90vh] overflow-y-auto
       ${
@@ -1041,19 +1128,20 @@ const FormModal = ({
           : ""
       }
     `}
-            >
-              <Form />
-
-              <div
-                className="absolute top-4 right-4 cursor-pointer"
-                onClick={() => setOpen(false)}
               >
-                <Image src="/close.png" width={14} height={14} alt="" />
+                <Form />
+
+                <div
+                  className="absolute top-4 right-4 cursor-pointer"
+                  onClick={() => setOpen(false)}
+                >
+                  <Image src="/close.png" width={14} height={14} alt="" />
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </>
   );
 };

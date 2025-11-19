@@ -46,7 +46,7 @@ export default function NameListPopover({
               className="mt-3 text-sm text-blue-600 underline"
               onClick={() => setOpen(false)}
             >
-              Close
+              Tutup
             </button>
           </div>
         </div>

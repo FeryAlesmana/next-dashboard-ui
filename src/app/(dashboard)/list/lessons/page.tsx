@@ -41,7 +41,7 @@ const LessonListPage = async ({
   ).toString();
 
   const p = page ? parseInt(page) : 1;
-  const perPage = limit === "all" ? undefined : parseInt(limit ?? "10");
+  const perPage = limit === "all" ? 50 : parseInt(limit ?? "10");
 
   const { role, userId } = await getCurrentUser();
   const columns = [
@@ -53,11 +53,11 @@ const LessonListPage = async ({
           },
         ]
       : []),
-    {
-      header: "ID Jadwal",
-      accessor: "lessonId",
-      className: "hidden md:table-cell",
-    },
+    // {
+    //   header: "ID Jadwal",
+    //   accessor: "lessonId",
+    //   className: "hidden md:table-cell",
+    // },
     {
       header: "Mata Pelajaran",
       accessor: "Nama",
@@ -106,7 +106,7 @@ const LessonListPage = async ({
       key={item.id}
       className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight"
     >
-      <td className="hidden md:table-cell">{item?.id}</td>
+      {/* <td className="hidden md:table-cell">{item?.id}</td> */}
       <td className="flex items-center p-4 gap-4">
         {item.subject?.name || "-"}
       </td>
@@ -135,8 +135,11 @@ const LessonListPage = async ({
       </td>
       <td>
         <Link href={`/list/attendance/${item.class.name}/${item.id}`}>
-          <button className="w-7 h-7 flex items-center justify-center rounded-full">
-            <Image src="/moreDark.png" alt="" width={16} height={16} />
+          <button
+            className="w-7 h-7 flex items-center justify-center rounded-full"
+            title="Pertemuan"
+          >
+            <Image src="/morev.png" alt="" width={16} height={16} />
           </button>
         </Link>
       </td>
@@ -305,9 +308,10 @@ const LessonListPage = async ({
                 teacherLesson.map((cls) => (
                   <div
                     key={cls.id}
-                    className="p-4 rounded-md border mb-6 bg-gray-50"
+                    className="p-4 rounded-md border mb-6 bg-gray-50 w-full overflow-x-auto"
                   >
-                    <h3 className="font-semibold mb-3 text-lamaPurple">
+                    <h3 className="font-semibold mb-3 text-lamaBlue">
+                      <span className="text-black">Kelas : </span>
                       {cls.name}
                     </h3>
 
@@ -328,7 +332,7 @@ const LessonListPage = async ({
                                 {lesson.subject?.name || "-"}
                               </td>
                               <td className="p-2">{lesson.day}</td>
-                              <td className="p-2">
+                              <td className="p-2 whitespace-nowrap min-w-[140px]">
                                 {lesson.startTime.toLocaleTimeString("id-ID", {
                                   hour: "2-digit",
                                   minute: "2-digit",

@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
@@ -447,6 +447,7 @@ model PaymentLog {
   grade   Grade? @relation(fields: [gradeId], references: [id], onDelete: SetNull)
 
   paymentInstallments PaymentInstallment[]
+  changeLogs          PaymentLogChange[]
 }
 
 enum PaymentType {
@@ -506,4 +507,27 @@ model PPDBSetting {
   quota     Int
   usedQuota Int      @default(0)
   updatedAt DateTime @updatedAt
+}
+
+model PaymentLogChange {
+  id           Int         @id @default(autoincrement())
+  paymentLogId Int?
+  paymentLog   PaymentLog? @relation(fields: [paymentLogId], references: [id], onDelete: SetNull)
+
+  action   ChangeAction
+  oldValue Json?
+  newValue Json?
+
+  changedById   String // Clerk userId
+  changedByName String
+  changedByRole String // Clerk publicMetadata.role
+
+  createdAt DateTime @default(now())
+}
+
+enum ChangeAction {
+  CREATE
+  UPDATE
+  DELETE
+  REVERT
 }

@@ -1,8 +1,13 @@
 "use client";
-import { CurrentState, importTeachers } from "@/lib/actions";
 import {
-  importTeacherSchema,
-  ImportTeacherSchema,
+  CurrentState,
+  importPayments,
+  importStudents,
+  importTeachers,
+} from "@/lib/actions";
+import {
+  importPaymentsschema,
+  ImportPaymentsSchema,
 } from "@/lib/formValidationSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
@@ -17,8 +22,9 @@ import {
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 
-const ImportTeachersForm = ({
+const ImportPaymentsForm = ({
   setOpen,
+  data,
   onChanged,
 }: {
   setOpen: Dispatch<SetStateAction<boolean>>;
@@ -26,32 +32,31 @@ const ImportTeachersForm = ({
   onChanged?: (item: any) => void;
 }) => {
   const {
-    register,
     handleSubmit,
     control,
-    setValue,
     reset,
     formState: { errors },
-  } = useForm<ImportTeacherSchema>({
-    resolver: zodResolver(importTeacherSchema),
+  } = useForm<ImportPaymentsSchema>({
+    resolver: zodResolver(importPaymentsschema),
   });
 
-  const importTeacherHandler = async (
+  const importPaymentsHandler = async (
     prevState: CurrentState,
-    payload: ImportTeacherSchema
+    payload: ImportPaymentsSchema
   ): Promise<CurrentState> => {
-    return await importTeachers(prevState, payload);
+    return await importPayments(prevState, payload);
   };
 
   const initialState: CurrentState = {
     success: false,
     error: false,
     message: "",
+    skipped: null,
   };
   const [file, setFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [state, formAction] = useActionState(
-    importTeacherHandler,
+    importPaymentsHandler,
     initialState
   );
 
@@ -69,18 +74,30 @@ const ImportTeachersForm = ({
   }, [state.success, state.error]);
   useEffect(() => {
     if (state.success) {
-      toast("✅ Import guru berhasil");
-      if (state.data && onChanged) {
-        console.log(state.data, "imported data");
+      toast.success(`✅ ${state.message}`);
 
-        onChanged(state.data);
+      // If some items were skipped, show them
+      if (state.skipped && state.skipped.length > 0) {
+        let skippedMsg = "🚫 Data dilewati:\n";
+        skippedMsg += state.skipped
+          .map((s: any) => `• NISN: ${s.nisn || "-"} — ${s.reason}`)
+          .join("\n");
+
+        toast.error(skippedMsg, {
+          autoClose: false,
+        });
+        if (state.data && onChanged) {
+          console.log(state.data, "imported data");
+
+          onChanged(state.data);
+          router.refresh();
+        }
+        setOpen(false);
+        reset();
         router.refresh();
+      } else if (state.error) {
+        toast(`❌ Import gagal: ${state.message}`);
       }
-      setOpen(false);
-      reset();
-      router.refresh();
-    } else if (state.error) {
-      toast(`❌ Import gagal: ${state.message}`);
     }
   }, [state, reset, setOpen, onChanged, router]);
 
@@ -90,39 +107,48 @@ const ImportTeachersForm = ({
       className="p-4 border rounded-md space-y-3 "
     >
       {/* Instruction box */}
-      {/* Instruction box */}
       <div className="bg-blue-50 border border-blue-200 text-blue-700 text-sm p-3 rounded-md">
-        <p className="font-medium mb-1">📄 Format File Wajib:</p>
+        <p className="font-medium mb-1">📄 Format Kolom Wajib:</p>
         <ul className="list-disc list-inside space-y-1">
-          <li>Nama Guru (Wajib)</li>
-          <li>Nomor Telepon (Wajib)</li>
-          <li>Alamat (Wajib)</li>
+          <li>
+            <span className="font-semibold">NISN / ID Siswa</span> — digunakan
+            untuk mencocokkan siswa (Wajib)
+          </li>
+          <li>
+            <span className="font-semibold">Amount / Nominal Pembayaran</span>{" "}
+            (Wajib)
+          </li>
+          <li>
+            <span className="font-semibold">
+              Payment Type / Jenis Pembayaran
+            </span>{" "}
+            (Wajib)
+          </li>
+          <li>
+            <span className="font-semibold">
+              Due Date / Tanggal Jatuh Tempo
+            </span>{" "}
+            (Wajib)
+          </li>
         </ul>
 
-        <p className="font-medium mt-3 mb-1">
-          📌 Kolom Opsional (boleh dikosongkan):
-        </p>
+        <p className="font-medium mt-3 mb-1">📌 Kolom Opsional:</p>
         <ul className="list-disc list-inside grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-1">
-          <li>Username</li>
-          <li>Password</li>
-          <li>Nama Lengkap</li>
-          <li>Email</li>
-          <li>RW</li>
-          <li>RT</li>
-          <li>Kelurahan</li>
-          <li>Kecamatan</li>
-          <li>Kota</li>
-          <li>Agama</li>
-          <li>Foto</li>
-          <li>Jenis Kelamin</li>
-          <li>Tanggal Lahir</li>
+          <li>Keterangan / Deskripsi</li>
+          <li>Metode Pembayaran</li>
+          <li>No. Kwitansi</li>
+          <li>ID Kelas</li>
+          <li>ID Tingkat</li>
         </ul>
 
         <p className="mt-2 text-xs text-gray-500">
-          Pastikan minimal kolom <span className="font-medium">Nama Guru</span>,{" "}
-          <span className="font-medium">Nomor Telepon</span>, dan{" "}
-          <span className="font-medium">Alamat</span> ada agar data bisa
-          ditambahkan.
+          Anda dapat menggunakan berbagai variasi nama kolom seperti
+          <i>
+            “jumlah bayar”, “nominal pembayaran”, “jenis pembayaran”, “tgl jatuh
+            tempo”
+          </i>
+          , dll. Sistem akan otomatis mengenali nama kolom berdasarkan variasi
+          yang umum digunakan.
         </p>
       </div>
 
@@ -162,11 +188,11 @@ const ImportTeachersForm = ({
           {isSubmitting && (
             <span className="animate-spin inline-block w-5 h-5 border-2 border-white border-t-blue-400 rounded-full"></span>
           )}
-          {isSubmitting ? "Memproses..." : "Import Guru"}
+          {isSubmitting ? "Memproses..." : "Import Pembayaran"}
         </button>
       </div>
     </form>
   );
 };
 
-export default ImportTeachersForm;
+export default ImportPaymentsForm;

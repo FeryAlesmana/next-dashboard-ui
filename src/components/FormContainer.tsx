@@ -1,30 +1,33 @@
 import prisma from "@/lib/prisma";
 import FormModal from "./FormModal";
 import { getCurrentUser } from "@/lib/utils";
+export type TableName =
+  | "teacher"
+  | "student"
+  | "parent"
+  | "subject"
+  | "class"
+  | "lesson"
+  | "exam"
+  | "assignment"
+  | "result"
+  | "attendance"
+  | "event"
+  | "announcement"
+  | "ppdb"
+  | "paymentLog"
+  | "importTeachers"
+  | "importStudents"
+  | "user"
+  | "eskul"
+  | "hero"
+  | "gallery"
+  | "ppdb-setting"
+  | "importPayments"
+  | "exportPayments";
 
 export type FormContainerProps = {
-  table:
-    | "teacher"
-    | "student"
-    | "parent"
-    | "subject"
-    | "class"
-    | "lesson"
-    | "exam"
-    | "assignment"
-    | "result"
-    | "attendance"
-    | "event"
-    | "announcement"
-    | "ppdb"
-    | "paymentLog"
-    | "importTeachers"
-    | "importStudents"
-    | "user"
-    | "eskul"
-    | "hero"
-    | "gallery"
-    | "ppdb-setting";
+  table: TableName;
   type:
     | "create"
     | "update"
@@ -32,7 +35,8 @@ export type FormContainerProps = {
     | "deleteMany"
     | "updateMany"
     | "createMany"
-    | "activateAccount";
+    | "activateAccount"
+    | "readMany";
 
   data?: any;
   id?: number | string;

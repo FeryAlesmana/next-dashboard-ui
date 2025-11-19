@@ -12,19 +12,8 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
-import {
-  createClass,
-  createUserDB,
-  CurrentState,
-  updateClass,
-  updateUserDB,
-} from "@/lib/actions";
-import {
-  classSchema,
-  ClassSchema,
-  userSchema,
-  UserSchema,
-} from "@/lib/formValidationSchema";
+import { createUserDB, CurrentState, updateUserDB } from "@/lib/actions";
+import { userSchema, UserSchema } from "@/lib/formValidationSchema";
 import ConfirmDialog from "../ConfirmDialog";
 import Select from "react-select";
 import { BaseFormProps } from "./AssignmentForm";
@@ -43,9 +32,11 @@ const UserForm = ({
     control,
     formState: { errors },
     setError,
+    watch,
   } = useForm<UserSchema>({
     resolver: zodResolver(userSchema),
   });
+  const roleValue = watch("role");
 
   const createUserHandler = async (
     prevState: CurrentState,
@@ -134,7 +125,12 @@ const UserForm = ({
   const usersOptions = usersData.map((user: any) => ({
     value: user.id,
     label: `${user.name} - ${user.role}`,
+    role: user.role, // keep the role here!!
   }));
+
+  const filteredUserOptions = roleValue
+    ? usersOptions.filter((u: any) => u.role === roleValue)
+    : [];
 
   return (
     <>
@@ -231,7 +227,7 @@ const UserForm = ({
                 return (
                   <Select
                     {...field}
-                    options={usersOptions}
+                    options={filteredUserOptions}
                     className="text-sm"
                     classNamePrefix="select"
                     placeholder="Hubungkan User..."
@@ -239,7 +235,7 @@ const UserForm = ({
                       field.onChange(selectedOption?.value)
                     }
                     value={
-                      usersOptions.find(
+                      filteredUserOptions.find(
                         (opt: { value: string; label: string }) =>
                           opt.value === field.value
                       ) || null

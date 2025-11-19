@@ -7,6 +7,8 @@ import FormModal from "../FormModal";
 import TableSearch from "../TableSearch";
 import FilterSortToggle from "../FilterSortToggle";
 import PaymenTableClient from "./PaymentTableClient";
+import Link from "next/link";
+import Image from "next/image";
 
 export default function PaymentListClient({
   columns,
@@ -57,6 +59,24 @@ export default function PaymentListClient({
       })
     );
   };
+
+  const handleManyImport = (newItems: any[]) => {
+    setLocalData((prev) => {
+      const updated = [...prev];
+
+      newItems.forEach((item) => {
+        const index = updated.findIndex((p) => p.id === item.id);
+        if (index > -1) {
+          updated[index] = item; // update existing
+        } else {
+          updated.unshift(item); // add new
+        }
+      });
+
+      return updated;
+    });
+  };
+
   const {
     classOptions = [],
     gradeOptions = [],
@@ -118,12 +138,29 @@ export default function PaymentListClient({
             />
 
             {role === "admin" && (
-              <FormModal
-                table="paymentLog"
-                type="create"
-                onChanged={handleChanged}
-                relatedData={relatedData}
-              />
+              <>
+                <FormModal
+                  table="paymentLog"
+                  type="create"
+                  onChanged={handleChanged}
+                  relatedData={relatedData}
+                />
+                <FormModal
+                  table="importPayments"
+                  type="createMany"
+                  onChanged={handleManyImport}
+                />
+                <FormModal
+                  table="exportPayments"
+                  type="readMany"
+                  onChanged={handleManyImport}
+                />
+                <Link href={`payment/changelog`}>
+                  <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow shadow-md">
+                    <Image src="/changelog.png" alt="" width={16} height={16} />
+                  </button>
+                </Link>
+              </>
             )}
           </div>
         </div>

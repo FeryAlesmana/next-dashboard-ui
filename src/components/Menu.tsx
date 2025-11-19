@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import MenuSkeleton from "./MenuSkeleton";
 
-export default function Menu() {
+export default function Menu({ onLinkClick }: { onLinkClick: () => void }) {
   const { user, isLoaded } = useUser();
   const pathname = usePathname();
   const role = user?.publicMetadata?.role as string | undefined;
@@ -173,6 +173,9 @@ export default function Menu() {
                 <Link
                   href={href}
                   key={item.label}
+                  onClick={() => {
+                    if (onLinkClick) onLinkClick();
+                  }}
                   className={`flex lg:justify-start gap-4 py-2 rounded-md md:px-2 
               ${
                 isActive

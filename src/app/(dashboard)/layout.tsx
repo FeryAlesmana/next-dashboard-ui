@@ -2,8 +2,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import Menu from "@/components/Menu";
+import Navbar from "@/components/Navbar";
 import { useState } from "react";
-import NavbarContainer from "@/components/NavbarContainer";
 
 export default function DashboardLayout({
   children,
@@ -38,12 +38,13 @@ export default function DashboardLayout({
             <span className="inline lg:hidden">SMPI Serua</span>
           </span>
         </Link>
-        <Menu />
+        <Menu onLinkClick={() => setSidebarOpen(false)} />
       </div>
 
       {/* RIGHT CONTENT */}
-      <div className="flex-1 flex flex-col bg-[#F7F8FA] overflow-y-auto">
-        <NavbarContainer onToggleMenu={() => setSidebarOpen(!sidebarOpen)} />
+      <div className="flex-1 flex flex-col bg-[#F7F8FA] overflow-y-auto"
+       id="scroll-container">
+        <Navbar onToggleMenu={() => setSidebarOpen(!sidebarOpen)} />
         <div className="p-4">{children}</div>
       </div>
 

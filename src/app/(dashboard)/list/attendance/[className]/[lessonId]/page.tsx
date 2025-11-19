@@ -101,7 +101,7 @@ export default async function AttendanceDetailPage({
     );
     const classStudentIds =
       item.lesson.class?.students?.map((s: any) => s.id) || [];
-    console.log("attendances:", JSON.stringify(item, null, 2));
+    // console.log("attendances:", JSON.stringify(item, null, 2));
 
     const relevantStudentIds = parentChildrenIds.filter((id) =>
       classStudentIds.includes(id)

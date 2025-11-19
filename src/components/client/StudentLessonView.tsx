@@ -122,7 +122,7 @@ export default function StudentLessonViewSemester({
           <table className="min-w-full divide-y divide-gray-200 text-sm">
             <thead className="bg-gray-100">
               <tr>
-                <th className="px-4 py-3 text-left">ID Jadwal</th>
+                {/* <th className="px-4 py-3 text-left">ID Jadwal</th> */}
                 <th className="px-4 py-3 text-left">Mata Pelajaran</th>
                 <th className="px-4 py-3 text-left hidden md:table-cell">
                   Kelas
@@ -148,7 +148,7 @@ export default function StudentLessonViewSemester({
                   key={lsn.id}
                   className="even:bg-slate-50 hover:bg-lamaPurpleLight"
                 >
-                  <td className="p-3">{lsn.id}</td>
+                  {/* <td className="p-3">{lsn.id}</td> */}
                   <td className="p-3">{lsn.subject?.name || "-"}</td>
                   <td className="hidden md:table-cell">{lsn.class?.name}</td>
                   <td className="p-3 hidden md:table-cell">

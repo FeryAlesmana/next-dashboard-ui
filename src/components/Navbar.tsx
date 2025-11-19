@@ -3,19 +3,73 @@
 import Image from "next/image";
 import NotificationBell from "./NotificationComp";
 import SearchBar from "./PageSearch";
+import { useEffect, useRef, useState } from "react";
 
 interface NavbarProps {
   onToggleMenu: () => void;
-  userProfile: {
-    name: string;
-    img: string;
-    role: string;
-  };
 }
 
-const Navbar = ({ onToggleMenu, userProfile }: NavbarProps) => {
+interface UserProfile {
+  name: string;
+  img: string;
+  role: string;
+}
+
+const Navbar = ({ onToggleMenu }: NavbarProps) => {
+  const [isHidden, setIsHidden] = useState(false);
+  const lastScrollRef = useRef(0);
+  const [userProfile, setUserProfile] = useState<UserProfile>({
+    name: "Loading...",
+    img: "/avatar.png",
+    role: "",
+  });
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const res = await fetch("/api/profile");
+      if (res.ok) {
+        const data = await res.json();
+        setUserProfile(data);
+      }
+    };
+    fetchProfile();
+  }, []);
+
+  useEffect(() => {
+    const container = document.getElementById("scroll-container");
+    if (!container) return;
+
+    const handleScroll = () => {
+      const current = container.scrollTop;
+      const last = lastScrollRef.current;
+
+      if (window.innerWidth < 1024) {
+        if (current > last && current > 60) {
+          setIsHidden(true);
+        } else {
+          setIsHidden(false);
+        }
+      }
+
+      lastScrollRef.current = current;
+    };
+
+    container.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => {
+      container.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
   return (
-    <div className="flex items-center justify-between p-4 bg-white shadow-sm">
+    <div
+      className={`
+        flex items-center justify-between p-4 bg-white shadow-sm
+
+        sticky top-0 z-50 transition-transform duration-300
+        ${isHidden ? "-translate-y-full" : "translate-y-0"}
+
+        lg:static lg:translate-y-0
+      `}
+    >
       {/* Burger button */}
       <button
         onClick={onToggleMenu}
@@ -30,15 +84,6 @@ const Navbar = ({ onToggleMenu, userProfile }: NavbarProps) => {
 
       {/* Profile Section */}
       <div className="flex items-center gap-4">
-        {/* <div className="bg-white rounded-full w-7 h-7 flex items-center justify-center cursor-pointer">
-          <Image src="/message.png" alt="" width={20} height={20} />
-        </div> */}
-        {/* <div className="bg-white rounded-full w-7 h-7 flex items-center justify-center cursor-pointer relative">
-          <Image src="/announcement.png" alt="" width={20} height={20} />
-          <div className="absolute -top-3 -right-3 w-5 h-5 flex items-center justify-center bg-purple-500 text-white rounded-full text-xs">
-            1
-          </div>
-        </div> */}
         <NotificationBell />
         <div className="flex flex-col">
           <span

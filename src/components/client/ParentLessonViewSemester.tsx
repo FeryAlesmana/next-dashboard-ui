@@ -177,7 +177,7 @@ export default function ParentLessonViewSemester({
                 <table className="min-w-full divide-y divide-gray-200 text-sm">
                   <thead className="bg-gray-100">
                     <tr>
-                      <th className="px-4 py-3 text-left">ID Jadwal</th>
+                      {/* <th className="px-4 py-3 text-left">ID Jadwal</th> */}
                       <th className="px-4 py-3 text-left">Mata Pelajaran</th>
                       <th className="px-4 py-3 text-left hidden md:table-cell">
                         Kelas
@@ -203,7 +203,7 @@ export default function ParentLessonViewSemester({
                         key={lesson.id}
                         className="even:bg-slate-50 hover:bg-lamaPurpleLight"
                       >
-                        <td className="p-3">{lesson.id}</td>
+                        {/* <td className="p-3">{lesson.id}</td> */}
                         <td className="p-3">{lesson.subject?.name || "-"}</td>
                         <td className="hidden md:table-cell">
                           {lesson.class?.name}

@@ -21,6 +21,7 @@ import {
 } from "@/lib/actions";
 import { BaseFormProps } from "./AssignmentForm";
 import Select from "react-select";
+import { PartialPaymentFields } from "../PartialPaymentFields";
 
 const FORM_KEY = "payment_log_draft_form";
 
@@ -105,8 +106,6 @@ export default function CreatePaymentLogPage({
     installment,
   } = relatedData ?? [];
 
-  let initialAmountPaid: number | undefined = undefined;
-
   // Muat draft dari localStorage atau data untuk update
   useEffect(() => {
     const saved = localStorage.getItem(FORM_KEY);
@@ -118,9 +117,14 @@ export default function CreatePaymentLogPage({
     }
 
     if (type === "update" && data) {
-      const matchedInstallment = installment.find(
-        (inst: any) => inst.paymentLogId === data.id
-      );
+      // const relatedInstallments = installment
+      //   .filter((inst: any) => inst.paymentLogId === data.id)
+      //   .map((inst: any) => ({
+      //     amount: inst.amount,
+      //     paidAt: inst.paidAt
+      //       ? new Date(inst.paidAt).toISOString().split("T")[0]
+      //       : undefined,
+      //   }));
       reset({
         paymentType: data.paymentType ?? "TUITION",
         amount: data.amount ?? 0,
@@ -134,25 +138,69 @@ export default function CreatePaymentLogPage({
         paidAt: data.paidAt
           ? new Date(data.paidAt).toISOString().split("T")[0]
           : "",
-        amountPaid: matchedInstallment?.amount ?? undefined,
+
         recipientType: data.studentId
           ? "student"
           : data.classId
           ? "class"
           : "grade",
         recipientId: data.studentId ?? data.classId ?? data.gradeId ?? "",
+        // installments: relatedInstallments,
+        // installmentCount: relatedInstallments.length || 1,
       });
     }
   }, [setValue, reset, data, type, installment]);
+  useEffect(() => {
+    if (watchedValues.status === "PAID") {
+      const amount = getValues("amount") || 0;
+      const paidAt =
+        getValues("paidAt") || new Date().toISOString().split("T")[0];
+
+      setValue("installments", [
+        {
+          amount: amount,
+          paidAt: paidAt,
+        },
+      ]);
+
+      // Optionally, update installmentCount if your PartialPaymentFields uses it
+      setValue("installmentCount", 1);
+    }
+  }, [watchedValues.status, getValues, setValue]);
 
   // Muat data siswa, kelas, dan angkatan
+  const normalizePaymentData = (formData: PaymentLogSchema) => {
+    let installments: { amount: number; paidAt?: string }[] = [];
+
+    if (formData.status === "PAID") {
+      // Full payment — just push amountPaid as one installment
+      installments.push({
+        amount: formData.amount,
+        paidAt: formData.paidAt || new Date().toISOString().split("T")[0],
+      });
+    } else if (formData.status === "PARTIALLY_PAID") {
+      // Partial payments — use installments from form
+      installments = formData.installments
+        ? formData.installments.map((i) => ({
+            amount: i.amount,
+            paidAt: i.paidAt || undefined,
+          }))
+        : [];
+    }
+
+    return {
+      ...formData,
+      installments,
+    };
+  };
 
   // Submit final setelah konfirmasi
   const handleSubmitForm = handleSubmit((formData) => {
+    const normalizedData = normalizePaymentData(formData);
     setIsSubmitting(true);
     setShowConfirm(false);
     startTransition(() => {
-      formAction(formData);
+      formAction(normalizedData);
     });
   });
 
@@ -181,15 +229,15 @@ export default function CreatePaymentLogPage({
       router.refresh();
     }
   }, [state, type, setOpen, router, onChanged, formData]);
-  useEffect(() => {
-    if (watchedValues.status === "PAID") {
-      const rawAmount = getValues("amount"); // number | "" | undefined
-      const normalizedAmount =
-        typeof rawAmount === "number" ? rawAmount : undefined; // only keep number
+  // useEffect(() => {
+  //   if (watchedValues.status === "PAID") {
+  //     const rawAmount = getValues("amount"); // number | "" | undefined
+  //     const normalizedAmount =
+  //       typeof rawAmount === "number" ? rawAmount : undefined; // only keep number
 
-      setValue("amountPaid", normalizedAmount);
-    }
-  }, [watchedValues.status, getValues, setValue]);
+  //     setValue("amountPaid", normalizedAmount);
+  //   }
+  // }, [watchedValues.status, getValues, setValue]);
 
   return (
     <div className="max-w-4xl mx-auto p-4">
@@ -279,22 +327,18 @@ export default function CreatePaymentLogPage({
                   <p className="text-red-600">{errors.paidAt.message}</p>
                 )}
               </div>
-
-              <div>
-                <label className="block mb-1 font-medium">Jumlah Dibayar</label>
-                <input
-                  type="number"
-                  {...register("amountPaid", { valueAsNumber: true })}
-                  readOnly={watchedValues.status === "PAID"}
-                  className={`w-full border rounded px-3 py-2 ${
-                    watchedValues.status === "PAID"
-                      ? "bg-gray-100 cursor-not-allowed"
-                      : ""
-                  }`}
-                  max={1000000000}
-                />
-              </div>
             </>
+          )}
+
+          {watchedValues.status === "PARTIALLY_PAID" && (
+            <PartialPaymentFields
+              control={control}
+              register={register}
+              setValue={setValue}
+              watch={watch}
+              errors={errors}
+              remainingAmount={relatedData.remainingAmount[data.id]}
+            />
           )}
 
           <div>
@@ -456,7 +500,16 @@ export default function CreatePaymentLogPage({
           </div>
         </form>
       </div>
-
+      {(state.error || Object.keys(errors).length > 0) && (
+        <span className="text-red-500">
+          Terjadi Kesalahan! {state.message ?? ""}
+          <pre>
+            {Object.entries(errors)
+              .map(([key, val]) => `${key}: ${val?.message}`)
+              .join("\n")}
+          </pre>
+        </span>
+      )}
       {showConfirm && (
         <ConfirmDialog
           message={

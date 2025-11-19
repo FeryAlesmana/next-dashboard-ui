@@ -2,6 +2,9 @@
 import Image from "next/image";
 import FormModal from "../FormModal";
 import { BaseTableClientProps } from "./AssignmentTableClient";
+import PaymentInstallmentsPreview from "../PaymentInstallmentsPreview";
+import { useState } from "react";
+import MobileMenu from "../MobileMenu";
 
 export default function PaymenTableClient({
   data,
@@ -12,6 +15,7 @@ export default function PaymenTableClient({
   onDeleted,
   onChanged,
 }: BaseTableClientProps) {
+  const [open, setOpend] = useState(false);
   return (
     <>
       <tr className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight">
@@ -100,13 +104,21 @@ export default function PaymenTableClient({
           </span>
         </td>
         <td className="hidden md:table-cell">
+          <PaymentInstallmentsPreview
+            installments={data.paymentInstallments}
+            totalAmount={Number(data.amount)}
+            limit={1}
+          />
+        </td>
+
+        <td className="hidden md:table-cell">
           {data.dueDate.toLocaleDateString("en-UK", {
             day: "numeric",
             month: "numeric",
             year: "numeric",
           })}
         </td>
-        <td>
+        <td className="hidden md:table-cell">
           <div className="flex items-center gap-2">
             {role === "admin" && (
               <>
@@ -127,6 +139,28 @@ export default function PaymenTableClient({
               </>
             )}
           </div>
+        </td>
+
+        {/* MOBILE VIEW */}
+        <td className="relative md:hidden">
+          <button
+            onClick={() => setOpend(!open)}
+            className="w-8 h-8 flex items-center justify-center rounded-full active:bg-gray-200"
+          >
+            <Image src="/morev.png" alt="" width={16} height={16} />
+          </button>
+
+          {open && (
+            <MobileMenu
+              table="paymentLog"
+              onClose={() => setOpend(false)}
+              data={data}
+              role={role}
+              relatedData={relatedData}
+              onChanged={onChanged}
+              onDeleted={onDeleted}
+            />
+          )}
         </td>
       </tr>
     </>

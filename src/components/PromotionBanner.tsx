@@ -45,15 +45,15 @@ export default function PromotionBanner({
   } else if (reason === "NOT_STARTED") {
     message = (
       <>
-        Maaf, PPDB belum dibuka (dibuka{" "}
-        <span className="font-semibold">{format(startDate)}</span>)
+        PPDB belum dibuka (dibuka{" "}
+        <span className="font-semibold">{format(startDate)}!</span>)
       </>
     );
   } else if (reason === "ENDED") {
     message = (
       <>
-        Maaf, PPDB sudah ditutup pada{" "}
-        <span className="font-semibold">{format(endDate)}</span>
+        PPDB sudah ditutup pada{" "}
+        <span className="font-semibold">{format(endDate)}!</span>
       </>
     );
   } else if (reason === "QUOTA_FULL") {
@@ -71,6 +71,7 @@ export default function PromotionBanner({
       text-white text-sm md:text-base font-medium
       max-w-4xl mx-auto 
       mt-40
+      text-center
     "
     >
       <Link href="/daftar">{message}</Link>

@@ -4,6 +4,7 @@ import FormModal from "../FormModal";
 import { BaseTableClientProps } from "./AssignmentTableClient";
 import Image from "next/image";
 import { useState } from "react";
+import MobileMenu from "../MobileMenu";
 
 export default function LessonTableClient({
   data,
@@ -94,43 +95,15 @@ export default function LessonTableClient({
           </button>
 
           {open && (
-            <div className="absolute right-0 mt-2 w-20 bg-white shadow-md border rounded-md p-1 z-10">
-              {/* View Attendance */}
-              <Link
-                href={`/list/attendance/${data.class.name}/${data.id}`}
-                className="block px-3 py-2 text-sm hover:bg-gray-100 rounded"
-                onClick={() => setOpend(false)}
-              >
-                <button className="w-7 h-7 flex items-center justify-center rounded-full bg-lamaSky shadow-lg">
-                  <Image src="/view.png" alt="" width={16} height={16} />
-                </button>
-              </Link>
-
-              {role === "admin" && (
-                <>
-                  {/* Update */}
-                  <div className="px-3 py-2 text-sm hover:bg-gray-100 rounded cursor-pointer">
-                    <FormModal
-                      table="lesson"
-                      type="update"
-                      data={data}
-                      relatedData={relatedData}
-                      onChanged={onChanged}
-                    />
-                  </div>
-
-                  {/* Delete */}
-                  <div className="px-3 py-2 text-sm hover:bg-gray-100 rounded cursor-pointer">
-                    <FormModal
-                      table="lesson"
-                      type="delete"
-                      id={data.id}
-                      onDeleted={() => onDeleted?.([data.id])}
-                    />
-                  </div>
-                </>
-              )}
-            </div>
+            <MobileMenu
+              table="lesson"
+              onClose={() => setOpend(false)}
+              data={data}
+              role={role}
+              relatedData={relatedData}
+              onChanged={onChanged}
+              onDeleted={onDeleted}
+            />
           )}
         </td>
       </tr>

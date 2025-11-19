@@ -5,6 +5,7 @@ import CountChartCountainer from "@/components/CountChartCountainer";
 import AttendanceChartContainer from "@/components/AttendanceChartContainer";
 import EventCalendarContainer from "@/components/EventCalendarContainer";
 import prisma from "@/lib/prisma";
+import { Decimal } from "@prisma/client/runtime/library";
 
 interface AdminPageProps {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -58,6 +59,12 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     sebagian_dibayar: 0,
   }));
 
+  function safeDecimal(value: Decimal) {
+    return value && typeof value === "object" && value.toNumber
+      ? value.toNumber()
+      : Number(value);
+  }
+
   for (const payment of payments) {
     let date: Date | null = null;
 
@@ -76,16 +83,16 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       const monthIdx = date.getMonth();
 
       if (payment.status === "PAID") {
-        monthlyData[monthIdx].lunas += payment.amount;
+        monthlyData[monthIdx].lunas += safeDecimal(payment.amount);
       } else if (payment.status === "PARTIALLY_PAID") {
         // add all installment amounts
         const installmentTotal = payment.paymentInstallments.reduce(
-          (sum, inst) => sum + inst.amount,
+          (sum, inst) => sum + safeDecimal(inst.amount),
           0
         );
         monthlyData[monthIdx].sebagian_dibayar += installmentTotal;
       } else {
-        monthlyData[monthIdx].belum_lunas += payment.amount;
+        monthlyData[monthIdx].belum_lunas += safeDecimal(payment.amount);
       }
     }
   }

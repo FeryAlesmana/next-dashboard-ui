@@ -3,6 +3,145 @@ import prisma from "./prisma";
 
 import crypto from "crypto";
 
+const PAYMENT_LOG_FIELDS = [
+  "studentId",
+  "amount",
+  "paymentType",
+  "status",
+  "dueDate",
+  "paidAt",
+  "description",
+  "paymentMethod",
+  "receiptNumber",
+  "classId",
+  "gradeId",
+] as const;
+
+type PaymentLogField = (typeof PAYMENT_LOG_FIELDS)[number];
+function sanitizeToJson(value: any): any {
+  if (value instanceof Date) return value.toISOString();
+
+  if (Prisma.Decimal.isDecimal(value)) return value.toNumber();
+
+  if (Array.isArray(value)) return value.map((v) => sanitizeToJson(v));
+
+  if (value && typeof value === "object") {
+    const clean: any = {};
+    for (const key of Object.keys(value)) {
+      const v = value[key];
+
+      if (v === undefined) continue; // JSON does not allow undefined
+
+      clean[key] = sanitizeToJson(v);
+    }
+    return clean;
+  }
+
+  return value; // string, number, boolean, null
+}
+
+export function sanitizePaymentLogSnapshot(snapshot: any) {
+  const clean: Partial<Record<PaymentLogField, any>> = {};
+
+  for (const key of PAYMENT_LOG_FIELDS) {
+    if (snapshot[key] !== undefined) {
+      clean[key] = sanitizeToJson(snapshot[key]);
+    }
+  }
+
+  return clean;
+}
+
+export function safeJSON(obj: any) {
+  return JSON.parse(
+    JSON.stringify(obj, (_, value) =>
+      value && value.toNumber ? value.toNumber() : value
+    )
+  );
+}
+
+const PAYMENT_TYPE_MAP: Record<
+  string,
+  "TUITION" | "EXTRACURRICULAR" | "UNIFORM" | "BOOKS" | "OTHER"
+> = {
+  // TUITION
+  tuition: "TUITION",
+  spp: "TUITION",
+  sekolah: "TUITION",
+  "biaya sekolah": "TUITION",
+  "tunggakan spp": "TUITION",
+
+  // EXTRACURRICULAR
+  extracurricular: "EXTRACURRICULAR",
+  ekstrakurikuler: "EXTRACURRICULAR",
+  eskul: "EXTRACURRICULAR",
+  kegiatan: "EXTRACURRICULAR",
+
+  // UNIFORM
+  uniform: "UNIFORM",
+  seragam: "UNIFORM",
+  "baju seragam": "UNIFORM",
+
+  // BOOKS
+  books: "BOOKS",
+  buku: "BOOKS",
+  "buku pelajaran": "BOOKS",
+
+  // OTHER
+  other: "OTHER",
+  lainnya: "OTHER",
+  denda: "OTHER",
+  "lain-lain": "OTHER",
+};
+
+export function mapPaymentType(raw?: string) {
+  if (!raw) return null;
+  const key = raw.toString().trim().toLowerCase();
+
+  // try exact map
+  if (PAYMENT_TYPE_MAP[key]) return PAYMENT_TYPE_MAP[key];
+
+  // try removing spaces/punctuation for more tolerance
+  const normalized = key.replace(/[^a-z0-9]/g, "");
+  if (PAYMENT_TYPE_MAP[normalized]) return PAYMENT_TYPE_MAP[normalized];
+
+  // fallback tries for short heuristics
+  if (normalized.includes("spp") || normalized.includes("tuition"))
+    return "TUITION";
+  if (
+    normalized.includes("ekstra") ||
+    normalized.includes("eskul") ||
+    normalized.includes("extracurricular")
+  )
+    return "EXTRACURRICULAR";
+  if (normalized.includes("seragam") || normalized.includes("uniform"))
+    return "UNIFORM";
+  if (normalized.includes("buku")) return "BOOKS";
+
+  // if nothing matched, return null (so you can skip or default)
+  return null;
+}
+
+export function getPeriodRange(period: "week" | "month" | "year") {
+  const now = new Date();
+  let start: Date;
+  let end: Date;
+
+  if (period === "week") {
+    start = new Date(now);
+    start.setDate(now.getDate() - 7);
+    end = now;
+  } else if (period === "month") {
+    start = new Date(now.getFullYear(), now.getMonth(), 1);
+    end = now;
+  } else {
+    start = new Date(now.getFullYear(), 0, 1);
+    end = now;
+  }
+
+  return { start, end };
+}
+
 export function buildStudentLessonAttendance(attendances: Attendance[]) {
   const statusCounts = {
     HADIR: 0,
@@ -24,8 +163,104 @@ export function buildStudentLessonAttendance(attendances: Attendance[]) {
     { status: "Izin", count: statusCounts.IZIN },
   ];
 }
+export const PAYMENT_FIELD_MAP: Record<string, string> = {
+  // ===============================
+  // REQUIRED: Student Identifier
+  // ===============================
+  nisn: "nisn",
+  "no nisn": "nisn",
+  nis: "nisn",
+  "no nis": "nisn",
+  "id siswa": "nisn",
+  siswa: "nisn",
+  "kode siswa": "nisn",
 
+  // ===============================
+  // REQUIRED: Payment Amount
+  // ===============================
+  amount: "amount",
+  nominal: "amount",
+  jumlah: "amount",
+  "jumlah bayar": "amount",
+  "jumlah pembayaran": "amount",
+  "nominal pembayaran": "amount",
+  "total bayar": "amount",
+  harga: "amount",
+  biaya: "amount",
+  "biaya spp": "amount",
 
+  // ===============================
+  // REQUIRED: Payment Type
+  // ===============================
+  paymenttype: "paymentType",
+  "payment type": "paymentType",
+  tipe: "paymentType",
+  jenis: "paymentType",
+  "jenis pembayaran": "paymentType",
+  "tipe pembayaran": "paymentType",
+  kategori: "paymentType",
+  "kategori pembayaran": "paymentType",
+
+  // ===============================
+  // REQUIRED: Due Date
+  // ===============================
+  duedate: "dueDate",
+  "due date": "dueDate",
+  "tanggal jatuh tempo": "dueDate",
+  "tgl jatuh tempo": "dueDate",
+  "jatuh tempo": "dueDate",
+  "deadline bayar": "dueDate",
+
+  // ===============================
+  // OPTIONAL FIELDS
+  // ===============================
+
+  // Description
+  description: "description",
+  keterangan: "description",
+  deskripsi: "description",
+  catatan: "description",
+
+  // Payment Method
+  paymentmethod: "paymentMethod",
+  metode: "paymentMethod",
+  "metode pembayaran": "paymentMethod",
+  channel: "paymentMethod",
+  "cara bayar": "paymentMethod",
+  "cara pembayaran": "paymentMethod",
+  via: "paymentMethod",
+
+  // Receipt Number
+  receipt: "receiptNumber",
+  "receipt number": "receiptNumber",
+  "no kwitansi": "receiptNumber",
+  kwitansi: "receiptNumber",
+  "nomor kwitansi": "receiptNumber",
+
+  // Class / Grade (Optional)
+  classid: "classId",
+  kelas: "classId",
+  "id kelas": "classId",
+
+  gradeid: "gradeId",
+  tingkat: "gradeId",
+  "id tingkat": "gradeId",
+};
+
+export function normalizePaymentRow(row: any) {
+  const normalized: any = {};
+
+  for (const key in row) {
+    if (!key) continue;
+    const lowerKey = key.toString().trim().toLowerCase();
+    const mappedKey = PAYMENT_FIELD_MAP[lowerKey];
+    if (mappedKey) {
+      normalized[mappedKey] = row[key];
+    }
+  }
+
+  return normalized;
+}
 
 export const FIELD_MAP: Record<string, string> = {
   // Required
@@ -172,8 +407,9 @@ export function normalizeSex(value: any): "MALE" | "FEMALE" {
 
 import { parse, isValid, format, subDays, addDays } from "date-fns";
 import { id as localeID } from "date-fns/locale";
-import { Attendance, resTypes } from "@prisma/client";
+import { Attendance, Prisma, resTypes } from "@prisma/client";
 import { Semester } from "@/components/client/StudentPaymentView";
+import { Decimal } from "@prisma/client/runtime/library";
 export function normalizeBirthday(value: any): string {
   if (!value) return "2000-01-01";
 

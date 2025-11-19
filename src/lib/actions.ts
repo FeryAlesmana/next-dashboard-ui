@@ -1,6 +1,8 @@
 "use server";
 import { v2 as cloudinary } from "cloudinary";
 import ExcelJS from "exceljs";
+import os from "os";
+import path from "path";
 
 cloudinary.config({
   cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME!,
@@ -41,24 +43,30 @@ import {
   UserSchema,
   EskulSchema,
   PPDBSettingSchema,
+  ImportPaymentsSchema,
+  ExportPaymentsSchema,
 } from "./formValidationSchema";
 import prisma from "./prisma";
 import { clerkClient } from "@clerk/nextjs/server";
 import extractCloudinaryPublicId, {
   decryptPassword,
   getCurrentUser,
+  getPeriodRange,
+  mapPaymentType,
   normalizeAgama,
   normalizeBirthday,
+  normalizePaymentRow,
   normalizeRow,
   normalizeSex,
 } from "./utils";
-import { Agama, Degree, parents, Prisma } from "@prisma/client";
+import { Agama, Degree, parents, PaymentStatus, Prisma } from "@prisma/client";
 import { encryptPassword } from "./utils";
 import { randomUUID } from "crypto";
 import { Readable } from "stream";
 import { error } from "console";
 import { disconnect } from "process";
 import { Decimal } from "@prisma/client/runtime/library";
+import { logPaymentChange } from "./paymentLogChange";
 
 export type CurrentState = {
   success: boolean;
@@ -70,6 +78,7 @@ export type CurrentState = {
   failed?: string[];
   deleted?: string[];
   data?: any;
+  skipped?: any;
 };
 const client = await clerkClient();
 
@@ -3492,6 +3501,17 @@ export async function createPaymentLog(
         },
       },
     });
+
+    await Promise.all(
+      createdPayments.map((payment) =>
+        logPaymentChange({
+          action: "CREATE",
+          paymentLogId: payment.id,
+          newValue: payment,
+        })
+      )
+    );
+
     function safeDecimal(value: Decimal) {
       return value && typeof value === "object" && value.toNumber
         ? value.toNumber()
@@ -3544,6 +3564,20 @@ export async function updatePaymentLog(
   }
 
   try {
+    // 1️⃣ Fetch old record safely
+    const oldRecord = await prisma.paymentLog.findUnique({
+      where: { id: data.id },
+      include: { paymentInstallments: true },
+    });
+
+    if (!oldRecord) {
+      return {
+        success: false,
+        error: true,
+        message: "Tagihan tidak ditemukan.",
+      };
+    }
+
     const { recipientType, recipientId, ...paymentData } = data;
 
     let classId: number | null = null;
@@ -3588,27 +3622,35 @@ export async function updatePaymentLog(
 
     // remaining amount left to pay
     const remainingAmount = paymentData.amount - totalPaid;
+    // Only keep new installments that are > 0 and not exceeding remainingAmount
+    const newInstallments: { amount: number; paidAt?: string }[] = (
+      paymentData.installments ?? []
+    ).filter((i) => i.amount > 0);
 
-    let installmentAction = undefined;
+    // If totalPaid already equals amount, ignore newInstallments
+    const installmentAction =
+      remainingAmount > 0 && newInstallments.length > 0
+        ? {
+            createMany: {
+              data: newInstallments.map((i) => ({
+                amount: i.amount,
+                paidAt: i.paidAt ? new Date(i.paidAt) : null,
+              })),
+            },
+          }
+        : undefined;
 
+    let finalPaidAt: Date | null = null;
     if (
-      paymentData.amountPaid &&
-      paymentData.amountPaid > 0 &&
-      remainingAmount > 0
+      paymentData.status === PaymentStatus.PAID ||
+      paymentData.status === PaymentStatus.PARTIALLY_PAID
     ) {
-      const amountToCreate = Math.min(paymentData.amountPaid, remainingAmount);
-
-      // Prevent overpayment & stop when full
-      if (amountToCreate > 0) {
-        installmentAction = {
-          create: {
-            amount: amountToCreate,
-            paidAt: paymentData.paidAt ? new Date(paymentData.paidAt) : null,
-          },
-        };
-      }
+      // Use the last installment's paidAt if available
+      const lastInstallment = newInstallments[newInstallments.length - 1];
+      finalPaidAt =
+        (lastInstallment?.paidAt && new Date(lastInstallment.paidAt)) ||
+        (paymentData.paidAt ? new Date(paymentData.paidAt) : new Date());
     }
-
     const updatedPayment = await prisma.paymentLog.update({
       where: {
         id: data.id,
@@ -3625,8 +3667,7 @@ export async function updatePaymentLog(
         gradeId,
         studentId: recipientId,
         // store paidAt if provided
-        paidAt: paymentData.paidAt ? new Date(paymentData.paidAt) : null,
-
+        paidAt: finalPaidAt,
         // handle installments (amountPaid lives here)
         paymentInstallments: installmentAction,
       },
@@ -3644,6 +3685,7 @@ export async function updatePaymentLog(
             student_details: { select: { nisn: true } },
           },
         },
+        paymentInstallments: true,
       },
     });
     function safeDecimal(value: Decimal) {
@@ -3655,8 +3697,17 @@ export async function updatePaymentLog(
     const safePayment = {
       ...updatedPayment,
       amount: safeDecimal(updatedPayment.amount),
+      paymentInstallments: updatedPayment.paymentInstallments.map((inst) => ({
+        ...inst,
+        amount: safeDecimal(inst.amount),
+      })),
     };
-
+    logPaymentChange({
+      action: "UPDATE",
+      paymentLogId: safePayment.id,
+      oldValue: oldRecord,
+      newValue: safePayment,
+    });
     return {
       success: true,
       error: false,
@@ -3774,13 +3825,23 @@ export const deletePaymentLog = async (
   formData: FormData
 ): Promise<CurrentState> => {
   const id = formData.get("id") as string;
+  const idAsNumber = parseInt(id);
   try {
+    const before = await prisma.paymentLog.findUnique({
+      where: { id: idAsNumber },
+    });
+    await logPaymentChange({
+      action: "DELETE",
+      paymentLogId: before?.id,
+      oldValue: before,
+    });
     await new Promise((resolve) => setTimeout(resolve, 1000));
     await prisma.paymentLog.delete({
       where: {
         id: parseInt(id),
       },
     });
+
     return { success: true, error: false };
   } catch (error) {
     console.log(error + " Di delete Payment server action");
@@ -3802,6 +3863,14 @@ export const deletePaymentLogs = async (
     for (const id of ids) {
       const idAsNumber = parseInt(id);
       try {
+        const before = await prisma.paymentLog.findUnique({
+          where: { id: idAsNumber },
+        });
+        await logPaymentChange({
+          action: "DELETE",
+          paymentLogId: before?.id,
+          oldValue: before,
+        });
         await prisma.paymentLog.delete({ where: { id: idAsNumber } });
       } catch (innerError) {
         console.error(`❌ Failed to delete Payment Log ID ${id}:`, innerError);
@@ -4301,6 +4370,513 @@ export async function updatePPDBSetting(
       success: false,
       error: true,
       message: err?.message || "Terjadi kesalahan.",
+    };
+  }
+}
+
+export const importPayments = async (
+  currentState: CurrentState,
+  data: ImportPaymentsSchema
+) => {
+  const file = data.file as File;
+  if (!file) {
+    return { success: false, error: true, message: "No file uploaded" };
+  }
+
+  const arrayBuffer = await file.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
+  const workbook = new ExcelJS.Workbook();
+  const stream = Readable.from([buffer]);
+  await workbook.xlsx.read(stream);
+
+  const worksheet = workbook.worksheets[0];
+  if (!worksheet) {
+    return { success: false, error: true, message: "Workbook has no sheets" };
+  }
+
+  // Read headers
+  const headers: string[] = [];
+  worksheet.getRow(1).eachCell({ includeEmpty: true }, (cell, colIdx) => {
+    headers[colIdx - 1] = (cell.value ?? "").toString().trim();
+  });
+
+  // Final data to insert
+  const paymentLogs: any[] = [];
+  const paymentInstallments: any[] = [];
+
+  // Process rows
+  const rowsToInsert: any[] = [];
+
+  for (let rowNumber = 2; rowNumber <= worksheet.rowCount; rowNumber++) {
+    const row = worksheet.getRow(rowNumber);
+    if (!row) continue;
+
+    const rawRow: Record<string, any> = {};
+
+    row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+      const key = headers[colNumber - 1] ?? `col${colNumber}`;
+      rawRow[key] = cell.value ?? "";
+    });
+
+    // Normalize based on your map
+    const normRow = normalizePaymentRow(rawRow);
+
+    // Validate required fields
+    if (
+      !normRow.nisn ||
+      !normRow.amount ||
+      !normRow.paymentType ||
+      !normRow.dueDate
+    ) {
+      return {
+        success: false,
+        error: true,
+        message: `Missing required fields on row ${rowNumber}. Required: NISN, Amount, Payment Type, Due Date.`,
+      };
+    }
+
+    rowsToInsert.push(normRow);
+  }
+
+  try {
+    const createdPayments: any[] = [];
+    const skipped: { nisn: string | null; reason: string | "" }[] = [];
+
+    await prisma.$transaction(async (tx) => {
+      for (const row of rowsToInsert) {
+        const nisnValue = row.nisn?.toString()?.trim();
+
+        // ❗ Skip if NISN is missing
+        if (!nisnValue) {
+          skipped.push({
+            nisn: row.nisn || null,
+            reason: `NISN Tidak ditemukan: "${row.nisn}"`,
+          });
+          continue;
+        }
+        const mappedType = mapPaymentType(row.paymentType) ?? "OTHER";
+
+        // Find student by NISN
+        const student = await tx.student.findFirst({
+          where: {
+            student_details: {
+              nisn: nisnValue,
+            },
+          },
+          select: { id: true, classId: true, gradeId: true },
+        });
+
+        // ❗ Skip if not found
+        if (!student) {
+          skipped.push({
+            nisn: nisnValue,
+            reason: `Siswa Tidak ditemukan dengan NISN: "${row.nisn}"`,
+          });
+          continue;
+        }
+
+        // Create PaymentLog
+        const log = await tx.paymentLog.create({
+          data: {
+            studentId: student.id,
+            amount: Number(row.amount),
+            paymentType: mappedType,
+            dueDate: new Date(normalizeBirthday(row.dueDate)),
+            description: row.description || null,
+            paymentMethod: row.paymentMethod || null,
+            status: "PENDING",
+            receiptNumber: crypto.randomUUID(),
+            classId: student.classId,
+            gradeId: student.gradeId,
+          },
+        });
+
+        createdPayments.push(log);
+
+        // If Excel includes initial installment
+        if (row.amountPaid && Number(row.amountPaid) > 0) {
+          await tx.paymentInstallment.create({
+            data: {
+              paymentLogId: log.id,
+              amount: Number(row.amountPaid),
+              paidAt: row.paidAt ? new Date(row.paidAt) : new Date(),
+            },
+          });
+
+          const totalPaid = Number(row.amountPaid);
+
+          // Update status
+          if (totalPaid >= Number(row.amount)) {
+            await tx.paymentLog.update({
+              where: { id: log.id },
+              data: {
+                status: "PAID",
+                paidAt: row.paidAt ? new Date(row.paidAt) : new Date(),
+              },
+            });
+          } else {
+            await tx.paymentLog.update({
+              where: { id: log.id },
+              data: { status: "PARTIALLY_PAID" },
+            });
+          }
+        }
+      }
+    });
+
+    return {
+      success: true,
+      error: false,
+      message: `${createdPayments.length} pembayaran berhasil diimport, ${skipped.length} data dilewati.`,
+      skipped,
+      data: createdPayments,
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      error: true,
+      message: error.message || "Unknown error",
+    };
+  }
+};
+
+export async function exportPaymentsToExcel(
+  prev: any,
+  data: ExportPaymentsSchema
+) {
+  try {
+    const period = data.period;
+    const startDate = data.startDate;
+    const endDate = data.endDate;
+
+    let start: Date;
+    let end: Date;
+
+    // If user chooses custom range
+    if (period === "range" && startDate && endDate) {
+      start = new Date(startDate + "T00:00:00");
+      end = new Date(endDate + "T23:59:59");
+    } else {
+      // Default: week, month, year
+      const range = getPeriodRange(period as any);
+      start = range.start;
+      end = range.end;
+    }
+
+    const payments = await prisma.paymentLog.findMany({
+      where: {
+        createdAt: { gte: start, lte: end },
+      },
+      include: {
+        student: {
+          include: {
+            student_details: true,
+          },
+        },
+        paymentInstallments: true,
+      },
+    });
+    function translatePeriod(p: string) {
+      switch (p) {
+        case "week":
+          return "Minggu Ini";
+        case "month":
+          return "Bulan Ini";
+        case "year":
+          return "Tahun Ini";
+        case "range":
+          return "Rentang Tanggal";
+        default:
+          return p;
+      }
+    }
+
+    // 🔹 Prepare workbook
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = "School System";
+    workbook.created = new Date();
+
+    const toRupiah = (num: number) =>
+      new Intl.NumberFormat("id-ID", {
+        style: "currency",
+        currency: "IDR",
+        minimumFractionDigits: 2,
+      }).format(num);
+
+    /*
+     * =====================================================
+     * 1️⃣ RINGKASAN
+     * =====================================================
+     */
+
+    const summarySheet = workbook.addWorksheet("Ringkasan", {
+      properties: { tabColor: { argb: "2E8B57" } },
+    });
+
+    const rows = payments.map((p) => {
+      const paidAmount = p.paymentInstallments.reduce(
+        (sum, inst) => sum + Number(inst.amount),
+        0
+      );
+
+      let status = "PENDING";
+      const full = Number(p.amount);
+
+      if (paidAmount === 0) status = "PENDING";
+      else if (paidAmount >= full) status = "PAID";
+      else if (paidAmount > 0 && paidAmount < full) status = "PARTIALLY_PAID";
+
+      const due = new Date(p.dueDate);
+      if (paidAmount < full && due < new Date()) {
+        status = "OVERDUE";
+      }
+
+      return {
+        name: p.student.name,
+        nisn: p.student.student_details?.nisn || "-",
+        totalAmount: full,
+        paidAmount,
+        remaining: full - paidAmount,
+        status,
+      };
+    });
+    const totalTagihan = rows.reduce((s, r) => s + r.totalAmount, 0);
+    const totalDibayar = rows.reduce((s, r) => s + r.paidAmount, 0);
+    const totalBelum = rows.reduce((s, r) => s + r.remaining, 0);
+    // HEADLINE
+    summarySheet.mergeCells("A1:B1");
+    const titleCell = summarySheet.getCell("A1");
+    titleCell.value = "LAPORAN PEMBAYARAN";
+    titleCell.font = { bold: true, size: 16 };
+    titleCell.alignment = { horizontal: "center" };
+
+    // Add spacing row
+    summarySheet.addRow([]);
+
+    // PERIOD ROWS
+    summarySheet.addRow(["Periode", translatePeriod(period)]);
+    summarySheet.addRow([
+      "Tanggal",
+      `${start.toLocaleDateString("id-ID")} - ${end.toLocaleDateString(
+        "id-ID"
+      )}`,
+    ]);
+
+    summarySheet.addRow([]);
+
+    // FINANCIAL SUMMARY
+    const totals = [
+      ["Total Tagihan", toRupiah(totalTagihan)],
+      ["Total Sudah Dibayar", toRupiah(totalDibayar)],
+      ["Total Belum Dibayar", toRupiah(totalBelum)],
+    ];
+
+    totals.forEach((row) => summarySheet.addRow(row));
+
+    summarySheet.addRow([]);
+
+    // STATUS SUMMARY HEADER
+    const statusHeader = summarySheet.addRow(["RINGKASAN STATUS"]);
+    statusHeader.font = { bold: true, color: { argb: "FF1A73E8" }, size: 12 };
+
+    // STATUS COUNTS
+    summarySheet.addRows([
+      ["Lunas", rows.filter((r) => r.status === "PAID").length],
+      ["Pending/Menunggu", rows.filter((r) => r.status === "PENDING").length],
+      ["Terlambat", rows.filter((r) => r.status === "OVERDUE").length],
+      [
+        "Sebagian Dibayar",
+        rows.filter((r) => r.status === "PARTIALLY_PAID").length,
+      ],
+    ]);
+
+    // FORMAT SUMMARY TABLE
+    summarySheet.getColumn(1).width = 40;
+    summarySheet.getColumn(2).width = 30;
+
+    // Style all data rows
+    summarySheet.eachRow((row, rowNum) => {
+      row.eachCell((cell) => {
+        cell.border = {
+          top: { style: "thin" },
+          bottom: { style: "thin" },
+          left: { style: "thin" },
+          right: { style: "thin" },
+        };
+        cell.font = { size: 12 };
+        cell.alignment = { vertical: "middle" };
+      });
+
+      // Light background for alternating rows
+      if (rowNum > 2 && rowNum % 2 === 0) {
+        row.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FFF7F7F7" },
+        };
+      }
+    });
+
+    /*
+     * =====================================================
+     * 2️⃣ DATA PEMBAYARAN
+     * =====================================================
+     */
+
+    const detailSheet = workbook.addWorksheet("Data Pembayaran");
+
+    detailSheet.columns = [
+      { header: "Nama Siswa", key: "name", width: 25 },
+      { header: "NISN", key: "nisn", width: 15 },
+      { header: "Nominal Tagihan", key: "tagihan", width: 20 },
+      { header: "Jumlah Dibayar", key: "dibayar", width: 20 },
+      { header: "Sisa", key: "sisa", width: 15 },
+      { header: "Status", key: "status", width: 18 },
+      { header: "Jatuh Tempo", key: "due", width: 18 },
+      { header: "Tanggal dibuat", key: "created", width: 18 },
+      { header: "Tanggal Dibayar", key: "paidAt", width: 18 },
+    ];
+
+    detailSheet.getRow(1).font = { bold: true };
+    detailSheet.getRow(1).alignment = { horizontal: "center" };
+    detailSheet.getRow(1).fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFDDDDDD" },
+    };
+
+    function translateStatus(status: string) {
+      switch (status) {
+        case "PAID":
+          return "Lunas";
+        case "PENDING":
+          return "Menunggu";
+        case "PARTIALLY_PAID":
+          return "Dibayar Sebagian";
+        case "OVERDUE":
+          return "Terlambat";
+        default:
+          return status;
+      }
+    }
+
+    payments.forEach((p) => {
+      const paid = p.paymentInstallments.reduce(
+        (s, i) => s + Number(i.amount),
+        0
+      );
+
+      const paidDates = p.paymentInstallments
+        .filter((i) => i.paidAt) // remove null values
+        .map((i) => new Date(i.paidAt as Date).getTime());
+
+      const latestPaidAt =
+        paidDates.length > 0
+          ? new Date(Math.max(...paidDates)).toLocaleDateString("id-ID")
+          : "-";
+
+      let status = "PENDING";
+      if (paid >= Number(p.amount)) status = "PAID";
+      else if (paid > 0) status = "PARTIALLY_PAID";
+
+      const due = new Date(p.dueDate);
+      if (paid < Number(p.amount) && due < new Date()) {
+        status = "OVERDUE";
+      }
+
+      const translatedStatus = translateStatus(status);
+
+      const row = detailSheet.addRow({
+        name: p.student.name,
+        nisn: p.student.student_details?.nisn || "-",
+        tagihan: toRupiah(Number(p.amount)),
+        dibayar: toRupiah(paid),
+        sisa: toRupiah(Number(p.amount) - paid),
+        status: translatedStatus,
+        due: new Date(p.dueDate).toLocaleDateString("id-ID"),
+        created: new Date(p.createdAt).toLocaleDateString("id-ID"),
+        paidAt: latestPaidAt, // ✅ NEW FIELD
+      });
+
+      // Apply color styling based on status
+      let color = "FFFFFFFF"; // white
+      if (status === "PAID") color = "FFCCFFCC"; // green
+      if (status === "PENDING") color = "FFFFFFCC"; // yellow
+      if (status === "OVERDUE") color = "FFFFCCCC"; // red
+      if (status === "PARTIALLY_PAID") color = "FFE6CCFF"; // purple
+
+      row.eachCell((cell) => {
+        cell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: color },
+        };
+      });
+      // =====================================
+      // 2️⃣ EXPANDED INSTALLMENT DETAIL ROWS
+      // =====================================
+      if (p.paymentInstallments.length > 0) {
+        p.paymentInstallments.forEach((inst, idx) => {
+          const installmentRow = detailSheet.addRow({
+            name: `→ Pembayaran ${idx + 1}`,
+            nisn: "",
+            tagihan: "",
+            dibayar: toRupiah(Number(inst.amount)),
+            sisa: "",
+            status: "",
+            due: "",
+            created: "",
+            paidAt: inst.paidAt
+              ? new Date(inst.paidAt).toLocaleDateString("id-ID")
+              : "-",
+          });
+
+          // Grey background for child rows
+          installmentRow.eachCell((cell) => {
+            cell.fill = {
+              type: "pattern",
+              pattern: "solid",
+              fgColor: { argb: "FFF3F3F3" },
+            };
+          });
+
+          // Indent the first cell for clarity
+          installmentRow.getCell("name").alignment = { indent: 1 };
+        });
+      }
+    });
+
+    // Add borders
+    detailSheet.eachRow((row) => {
+      row.eachCell((cell) => {
+        cell.border = {
+          top: { style: "thin" },
+          bottom: { style: "thin" },
+          left: { style: "thin" },
+          right: { style: "thin" },
+        };
+      });
+    });
+
+    // OUTPUT FILE
+    const fileName = `Laporan_Pembayaran_${Date.now()}.xlsx`;
+    const tmpDir = os.tmpdir(); // cross-platform temp folder
+    const filePath = path.join(tmpDir, fileName);
+
+    await workbook.xlsx.writeFile(filePath);
+    const downloadUrl = `/api/download?file=${fileName}`;
+    return {
+      ...prev,
+      fileName,
+      filePath,
+      downloadUrl,
+      success: true,
+    };
+  } catch (e: any) {
+    return {
+      ...prev,
+      error: e.message,
+      success: false,
     };
   }
 }

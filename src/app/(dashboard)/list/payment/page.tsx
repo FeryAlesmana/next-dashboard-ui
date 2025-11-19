@@ -31,7 +31,7 @@ const PaymentLogListPage = async ({
   ).toString();
   const { page, limit, ...queryParams } = sp;
   const p = page ? parseInt(page) : 1;
-  const perPage = limit === "all" ? undefined : parseInt(limit ?? "10");
+  const perPage = limit === "all" ? 50 : parseInt(limit ?? "10");
 
   const columns = [
     ...(role === "admin"
@@ -63,6 +63,11 @@ const PaymentLogListPage = async ({
     {
       header: "Status",
       accessor: "status",
+      className: "hidden md:table-cell",
+    },
+    {
+      header: "Jumlah Pembayaran",
+      accessor: "paidAmount",
       className: "hidden md:table-cell",
     },
     {
@@ -293,6 +298,7 @@ const PaymentLogListPage = async ({
               student_details: { select: { nisn: true } },
             },
           },
+          paymentInstallments: true,
         },
         take: perPage,
         skip: perPage ? perPage * (p - 1) : undefined,
@@ -328,7 +334,23 @@ const PaymentLogListPage = async ({
   const safeData = data.map((log) => ({
     ...log,
     amount: typeof log.amount === "object" ? log.amount.toNumber() : log.amount,
+
+    paymentInstallments: log.paymentInstallments.map((ins) => ({
+      ...ins,
+      amount:
+        typeof ins.amount === "object" ? ins.amount.toNumber() : ins.amount,
+    })),
   }));
+
+  const remainingMap: Record<number, number> = {};
+  safeData.forEach((log) => {
+    const totalPaid = log.paymentInstallments.reduce(
+      (acc, ins) => acc + ins.amount,
+      0
+    );
+    const remaining = log.amount - totalPaid;
+    remainingMap[log.id] = remaining;
+  });
 
   // Convert Decimal → Number for installments
   const safeInstallment = installment.map((inst) => ({
@@ -343,6 +365,7 @@ const PaymentLogListPage = async ({
     classData: classesData,
     gradeData: gradeData,
     installment: safeInstallment,
+    remainingAmount: remainingMap,
   };
 
   const classOptions = classesData.map((cls) => ({

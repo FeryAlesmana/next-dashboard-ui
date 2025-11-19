@@ -15,20 +15,17 @@ const TeacherPage = async () => {
   return (
     <div className="p-4 flex flex-1 gap-4 flex-col xl:flex-row">
       {/* left */}
-      {/* <div className="w-full xl:w-2/3">
-        <div className="h-full bg-white p-4 rounded-md">
-          <h1 className="text-xl font-semibold">Jadwal ({classItem[0].name})</h1>
-          <BigCalendarContainer type="teacherId" id={userId!} />
-        </div>
-      </div> */}
+
       <div className="w-full xl:w-2/3flex-col">
         {classItem.map((teacher) => (
-          <div className="" key={teacher.id}>
-            <div className="h-full bg-white p-4 rounded-md">
-              <h1 className="text-xl font-semibold">
-                Jadwal Kelas {teacher.name}
-              </h1>
-              <BigCalendarContainer type="classId" id={teacher.id!} />
+          <div className="w-full overflow-x-auto" key={teacher.id}>
+            <div className="min-w-[823px]">
+              <div className="h-full bg-white p-4 rounded-md">
+                <h1 className="text-xl font-semibold">
+                  Jadwal Kelas {teacher.name}
+                </h1>
+                <BigCalendarContainer type="classId" id={teacher.id!} />
+              </div>
             </div>
           </div>
         ))}

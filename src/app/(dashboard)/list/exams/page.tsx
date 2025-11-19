@@ -37,7 +37,7 @@ const ExamListPage = async ({
     }, {} as Record<string, string>)
   ).toString();
   const p = page ? parseInt(page) : 1;
-  const perPage = limit === "all" ? undefined : parseInt(limit ?? "10");
+  const perPage = limit === "all" ? 50 : parseInt(limit ?? "10");
 
   const { role, userId } = await getCurrentUser();
   const columns = [
