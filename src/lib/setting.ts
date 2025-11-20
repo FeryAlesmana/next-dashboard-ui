@@ -24,5 +24,5 @@ export const routeAccessMap: RouteAccessMap = {
   "/list/ppdb": ["admin"],
   "/list/users": ["admin"],
   "/settings": ["admin"],
-  "/list/payment": ["admin", "student", "parent"],
+  "/list/payment(.*)": ["admin", "student", "parent"],
 };

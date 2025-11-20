@@ -22,9 +22,6 @@ const ChangeLog = async ({
   const { page, limit, ...queryParams } = sp;
   const p = page ? parseInt(page) : 1;
   const perPage = limit === "all" ? 50 : parseInt(limit ?? "10");
-  if (role !== "admin") {
-    return new Response("Unauthorized", { status: 403 });
-  }
   const query: Prisma.PaymentLogChangeWhereInput = {};
   let orderBy: Prisma.PaymentLogChangeOrderByWithRelationInput | undefined;
   const dateSchema = z.object({
