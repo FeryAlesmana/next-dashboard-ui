@@ -1,25 +1,26 @@
 import { logPaymentChange } from "@/lib/paymentLogChange";
 import prisma from "@/lib/prisma";
 import { currentUser } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
 type Params = {
   params: Promise<{
-    id: number;
+    id: string;
   }>;
 };
 export async function POST(req: Request, { params }: Params) {
   const { id } = await params;
-  const changeId = Number(id);
+  const changeId = parseInt(id);
   const user = await currentUser();
 
   if (user?.publicMetadata.role !== "admin") {
-    return new Response("Unauthorized", { status: 403 });
+    return new NextResponse("Unauthorized", { status: 403 });
   }
 
   const log = await prisma.paymentLogChange.findUnique({
     where: { id: changeId },
   });
 
-  if (!log) return new Response("Not Found", { status: 404 });
+  if (!log) return new NextResponse("Not Found", { status: 404 });
   const action = log.action;
   const oldValue = log.oldValue as any;
   const newValue = log.newValue as any;
@@ -58,7 +59,9 @@ export async function POST(req: Request, { params }: Params) {
   // ----------------------------------------
   if (action === "CREATE") {
     if (!log.paymentLogId) {
-      return new Response("Missing paymentLogId for revert", { status: 400 });
+      return new NextResponse("Missing paymentLogId for revert", {
+        status: 400,
+      });
     }
 
     reverted = await prisma.paymentLog.delete({
@@ -71,13 +74,13 @@ export async function POST(req: Request, { params }: Params) {
       newValue: null,
     });
 
-    return Response.json({ success: true, reverted });
+    return NextResponse.json({ success: true, reverted });
   }
   if (action === "UPDATE") {
     console.log(oldValue, "Old Value in Revert");
 
     if (!oldValue) {
-      return new Response("No previous state to revert", { status: 400 });
+      return new NextResponse("No previous state to revert", { status: 400 });
     }
     // 1️⃣ Delete current installments
     await prisma.paymentInstallment.deleteMany({
@@ -112,12 +115,12 @@ export async function POST(req: Request, { params }: Params) {
       newValue: oldValue, // restoring values
     });
 
-    return Response.json({ success: true, reverted });
+    return NextResponse.json({ success: true, reverted });
   }
 
   if (action === "DELETE") {
     if (!oldValue) {
-      return new Response("No previous state to recreate", { status: 400 });
+      return new NextResponse("No previous state to recreate", { status: 400 });
     }
 
     const recreated = await prisma.paymentLog.create({
@@ -133,8 +136,8 @@ export async function POST(req: Request, { params }: Params) {
       newValue: oldValue,
     });
 
-    return Response.json({ success: true, reverted });
+    return NextResponse.json({ success: true, reverted });
   }
 
-  return new Response("Invalid action to revert", { status: 400 });
+  return new NextResponse("Invalid action to revert", { status: 400 });
 }
