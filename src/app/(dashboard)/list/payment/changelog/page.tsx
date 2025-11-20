@@ -1,4 +1,5 @@
 import ChangeLogClient from "@/components/ChangeLogClient";
+import ClientPageWrapper from "@/components/ClientWrapper";
 import Pagination from "@/components/Pagination";
 import prisma from "@/lib/prisma";
 import { getCurrentUser, normalizeSearchParams } from "@/lib/utils";
@@ -133,12 +134,12 @@ const ChangeLog = async ({
     actOptions,
   };
   return (
-    <>
+    <ClientPageWrapper key={key} role={role!}>
       <ChangeLogClient groups={groups} options={options} />
       <div className="">
         <Pagination page={p} count={count}></Pagination>
       </div>
-    </>
+    </ClientPageWrapper>
   );
 };
 
