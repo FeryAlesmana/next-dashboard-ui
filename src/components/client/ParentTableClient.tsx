@@ -44,7 +44,12 @@ export default function ParentTableClient({
               ...data.students,
               ...data.secondaryStudents,
               ...data.guardianStudents,
-            ].map((student: any) => student.name)}
+            ].map((student: any) => ({
+              id: student.id,
+              img: student.img,
+              name: student.name,
+              className: student.class?.name,
+            }))}
             label="Murid"
           />
         </td>

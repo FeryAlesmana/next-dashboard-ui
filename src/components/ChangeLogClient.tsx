@@ -3,52 +3,42 @@
 import { useState } from "react";
 import TableSearch from "./TableSearch";
 import FilterSortToggle from "./FilterSortToggle";
+import { toast } from "react-toastify";
 
 export default function ChangeLogClient({
   groups,
   options,
+  hasMore,
 }: {
   groups: any[];
   options: any;
+  hasMore: any;
 }) {
-  function computeDiff(oldVal: any, newVal: any) {
-    const result = [];
+  const [items, setItems] = useState(groups);
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(false);
 
-    const allKeys = new Set([
-      ...Object.keys(oldVal || {}),
-      ...Object.keys(newVal || {}),
-    ]);
+  async function loadMore() {
+    setLoading(true);
 
-    for (const key of allKeys) {
-      if (oldVal?.[key] !== newVal?.[key]) {
-        result.push({
-          field: key,
-          oldValue: oldVal ? oldVal[key] : null,
-          newValue: newVal ? newVal[key] : null,
-        });
-      }
-    }
+    const res = await fetch(`/api/payment-changelog?page=${page + 1}`, {
+      cache: "no-store",
+    });
 
-    return result;
+    const json = await res.json();
+
+    setItems((prev) => [...prev, ...json.groups]);
+    setPage((p) => p + 1);
+    setLoading(false);
   }
 
-  if (!groups || groups.length === 0) {
-    return (
-      <div className="p-6 text-center text-gray-500">
-        <h2 className="text-lg font-semibold">No changes recorded yet.</h2>
-        <p className="text-sm mt-1">
-          Changes will appear here whenever users update the payment logs.
-        </p>
-      </div>
-    );
-  }
   const { roleOptions = [], actOptions = [] } = options || [];
   return (
     <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
       <div className="space-y-4 mt-3">
         <div className="flex items-center justify-between">
           <h1 className="hidden md:block text-lg font-semibold">
-            Payment ChangeLog
+            ChangeLog Pembayaran
           </h1>
           <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
             <TableSearch />
@@ -69,10 +59,33 @@ export default function ChangeLogClient({
           </div>
         </div>
         <div className="flex flex-col gap-6">
-          {groups.map((group: any, idx) => (
-            <ChangeGroup key={idx} group={group} />
-          ))}
+          {!groups || groups.length === 0 ? (
+            <div className="p-6 text-center text-gray-500">
+              <h2 className="text-lg font-semibold">
+                Tidak ada perubahan record untuk sekarang.
+              </h2>
+              <p className="text-sm mt-1">
+                Perubahan akan tampil jika user mengedit paymentLog.
+              </p>
+            </div>
+          ) : (
+            items.map((group: any, idx: number) => (
+              <ChangeGroup key={idx} group={group} />
+            ))
+          )}
         </div>
+
+        {hasMore && (
+          <div className="flex justify-center mt-6">
+            <button
+              disabled={loading}
+              onClick={loadMore}
+              className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+            >
+              {loading ? "Loading..." : "Load More"}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -83,7 +96,7 @@ const ChangeGroup = ({ group }: { group: any }) => {
   const [loadingGroup, setLoadingGroup] = useState(false);
 
   async function revertGroup() {
-    if (!confirm("Revert ALL changes in this group?")) return;
+    if (!confirm("Kembalikan SEMUA Perubahan-perubahan di group Ini?")) return;
 
     setLoadingGroup(true);
 
@@ -96,11 +109,16 @@ const ChangeGroup = ({ group }: { group: any }) => {
 
     setLoadingGroup(false);
 
+    const data = await res.json();
+
     if (res.ok) {
-      alert("Group reverted successfully");
-      window.location.reload();
+      const revertedCount = data?.results?.length || 0;
+
+      toast.success(` ${revertedCount} Perubahan berhasil di kembalikan`);
+
+      setTimeout(() => window.location.reload(), 800);
     } else {
-      alert("Failed to revert group");
+      toast.error("Gagal mengembalikan Perubahan-perubahan");
     }
   }
 
@@ -136,8 +154,8 @@ const ChangeGroup = ({ group }: { group: any }) => {
       {/* LIST */}
       {open && (
         <div className="mt-4 flex flex-col gap-3">
-          {group.items.map((item: any) => (
-            <ChangeItem key={item.id} item={item} />
+          {group.items.map((item: any, idx: number) => (
+            <ChangeItem key={item.id} item={item} index={idx + 1} />
           ))}
         </div>
       )}
@@ -145,7 +163,7 @@ const ChangeGroup = ({ group }: { group: any }) => {
   );
 };
 
-const ChangeItem = ({ item }: { item: any }) => {
+const ChangeItem = ({ item, index }: { item: any; index: number }) => {
   const [loading, setLoading] = useState(false);
 
   const oldVal = item.oldValue || {};
@@ -167,10 +185,10 @@ const ChangeItem = ({ item }: { item: any }) => {
     setLoading(false);
 
     if (res.ok) {
-      alert("Reverted successfully");
+      toast("Berhasil di kembalikan");
       window.location.reload();
     } else {
-      alert("Failed to revert");
+      toast("Gagal di kembalikan");
     }
   }
 
@@ -178,7 +196,9 @@ const ChangeItem = ({ item }: { item: any }) => {
     <div className="border rounded p-3 bg-gray-50">
       <div className="flex justify-between ">
         <div>
-          <p className="font-semibold">{item.action}</p>
+          <p className="font-semibold">
+            {index}. {item.action}
+          </p>
           <p className="text-xs text-gray-500">
             {new Date(item.createdAt).toLocaleString("id-ID")}
           </p>

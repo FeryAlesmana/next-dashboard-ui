@@ -26,15 +26,20 @@ const ClassesTableClient = ({
           />
         </td>
       )}
-      <td className="flex items-center p-4 gap-4">{data.name}</td>
+      <td className="flex items-center p-2 md:p-4 gap-4 ">{data.name}</td>
       <td className="hidden md:table-cell">
         {data._count?.students !== undefined
           ? `${data._count.students}/${data.capacity ?? 0}`
           : `0/${data.capacity ?? 0}`}
       </td>
-      <td className="hidden md:table-cell">
+      <td className="">
         <NameListPopover
-          items={data.students.map((t: any) => t.name)}
+          items={data.students.map((student: any) => ({
+            id: student.id,
+            img: student.img,
+            name: student.name,
+            className: student.class?.name,
+          }))}
           label="Murid"
         />
       </td>

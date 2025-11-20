@@ -132,10 +132,14 @@ const ChangeLog = async ({
   };
   return (
     <ClientPageWrapper key={key} role={role!}>
-      <ChangeLogClient groups={groups} options={options} />
-      <div className="">
+      <ChangeLogClient
+        groups={groups}
+        options={options}
+        hasMore={p * perPage < count}
+      />
+      {/* <div className="">
         <Pagination page={p} count={count}></Pagination>
-      </div>
+      </div> */}
     </ClientPageWrapper>
   );
 };

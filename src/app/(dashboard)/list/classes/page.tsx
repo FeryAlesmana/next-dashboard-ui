@@ -43,7 +43,6 @@ const ClassListPage = async ({
     {
       header: "Murid",
       accessor: "students",
-      className: "hidden md:table-cell",
     },
     {
       header: "Tingkat",
@@ -121,7 +120,11 @@ const ClassListPage = async ({
         _count: {
           select: { students: true },
         },
-        students: true,
+        students: {
+          include: {
+            class: { select: { id: true, name: true, grade: true } },
+          },
+        },
       },
       take: perPage,
       skip: perPage ? perPage * (p - 1) : undefined,

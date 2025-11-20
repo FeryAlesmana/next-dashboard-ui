@@ -37,9 +37,14 @@ export default function SubjectTableClient({
 
         <td className="text-center hidden md:table-cell">{data.id}</td>
         <td className="p-4 gap-4 text-center">{data.name}</td>
-        <td className="hidden md:table-cell">
+        <td className="p-4">
           <NameListPopover
-            items={data.teachers.map((t: any) => t.name)}
+            items={data.teachers.map((t: any) => ({
+              id: t.id,
+              img: t.img,
+              name: t.name,
+              email: t.email,
+            }))}
             label="Guru"
           />
         </td>
