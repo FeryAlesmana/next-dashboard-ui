@@ -4,6 +4,7 @@ import Pagination from "@/components/Pagination";
 import prisma from "@/lib/prisma";
 import { getCurrentUser, normalizeSearchParams } from "@/lib/utils";
 import { ChangeAction, Prisma } from "@prisma/client";
+import { notFound } from "next/navigation";
 import z from "zod";
 
 const ChangeLog = async ({
@@ -12,6 +13,9 @@ const ChangeLog = async ({
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) => {
   const { role } = await getCurrentUser();
+  if (role !== "admin") {
+    return notFound();
+  }
   const sp = await normalizeSearchParams(searchParams);
   const key = new URLSearchParams(
     Object.entries(sp).reduce((acc, [k, v]) => {

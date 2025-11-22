@@ -161,56 +161,14 @@ const UserListPage = async ({
     <ClientPageWrapper key={key} role={role!}>
       <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
         {/* TOP */}
-        <div className="flex items-center justify-between">
-          <h1 className="hidden md:block text-lg font-semibold">
-            Semua Pengguna
-          </h1>
-          <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-            <TableSearch />
-            <div className="flex items-center gap-4 self-end">
-              <FilterSortToggle
-                filterFields={[
-                  {
-                    name: "search",
-                    label: "Role",
-                    options: [
-                      { label: "Admin", value: "admin" },
-                      { label: "Guru", value: "teacher" },
-                      { label: "Murid", value: "student" },
-                      { label: "Wali Murid", value: "parent" },
-                    ],
-                  },
-                ]}
-                sortOptions={[
-                  { label: "A-Z", value: "az" },
-                  { label: "Z-A", value: "za" },
-                  { label: "ID Asc", value: "id_asc" },
-                  { label: "ID Desc", value: "id_desc" },
-                ]}
-                hideperPage={true}
-              />
-
-              {role === "admin" && (
-                <FormContainer table="user" type="create"></FormContainer>
-              )}
-            </div>
-          </div>
-        </div>
         {/* LIST */}
         <div className="">
-          {rows.length === 0 ? (
-            <div className="text-center py-6 text-gray-500">
-              Tidak ada User.
-            </div>
-          ) : (
-            // <Table columns={columns} renderRow={renderRow} data={rows} />
             <UserListClient
               rows={rows}
               role={role!}
               columns={columns}
               relatedData={relatedData}
             />
-          )}
         </div>
         {/* PAGINATION */}
         <div>

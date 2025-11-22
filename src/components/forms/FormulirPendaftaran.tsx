@@ -251,7 +251,9 @@ const FormulirPendaftaran = ({
   useEffect(() => {
     if (state.success) {
       const updatedItem = state.data ?? data; // <- depends on what your action returns
-
+      if (state.field) {
+        setError(state.field as any, { message: state.message });
+      }
       toast(
         `PPDB telah berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`
       );
@@ -325,7 +327,7 @@ const FormulirPendaftaran = ({
       setSendingFeedback(false);
     }
   };
-  const { grades = [], classes = [] } = relatedData ?? {};
+  const { classes = [] } = relatedData ?? {};
 
   return (
     <div className="max-w-4xl mx-auto p-4">

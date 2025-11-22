@@ -3,10 +3,25 @@
 import { useState } from "react";
 import { cloudinaryUpload } from "@/lib/upload/cloudinaryUpload";
 import Image from "next/image";
-
+import crypto from "crypto";
 export default function UploadTest() {
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
+  const ALGORITHM = "aes-256-cbc";
+  const SECRET_KEY = crypto
+    .createHash("sha256")
+    .update("SMP1_S3RU4_Islamiyah")
+    .digest();
+  const IV_LENGTH = 16;
+
+  // Encrypt password
+  function encryptPassword(password: string) {
+    const iv = crypto.randomBytes(IV_LENGTH);
+    const cipher = crypto.createCipheriv(ALGORITHM, SECRET_KEY, iv);
+    let encrypted = cipher.update(password, "utf8", "hex");
+    encrypted += cipher.final("hex");
+    return `${iv.toString("hex")}:${encrypted}`;
+  }
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -26,26 +41,7 @@ export default function UploadTest() {
 
   return (
     <div className="p-6 space-y-4 bg-white max-w-md mx-auto mt-10 rounded-lg shadow">
-      <h1 className="text-xl font-bold">Test Upload Dokumen</h1>
-      <input
-        type="file"
-        onChange={handleUpload}
-        className="border p-2 rounded"
-      />
-      {loading && <p>Uploading...</p>}
-      {url && (
-        <div>
-          <p>Upload Success!</p>
-          <Image
-            src={url}
-            alt="Uploaded"
-            className="w-32 mt-2 rounded"
-            width={400}
-            height={400}
-          />
-          <p className="text-sm break-all mt-2">{url}</p>
-        </div>
-      )}
+      <h1>{encryptPassword("11223344556677889900@AYAH")}</h1>
     </div>
   );
 }

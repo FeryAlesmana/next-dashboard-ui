@@ -1003,7 +1003,7 @@ const StudentForm = ({
               toast.error(result.message || "Terjadi kesalahan.");
             }
             setShowActivateDialog(false);
-            // setOpen(false);
+            setOpen(false);
             // router.refresh();
           }}
           onCancel={async () => {

@@ -6,38 +6,14 @@ import Link from "next/link";
 const UserCard = async ({
   type,
 }: {
-  type: "admin" | "teacher" | "student" | "parent";
+  type: "staff" | "teacher" | "student" | "parent";
 }) => {
   let data: number;
 
   const client = await clerkClient();
 
-  if (type === "admin") {
-    // Count admins by fetching Clerk users page-by-page and filtering by publicMetadata.role
-    const limit = 500; // Clerk max page size
-    let offset = 0;
-    let adminsCount = 0;
-
-    while (true) {
-      const res = await client.users.getUserList({
-        limit,
-        offset,
-      });
-
-      // filter this page by publicMetadata.role === "admin"
-      const adminInPage = res.data.filter(
-        (u) => (u.publicMetadata as any)?.role === "admin"
-      ).length;
-
-      adminsCount += adminInPage;
-
-      // if returned less than limit, we've reached the last page
-      if (res.data.length < limit) break;
-
-      offset += limit;
-    }
-
-    data = adminsCount;
+  if (type === "staff") {
+    data = await prisma.staff.count();
   } else if (type === "teacher") {
     data = await prisma.teacher.count();
   } else if (type === "student") {
@@ -47,12 +23,18 @@ const UserCard = async ({
     data = await prisma.parent.count();
   }
   // console.log(data);
+  const now = new Date();
 
+  // Format the date as Month/Year (e.g., 11/2025)
+  const formattedDate = now.toLocaleDateString("en-US", {
+    month: "2-digit",
+    year: "numeric",
+  });
   return (
     <div className="rounded-2xl odd:bg-lamaBlue even:bg-lamaYellow p-4 flex-1 min-w-[130px]">
       <div className="flex justify-between items-center">
         <span className="text-[10px] bg-white px-2 py-1 rounded-full text-green-600">
-          2021/25
+          {formattedDate}
         </span>
         <Link href={`/list/${type}s`}>
           <Image src="/more.png" alt="" width={20} height={20} />

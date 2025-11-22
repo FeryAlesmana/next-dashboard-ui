@@ -110,11 +110,11 @@ const UserForm = ({
       toast(
         `User telah berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`
       );
-      // if (onChanged && updatedItem) {
-      //   onChanged(updatedItem); // 🔥 notify parent so it can update localData
-      // } else {
-      //   router.refresh(); // fallback if no handler passed
-      // }
+      if (onChanged && updatedItem) {
+        onChanged(updatedItem); // 🔥 notify parent so it can update localData
+      } else {
+        router.refresh(); // fallback if no handler passed
+      }
       setOpen(false);
       router.refresh();
     }
@@ -209,6 +209,7 @@ const UserForm = ({
               <option value="teacher">Guru</option>
               <option value="parent">Wali Murid</option>
               <option value="admin">Admin</option>
+              <option value="staff">Staff</option>
             </select>
             {errors.role?.message && (
               <p className="text-xs text-red-400">

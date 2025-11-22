@@ -3,7 +3,6 @@ import Announcements from "@/components/Announcements";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import Image from "next/image";
 import Link from "next/link";
-import Perfomance from "@/components/Perfomance";
 import BigCalendarContainer from "@/components/BigCalendarContainer";
 import prisma from "@/lib/prisma";
 import { Class, Teacher } from "@prisma/client";
@@ -61,14 +60,14 @@ const SingleTeacherPage = async ({
         {/* TOP */}
         <div className=" flex flex-col lg:flex-row gap-4">
           {/* USER INFO CARD */}
-          <div className="bg-lamaSky py-6 px-4 rounded-md flex-1 flex gap-4">
-            <div className="w-1/3">
+          <div className="bg-lamaSky py-6 px-4 rounded-xl flex-1 flex flex-col items-center lg:flex-row lg:items-start lg:gap-4">
+            <div className="w-full lg:w-1/3 flex justify-center mb-4 lg:mb-0">
               <Image
                 src={teacher.img || "/noAvatar.png"}
                 alt=""
                 width={144}
                 height={144}
-                className="w-36 h-36 rounded-full object-cover"
+                className="w-32 h-32 md:w-48 md:h-48 xl:w-52 xl:h-52 rounded-full object-cover"
               ></Image>
             </div>
             <div className="w-2/3 flex flex-col justify-between gap-4">
@@ -115,7 +114,7 @@ const SingleTeacherPage = async ({
           {/* SMALL CARDS */}
           <div className="flex-1 flex gap-4 justify-between flex-wrap">
             {/* CARD */}
-            <div className="w-full bg-white p-4 rounded-md flex gap-4 md:w-[48%] xl:w-[45%] 2xl:w-[48%]">
+            {/* <div className="w-full bg-white p-4 rounded-md flex gap-4 md:w-[48%] xl:w-[45%] 2xl:w-[48%]">
               <Image
                 src="/singleAttendance.png"
                 alt=""
@@ -123,11 +122,7 @@ const SingleTeacherPage = async ({
                 width={24}
                 className="w-6 h-6"
               ></Image>
-              {/* <div className="">
-                <h1 className="text-xl font-semibold">90%</h1>
-                <span className="text-sm text-gray-400">Kehadiran</span>
-              </div> */}
-            </div>
+            </div> */}
             {/* CARD */}
             <div className="w-full bg-white p-4 rounded-md flex gap-4 md:w-[48%] xl:w-[45%] 2xl:w-[48%]">
               <Image

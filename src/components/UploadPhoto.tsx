@@ -18,9 +18,9 @@ const UploadPhoto = ({ imageUrl, onUpload }: UploadPreviewProps) => {
         widget.close();
       }}
     >
-      {({ open }) => (
+      {({ open }: { open: () => void }) => (
         <div className="space-y-2">
-          {imageUrl && (
+          {imageUrl ? (
             <div className="flex items-center gap-4">
               <Image
                 src={imageUrl}
@@ -31,18 +31,16 @@ const UploadPhoto = ({ imageUrl, onUpload }: UploadPreviewProps) => {
               />
               <button
                 type="button"
-                onClick={() => typeof open === "function" && open()}
+                onClick={() => open()}
                 className="text-blue-500 hover:underline text-sm"
               >
                 Ganti Foto
               </button>
             </div>
-          )}
-
-          {!imageUrl && (
+          ) : (
             <div
               className="text-xs text-gray-400 flex items-center p-16 gap-2 cursor-pointer"
-              onClick={() => typeof open === "function" && open()}
+              onClick={() => open()}
             >
               <Image src="/upload.png" alt="" width={28} height={28} />
               <span>Upload photo</span>

@@ -45,6 +45,8 @@ import {
   PPDBSettingSchema,
   ImportPaymentsSchema,
   ExportPaymentsSchema,
+  CreatestaffSchema,
+  UpdatestaffSchema,
 } from "./formValidationSchema";
 import prisma from "./prisma";
 import { clerkClient } from "@clerk/nextjs/server";
@@ -543,7 +545,7 @@ export const updateTeacher = async (
         email: data.email || null,
         phone: data.phone,
         address: data.address,
-        img: data.img ?? null, // <-- Always set explicitly
+        ...(data.img && { img: data.img }),
         sex: data.sex,
         birthday: new Date(data.birthday),
         subjects: {
@@ -753,7 +755,8 @@ export const deleteTeachers = async (
 
 export const createStudent = async (
   currentState: CurrentState,
-  data: CreatestudentSchema
+  data: CreatestudentSchema,
+  PPDB: boolean = false
 ) => {
   const classItem = await prisma.class.findUnique({
     where: { id: data.classId },
@@ -770,35 +773,53 @@ export const createStudent = async (
     return { success: false, error: true };
   }
   try {
-    let user;
-    try {
-      user = await client.users.createUser({
-        username: data.username,
-        password: data.password,
-        firstName: data.name,
+    let clerkUser: any = null;
 
-        publicMetadata: { role: "student" },
-      });
-      if (user) {
-        console.log("✅ User Sucessfully created:", user.id);
-      } else {
-        console.warn(
-          "⚠️ Clerk returned no user info. User may already be created?"
-        );
-      }
-    } catch (err: any) {
-      console.error("❌ Clerk error:", err);
+    // ---------------------------------------------
+    // 1️⃣ CHECK PPDB FLAG
+    // ---------------------------------------------
+    if (PPDB) {
+      console.log("🔍 PPDB mode: finding existing Clerk user...");
 
-      const message = err?.errors?.[0]?.message || "Terjadi kesalahan";
+      clerkUser = await client.users.getUser(data.sdId);
 
-      if (message.toLowerCase().includes("username")) {
-        return { success: false, field: "username", message, error: true };
-      }
-      if (message.toLowerCase().includes("password")) {
-        return { success: false, field: "password", message, error: true };
+      if (!clerkUser) {
+        return {
+          success: false,
+          field: "sdId",
+          message: "Akun PPDB tidak ditemukan di Clerk.",
+          error: true,
+        };
       }
 
-      return { success: false, field: undefined, message, error: true };
+      console.log("✅ Existing Clerk user found:", clerkUser.id);
+    } else {
+      // ---------------------------------------------
+      // 2️⃣ NORMAL MODE (create new user)
+      // ---------------------------------------------
+      try {
+        clerkUser = await client.users.createUser({
+          username: data.username,
+          password: data.password,
+          firstName: data.name,
+          publicMetadata: { role: "student" },
+        });
+
+        console.log("✅ Clerk user created:", clerkUser.id);
+      } catch (err: any) {
+        console.error("❌ Clerk error:", err);
+
+        const message = err?.errors?.[0]?.message || "Terjadi kesalahan";
+
+        if (message.toLowerCase().includes("username")) {
+          return { success: false, field: "username", message, error: true };
+        }
+        if (message.toLowerCase().includes("password")) {
+          return { success: false, field: "password", message, error: true };
+        }
+
+        return { success: false, message, error: true };
+      }
     }
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -815,7 +836,7 @@ export const createStudent = async (
     }
     const createdStudent = await prisma.student.create({
       data: {
-        id: user.id,
+        id: clerkUser.id,
         username: data.username,
         password: encryptPassword(data.password),
         name: data.name,
@@ -869,7 +890,12 @@ export const createStudent = async (
         student_details: true,
       },
     });
-    return { success: true, error: false, id: user.id, data: createdStudent };
+    return {
+      success: true,
+      error: false,
+      id: clerkUser.id,
+      data: createdStudent,
+    };
   } catch (error: any) {
     console.error("Create student failed:", error);
     if (error?.errors) {
@@ -2980,188 +3006,284 @@ export const updatePpdb = async (
 
     // If isvalid is true, create a new user and student
     if (data.isvalid === true) {
-      // Prepare StudentSchema payload
-      const studentPayload = {
-        sdId: "", // You may want to generate or fetch this value
-        username: data.name + "_student",
-        password: data.nisn, // Or generate a random password
-        name: data.name,
-        email: data.email,
-        phone: data.phone,
-        noWa: data.noWhatsapp,
-        address: data.address,
-        rw: data.rw,
-        rt: data.rt,
-        kelurahan: data.kelurahan,
-        kecamatan: data.kecamatan,
-        kota: data.kota,
-        religion: data.religion,
-        img: data.dokumenPasfoto ?? null,
-        birthday: new Date(data.birthday),
-        birthPlace: data.birthPlace,
-        sex: data.sex,
-        asalSekolah: data.asalSekolah,
-        npsn: data.npsn,
-        nisn: data.nisn,
-        no_ijz: data.no_ijz,
-        nik: data.nik,
-        postcode: data.postcode,
-        transportation: data.transportation,
-        tempat_tinggal: data.tempat_tinggal,
-        kps: data.kps === "" ? null : data.kps,
-        no_kps: data.no_kps ?? null,
-        height: data.height,
-        weight: data.weight,
-        distance_from_home: data.distance_from_home,
-        time_from_home: data.time_from_home,
-        number_of_siblings: data.number_of_siblings,
-        awards: data.awards ?? null,
-        awards_lvl: data.awards_lvl ?? null,
-        awards_date: data.awards_date ? new Date(data.awards_date) : null,
-        scholarship: data.scholarship ?? null,
-        scholarship_detail: data.scholarship_detail ?? null,
-        dokumenIjazah: data.dokumenIjazah ?? null,
-        dokumenAkte: data.dokumenAkte ?? null,
-        dokumenPasfoto: data.dokumenPasfoto ?? null,
-        dokumenKKKTP: data.dokumenKKKTP ?? null,
-        // gradeId: data.gradeId ?? 1, // You may want to set this properly
-        classId: data.classId ?? 1, // You may want to set this properly
-        parentId: null,
-        withUser: false,
-      };
-      const studentResult = await createStudent(
-        { success: false, error: false },
-        studentPayload
-      );
-      let parentIdToAssign: string | null = null;
-      const studentId = studentResult?.id;
-      function toDegree(val: any): Degree {
-        const allowed = [
-          "TIDAK_ADA",
-          "SD",
-          "SMP",
-          "SMA",
-          "D3",
-          "S1",
-          "S2",
-          "S3",
-        ];
-        return allowed.includes(val) ? val : "TIDAK_ADA";
-      }
-      if (!studentId) {
-        throw new Error("Student ID not found — cannot link parent.");
-      }
-      // if (studentId) {
-      //   await prisma.student.update({
-      //     where: { id: studentId! },
-      //     data: { parentId: parentIdToAssign },
-      //   });
-      // }
-      // Create Ayah parent if name exists
-      if (data.namaAyah) {
-        const ayahPayload = {
-          id: undefined,
-          username: data.nik + "_ayah",
-          password: `${data.nik}@ayah`,
-          email: `${data.nik}_ayah@parent.local`,
-          name: data.namaAyah,
-          phone: data.telpAyah ?? "",
-          birthday: data.tahunLahirAyah
-            ? new Date(data.tahunLahirAyah)
-            : new Date(1970, 0, 1),
-          job: data.pekerjaanAyah ?? "",
-          degree: toDegree(data.pendidikanAyah),
-          waliMurid: "AYAH" as parents,
-          income:
-            typeof data.penghasilanAyah === "number" ? data.penghasilanAyah : 0,
-          address: data.address,
-          sex: "MALE" as "MALE" | "FEMALE",
-          students: [studentId!],
-          withUser: false,
-        };
-        const ayahResult = await createParent(
-          { success: false, error: false },
-          ayahPayload
-        );
-
-        if (!parentIdToAssign && ayahResult?.id) {
-          parentIdToAssign = ayahResult.id;
-        }
-      }
-      // Create Ibu parent if name exists
-      if (data.namaIbu) {
-        const ibuPayload = {
-          id: undefined,
-          username: data.nik + "_ibu",
-          password: `${data.nik}@ibu`,
-          email: `${data.nik}_ibu@parent.local`,
-          name: data.namaIbu,
-          phone: data.telpIbu ?? "",
-          birthday: data.tahunLahirIbu
-            ? new Date(data.tahunLahirIbu)
-            : new Date(1970, 0, 1),
-          job: data.pekerjaanIbu ?? "",
-          degree: toDegree(data.pendidikanIbu),
-          income:
-            typeof data.penghasilanIbu === "number" ? data.penghasilanIbu : 0,
-          address: data.address,
-          sex: "FEMALE" as "MALE" | "FEMALE",
-          waliMurid: "IBU" as parents,
-          students: [studentId!],
-          withUser: false,
-        };
-        const ibuResult = await createParent(
-          { success: false, error: false },
-          ibuPayload
-        );
-
-        if (!parentIdToAssign && ibuResult?.id) {
-          parentIdToAssign = ibuResult.id;
-        }
-      }
-      // Create Wali parent if name exists
-      if (data.namaWali) {
-        const waliPayload = {
-          id: undefined,
-          username: data.nik + "_wali",
-          password: `${data.nik}@wali`,
-          email: `${data.nik}_wali@parent.local`,
-          name: data.namaWali,
-          phone: data.telpWali ?? "",
-          birthday: data.tahunLahirWali
-            ? new Date(data.tahunLahirWali)
-            : new Date(1970, 0, 1),
-          job: data.pekerjaanWali ?? "",
-          degree: toDegree(data.pendidikanWali),
-          income:
-            typeof data.penghasilanWali === "number" ? data.penghasilanWali : 0,
-          address: data.address,
-          sex: "MALE" as "MALE" | "FEMALE",
-          waliMurid: "WALI" as parents,
-          students: [studentId!],
-          withUser: false,
-        };
-        const waliResult = await createParent(
-          { success: false, error: false },
-          waliPayload
-        );
-
-        if (!parentIdToAssign && waliResult?.id) {
-          parentIdToAssign = waliResult.id;
-        }
-      }
-      if (parentIdToAssign) {
-        await prisma.student.update({
-          where: { id: studentId! },
-          data: { parentId: parentIdToAssign },
+      /** ----------------------------------------------------
+       * 1️⃣ Create Clerk user first (must be outside transaction)
+       * ---------------------------------------------------- */
+      let clerkUser;
+      try {
+        clerkUser = await client.users.createUser({
+          username: data.name,
+          password: data.nisn,
+          firstName: data.name,
+          publicMetadata: { role: "student" },
         });
+      } catch (err: any) {
+        const message = err?.errors?.[0]?.message || "Terjadi kesalahan";
+        return { success: false, error: true, message };
       }
+
+      const clerkId = clerkUser.id;
+
+      /** ----------------------------------------------------
+       * 2️⃣ Start Prisma Transaction
+       * ---------------------------------------------------- */
+      const result = await prisma.$transaction(async (tx) => {
+        /** -------------------------
+         * Create Student
+         * ------------------------- */
+        const student = await tx.student.create({
+          data: {
+            id: clerkId,
+            username: clerkUser.username ?? data.name,
+            password: encryptPassword(data.nisn),
+            name: data.name,
+            email: data.email,
+            phone: data.phone,
+            address: data.address,
+            rw: data.rw,
+            rt: data.rt,
+            kelurahan: data.kelurahan,
+            kecamatan: data.kecamatan,
+            kota: data.kota,
+            religion: data.religion,
+            sex: data.sex,
+            img: data.dokumenPasfoto ?? null,
+            birthday: new Date(data.birthday),
+            classId: data.classId ?? null,
+          },
+        });
+
+        /** -------------------------
+         * Create Student Details
+         * ------------------------- */
+        await tx.student_details.create({
+          data: {
+            studentId: student.id,
+            asalSekolah: data.asalSekolah,
+            birthPlace: data.birthPlace,
+            noWa: data.noWhatsapp,
+            nisn: data.nisn,
+            npsn: data.npsn,
+            no_ijz: data.no_ijz,
+            nik: data.nik,
+            kps: data.kps === "" ? null : data.kps,
+            no_kps: data.no_kps ?? null,
+            height: data.height,
+            weight: data.weight,
+            transportation: data.transportation,
+            tempat_tinggal: data.tempat_tinggal,
+            distance_from_home: data.distance_from_home,
+            time_from_home: data.time_from_home,
+            number_of_siblings: data.number_of_siblings,
+            postcode: data.postcode,
+            awards: data.awards ?? null,
+            awards_lvl: data.awards_lvl ?? null,
+            awards_date: data.awards_date ? new Date(data.awards_date) : null,
+            scholarship: data.scholarship ?? null,
+            scholarship_detail: data.scholarship_detail ?? null,
+            dokumenIjazah: data.dokumenIjazah ?? null,
+            dokumenAkte: data.dokumenAkte ?? null,
+            dokumenPasfoto: data.dokumenPasfoto ?? null,
+            dokumenKKKTP: data.dokumenKKKTP ?? null,
+          },
+        });
+
+        /** Helper: build parent payload */
+        function toDegree(val: any): Degree {
+          const allowed = [
+            "TIDAK_ADA",
+            "SD",
+            "SMP",
+            "SMA",
+            "D3",
+            "S1",
+            "S2",
+            "S3",
+          ];
+          return allowed.includes(val) ? val : "TIDAK_ADA";
+        }
+        const makeParent = (
+          role: parents,
+          name: string,
+          sex: "MALE" | "FEMALE",
+          income: number,
+          degree?: string,
+          kerja?: string,
+          lahir?: string,
+          phone?: string
+        ) => ({
+          username: `${data.nik}_${role}`,
+          password: encryptPassword(`${data.nik}@${role}`),
+          email: `${data.nik}_${role}@parent.local`,
+          name,
+          phone: phone ?? "",
+          birthday: lahir ? new Date(lahir) : new Date(1970, 0, 1),
+          job: kerja ?? "",
+          income: income,
+          degree: toDegree(degree),
+          waliMurid: role,
+          address: data.address,
+          sex,
+        });
+
+        let parentId: string | null = null;
+        let secondParentId: string | null = null;
+        let guardianId: string | null = null;
+
+        /** -------------------------
+         * Create Parents (Ayah / Ibu / Wali)
+         * ------------------------- */
+
+        // Ayah
+        if (data.namaAyah) {
+          const parentData = makeParent(
+            "AYAH",
+            data.namaAyah,
+            "MALE",
+            typeof data.penghasilanAyah === "number" ? data.penghasilanAyah : 0,
+            data.pendidikanAyah ?? "",
+            data.pekerjaanAyah ?? "",
+            data.tahunLahirAyah ?? "",
+            data.telpAyah ?? ""
+          );
+
+          // 🔥 Create Clerk account
+          let Father;
+          try {
+            Father = await client.users.createUser({
+              username: parentData.username,
+              password: parentData.password,
+              firstName: parentData.name,
+              publicMetadata: { role: "parent" },
+            });
+          } catch (err: any) {
+            const message =
+              err?.errors?.[0]?.message || "Gagal membuat akun wali.";
+            return { success: false, error: true, message };
+          }
+
+          // 🔥 Create Parent in Prisma with Clerk ID
+          const wali = await tx.parent.create({
+            data: {
+              id: Father.id,
+              ...parentData,
+              students: { connect: { id: student.id } },
+            },
+          });
+
+          guardianId = wali.id;
+        }
+
+        // Ibu
+        if (data.namaIbu) {
+          const parentData = makeParent(
+            "IBU",
+            data.namaIbu,
+            "FEMALE",
+            typeof data.penghasilanIbu === "number" ? data.penghasilanIbu : 0,
+            data.pendidikanIbu ?? "",
+            data.pekerjaanIbu ?? "",
+            data.tahunLahirIbu ?? "",
+            data.telpIbu ?? ""
+          );
+
+          // 🔥 Create Clerk account
+          let mother;
+          try {
+            mother = await client.users.createUser({
+              username: parentData.username,
+              password: parentData.password,
+              firstName: parentData.name,
+              publicMetadata: { role: "parent" },
+            });
+          } catch (err: any) {
+            const message =
+              err?.errors?.[0]?.message || "Gagal membuat akun ibu.";
+            return { success: false, error: true, message };
+          }
+
+          // 🔥 Create Prisma Parent using Clerk ID
+          const ibu = await tx.parent.create({
+            data: {
+              id: mother.id,
+              ...parentData,
+              secondaryStudents: { connect: { id: student.id } },
+            },
+          });
+
+          secondParentId = ibu.id;
+        }
+
+        // Wali
+        if (data.namaWali) {
+          const parentData = makeParent(
+            "WALI",
+            data.namaWali,
+            "MALE",
+            typeof data.penghasilanWali === "number" ? data.penghasilanWali : 0,
+            data.pendidikanWali ?? "",
+            data.pekerjaanWali ?? "",
+            data.tahunLahirWali ?? "",
+            data.telpWali ?? ""
+          );
+
+          // 🔥 Create Clerk account
+          let clerkUser;
+          try {
+            clerkUser = await client.users.createUser({
+              username: parentData.username,
+              password: parentData.password,
+              firstName: parentData.name,
+              publicMetadata: { role: "parent" },
+            });
+          } catch (err: any) {
+            const message =
+              err?.errors?.[0]?.message || "Gagal membuat akun wali.";
+            return { success: false, error: true, message };
+          }
+
+          // 🔥 Create Parent in Prisma with Clerk ID
+          const wali = await tx.parent.create({
+            data: {
+              id: clerkUser.id,
+              ...parentData,
+              guardianStudents: { connect: { id: student.id } },
+            },
+          });
+
+          guardianId = wali.id;
+        }
+
+        /** -------------------------
+         * Update student with parent references
+         * ------------------------- */
+        await tx.student.update({
+          where: { id: student.id },
+          data: {
+            parentId,
+            secondParentId,
+            guardianId,
+          },
+        });
+
+        /** -------------------------
+         * Final: Mark PPDB row updated
+         * ------------------------- */
+
+        return { student };
+      });
     }
+
     const updatedPpdb = await prisma.pPDB.findUnique({
       where: { id: data.id },
     });
 
-    return { success: true, error: false, data: updatedPpdb };
+    return {
+      success: true,
+      error: false,
+      data: updatedPpdb,
+      message: "PPDB Berhasil di update",
+    };
   } catch (error) {
     const message =
       error instanceof Error
@@ -3908,39 +4030,72 @@ export const createUserDB = async (
     // 2. Update local DB record (student, teacher, or parent)
     let updatedUser = null;
 
-    if (data.role === "student") {
-      updatedUser = await prisma.student.update({
-        where: { id: String(data.userId) },
-        data: {
-          id: user.id,
-          username: data.username,
-          email: data.email,
-          password: encryptPassword(data.password!), // keep encrypted
-        },
-      });
-    } else if (data.role === "teacher") {
-      updatedUser = await prisma.teacher.update({
-        where: { id: String(data.userId) },
-        data: {
-          id: user.id,
-          username: data.username,
-          email: data.email,
-          password: encryptPassword(data.password!),
-        },
-      });
-    } else if (data.role === "parent") {
-      updatedUser = await prisma.parent.update({
-        where: { id: String(data.userId) },
-        data: {
-          id: user.id,
-          username: data.username,
-          email: data.email,
-          password: encryptPassword(data.password!),
-        },
-      });
+    switch (data.role) {
+      case "student":
+        updatedUser = await prisma.student.update({
+          where: { id: String(data.userId) },
+          data: {
+            id: user.id,
+            username: data.username,
+            email: data.email,
+            password: encryptPassword(data.password!), // keep encrypted
+          },
+        });
+        break;
+      case "teacher":
+        updatedUser = await prisma.teacher.update({
+          where: { id: String(data.userId) },
+          data: {
+            id: user.id,
+            username: data.username,
+            email: data.email,
+            password: encryptPassword(data.password!),
+          },
+        });
+        break;
+      case "parent":
+        updatedUser = await prisma.parent.update({
+          where: { id: String(data.userId) },
+          data: {
+            id: user.id,
+            username: data.username,
+            email: data.email,
+            password: encryptPassword(data.password!),
+          },
+        });
+        break;
+      case "staff":
+        updatedUser = await prisma.staff.update({
+          where: { id: String(data.userId) },
+          data: {
+            id: user.id,
+            username: data.username,
+            email: data.email,
+            password: encryptPassword(data.password!),
+          },
+        });
+        break;
+      default:
+        return {
+          success: true,
+          error: false,
+          message: "User Tidak ditemukan di database!",
+        };
     }
+    const transformedRow = {
+      id: user.id,
 
-    return { success: true, error: false, id: user.id, data: updatedUser };
+      img: updatedUser && "img" in updatedUser ? updatedUser.img : "",
+      name: user.username || "-",
+      dbName: updatedUser && "name" in updatedUser ? updatedUser.name : "-",
+      email: updatedUser && "email" in updatedUser ? updatedUser.email : "—",
+      role: user.publicMetadata?.role ?? "—",
+      password: updatedUser?.password
+        ? decryptPassword(updatedUser.password)
+        : "",
+    };
+
+    return { success: true, error: false, id: user.id, data: transformedRow };
   } catch (error: any) {
     console.error("Create student failed:", error);
     if (error?.errors) {
@@ -3992,24 +4147,53 @@ export const updateUserDB = async (
       password: encryptPassword(data.password!),
     };
 
-    if (data.role === "student") {
-      updatedUser = await prisma.student.update({
-        where: { id: String(data.userId) },
-        data: updateData,
-      });
-    } else if (data.role === "teacher") {
-      updatedUser = await prisma.teacher.update({
-        where: { id: String(data.userId) },
-        data: updateData,
-      });
-    } else if (data.role === "parent") {
-      updatedUser = await prisma.parent.update({
-        where: { id: String(data.userId) },
-        data: updateData,
-      });
+    switch (data.role) {
+      case "student":
+        updatedUser = await prisma.student.update({
+          where: { id: String(data.userId) },
+          data: updateData,
+        });
+        break;
+      case "teacher":
+        updatedUser = await prisma.teacher.update({
+          where: { id: String(data.userId) },
+          data: updateData,
+        });
+        break;
+      case "parent":
+        updatedUser = await prisma.parent.update({
+          where: { id: String(data.userId) },
+          data: updateData,
+        });
+        break;
+      case "staff":
+        updatedUser = await prisma.staff.update({
+          where: { id: String(data.userId) },
+          data: updateData,
+        });
+        break;
+      default:
+        return {
+          success: true,
+          error: false,
+          message: "User Tidak ditemukan di database!",
+        };
     }
 
-    return { success: true, error: false, id: user.id, data: updatedUser };
+    const transformedRow = {
+      id: user.id,
+
+      img: updatedUser && "img" in updatedUser ? updatedUser.img : "",
+      name: user.username || "-",
+      dbName: updatedUser && "name" in updatedUser ? updatedUser.name : "-",
+      email: updatedUser && "email" in updatedUser ? updatedUser.email : "—",
+      role: user.publicMetadata?.role ?? "—",
+      password: updatedUser?.password
+        ? decryptPassword(updatedUser.password)
+        : "",
+    };
+
+    return { success: true, error: false, id: user.id, data: transformedRow };
   } catch (error: any) {
     console.error("Update user failed:", error);
     let message = "Unknown error";
@@ -4880,3 +5064,271 @@ export async function exportPaymentsToExcel(
     };
   }
 }
+
+export const createStaff = async (
+  currentState: CurrentState,
+  data: CreatestaffSchema
+) => {
+  try {
+    let user;
+    try {
+      user = await client.users.createUser({
+        username: data.username,
+        password: data.password,
+        firstName: data.name,
+
+        publicMetadata: { role: "staff" },
+      });
+      if (user) {
+        console.log("✅ User Sucessfully created:", user.id);
+      } else {
+        console.warn(
+          "⚠️ Clerk returned no user info. User may already be created?"
+        );
+      }
+    } catch (err: any) {
+      console.error("❌ Clerk error:", err);
+
+      const message = err?.errors?.[0]?.message || "Terjadi kesalahan";
+
+      if (message.toLowerCase().includes("username")) {
+        return { success: false, field: "username", message, error: true };
+      }
+      if (message.toLowerCase().includes("password")) {
+        return { success: false, field: "password", message, error: true };
+      }
+
+      return { success: false, field: undefined, message, error: true };
+    }
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    const createdStaff = await prisma.staff.create({
+      data: {
+        id: user.id,
+        username: data.username,
+        password: encryptPassword(data.password!),
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        address: data.address,
+        rw: data.rw,
+        rt: data.rt,
+        kelurahan: data.kelurahan,
+        kecamatan: data.kecamatan,
+        kota: data.kota,
+        religion: data.religion,
+        img: data.img || null,
+        sex: data.sex,
+        birthday: new Date(data.birthday),
+        staffroles: data.staffrole,
+      },
+    });
+
+    return { success: true, error: false, data: createdStaff, id: user.id };
+  } catch (error: any) {
+    let message = "Unknown error";
+    // Handle Clerk API errors properly
+
+    if (
+      error?.errors &&
+      Array.isArray(error.errors) &&
+      error.errors.length > 0
+    ) {
+      message = error.errors[0].message;
+    } else if (error instanceof Error) {
+      message = error.message;
+    } else if (typeof error === "string") {
+      message = error;
+    }
+    return { success: false, error: true, message };
+  }
+};
+
+export const updateStaff = async (
+  currentState: CurrentState,
+  data: UpdatestaffSchema
+) => {
+  try {
+    if (!data.id) {
+      console.log(data.id + "Data.id");
+
+      return { success: false, error: true, message: "Missing staff ID" };
+    }
+    let user;
+    if (data.withUser) {
+      try {
+        user = await client.users.updateUser(data.id, {
+          username: data.username,
+          ...(data.password !== "" && {
+            password: data.password,
+          }),
+          firstName: data.name,
+        });
+        if (user) {
+          console.log("✅ User Sucessfully Updated:", user.id);
+        }
+      } catch (error) {
+        console.warn(
+          "⚠️ Clerk returned no user info. Attempting to create user..."
+        );
+        return {
+          success: false,
+          error: true,
+          code: "USER_NOT_FOUND",
+          message:
+            "Akun ini belum diaktifkan di sistem Clerk. Aktifkan akun ini sekarang?",
+          field: undefined,
+        };
+      }
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await prisma.staff.update({
+      where: {
+        id: data.id,
+      },
+      data: {
+        id: user?.id ?? data.id,
+        username: data.username,
+        ...(data.password !== "" && {
+          password: encryptPassword(data.password!),
+        }),
+        name: data.name,
+        email: data.email || null,
+        phone: data.phone,
+        address: data.address,
+        ...(data.img && { img: data.img }),
+        sex: data.sex,
+        birthday: new Date(data.birthday),
+        staffroles: data.staffrole,
+      },
+    });
+    const updatedStaff = await prisma.staff.findUnique({
+      where: { id: user?.id || data.id },
+    });
+    if (updatedStaff?.password) {
+      updatedStaff.password = decryptPassword(updatedStaff.password);
+    }
+    return { success: true, error: false, data: updatedStaff };
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === "string"
+        ? error
+        : "Unknown error";
+
+    console.error("updateTeacher error:", error);
+    return { success: false, error: true, message };
+  }
+};
+
+export const deleteStaff = async (
+  currentState: CurrentState,
+  formData: FormData
+): Promise<CurrentState> => {
+  const id = formData.get("id") as string;
+
+  try {
+    if (!id) {
+      console.log(id);
+      return { success: false, error: true, message: "Missing staff ID" };
+    }
+    const staff = await prisma.staff.findUnique({ where: { id } });
+    if (staff?.img) {
+      const publicId = extractCloudinaryPublicId(staff.img);
+      if (publicId) {
+        await cloudinary.uploader.destroy(publicId);
+        console.log("Cloudinary image deleted:", publicId);
+      }
+    }
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await prisma.staff.delete({
+      where: {
+        id: id,
+      },
+    });
+    try {
+      const deletedUser = await client.users.deleteUser(id);
+
+      if (deletedUser) {
+        console.log("✅ User Sucessfully deleted:", deletedUser.id);
+      }
+    } catch (error) {
+      console.warn(
+        "⚠️ Clerk returned no user info. User may already be deleted?"
+      );
+    }
+
+    return { success: true, error: false };
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === "string"
+        ? error
+        : "Unknown error";
+
+    console.error("Delete Staff error: ", error);
+    return { success: false, error: true, message };
+  }
+};
+
+export const deleteStaffs = async (
+  currentState: CurrentState,
+  formData: FormData
+): Promise<CurrentState> => {
+  const ids = formData.getAll("ids") as string[];
+
+  if (!ids || ids.length === 0) {
+    return {
+      success: false,
+      error: true,
+      message: "Staff ID tidak ditemukan.",
+    };
+  }
+
+  try {
+    for (const id of ids) {
+      try {
+        const staff = await prisma.staff.findUnique({ where: { id } });
+
+        if (staff?.img) {
+          const publicId = extractCloudinaryPublicId(staff.img);
+          if (publicId) {
+            await cloudinary.uploader.destroy(publicId);
+            console.log("Cloudinary image deleted:", publicId);
+          }
+        }
+
+        await prisma.staff.delete({ where: { id } });
+
+        try {
+          const deletedUser = await client.users.deleteUser(id);
+          if (deletedUser) {
+            console.log("✅ Clerk user deleted:", deletedUser.id);
+          }
+        } catch {
+          console.warn(`⚠️ Clerk user ${id} not found or already deleted.`);
+        }
+      } catch (innerError) {
+        console.error(`❌ Failed to delete staff ID = ${id}:`, innerError);
+        // Optionally continue deleting others instead of failing all
+      }
+    }
+
+    return {
+      success: true,
+      error: false,
+      message: `Deleted ${ids.length} Payment(s) successfully.`,
+    };
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === "string"
+        ? error
+        : "Unknown error";
+
+    return { success: false, error: true, message };
+  }
+};

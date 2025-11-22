@@ -3,6 +3,7 @@ import FormModal from "./FormModal";
 import { getCurrentUser } from "@/lib/utils";
 export type TableName =
   | "teacher"
+  | "staff"
   | "student"
   | "parent"
   | "subject"

@@ -3,15 +3,41 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  // directUrl = env("DIRECT_URL")
 }
 
 model Admin {
   id       String @id
   username String @unique
   password String @unique
+}
+
+model Staff {
+  id         String     @id
+  name       String
+  username   String     @unique
+  password   String     @unique
+  staffroles staffrole?
+  email      String?    @unique
+  phone      String     @unique
+  address    String
+  rw         String
+  rt         String
+  kelurahan  String
+  kecamatan  String
+  kota       String
+  religion   Agama
+  img        String?
+  sex        UserSex
+  birthday   DateTime
+  createdAt  DateTime   @default(now())
+}
+
+enum staffrole {
+  PENJADWALAN
+  ACCOUNTING
 }
 
 model Student {

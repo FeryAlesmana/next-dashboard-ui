@@ -102,7 +102,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       {/* LEFT */}
       <div className="w-full lg:w-2/3 flex flex-col gap-8">
         <div className="flex gap-4 justify-between flex-wrap">
-          <UserCard type="admin" />
+          <UserCard type="staff" />
           <UserCard type="student" />
           <UserCard type="teacher" />
           <UserCard type="parent" />

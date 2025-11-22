@@ -22,6 +22,8 @@ import {
   deletePPDBs,
   deleteResult,
   deleteResults,
+  deleteStaff,
+  deleteStaffs,
   deleteStudent,
   deleteStudents,
   deleteSubject,
@@ -75,6 +77,7 @@ const deleteActionMap = {
   ppdb: deletePpdb,
   paymentLog: deletePaymentLog,
   user: deleteUser,
+  staff: deleteStaff,
 };
 
 const singleDeleteMap = {
@@ -93,6 +96,7 @@ const singleDeleteMap = {
   ppdb: deletePpdb,
   paymentLog: deletePaymentLog,
   user: deleteUser,
+  staff: deleteStaff,
 };
 
 const bulkDeleteMap = {
@@ -111,9 +115,13 @@ const bulkDeleteMap = {
   ppdb: deletePPDBs,
   paymentLog: deletePaymentLogs,
   user: deleteManyUsers,
+  staff: deleteStaffs,
 };
 
 const TeacherForm = dynamic(() => import("./forms/TeacherForm"), {
+  loading: () => <h1>Loading...</h1>,
+});
+const StaffForm = dynamic(() => import("./forms/StaffForm"), {
   loading: () => <h1>Loading...</h1>,
 });
 const StudentForm = dynamic(() => import("./forms/StudentForm"), {
@@ -188,6 +196,14 @@ const forms: {
       type={type}
       data={data}
       relatedData={relatedData}
+      onChanged={onChanged}
+    />
+  ),
+  staff: (setOpen, type, data, relatedData, onChanged) => (
+    <StaffForm
+      setOpen={setOpen}
+      type={type}
+      data={data}
       onChanged={onChanged}
     />
   ),
@@ -1109,7 +1125,7 @@ const FormModal = ({
         createPortal(
           <div
             className={`
-        fixed inset-0 z-[9999] bg-black bg-opacity-60 
+        fixed inset-0 z-[5000] bg-black bg-opacity-60 
         flex items-center justify-center p-4
       `}
           >
@@ -1121,9 +1137,14 @@ const FormModal = ({
       ${
         ["delete", "deleteMany", "createMany"].includes(type)
           ? "w-[350px] h-auto"
-          : ["student", "ppdb", "teacher", "paymentLog", "parent"].includes(
-              table
-            )
+          : [
+              "student",
+              "ppdb",
+              "teacher",
+              "paymentLog",
+              "parent",
+              "staff",
+            ].includes(table)
           ? "w-[95%] h-[95%] md:w-[90%] lg:w-[85%] xl:w-[80%] 2xl:w-[75%]"
           : ""
       }

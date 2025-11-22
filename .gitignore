@@ -45,3 +45,4 @@ to-do-list.docx
 ~WRL0003.tmp
 Dockerfile
 production.env
+src/app/test/page.tsx

@@ -4,39 +4,30 @@ import { Controller, useForm, useWatch } from "react-hook-form";
 import InputField from "../InputField";
 import { startTransition, useActionState, useEffect, useState } from "react";
 import {
-  CreateteacherSchema,
-  createTeacherSchema,
-  UpdateteacherSchema,
-  updateTeacherSchema,
+  createStaffSchema,
+  CreatestaffSchema,
+  updateStaffSchema,
+  UpdatestaffSchema,
 } from "@/lib/formValidationSchema";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import {
   activateManyTeachers,
-  createTeacher,
+  createStaff,
   CurrentState,
-  updateTeacher,
+  updateStaff,
 } from "@/lib/actions";
-import Select from "react-select";
-import { Day } from "@prisma/client";
 import UploadPhoto from "../UploadPhoto";
 import z from "zod";
 import ConfirmDialog from "../ConfirmDialog";
 import { BaseFormProps } from "./AssignmentForm";
 
-const TeacherForm = ({
-  type,
-  data,
-  setOpen,
-  relatedData,
-  onChanged,
-}: BaseFormProps) => {
-  const schema = type === "create" ? createTeacherSchema : updateTeacherSchema;
+const TeacherForm = ({ type, data, setOpen, onChanged }: BaseFormProps) => {
+  const schema = type === "create" ? createStaffSchema : updateStaffSchema;
 
   const {
     register,
     handleSubmit,
-    control,
     reset,
     formState: { errors },
     getValues,
@@ -47,26 +38,23 @@ const TeacherForm = ({
   >({
     resolver: zodResolver(schema),
     defaultValues: {
-      subjects: [],
-      lessons: [],
-      classes: [],
       password: "", // ✅ Always set as string to avoid `undefined` issues
     },
   });
   // console.log("✅ TeacherForm rendered");
   const [img, setImg] = useState<any>();
-  const createTeacherHandler = async (
+  const createStaffHandler = async (
     prevState: CurrentState,
-    payload: CreateteacherSchema
+    payload: CreatestaffSchema
   ): Promise<CurrentState> => {
-    return await createTeacher(prevState, payload);
+    return await createStaff(prevState, payload);
   };
 
-  const updateTeacherHandler = async (
+  const updateStaffHandler = async (
     prevState: CurrentState,
-    payload: UpdateteacherSchema
+    payload: UpdatestaffSchema
   ): Promise<CurrentState> => {
-    return await updateTeacher(prevState, payload);
+    return await updateStaff(prevState, payload);
   };
 
   const initialState: CurrentState = {
@@ -75,7 +63,7 @@ const TeacherForm = ({
     message: "",
   };
   const [state, formAction] = useActionState(
-    type === "create" ? createTeacherHandler : updateTeacherHandler,
+    type === "create" ? createStaffHandler : updateStaffHandler,
     initialState
   );
 
@@ -119,24 +107,6 @@ const TeacherForm = ({
 
   const router = useRouter();
 
-  const { subjects = [], classes = [], lessons = [] } = relatedData ?? {};
-  const subjectOption = subjects.map(
-    (subject: { id: number; name: string }) => ({
-      value: subject.id,
-      label: `${subject.name}`,
-    })
-  );
-  const classOptions = classes.map((kelas: { id: number; name: string }) => ({
-    value: kelas.id,
-    label: `${kelas.name}`,
-  }));
-  const lessonOptions = lessons.map(
-    (lesson: { id: number; name: string; day: Day }) => ({
-      value: lesson.id,
-      label: `${lesson.name} ${lesson.day}`,
-    })
-  );
-
   useEffect(() => {
     console.log("✅ data received:", data);
     if (type === "update" && data?.subjects) {
@@ -145,16 +115,13 @@ const TeacherForm = ({
         birthday: data?.birthday
           ? new Date(data.birthday).toISOString().split("T")[0]
           : "",
-        subjects: data.subjects.map((s: { id: number }) => s.id),
-        lessons: data.lessons.map((l: { id: number }) => l.id),
-        classes: data.classes.map((c: { id: number }) => c.id),
         img: img?.secure_url,
       });
     }
     if (state.success) {
       const updatedItem = state.data ?? data;
       toast(
-        `Guru telah berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`
+        `Staff telah berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`
       );
       if (onChanged && updatedItem) {
         onChanged(updatedItem); // 🔥 notify parent so it can update localData
@@ -163,7 +130,7 @@ const TeacherForm = ({
       }
       setOpen(false);
       if (type === "create") {
-        setTimeout(() => router.push(`/list/teachers/${state.id}`), 3000);
+        setTimeout(() => router.push(`/list/staffs/${state.id}`), 3000);
       }
     }
   }, [state, type, setOpen, router, data, reset, img, onChanged, withUser]);
@@ -172,7 +139,7 @@ const TeacherForm = ({
     <>
       <form action="" className="flex flex-col gap-8" onSubmit={onSubmit}>
         <h1 className="text-xl font-semibold">
-          {type === "create" ? "Tambah Guru baru" : "Edit Guru"}
+          {type === "create" ? "Tambah Staff baru" : "Edit Staff"}
         </h1>
         <span className="text-xs text-gray-400 font-medium">
           Informasi Autentikasi
@@ -239,7 +206,7 @@ const TeacherForm = ({
             defaultValue={data?.name}
             register={register}
             error={errors?.name}
-            placeholder="Masukkan Nama Lengkap Guru"
+            placeholder="Masukkan Nama Lengkap Staff"
           ></InputField>
           <InputField
             label="No. Telepon"
@@ -255,7 +222,7 @@ const TeacherForm = ({
             defaultValue={data?.address}
             register={register}
             error={errors?.address}
-            placeholder="Masukkan Alamat Guru"
+            placeholder="Masukkan Alamat Staff"
           ></InputField>
           <InputField
             label="RT"
@@ -297,17 +264,15 @@ const TeacherForm = ({
             error={errors?.kota}
             placeholder="Masukkan kota/kabupaten"
           ></InputField>
-          {/* <InputField
-          label="Gol. darah"
-          name="bloodType"
-          defaultValue={data?.bloodType}
-          register={register}
-          error={errors?.bloodType}
-        ></InputField> */}
           <InputField
             label="Birthday"
             name="birthday"
             type="date"
+            defaultValue={
+              data?.birthday
+                ? new Date(data.birthday).toISOString().split("T")[0]
+                : ""
+            }
             register={register}
             error={errors?.birthday}
           ></InputField>
@@ -357,121 +322,20 @@ const TeacherForm = ({
               </p>
             )}
           </div>
-
           <div className="flex flex-col gap-2 w-full md:w-1/4 ">
-            <label className="text-xs text-gray-400">Mata Pelajaran</label>
-
-            <Controller
-              name="subjects"
-              control={control}
-              render={({ field }) => {
-                const selectedValues = subjectOption.filter(
-                  (opt: { value: number; label: string }) =>
-                    field.value?.includes(opt.value)
-                );
-                return (
-                  <Select
-                    {...field}
-                    isMulti
-                    options={subjectOption}
-                    className="text-sm"
-                    classNamePrefix="select"
-                    placeholder="Cari Matpel..."
-                    value={selectedValues}
-                    onChange={(selected) => {
-                      field.onChange(selected.map((opt) => opt.value));
-                    }}
-                  />
-                );
-              }}
-            />
-
-            {errors.subjects?.message && (
+            <label className="text-xs text-gray-400">Peran Staff</label>
+            <select
+              className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
+              {...register("staffrole")}
+              defaultValue={data?.staffroles}
+            >
+              <option value="">Pilih</option>
+              <option value="PENJADWALAN">Penjadwalan</option>
+              <option value="ACCOUNTING">Akutansi</option>
+            </select>
+            {errors.staffrole?.message && (
               <p className="text-xs text-red-400">
-                {errors.subjects.message.toString()}
-              </p>
-            )}
-          </div>
-          <div className="flex flex-col gap-2 w-full md:w-1/4 ">
-            <label className="text-xs text-gray-400">Jadwal</label>
-
-            <Controller
-              name="lessons"
-              control={control}
-              defaultValue={
-                data?.lessons?.map(
-                  (lesson: { id: number; name: string; day: Day }) => lesson.id
-                ) || []
-              }
-              render={({ field }) => {
-                const selectedValues = lessonOptions.filter(
-                  (opt: { value: number; label: string }) =>
-                    field.value?.includes(opt.value)
-                );
-                return (
-                  <Select
-                    {...field}
-                    isMulti
-                    options={lessonOptions}
-                    className="text-sm"
-                    classNamePrefix="select"
-                    placeholder="Cari Jadwal..."
-                    value={selectedValues}
-                    onChange={(selectedOptions) => {
-                      field.onChange(
-                        selectedOptions.map((opt) => Number(opt.value))
-                      );
-                    }}
-                  />
-                );
-              }}
-            />
-
-            {errors.lessons?.message && (
-              <p className="text-xs text-red-400">
-                {errors.lessons.message.toString()}
-              </p>
-            )}
-          </div>
-          <div className="flex flex-col gap-2 w-full md:w-1/4">
-            <label className="text-xs text-gray-400">Pengurus Kelas..</label>
-
-            <Controller
-              name="classes"
-              control={control}
-              defaultValue={
-                data?.classes?.map(
-                  (kelas: { id: number; name: string }) => kelas.id
-                ) || []
-              }
-              render={({ field }) => {
-                const selectedValues = classOptions.filter(
-                  (opt: { value: number; label: string }) =>
-                    field.value?.includes(opt.value)
-                );
-
-                return (
-                  <Select
-                    {...field}
-                    isMulti
-                    options={classOptions}
-                    className="text-sm"
-                    classNamePrefix="select"
-                    placeholder="Cari Kelas..."
-                    value={selectedValues}
-                    onChange={(selectedOptions) => {
-                      field.onChange(
-                        selectedOptions.map((opt) => Number(opt.value))
-                      );
-                    }}
-                  />
-                );
-              }}
-            />
-
-            {errors.classes?.message && (
-              <p className="text-xs text-red-400">
-                {errors.classes.message.toString()}
+                {errors.staffrole.message.toString()}
               </p>
             )}
           </div>
@@ -499,14 +363,14 @@ const TeacherForm = ({
             {isSubmitting
               ? "Memproses..."
               : type === "create"
-              ? "Tambah Guru"
-              : "Update Guru"}
+              ? "Tambah Staff"
+              : "Update Staff"}
           </button>
         </div>
       </form>
       {showConfirm && (
         <ConfirmDialog
-          message={type === "create" ? "Tambah Guru baru?" : "Ubah Guru?"}
+          message={type === "create" ? "Tambah Staff baru?" : "Ubah Staff?"}
           onConfirm={handleSubmitForm}
           onCancel={() => setShowConfirm(false)}
         />

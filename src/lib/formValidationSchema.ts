@@ -8,6 +8,7 @@ import {
   KPS,
   parents,
   resTypes,
+  staffrole,
   TTinggal,
   UserSex,
 } from "@prisma/client";
@@ -1035,7 +1036,7 @@ export const userSchema = z.object({
     .email({ message: "Email anda Tidak valid!" })
     .optional()
     .or(z.literal("")),
-  role: z.enum(["student", "teacher", "parent", "admin"], {
+  role: z.enum(["student", "teacher", "parent", "admin", "staff"], {
     message: "Role Akun wajib diisi!",
   }),
   userId: z.string({ message: "Id User wajib di isi" }),
@@ -1125,3 +1126,54 @@ export const exportPaymentsSchema = z
   );
 
 export type ExportPaymentsSchema = z.infer<typeof exportPaymentsSchema>;
+
+export const staffSchema = z.object({
+  id: z.string().optional(),
+  withUser: z.boolean().optional().default(true),
+  username: z
+    .string()
+    .min(3, { message: "Username harus lebih dari 3 karakter!" })
+    .max(20, { message: "Username harus kurang dari 20 karakter!" }),
+  password: z
+    .string()
+    .min(8, { message: "Password harus mempunyai 8 karakter!" })
+    .or(z.literal(""))
+    .optional(),
+  name: z.string().min(1, { message: "Nama depan wajib diisi!" }),
+  email: z
+    .string()
+    .email({ message: "Email anda Tidak valid!" })
+    .optional()
+    .or(z.literal("")),
+  phone: z.string().min(1, { message: "Nomor telepon wajib diisi!" }),
+  address: z.string().min(1, { message: "Alamat wajib diisi!" }),
+  rt: z.string({ message: " RT Guru wajib diisi!" }).length(2),
+  rw: z.string({ message: " RW Guru wajib diisi!" }).length(2),
+  kelurahan: z.string({ message: " Nama Kelurahan Guru wajib diisi!" }).min(1),
+  kecamatan: z.string({ message: " Nama Kecamatan Guru wajib diisi!" }).min(1),
+  kota: z.string({ message: " Nama Kota Guru wajib diisi!" }).min(1),
+  religion: z.enum(["Islam", "Kristen", "Buddha", "Lainnya"], {
+    message: " Agama Guru wajib diisi!",
+  }),
+  img: z.string().optional().nullable(),
+  birthday: z.coerce.date({ message: "Tanggal lahir wajib disii!" }),
+  sex: z.nativeEnum(UserSex, { message: "Jenis Kelamin wajib diisi!" }),
+  staffrole: z.nativeEnum(staffrole, { message: "Jenis Staff wajib diisi!" }),
+});
+export type StaffSchema = z.infer<typeof staffSchema>;
+export const createStaffSchema = staffSchema.extend({
+  password: z.string().min(8, {
+    message: "Password harus mempunyai 8 karakter!",
+  }),
+});
+
+export type CreatestaffSchema = z.infer<typeof createStaffSchema>;
+
+export const updateStaffSchema = staffSchema.extend({
+  password: z
+    .string()
+    .min(8, { message: "Password harus mempunyai 8 karakter!" })
+    .or(z.literal(""))
+    .optional(),
+});
+export type UpdatestaffSchema = z.infer<typeof updateStaffSchema>;
