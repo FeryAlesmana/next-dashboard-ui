@@ -6,6 +6,7 @@ export type BaseTableClientProps = {
   role: string;
   selected: string[];
   relatedData?: any;
+  allowedStaff?: boolean;
   onToggle: (id: string) => void;
   onDeleted?: (ids: (string | number)[]) => void;
   onChanged?: (item: any) => void;
@@ -19,6 +20,7 @@ export default function AssignmentTableClient({
   relatedData,
   onDeleted,
   onChanged,
+  allowedStaff,
 }: BaseTableClientProps) {
   const AssignmentsTypeLabel = {
     PEKERJAAN_RUMAH: "Pekerjaan Rumah",
@@ -69,7 +71,7 @@ export default function AssignmentTableClient({
         </td>
         <td>
           <div className="flex items-center gap-2">
-            {(role === "admin" || role === "teacher") && (
+            {allowedStaff && (
               <>
                 <FormModal
                   table="assignment"

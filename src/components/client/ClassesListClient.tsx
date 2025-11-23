@@ -8,16 +8,18 @@ import Table from "@/components/Table";
 import FormModal from "../FormModal";
 import ClassesTableClient from "./ClassesTableClient";
 import FilterSortToggle from "../FilterSortToggle";
+import { staffrole } from "@prisma/client";
 const ClassesListClient = ({
   columns,
   data,
   role,
   relatedData,
   options,
+  staffrole,
 }: BaseListClientProps) => {
   const [selected, setSelected] = useState<string[]>([]);
   const [localData, setLocalData] = useState(data); // 👈 keep a client copy
-
+  const [currentStaff] = useState<staffrole>(staffrole!);
   const toggleSelection = (id: string) => {
     setSelected((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
@@ -52,6 +54,8 @@ const ClassesListClient = ({
     gradeOptions = [],
     teacherOptions = [],
   } = options || {};
+  const allowedStaff = role === "staff" && currentStaff! === "PENILAIAN";
+  const allowedRole = role === "admin" || allowedStaff;
   return (
     <div className="space-y-4 mt-3">
       <div className="flex items-center justify-between">
@@ -86,7 +90,7 @@ const ClassesListClient = ({
                 { label: "Kapasitas Desc", value: "cp_desc" },
               ]}
             />
-            {role === "admin" && (
+            {allowedRole && (
               <FormModal
                 table="class"
                 type="create"
@@ -110,7 +114,7 @@ const ClassesListClient = ({
       {/* LIST */}
       <Table columns={columns}>
         <tr key="header" className="text-left text-gray-500 text-sm">
-          {role === "admin" && (
+          {allowedRole && (
             <td className="px-4 py-2">
               <input
                 type="checkbox"
@@ -126,7 +130,7 @@ const ClassesListClient = ({
         {localData.length === 0 ? (
           <tr>
             <td
-              colSpan={columns.length + (role === "admin" ? 1 : 0)}
+              colSpan={columns.length + (allowedRole ? 1 : 0)}
               className="text-center text-gray-500 py-6"
             >
               Tidak ada data untuk table ini
@@ -143,6 +147,7 @@ const ClassesListClient = ({
               relatedData={relatedData}
               onDeleted={handleDeleteOptimistic}
               onChanged={handleChanged}
+              allowedStaff = {allowedRole}
             />
           ))
         )}

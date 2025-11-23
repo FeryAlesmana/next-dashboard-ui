@@ -7,6 +7,7 @@ import { EmailVerificationGate } from "@/components/EmailVerificationGate";
 import { useUser } from "@clerk/nextjs";
 import { VerificationGate } from "@/components/VerificationGate";
 import PPDBBanner from "@/components/PPDBBanner";
+import { staffrole } from "@prisma/client";
 
 export default function PPDBPage() {
   const formRef = useRef<HTMLDivElement>(null);
@@ -18,12 +19,14 @@ export default function PPDBPage() {
     open: boolean;
     reason: string;
   } | null>(null);
+  const [currentStaff, setCurrentStaff] = useState<staffrole>("PENILAIAN");
 
   useEffect(() => {
     async function fetchStatus() {
       const res = await fetch("/api/ppdb-status");
       const data = await res.json();
-      setPpdbStatus(data);
+      setPpdbStatus(data?.ppdbStatus);
+      setCurrentStaff(data?.currentStaffRole);
     }
     fetchStatus();
   }, []);
@@ -34,7 +37,7 @@ export default function PPDBPage() {
       formRef.current.scrollIntoView({ behavior: "smooth" });
     }
   };
-
+  const allowedStaff = role === "staff" && currentStaff === "PENILAIAN";
   return (
     <div className="relative font-sans min-h-screen">
       {/* Background Gradient & Pattern */}
@@ -131,7 +134,7 @@ export default function PPDBPage() {
                   Formulir Pendaftaran Online
                 </h3>
 
-                {role === "admin" ? (
+                {role === "admin" || allowedStaff ? (
                   <>
                     {!skipVerification ? (
                       <>

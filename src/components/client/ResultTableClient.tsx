@@ -11,6 +11,7 @@ export default function ResultTableClient({
   relatedData,
   onDeleted,
   onChanged,
+  allowedStaff,
 }: BaseTableClientProps) {
   const resultTypelabel = {
     UJIAN_HARIAN: "Ujian Harian",
@@ -20,10 +21,11 @@ export default function ResultTableClient({
     TUGAS_AKHIR: "Tugas Akhir",
     TUGAS_HARIAN: "Tugas Harian",
   } as const;
+  const allowedRole = role === "admin" || role === "teacher" || allowedStaff;
   return (
     <>
       <tr className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight">
-        {role === "admin" && (
+        {(role === "admin" || allowedStaff) && (
           <td className="px-4 py-2">
             <input
               type="checkbox"
@@ -35,7 +37,7 @@ export default function ResultTableClient({
 
         <td className="p-4 hidden md:table-cell">{data?.subject || "-"}</td>
         <td>{data.student}</td>
-        <td >{data.score}</td>
+        <td>{data.score}</td>
         <td className="hidden md:table-cell">{data.teacher}</td>
         <td className="hidden md:table-cell">{data.class}</td>
         <td className="hidden md:table-cell">
@@ -55,7 +57,7 @@ export default function ResultTableClient({
 
         <td>
           <div className="flex items-center gap-2">
-            {(role === "admin" || role === "teacher") && (
+            {allowedRole && (
               <>
                 <FormModal
                   table="result"

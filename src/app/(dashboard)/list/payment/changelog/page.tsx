@@ -2,7 +2,11 @@ import ChangeLogClient from "@/components/ChangeLogClient";
 import ClientPageWrapper from "@/components/ClientWrapper";
 import Pagination from "@/components/Pagination";
 import prisma from "@/lib/prisma";
-import { getCurrentUser, normalizeSearchParams } from "@/lib/utils";
+import {
+  getCurrentUser,
+  normalizeSearchParams,
+  toIntOrNotFound,
+} from "@/lib/utils";
 import { ChangeAction, Prisma } from "@prisma/client";
 import { notFound } from "next/navigation";
 import z from "zod";
@@ -50,7 +54,8 @@ const ChangeLog = async ({
             ];
             break;
           case "id":
-            query.id = parseInt(value);
+            const id = toIntOrNotFound(value);
+            query.id = id;
             break;
           case "byRole":
             query.changedByRole = value;
@@ -67,7 +72,9 @@ const ChangeLog = async ({
             }
             break;
           case "action":
-            query.action = value as ChangeAction;
+            if (Object.values(ChangeAction).includes(value as ChangeAction)) {
+              query.action = value as ChangeAction;
+            }
             break;
 
           case "sort":
@@ -84,10 +91,12 @@ const ChangeLog = async ({
               case "id_desc":
                 orderBy = { id: "desc" };
                 break;
+              default:
+                return notFound();
             }
             break;
           default:
-            break;
+            return notFound();
         }
     }
   }

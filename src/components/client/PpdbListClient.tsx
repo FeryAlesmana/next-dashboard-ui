@@ -4,6 +4,7 @@ import Table from "@/components/Table";
 import BulkActions from "../BulkActions";
 import PpdbTableClient from "./PpdbTableClient";
 import { BaseListClientProps } from "./AssignmentListClient";
+import { staffrole } from "@prisma/client";
 
 export default function PpdbListClient({
   columns,
@@ -11,10 +12,11 @@ export default function PpdbListClient({
   role,
   relatedData,
   options,
+  staffrole,
 }: BaseListClientProps) {
   const [selected, setSelected] = useState<string[]>([]);
   const [localData, setLocalData] = useState(data); // 👈 keep a client copy
-
+  const [currentStaff] = useState<staffrole>(staffrole!);
   const toggleSelection = (id: string) => {
     setSelected((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
@@ -44,7 +46,8 @@ export default function PpdbListClient({
       })
     );
   };
-
+  const allowedStaff = role === "staff" && currentStaff === "PENILAIAN";
+  const allowedRole = role === "admin" || allowedStaff;
   return (
     <div className="space-y-4 mt-3">
       <BulkActions
@@ -60,7 +63,7 @@ export default function PpdbListClient({
 
       <Table columns={columns}>
         <tr className="text-left text-gray-500 text-sm">
-          {role === "admin" && (
+          {allowedRole && (
             <td className="px-4 py-2">
               <input
                 type="checkbox"
@@ -93,6 +96,7 @@ export default function PpdbListClient({
               relatedData={relatedData}
               onDeleted={handleDeleteOptimistic}
               onChanged={handleChanged}
+              allowedStaff={allowedRole}
             />
           ))
         )}

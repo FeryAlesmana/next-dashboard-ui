@@ -22,7 +22,7 @@ import z from "zod";
 import ConfirmDialog from "../ConfirmDialog";
 import { BaseFormProps } from "./AssignmentForm";
 
-const TeacherForm = ({ type, data, setOpen, onChanged }: BaseFormProps) => {
+const StaffForm = ({ type, data, setOpen, onChanged }: BaseFormProps) => {
   const schema = type === "create" ? createStaffSchema : updateStaffSchema;
 
   const {
@@ -38,7 +38,7 @@ const TeacherForm = ({ type, data, setOpen, onChanged }: BaseFormProps) => {
   >({
     resolver: zodResolver(schema),
     defaultValues: {
-      password: "", // ✅ Always set as string to avoid `undefined` issues
+      password: data?.password || "", // ✅ Always set as string to avoid `undefined` issues
     },
   });
   // console.log("✅ TeacherForm rendered");
@@ -332,6 +332,7 @@ const TeacherForm = ({ type, data, setOpen, onChanged }: BaseFormProps) => {
               <option value="">Pilih</option>
               <option value="PENJADWALAN">Penjadwalan</option>
               <option value="ACCOUNTING">Akutansi</option>
+              <option value="PENILAIAN">Penilaian</option>
             </select>
             {errors.staffrole?.message && (
               <p className="text-xs text-red-400">
@@ -419,4 +420,4 @@ const TeacherForm = ({ type, data, setOpen, onChanged }: BaseFormProps) => {
     </>
   );
 };
-export default TeacherForm;
+export default StaffForm;

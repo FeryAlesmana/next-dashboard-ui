@@ -6,12 +6,13 @@ import BulkActions from "../BulkActions";
 import TableSearch from "../TableSearch";
 import FilterSortToggle from "../FilterSortToggle";
 import FormModal from "../FormModal";
-import { Semester } from "./StudentPaymentView";
+import { staffrole } from "@prisma/client";
 export type BaseListClientProps = {
   data: any[];
   relatedData?: any;
   options?: any;
   role: string;
+  staffrole?: staffrole;
   columns: { header: string; accessor: string; className?: string }[];
 };
 
@@ -21,10 +22,11 @@ export default function AssignmentListClient({
   role,
   relatedData,
   options,
+  staffrole,
 }: BaseListClientProps) {
   const [selected, setSelected] = useState<string[]>([]);
   const [localData, setLocalData] = useState(data); // 👈 keep a client copy
-
+  const [currentStaff] = useState<staffrole>(staffrole!);
   const toggleSelection = (id: string) => {
     setSelected((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
@@ -61,8 +63,9 @@ export default function AssignmentListClient({
     teacherOptions = [],
     semesterOptions = [],
   } = options || {};
-// console.log(semesterOptions, "semester option");
-
+  // console.log(semesterOptions, "semester option");
+  const allowedStaff = role === "staff" && currentStaff === "PENILAIAN";
+  const allowedRole = role === "admin" || role === "teacher" || allowedStaff;
   return (
     <div className="space-y-4 mt-3">
       {/* TOP */}
@@ -108,7 +111,7 @@ export default function AssignmentListClient({
                 { label: "Deadline", value: "dl" },
               ]}
             />
-            {(role === "admin" || role === "teacher") && (
+            {allowedRole && (
               <FormModal
                 table="assignment"
                 type="create"
@@ -132,7 +135,7 @@ export default function AssignmentListClient({
       {/* LIST */}
       <Table columns={columns}>
         <tr key="header" className="text-left text-gray-500 text-sm">
-          {role === "admin" && (
+          {(role === "admin" || allowedStaff) && (
             <td className="px-4 py-2">
               <input
                 type="checkbox"
@@ -165,6 +168,7 @@ export default function AssignmentListClient({
               relatedData={relatedData}
               onDeleted={handleDeleteOptimistic}
               onChanged={handleChanged}
+              allowedStaff={allowedRole}
             />
           ))
         )}

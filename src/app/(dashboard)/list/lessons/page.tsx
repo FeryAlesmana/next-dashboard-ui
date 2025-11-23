@@ -9,10 +9,12 @@ import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/setting";
 import {
   generateSemesters,
+  getCurrentStaff,
   getCurrentUser,
   normalizeSearchParams,
+  toIntOrNotFound,
 } from "@/lib/utils";
-import { Day, Prisma } from "@prisma/client";
+import { Day, Prisma, staffrole } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
 import { LessonWithRelations } from "../attendance/page";
@@ -21,6 +23,7 @@ import LessonListClient from "@/components/client/LessonListClient";
 import ParentLessonViewSemester from "@/components/client/ParentLessonViewSemester";
 import StudentLessonViewSemester from "@/components/client/StudentLessonView";
 import z from "zod";
+import { notFound } from "next/navigation";
 
 // type LessonList = Lesson & { subject: Subject } & { class: Class } & {
 //   teacher: Teacher;
@@ -44,8 +47,15 @@ const LessonListPage = async ({
   const perPage = limit === "all" ? 50 : parseInt(limit ?? "10");
 
   const { role, userId } = await getCurrentUser();
+  let staffRole: staffrole;
+  if (role === "staff") {
+    const staffrole = await getCurrentStaff(userId!);
+    staffRole = staffrole;
+  }
+  const allowedStaff = role === "staff" && staffRole! === "PENJADWALAN";
+  const allowedRole = role === "admin" || allowedStaff;
   const columns = [
-    ...(role === "admin"
+    ...(role === "admin" || allowedStaff
       ? [
           {
             header: "Select",
@@ -91,7 +101,7 @@ const LessonListPage = async ({
       accessor: "meeting",
       className: "hidden md:table-cell",
     },
-    ...(role === "admin"
+    ...(allowedRole
       ? [
           {
             header: "Aksi",
@@ -176,16 +186,18 @@ const LessonListPage = async ({
         switch (key) {
           case "teacherId":
             query.teacherId = value.trim();
-            console.log("teacherId param:", value);
+            // console.log("teacherId param:", value);
 
             break;
           case "classId":
-            query.classId = parseInt(value);
+            const classId = toIntOrNotFound(value);
+            query.classId = classId;
             break;
           case "gradeId":
+            const gradeId = toIntOrNotFound(value);
             query.class = {
               is: {
-                gradeId: parseInt(value),
+                gradeId: gradeId,
               },
             };
             break;
@@ -201,8 +213,10 @@ const LessonListPage = async ({
           case "day":
             if (Object.values(Day).includes(value as Day)) {
               query.day = value as Day;
+            } else {
+              // Ignore the parameter or log a warning if the value is invalid
+              return notFound();
             }
-            break;
           case "search":
             query.OR = [
               { subject: { name: { contains: value, mode: "insensitive" } } },
@@ -227,10 +241,12 @@ const LessonListPage = async ({
               case "day":
                 orderBy = { day: "asc" }; // or "desc" if preferred
                 break;
+              default:
+                return notFound();
             }
             break;
           default:
-            break;
+            return notFound();
         }
     }
   }
@@ -240,6 +256,7 @@ const LessonListPage = async ({
   let teacherLesson: any[] = [];
   let gradeLevel = 3;
   let semesterOptions: any = [];
+  // ROLE CONDITION
   switch (role) {
     case "admin":
       const oldest = await prisma.student.findFirst({
@@ -561,6 +578,7 @@ const LessonListPage = async ({
             relatedData={relatedData}
             options={options}
             gradeLevel={gradeLevel}
+            staffrole={staffRole!}
           />
         </div>
         {/* PAGINATION*/}

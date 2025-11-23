@@ -10,6 +10,7 @@ import {
   normalizeSearchParams,
 } from "@/lib/utils";
 import { Class, Prisma, staffrole, Subject, Teacher } from "@prisma/client";
+import { notFound } from "next/navigation";
 
 const StaffListPage = async ({
   searchParams,
@@ -76,43 +77,54 @@ const StaffListPage = async ({
 
   if (queryParams) {
     for (const [key, value] of Object.entries(queryParams)) {
-      if (value !== undefined && value !== "")
-        switch (key) {
-          case "search":
-            query.OR = [
-              { name: { contains: value, mode: "insensitive" } },
-              { id: { contains: value, mode: "insensitive" } },
-              { phone: { contains: value, mode: "insensitive" } },
-            ];
-            break;
-          case "byRole":
-            query.staffroles = value as staffrole;
-            break;
-          case "sort":
-            switch (value) {
-              case "az":
-                orderBy = { name: "asc" };
-                break;
-              case "za":
-                orderBy = { name: "desc" };
-                break;
-              case "id_asc":
-                orderBy = { id: "asc" };
-                break;
-              case "id_desc":
-                orderBy = { id: "desc" };
-                break;
-              case "newest":
-                orderBy = { createdAt: "desc" };
-                break;
-              case "oldest":
-                orderBy = { createdAt: "asc" };
-                break;
-            }
-            break;
-          default:
-            break;
-        }
+      if (value === undefined || value === null || value === "") {
+        continue;
+      }
+      const ALLOWED_ROLES: staffrole[] = ["PENJADWALAN", "ACCOUNTING"];
+      const safeValue = String(value).trim();
+      switch (key) {
+        case "search":
+          query.OR = [
+            { name: { contains: safeValue, mode: "insensitive" } },
+            { id: { contains: safeValue, mode: "insensitive" } },
+            { phone: { contains: safeValue, mode: "insensitive" } },
+          ];
+          break;
+        case "byRole":
+          if (ALLOWED_ROLES.includes(safeValue as staffrole)) {
+            query.staffroles = safeValue as staffrole;
+          } else {
+            // Ignore the parameter or log a warning if the value is invalid
+            return notFound();
+          }
+          break;
+        case "sort":
+          switch (safeValue) {
+            case "az":
+              orderBy = { name: "asc" };
+              break;
+            case "za":
+              orderBy = { name: "desc" };
+              break;
+            case "id_asc":
+              orderBy = { id: "asc" };
+              break;
+            case "id_desc":
+              orderBy = { id: "desc" };
+              break;
+            case "newest":
+              orderBy = { createdAt: "desc" };
+              break;
+            case "oldest":
+              orderBy = { createdAt: "asc" };
+              break;
+            default:
+              return notFound();
+          }
+          break;
+        default:
+          return notFound();
+      }
     }
   }
 
@@ -134,7 +146,7 @@ const StaffListPage = async ({
     password: decryptPassword(staff.password),
   }));
   const staffRoles = [
-    { label: "Penjadwalan", value: "PENDJADWALAN" },
+    { label: "Penjadwalan", value: "PENJADWALAN" },
     { label: "Akutansi", value: "ACCOUNTING" },
   ];
   let options = { staffRoles };

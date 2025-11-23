@@ -2,8 +2,14 @@ import ClassesListClient from "@/components/client/ClassesListClient";
 import ClientPageWrapper from "@/components/ClientWrapper";
 import Pagination from "@/components/Pagination";
 import prisma from "@/lib/prisma";
-import { getCurrentUser, normalizeSearchParams } from "@/lib/utils";
-import { Prisma } from "@prisma/client";
+import {
+  getCurrentStaff,
+  getCurrentUser,
+  normalizeSearchParams,
+  toIntOrNotFound,
+} from "@/lib/utils";
+import { Prisma, staffrole } from "@prisma/client";
+import { notFound } from "next/navigation";
 
 const ClassListPage = async ({
   searchParams,
@@ -20,10 +26,16 @@ const ClassListPage = async ({
   ).toString();
   const p = page ? parseInt(page) : 1;
   const perPage = limit === "all" ? 50 : parseInt(limit ?? "10");
-
-  const { role } = await getCurrentUser();
+  const { role, userId } = await getCurrentUser();
+  let staffRole: staffrole;
+  if (role === "staff") {
+    const staffrole = await getCurrentStaff(userId!);
+    staffRole = staffrole;
+  }
+  const allowedStaff = role === "staff" && staffRole! === "PENILAIAN";
+  const allowedRole = role === "admin" || allowedStaff;
   const columns = [
-    ...(role === "admin"
+    ...(allowedRole
       ? [
           {
             header: "Select",
@@ -54,7 +66,7 @@ const ClassListPage = async ({
       accessor: "supervisor",
       className: "hidden md:table-cell",
     },
-    ...(role === "admin"
+    ...(allowedRole
       ? [
           {
             header: "Aksi",
@@ -75,14 +87,19 @@ const ClassListPage = async ({
             query.supervisorId = value;
             break;
           case "capacity":
-            query.capacity = parseInt(value);
+            const capacity = toIntOrNotFound(value);
+            query.capacity = capacity;
             break;
 
           case "gradeId":
-            query.gradeId = parseInt(value);
+            const gradeId = toIntOrNotFound(value);
+            query.gradeId = gradeId;
             break;
           case "search":
-            query.name = { contains: value, mode: "insensitive" };
+            query.OR = [
+              { name: { contains: value, mode: "insensitive" } },
+              { capacity: { equals: parseInt(value) } },
+            ];
             break;
           case "sort":
             switch (value) {
@@ -104,9 +121,11 @@ const ClassListPage = async ({
               case "cp_desc":
                 orderBy = { capacity: "desc" };
                 break;
+              default:
+                return notFound();
             }
           default:
-            break;
+            return notFound();
         }
     }
   }
@@ -178,6 +197,7 @@ const ClassListPage = async ({
             role={role!}
             relatedData={relatedData}
             options={options}
+            staffrole={staffRole!}
           />
         </div>
         {/* PAGINATION*/}

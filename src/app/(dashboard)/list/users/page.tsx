@@ -15,6 +15,7 @@ import {
 } from "@/lib/utils";
 import { clerkClient } from "@clerk/nextjs/server";
 import Image from "next/image";
+import { notFound } from "next/navigation";
 
 const UserListPage = async ({
   searchParams,
@@ -135,6 +136,8 @@ const UserListPage = async ({
       case "id_desc":
         rows.sort((a, b) => b.id.localeCompare(a.id));
         break;
+      default:
+        return notFound();
     }
   }
   // Apply pagination here
@@ -143,6 +146,9 @@ const UserListPage = async ({
   });
 
   const teachers = await prisma.teacher.findMany({
+    select: { id: true, name: true },
+  });
+  const staffs = await prisma.staff.findMany({
     select: { id: true, name: true },
   });
 
@@ -154,6 +160,7 @@ const UserListPage = async ({
   const usersData = [
     ...students.map((s) => ({ id: s.id, name: s.name, role: "student" })),
     ...teachers.map((t) => ({ id: t.id, name: t.name, role: "teacher" })),
+    ...staffs.map((t) => ({ id: t.id, name: t.name, role: "staff" })),
     ...parents.map((p) => ({ id: p.id, name: p.name, role: "parent" })),
   ];
   let relatedData = { usersData };
@@ -163,12 +170,12 @@ const UserListPage = async ({
         {/* TOP */}
         {/* LIST */}
         <div className="">
-            <UserListClient
-              rows={rows}
-              role={role!}
-              columns={columns}
-              relatedData={relatedData}
-            />
+          <UserListClient
+            rows={rows}
+            role={role!}
+            columns={columns}
+            relatedData={relatedData}
+          />
         </div>
         {/* PAGINATION */}
         <div>

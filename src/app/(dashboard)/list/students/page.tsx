@@ -3,24 +3,22 @@ import Pagination from "@/components/Pagination";
 import prisma from "@/lib/prisma";
 import {
   decryptPassword,
+  getCurrentStaff,
   getCurrentUser,
   normalizeSearchParams,
+  toIntOrNotFound,
 } from "@/lib/utils";
-import { Class, Prisma, Student } from "@prisma/client";
+import { Class, Prisma, staffrole, Student } from "@prisma/client";
 import React from "react";
 import StudentListClient from "@/components/client/StudentListClient";
-
-type StudentList = Student & {
-  class: Class;
-  student_details: { nisn: string; noWA: string };
-};
+import { notFound } from "next/navigation";
 
 const StudentsListPage = async ({
   searchParams,
 }: {
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) => {
-  const { role } = await getCurrentUser();
+  const { role, userId } = await getCurrentUser();
   const sp = await normalizeSearchParams(searchParams);
   const key = new URLSearchParams(
     Object.entries(sp).reduce((acc, [k, v]) => {
@@ -31,9 +29,15 @@ const StudentsListPage = async ({
   const { page, limit, ...queryParams } = sp;
   const p = page ? parseInt(page) : 1;
   const perPage = limit === "all" ? 50 : parseInt(limit ?? "10");
-
+  let staffRole: staffrole;
+  if (role === "staff") {
+    const staffrole = await getCurrentStaff(userId!);
+    staffRole = staffrole;
+  }
+  const allowedStaff = role === "staff" && staffRole! === "PENILAIAN";
+  const allowedRole = role === "admin" || allowedStaff;
   const columns = [
-    ...(role === "admin"
+    ...(role === "admin" || allowedStaff
       ? [
           {
             header: "Select",
@@ -66,7 +70,7 @@ const StudentsListPage = async ({
       accessor: "address",
       className: "hidden md:table-cell",
     },
-    ...(role === "admin"
+    ...(allowedRole
       ? [
           {
             header: "Aksi",
@@ -107,12 +111,14 @@ const StudentsListPage = async ({
             ];
             break;
           case "classId":
-            query.classId = parseInt(value);
+            const classId = toIntOrNotFound(value);
+            query.classId = classId;
             break;
           case "gradeId":
+            const gradeId = toIntOrNotFound(value);
             query.class = {
               is: {
-                gradeId: parseInt(value),
+                gradeId: gradeId,
               },
             };
             break;
@@ -134,7 +140,7 @@ const StudentsListPage = async ({
             }
             break;
           default:
-            break;
+            return notFound();
         }
     }
   }
@@ -208,6 +214,7 @@ const StudentsListPage = async ({
             relatedData={relatedData}
             count={count}
             options={options}
+            staffrole={staffRole!}
           />
         </div>
         {/* PAGINATION*/}

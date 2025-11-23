@@ -11,6 +11,7 @@ export default function PpdbTableClient({
   relatedData,
   onDeleted,
   onChanged,
+  allowedStaff,
 }: BaseTableClientProps) {
   return (
     <>
@@ -47,7 +48,7 @@ export default function PpdbTableClient({
         </td>
         <td>
           <div className="flex items-center gap-2">
-            {role === "admin" && (
+            {allowedStaff && (
               <>
                 <FormModal
                   table="ppdb"

@@ -6,8 +6,10 @@ import {
   decryptPassword,
   getCurrentUser,
   normalizeSearchParams,
+  toIntOrNotFound,
 } from "@/lib/utils";
 import { Parent, Prisma, Student } from "@prisma/client";
+import { notFound } from "next/navigation";
 
 type ParentList = Parent & { students: Student[] };
 
@@ -89,14 +91,26 @@ const ParentsListPage = async ({
                   some: { name: { contains: value, mode: "insensitive" } },
                 },
               },
+              {
+                secondaryStudents: {
+                  some: { name: { contains: value, mode: "insensitive" } },
+                },
+              },
+              {
+                guardianStudents: {
+                  some: { name: { contains: value, mode: "insensitive" } },
+                },
+              },
               { phone: { contains: value, mode: "insensitive" } },
             ];
             break;
           case "classId":
-            query.students = { some: { classId: { equals: parseInt(value) } } };
+            const classId = toIntOrNotFound(value);
+            query.students = { some: { classId: { equals: classId } } };
             break;
           case "gradeId":
-            query.students = { some: { class: { gradeId: parseInt(value) } } };
+            const gradeId = toIntOrNotFound(value);
+            query.students = { some: { class: { gradeId: gradeId } } };
             break;
 
           case "sort":
@@ -113,10 +127,12 @@ const ParentsListPage = async ({
               case "id_desc":
                 orderBy = { id: "desc" };
                 break;
+              default:
+                return notFound();
             }
             break;
           default:
-            break;
+            return notFound();
         }
     }
   }

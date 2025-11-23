@@ -11,10 +11,12 @@ import {
   generateSemesters,
   getCurrentUser,
   normalizeSearchParams,
+  toIntOrNotFound,
 } from "@/lib/utils";
 import { Announcement, Class, Prisma } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import z from "zod";
 
 type AnnouncementList = Announcement & { class: Class };
@@ -108,14 +110,22 @@ const AnnouncementListPage = async ({
         switch (key) {
           case "search":
             query.title = { contains: value, mode: "insensitive" };
-          case "id":
-            query.id = parseInt(value);
-          case "classId":
-            query.classId = parseInt(value);
             break;
-          case "gradeId":
-            query.class = { gradeId: parseInt(value) };
+          case "id": {
+            const id = toIntOrNotFound(value);
+            query.id = id;
             break;
+          }
+          case "classId": {
+            const classId = toIntOrNotFound(value);
+            query.classId = classId;
+            break;
+          }
+          case "gradeId": {
+            const gradeId = toIntOrNotFound(value);
+            query.class = { gradeId };
+            break;
+          }
           case "semester":
             try {
               const parsed = semesterSchema.parse(JSON.parse(value as string));
@@ -142,10 +152,12 @@ const AnnouncementListPage = async ({
               case "id_desc":
                 orderBy = { id: "desc" };
                 break;
+              default:
+                return notFound();
             }
             break;
           default:
-            break;
+            return notFound();
         }
     }
   }
@@ -210,7 +222,7 @@ const AnnouncementListPage = async ({
     const highest = await prisma.grade.aggregate({
       _max: { level: true },
     });
-  if (oldest) {
+    if (oldest) {
       semesters = generateSemesters(
         oldest.createdAt,
         highest._max.level ?? 3,

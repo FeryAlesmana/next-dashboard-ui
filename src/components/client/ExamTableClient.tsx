@@ -11,16 +11,18 @@ export default function ExamTableClient({
   relatedData,
   onDeleted,
   onChanged,
+  allowedStaff,
 }: BaseTableClientProps) {
   const examTypeLabel = {
     UJIAN_HARIAN: "Ujian Harian",
     UJIAN_TENGAH_SEMESTER: "Ujian Tengah Semester",
     UJIAN_AKHIR_SEMESTER: "Ujian Akhir Semester",
   } as const;
+  const allowedRole = role === "admin" || role === "teacher" || allowedStaff;
   return (
     <>
       <tr className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight">
-        {role === "admin" && (
+        {(role === "admin" || allowedStaff) && (
           <td className="px-4 py-2">
             <input
               type="checkbox"
@@ -65,7 +67,7 @@ export default function ExamTableClient({
         </td>
         <td>
           <div className="flex items-center gap-2">
-            {(role === "admin" || role === "teacher") && (
+            {allowedRole && (
               <>
                 <FormModal
                   table="exam"

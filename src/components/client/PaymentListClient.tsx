@@ -9,6 +9,7 @@ import FilterSortToggle from "../FilterSortToggle";
 import PaymenTableClient from "./PaymentTableClient";
 import Link from "next/link";
 import Image from "next/image";
+import { staffrole } from "@prisma/client";
 
 export default function PaymentListClient({
   columns,
@@ -16,10 +17,11 @@ export default function PaymentListClient({
   role,
   relatedData,
   options,
+  staffrole,
 }: BaseListClientProps) {
   const [selected, setSelected] = useState<string[]>([]);
   const [localData, setLocalData] = useState(data); // 👈 keep a client copy
-
+  const [currentStaff] = useState<staffrole>(staffrole!);
   const toggleSelection = (id: string) => {
     setSelected((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
@@ -84,7 +86,8 @@ export default function PaymentListClient({
     paymentTypeOptions = [],
     semesterOptions = [],
   } = options || {};
-
+  const allowedStaff = role === "staff" && currentStaff === "ACCOUNTING";
+  const allowedRole = role === "admin" || allowedStaff;
   return (
     <div className="space-y-4 mt-3">
       {/* TOP */}
@@ -137,7 +140,7 @@ export default function PaymentListClient({
               ]}
             />
 
-            {role === "admin" && (
+            {allowedRole && (
               <>
                 <FormModal
                   table="paymentLog"
@@ -155,11 +158,20 @@ export default function PaymentListClient({
                   type="readMany"
                   onChanged={handleManyImport}
                 />
-                <Link href={`payment/changelog`}>
-                  <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow shadow-md">
-                    <Image src="/changelog.png" alt="" width={16} height={16} />
-                  </button>
-                </Link>
+                {role === "admin" && (
+                  <>
+                    <Link href={`payment/changelog`}>
+                      <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow shadow-md">
+                        <Image
+                          src="/changelog.png"
+                          alt=""
+                          width={16}
+                          height={16}
+                        />
+                      </button>
+                    </Link>
+                  </>
+                )}
               </>
             )}
           </div>
@@ -178,7 +190,7 @@ export default function PaymentListClient({
 
       <Table columns={columns}>
         <tr className="text-left text-gray-500 text-sm">
-          {role === "admin" && (
+          {allowedRole && (
             <td className="px-4 py-2">
               <input
                 type="checkbox"
@@ -211,6 +223,7 @@ export default function PaymentListClient({
               relatedData={relatedData}
               onDeleted={handleDeleteOptimistic}
               onChanged={handleChanged}
+              allowedStaff={allowedRole}
             />
           ))
         )}

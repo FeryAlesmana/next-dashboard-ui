@@ -28,7 +28,7 @@ const SingleStaffPage = async ({
   if (!staff) {
     return notFound();
   }
-  console.log(staff, "Staff in single page");
+  // console.log(staff, "Staff in single page");
 
   let staffWithDecryptedPassword = {
     ...staff,

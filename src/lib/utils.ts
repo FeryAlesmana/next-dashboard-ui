@@ -40,6 +40,12 @@ function sanitizeToJson(value: any): any {
   return value; // string, number, boolean, null
 }
 
+export function toIntOrNotFound(value: string) {
+    const parsed = parseInt(value);
+    if (isNaN(parsed)) return notFound();
+    return parsed;
+  }
+
 export function sanitizePaymentLogSnapshot(snapshot: any) {
   const clean: Partial<Record<PaymentLogField, any>> = {};
 
@@ -407,9 +413,10 @@ export function normalizeSex(value: any): "MALE" | "FEMALE" {
 
 import { parse, isValid, format, subDays, addDays } from "date-fns";
 import { id as localeID } from "date-fns/locale";
-import { Attendance, Prisma, resTypes } from "@prisma/client";
+import { Attendance, Prisma, resTypes, staffrole } from "@prisma/client";
 import { Semester } from "@/components/client/StudentPaymentView";
 import { Decimal } from "@prisma/client/runtime/library";
+import { notFound } from "next/navigation";
 export function normalizeBirthday(value: any): string {
   if (!value) return "2000-01-01";
 
@@ -486,6 +493,11 @@ export const getCurrentUser = async () => {
   const { userId, sessionClaims, actor } = await auth();
   const role = (sessionClaims?.metadata as { role?: string })?.role;
   return { userId, role, actor };
+};
+export const getCurrentStaff = async (id: string) => {
+  const staff = await prisma.staff.findUnique({ where: { id } });
+  const staffrole = staff?.staffroles as staffrole;
+  return staffrole;
 };
 
 // This runs when loading data for UPDATE form
@@ -582,6 +594,13 @@ export const getProfileByClerkIdAndRole = async (
           where: { id: clerkId },
           select: { name: true, img: true },
         })) ?? { name: "Guru", img: defaultImg }
+      );
+    case "staff":
+      return (
+        (await prisma.staff.findUnique({
+          where: { id: clerkId },
+          select: { name: true, img: true },
+        })) ?? { name: "Staff", img: defaultImg }
       );
 
     case "parent":

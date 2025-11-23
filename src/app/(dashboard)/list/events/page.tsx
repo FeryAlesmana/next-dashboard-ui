@@ -10,10 +10,12 @@ import {
   generateSemesters,
   getCurrentUser,
   normalizeSearchParams,
+  toIntOrNotFound,
 } from "@/lib/utils";
 import { Class, Event, Prisma } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import z from "zod";
 
 type EventList = Event & { class: Class };
@@ -149,14 +151,21 @@ const EventListPage = async ({
         switch (key) {
           case "search":
             query.title = { contains: value, mode: "insensitive" };
-          case "id":
-            query.id = parseInt(value);
-          case "classId":
-            query.classId = parseInt(value);
+          case "id": {
+            const id = toIntOrNotFound(value);
+            query.id = id;
             break;
-          case "gradeId":
-            query.class = { gradeId: parseInt(value) };
+          }
+          case "classId": {
+            const classId = toIntOrNotFound(value);
+            query.classId = classId;
             break;
+          }
+          case "gradeId": {
+            const gradeId = toIntOrNotFound(value);
+            query.class = { gradeId };
+            break;
+          }
           case "semester":
             try {
               const parsed = semesterSchema.parse(JSON.parse(value as string));
@@ -181,10 +190,12 @@ const EventListPage = async ({
               case "id_desc":
                 orderBy = { id: "desc" };
                 break;
+              default:
+                return notFound();
             }
             break;
           default:
-            break;
+            return notFound();
         }
     }
   }

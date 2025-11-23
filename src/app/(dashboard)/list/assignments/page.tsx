@@ -3,20 +3,24 @@ import Pagination from "@/components/Pagination";
 import prisma from "@/lib/prisma";
 import {
   generateSemesters,
+  getCurrentStaff,
   getCurrentUser,
   normalizeSearchParams,
+  toIntOrNotFound,
 } from "@/lib/utils";
 import {
   Assignment,
   assTypes,
   Class,
   Prisma,
+  staffrole,
   Subject,
   Teacher,
 } from "@prisma/client";
 import AssignmentListClient from "@/components/client/AssignmentListClient";
 import ParentAssignmentViewSemester from "@/components/client/ParentAssigmentViewSemester";
 import z from "zod";
+import { notFound } from "next/navigation";
 
 type AssignmentList = Assignment & {
   lesson: { subject: Subject; class: Class; teacher: Teacher };
@@ -38,9 +42,15 @@ const AssignmentListPage = async ({
   const p = page ? parseInt(page) : 1;
   const perPage = limit === "all" ? 50 : parseInt(limit ?? "10");
   const { role, userId } = await getCurrentUser();
-
+  let staffRole: staffrole;
+  if (role === "staff") {
+    const staffrole = await getCurrentStaff(userId!);
+    staffRole = staffrole;
+  }
+  const allowedStaff = role === "staff" && staffRole! === "PENILAIAN";
+  const allowedRole = role === "admin" || role === "teacher" || allowedStaff;
   const columns = [
-    ...(role === "admin"
+    ...(role === "admin" || allowedStaff
       ? [
           {
             header: "Select",
@@ -71,7 +81,7 @@ const AssignmentListPage = async ({
       accessor: "assTypes",
       className: "hidden md:table-cell",
     },
-    ...(role === "admin" || role == "teacher"
+    ...(allowedRole
       ? [
           {
             header: "Aksi",
@@ -92,18 +102,21 @@ const AssignmentListPage = async ({
       if (value !== undefined && value !== "")
         switch (key) {
           case "id":
-            query.id = parseInt(value);
+            const id = toIntOrNotFound(value);
+            query.id = id;
             break;
           case "teacherId":
             query.lesson.teacherId = value;
             break;
           case "classId":
-            query.lesson.classId = parseInt(value);
+            const classId = toIntOrNotFound(value);
+            query.lesson.classId = classId;
             break;
           case "gradeId":
+            const gradeId = toIntOrNotFound(value);
             query.lesson = query.lesson || {};
             query.lesson.class = query.lesson.class || {};
-            query.lesson.class.gradeId = parseInt(value);
+            query.lesson.class.gradeId = gradeId;
             break;
           case "semester":
             try {
@@ -140,10 +153,12 @@ const AssignmentListPage = async ({
               case "dl":
                 orderBy = { dueDate: "asc" }; // or "desc" if preferred
                 break;
+              default:
+                return notFound();
             }
             break;
           default:
-            break;
+            return notFound();
         }
     }
   }
@@ -426,6 +441,7 @@ const AssignmentListPage = async ({
             role={role!}
             relatedData={relatedData}
             options={options}
+            staffrole={staffRole!}
           />
         </div>
         {/* PAGINATION*/}

@@ -4,20 +4,21 @@ import Pagination from "@/components/Pagination";
 import prisma from "@/lib/prisma";
 import {
   generateSemesters,
+  getCurrentStaff,
   getCurrentUser,
   normalizeSearchParams,
+  toIntOrNotFound,
 } from "@/lib/utils";
-import { Prisma, Subject, Teacher } from "@prisma/client";
+import { Prisma, staffrole, Subject, Teacher } from "@prisma/client";
+import { notFound } from "next/navigation";
 import z from "zod";
-
-type SubjectList = Subject & { teachers: Teacher[] };
 
 const SubjectListPage = async ({
   searchParams,
 }: {
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) => {
-  const { role } = await getCurrentUser();
+  const { role, userId } = await getCurrentUser();
   const sp = await normalizeSearchParams(searchParams);
   const key = new URLSearchParams(
     Object.entries(sp).reduce((acc, [k, v]) => {
@@ -28,9 +29,15 @@ const SubjectListPage = async ({
   const { page, limit, ...queryParams } = sp;
   const p = page ? parseInt(page) : 1;
   const perPage = limit === "all" ? 50 : parseInt(limit ?? "10");
-
+  let staffRole: staffrole;
+  if (role === "staff") {
+    const staffrole = await getCurrentStaff(userId!);
+    staffRole = staffrole;
+  }
+  const allowedStaff = role === "staff" && staffRole! === "PENJADWALAN";
+  const allowedRole = role === "admin" || allowedStaff;
   const columns = [
-    ...(role === "admin"
+    ...(role === "admin" || allowedStaff
       ? [
           {
             header: "Select",
@@ -53,15 +60,18 @@ const SubjectListPage = async ({
       header: "Guru",
       accessor: "teachers",
     },
-    {
-      header: "Aksi",
-      accessor: "actions",
-    },
+    ...(allowedRole
+      ? [
+          {
+            header: "Aksi",
+            accessor: "actions",
+          },
+        ]
+      : []),
   ];
 
   const query: Prisma.SubjectWhereInput = {};
   let orderBy: Prisma.SubjectOrderByWithRelationInput | undefined;
-  let gradeLevel = 3;
   let semesterOptions: any = [];
   const oldest = await prisma.student.findFirst({
     orderBy: { createdAt: "asc" },
@@ -90,17 +100,19 @@ const SubjectListPage = async ({
             query.teachers = { some: { id: value } };
             break;
           case "classId":
+            const classId = toIntOrNotFound(value);
             query.lessons = {
               some: {
-                classId: parseInt(value),
+                classId: classId,
               },
             };
             break;
           case "gradeId":
+            const gradeId = toIntOrNotFound(value);
             query.lessons = {
               some: {
                 class: {
-                  gradeId: parseInt(value),
+                  gradeId: gradeId,
                 },
               },
             };
@@ -136,9 +148,11 @@ const SubjectListPage = async ({
               case "id_desc":
                 orderBy = { id: "desc" };
                 break;
+              default:
+                return notFound();
             }
           default:
-            break;
+            return notFound();
         }
     }
   }
@@ -209,6 +223,7 @@ const SubjectListPage = async ({
             role={role!}
             relatedData={relatedData}
             options={options}
+            staffrole={staffRole!}
           />
         </div>
         {/* PAGINATION*/}

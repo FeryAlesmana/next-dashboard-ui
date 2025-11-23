@@ -3,15 +3,7 @@ import { assTypes } from "@prisma/client";
 import FormModal from "../FormModal";
 import ExpandableList from "../ExpandableList";
 import NameListPopover from "../NamePopover";
-export type BaseTableClientProps = {
-  data: any;
-  role: string;
-  selected: string[];
-  relatedData?: any;
-  onToggle: (id: string) => void;
-  onDeleted?: (ids: (string | number)[]) => void;
-  onChanged?: (item: any) => void;
-};
+import { BaseTableClientProps } from "./AssignmentTableClient";
 
 export default function SubjectTableClient({
   data,
@@ -21,11 +13,12 @@ export default function SubjectTableClient({
   relatedData,
   onDeleted,
   onChanged,
+  allowedStaff,
 }: BaseTableClientProps) {
   return (
     <>
       <tr className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight">
-        {role === "admin" && (
+        {allowedStaff && (
           <td className="px-4 py-2">
             <input
               type="checkbox"
@@ -50,7 +43,7 @@ export default function SubjectTableClient({
         </td>
         <td>
           <div className="flex items-center gap-2">
-            {role === "admin" && (
+            {allowedStaff && (
               <>
                 <FormModal
                   table="subject"

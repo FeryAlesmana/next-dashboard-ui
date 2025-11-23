@@ -3,10 +3,16 @@ import Pagination from "@/components/Pagination";
 import PpdbListClient from "@/components/client/PpdbListClient";
 import TableSearch from "@/components/TableSearch";
 import prisma from "@/lib/prisma";
-import { getCurrentUser, normalizeSearchParams } from "@/lib/utils";
-import { Class, PPDB, Prisma } from "@prisma/client";
+import {
+  getCurrentStaff,
+  getCurrentUser,
+  normalizeSearchParams,
+  toIntOrNotFound,
+} from "@/lib/utils";
+import { Class, PPDB, Prisma, staffrole } from "@prisma/client";
 import FilterSortToggle from "@/components/FilterSortToggle";
 import FormModal from "@/components/FormModal";
+import { notFound } from "next/navigation";
 
 type Ppdb = PPDB & { class: Class };
 
@@ -15,7 +21,7 @@ const PpdbPage = async ({
 }: {
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) => {
-  const { role } = await getCurrentUser();
+  const { role, userId } = await getCurrentUser();
   const sp = await normalizeSearchParams(searchParams);
   const key = new URLSearchParams(
     Object.entries(sp).reduce((acc, [k, v]) => {
@@ -27,9 +33,15 @@ const PpdbPage = async ({
   const p = page ? parseInt(page) : 1;
 
   const perPage = limit === "all" ? 50 : parseInt(limit ?? "10");
-
+  let staffRole: staffrole;
+  if (role === "staff") {
+    const staffrole = await getCurrentStaff(userId!);
+    staffRole = staffrole;
+  }
+  const allowedStaff = role === "staff" && staffRole! === "PENILAIAN";
+  const allowedRole = role === "admin" || allowedStaff;
   const columns = [
-    ...(role === "admin"
+    ...(role === "admin" || allowedStaff
       ? [
           {
             header: "Select",
@@ -55,7 +67,7 @@ const PpdbPage = async ({
       header: "Status Formulir",
       accessor: "isvalid",
     },
-    ...(role === "admin"
+    ...(allowedRole
       ? [
           {
             header: "Aksi",
@@ -73,7 +85,8 @@ const PpdbPage = async ({
       if (value !== undefined && value !== "")
         switch (key) {
           case "id":
-            query.id = parseInt(value);
+            const id = toIntOrNotFound(value);
+            query.id = id;
             break;
           case "search":
             query.name = { contains: value, mode: "insensitive" };
@@ -83,8 +96,7 @@ const PpdbPage = async ({
               query.isvalid = true;
             } else if (value === "false") {
               query.isvalid = false;
-            }
-            break;
+            } else return notFound();
           case "time":
             const now = new Date();
 
@@ -96,9 +108,7 @@ const PpdbPage = async ({
               endOfDay.setHours(23, 59, 59, 999);
 
               query.createdAt = { gte: startOfDay, lte: endOfDay };
-            }
-
-            if (value === "week") {
+            } else if (value === "week") {
               const startOfWeek = new Date(now);
               startOfWeek.setDate(now.getDate() - now.getDay()); // Sunday as start
               startOfWeek.setHours(0, 0, 0, 0);
@@ -108,9 +118,7 @@ const PpdbPage = async ({
               endOfWeek.setHours(23, 59, 59, 999);
 
               query.createdAt = { gte: startOfWeek, lte: endOfWeek };
-            }
-
-            if (value === "month") {
+            } else if (value === "month") {
               const startOfMonth = new Date(
                 now.getFullYear(),
                 now.getMonth(),
@@ -124,8 +132,7 @@ const PpdbPage = async ({
               endOfMonth.setHours(23, 59, 59, 999);
 
               query.createdAt = { gte: startOfMonth, lte: endOfMonth };
-            }
-            break;
+            } else return notFound();
 
           case "sort":
             switch (value) {
@@ -147,10 +154,12 @@ const PpdbPage = async ({
               case "id_desc":
                 orderBy = { id: "asc" };
                 break;
+              default:
+                return notFound();
             }
             break;
           default:
-            break;
+            return notFound();
         }
     }
   }
@@ -242,6 +251,7 @@ const PpdbPage = async ({
             data={data}
             role={role!}
             relatedData={relatedData}
+            staffrole={staffRole!}
           />
         </div>
         {/* PAGINATION*/}

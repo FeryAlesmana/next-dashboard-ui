@@ -7,8 +7,10 @@ import {
   decryptPassword,
   getCurrentUser,
   normalizeSearchParams,
+  toIntOrNotFound,
 } from "@/lib/utils";
 import { Class, Prisma, Subject, Teacher } from "@prisma/client";
+import { notFound } from "next/navigation";
 
 const TeacherListPage = async ({
   searchParams,
@@ -84,9 +86,10 @@ const TeacherListPage = async ({
         switch (key) {
           case "classId":
             {
+              const classId = toIntOrNotFound(value);
               query.lessons = {
                 some: {
-                  classId: parseInt(value),
+                  classId: classId,
                 },
               };
             }
@@ -99,8 +102,9 @@ const TeacherListPage = async ({
             ];
             break;
           case "subjectId":
+            const subjectId = toIntOrNotFound(value);
             query.subjects = {
-              some: { id: parseInt(value) },
+              some: { id: subjectId },
             };
             break;
           case "sort":
@@ -117,10 +121,12 @@ const TeacherListPage = async ({
               case "id_desc":
                 orderBy = { id: "desc" };
                 break;
+              default:
+                return notFound();
             }
             break;
           default:
-            break;
+            return notFound();
         }
     }
   }

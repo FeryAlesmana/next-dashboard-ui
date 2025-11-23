@@ -8,6 +8,7 @@ import FilterSortToggle from "../FilterSortToggle";
 import FormModal from "../FormModal";
 import LessonTableClient from "./LessonTableClient";
 import { Semester } from "./StudentPaymentView";
+import { staffrole } from "@prisma/client";
 
 export default function LessonListClient({
   columns,
@@ -15,11 +16,11 @@ export default function LessonListClient({
   role,
   relatedData,
   options,
-  gradeLevel,
+  staffrole,
 }: BaseListClientProps & { gradeLevel: number }) {
   const [selected, setSelected] = useState<string[]>([]);
   const [localData, setLocalData] = useState(data); // 👈 keep a client copy
-
+  const [currentStaff] = useState<staffrole>(staffrole!);
   const toggleSelection = (id: string) => {
     setSelected((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
@@ -55,7 +56,8 @@ export default function LessonListClient({
     gradeOptions = [],
     semesterOptions = [],
   } = options || {};
-
+  const allowedStaff = role === "staff" && currentStaff === "PENJADWALAN";
+  const allowedRole = role === "admin" || allowedStaff;
   return (
     <div className="space-y-4 mt-3">
       {/* TOP */}
@@ -108,7 +110,7 @@ export default function LessonListClient({
                 { label: "Day", value: "day" }, // Only for this page
               ]}
             />
-            {role === "admin" && (
+            {allowedRole && (
               <FormModal
                 table="lesson"
                 type="create"
@@ -132,7 +134,7 @@ export default function LessonListClient({
 
       <Table columns={columns}>
         <tr className="text-left text-gray-500 text-sm">
-          {role === "admin" && (
+          {allowedRole && (
             <td className="px-4 py-2">
               <input
                 type="checkbox"
@@ -165,6 +167,7 @@ export default function LessonListClient({
               relatedData={relatedData}
               onDeleted={handleDeleteOptimistic}
               onChanged={handleChanged}
+              allowedStaff ={allowedRole}
             />
           ))
         )}

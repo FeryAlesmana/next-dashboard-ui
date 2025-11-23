@@ -14,13 +14,14 @@ export default function LessonTableClient({
   relatedData,
   onDeleted,
   onChanged,
+  allowedStaff,
 }: BaseTableClientProps) {
   const [open, setOpend] = useState(false);
 
   return (
     <>
       <tr className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight">
-        {role === "admin" && (
+        {allowedStaff && (
           <td className="px-4 py-2">
             <input
               type="checkbox"
@@ -66,7 +67,7 @@ export default function LessonTableClient({
         </td>
         <td className="hidden md:table-cell">
           <div className="flex items-center gap-2 ">
-            {role === "admin" && (
+            {allowedStaff && (
               <>
                 <FormModal
                   table="lesson"

@@ -8,6 +8,7 @@ import TableSearch from "../TableSearch";
 import FilterSortToggle from "../FilterSortToggle";
 import FormModal from "../FormModal";
 import { Semester } from "./StudentPaymentView";
+import { staffrole } from "@prisma/client";
 
 export default function ExamListClient({
   columns,
@@ -15,11 +16,11 @@ export default function ExamListClient({
   role,
   relatedData,
   options,
-  gradeLevel,
+  staffrole,
 }: BaseListClientProps & { gradeLevel: number }) {
   const [selected, setSelected] = useState<string[]>([]);
   const [localData, setLocalData] = useState(data); // 👈 keep a client copy
-
+  const [currentStaff] = useState<staffrole>(staffrole!);
   const toggleSelection = (id: string) => {
     setSelected((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
@@ -54,7 +55,8 @@ export default function ExamListClient({
     gradeOptions = [],
     semesterOptions = [],
   } = options || {};
-
+  const allowedStaff = role === "staff" && currentStaff === "PENILAIAN";
+  const allowedRole = role === "admin" || role === "teacher" || allowedStaff;
   return (
     <div className="space-y-4 mt-3">
       {/* TOP */}
@@ -94,7 +96,7 @@ export default function ExamListClient({
                 { label: "ID Desc", value: "id_desc" },
               ]}
             />
-            {(role === "admin" || role === "teacher") && (
+            {allowedRole && (
               <FormModal
                 table="exam"
                 type="create"
@@ -118,7 +120,7 @@ export default function ExamListClient({
 
       <Table columns={columns}>
         <tr className="text-left text-gray-500 text-sm">
-          {role === "admin" && (
+          {(role === "admin" || allowedStaff) && (
             <td className="px-4 py-2">
               <input
                 type="checkbox"
@@ -151,6 +153,7 @@ export default function ExamListClient({
               relatedData={relatedData}
               onDeleted={handleDeleteOptimistic}
               onChanged={handleChanged}
+              allowedStaff={allowedStaff}
             />
           ))
         )}

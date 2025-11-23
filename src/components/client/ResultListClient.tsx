@@ -8,6 +8,7 @@ import TableSearch from "../TableSearch";
 import FilterSortToggle from "../FilterSortToggle";
 import FormModal from "../FormModal";
 import { Semester } from "./StudentPaymentView";
+import { staffrole } from "@prisma/client";
 
 export default function ResultListClient({
   columns,
@@ -16,10 +17,11 @@ export default function ResultListClient({
   relatedData,
   options,
   searchParams,
-  gradeLevel,
-}: BaseListClientProps & { searchParams?: any; gradeLevel: number }) {
+  staffrole,
+}: BaseListClientProps & { searchParams?: any }) {
   const [selected, setSelected] = useState<string[]>([]);
   const [localData, setLocalData] = useState(data); // 👈 keep a client copy
+  const [currentStaff] = useState<staffrole>(staffrole!);
   const normalizeResult = (item: any) => {
     const source = item.exam ?? item.assignment;
     const lesson = source?.lesson;
@@ -100,7 +102,8 @@ export default function ResultListClient({
     { label: "Pekerjaan Rumah", value: "pr" },
     { label: "Tugas Akhir", value: "ta" },
   ];
-
+  const allowedStaff = role === "staff" && currentStaff === "PENILAIAN";
+  const allowedRole = role === "admin" || role === "teacher" || allowedStaff;
   return (
     <div className="space-y-4 mt-3">
       {/* TOP */}
@@ -162,7 +165,7 @@ export default function ResultListClient({
                 { label: "ID Desc", value: "id_desc" },
               ]}
             />
-            {(role === "admin" || role === "teacher") && (
+            {allowedRole && (
               <FormModal
                 table="result"
                 type="create"
@@ -186,7 +189,7 @@ export default function ResultListClient({
 
       <Table columns={columns}>
         <tr className="text-left text-gray-500 text-sm">
-          {role === "admin" && (
+          {(role === "admin" || allowedStaff) && (
             <td className="px-4 py-2">
               <input
                 type="checkbox"
@@ -219,6 +222,7 @@ export default function ResultListClient({
               relatedData={relatedData}
               onDeleted={handleDeleteOptimistic}
               onChanged={handleChanged}
+              allowedStaff={allowedStaff}
             />
           ))
         )}

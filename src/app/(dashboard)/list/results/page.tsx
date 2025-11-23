@@ -8,14 +8,17 @@ import TableSearch from "@/components/TableSearch";
 import prisma from "@/lib/prisma";
 import {
   generateSemesters,
+  getCurrentStaff,
   getCurrentUser,
   normalizeSearchParams,
+  toIntOrNotFound,
 } from "@/lib/utils";
-import { Prisma, resTypes } from "@prisma/client";
+import { Prisma, resTypes, staffrole } from "@prisma/client";
 import StudentResultView from "@/components/client/StudentResultView";
 import ParentLessonViewSemester from "@/components/client/ParentLessonViewSemester";
 import ParentResultViewSemester from "@/components/client/ParentResultViewSemester";
 import z from "zod";
+import { notFound } from "next/navigation";
 
 const ResultListPage = async ({
   searchParams,
@@ -33,9 +36,15 @@ const ResultListPage = async ({
   const { page, limit, ...queryParams } = sp;
   const p = page ? parseInt(page) : 1;
   const perPage = limit === "all" ? 50 : parseInt(limit ?? "10");
-
+  let staffRole: staffrole;
+  if (role === "staff") {
+    const staffrole = await getCurrentStaff(userId!);
+    staffRole = staffrole;
+  }
+  const allowedStaff = role === "staff" && staffRole! === "PENILAIAN";
+  const allowedRole = role === "admin" || role === "teacher" || allowedStaff;
   const columns = [
-    ...(role === "admin"
+    ...(role === "admin" || allowedStaff
       ? [
           {
             header: "Select",
@@ -55,9 +64,7 @@ const ResultListPage = async ({
     { header: "Guru", accessor: "teacher", className: "hidden md:table-cell" },
     { header: "Kelas", accessor: "class", className: "hidden md:table-cell" },
     { header: "Tipe", accessor: "type", className: "hidden md:table-cell" },
-    ...(role === "admin" || role === "teacher"
-      ? [{ header: "Aksi", accessor: "action" }]
-      : []),
+    ...(allowedRole ? [{ header: "Aksi", accessor: "action" }] : []),
   ];
 
   const query: Prisma.ResultWhereInput = {};
@@ -109,16 +116,18 @@ const ResultListPage = async ({
             }
             break;
           case "classId":
+            const classId = toIntOrNotFound(value);
             query.OR = [
-              { exam: { lesson: { classId: parseInt(value) } } },
-              { assignment: { lesson: { classId: parseInt(value) } } },
+              { exam: { lesson: { classId: classId } } },
+              { assignment: { lesson: { classId: classId } } },
             ];
             break;
           case "gradeId":
+            const gradeId = toIntOrNotFound(value);
             query.OR = [
-              { exam: { lesson: { class: { gradeId: parseInt(value) } } } },
+              { exam: { lesson: { class: { gradeId: gradeId } } } },
               {
-                assignment: { lesson: { class: { gradeId: parseInt(value) } } },
+                assignment: { lesson: { class: { gradeId: gradeId } } },
               },
             ];
             break;
@@ -127,7 +136,7 @@ const ResultListPage = async ({
               query.examId = { not: null };
             } else if (value === "Tugas") {
               query.assignmentId = { not: null };
-            }
+            } else return notFound();
             break;
           case "extype":
             switch (value) {
@@ -141,7 +150,7 @@ const ResultListPage = async ({
                 query.resultType = "UJIAN_AKHIR_SEMESTER";
                 break;
               default:
-                break;
+                return notFound();
             }
             break;
           case "asstype":
@@ -156,7 +165,7 @@ const ResultListPage = async ({
                 query.resultType = "TUGAS_AKHIR";
                 break;
               default:
-                break;
+                return notFound();
             }
             break;
 
@@ -174,16 +183,19 @@ const ResultListPage = async ({
               case "id_desc":
                 orderBy = { id: "desc" };
                 break;
+              default:
+                return notFound();
             }
             break;
           default:
-            break;
+            return notFound();
         }
     }
   }
   //ROLE CONDITIONS
-  let gradeLevel = 3;
   let semesterOptions: any = [];
+
+  // ROLE CONDITION
   switch (role) {
     case "admin":
       const oldest = await prisma.student.findFirst({
@@ -424,6 +436,7 @@ const ResultListPage = async ({
     await prisma.$transaction([
       prisma.result.findMany({
         where: query,
+        orderBy,
         include: {
           student: { select: { name: true } },
           exam: {
@@ -546,7 +559,7 @@ const ResultListPage = async ({
             relatedData={relatedData}
             options={options}
             searchParams={sp}
-            gradeLevel={gradeLevel}
+            staffrole={staffRole!}
           />
         </div>
         {/* PAGINATION*/}

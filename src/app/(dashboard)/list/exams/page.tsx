@@ -10,14 +10,25 @@ import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/setting";
 import {
   generateSemesters,
+  getCurrentStaff,
   getCurrentUser,
   normalizeSearchParams,
+  toIntOrNotFound,
 } from "@/lib/utils";
-import { Class, Exam, exTypes, Prisma, Subject, Teacher } from "@prisma/client";
+import {
+  Class,
+  Exam,
+  exTypes,
+  Prisma,
+  staffrole,
+  Subject,
+  Teacher,
+} from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
 import ParentExamViewSemester from "@/components/client/ParentExamViewSemester";
 import z from "zod";
+import { notFound } from "next/navigation";
 
 type ExamList = Exam & {
   lesson: { subject: Subject; class: Class; teacher: Teacher };
@@ -40,8 +51,15 @@ const ExamListPage = async ({
   const perPage = limit === "all" ? 50 : parseInt(limit ?? "10");
 
   const { role, userId } = await getCurrentUser();
+  let staffRole: staffrole;
+  if (role === "staff") {
+    const staffrole = await getCurrentStaff(userId!);
+    staffRole = staffrole;
+  }
+  const allowedStaff = role === "staff" && staffRole! === "PENILAIAN";
+  const allowedRole = role === "admin" || role === "teacher" || allowedStaff;
   const columns = [
-    ...(role === "admin"
+    ...(role === "admin" || allowedStaff
       ? [
           {
             header: "Select",
@@ -82,7 +100,7 @@ const ExamListPage = async ({
       accessor: "exType",
       className: "hidden md:table-cell",
     },
-    ...(role === "admin" || role === "teacher"
+    ...(allowedRole
       ? [
           {
             header: "Aksi",
@@ -109,7 +127,8 @@ const ExamListPage = async ({
             query.lesson.teacherId = value;
             break;
           case "classId":
-            query.lesson.classId = parseInt(value);
+            const classId = toIntOrNotFound(value);
+            query.lesson.classId = classId;
             break;
           case "semester":
             try {
@@ -159,10 +178,12 @@ const ExamListPage = async ({
               case "dl":
                 orderBy = { date: "asc" }; // or "desc" if preferred
                 break;
+              default:
+                return notFound();
             }
             break;
           default:
-            break;
+            return notFound();
         }
     }
   }
@@ -403,6 +424,7 @@ const ExamListPage = async ({
             relatedData={relatedData}
             gradeLevel={gradeLevel}
             options={options}
+            staffrole={staffRole!}
           />
         </div>
         {/* PAGINATION*/}

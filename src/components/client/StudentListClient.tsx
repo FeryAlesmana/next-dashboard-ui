@@ -7,7 +7,7 @@ import { BaseListClientProps } from "./AssignmentListClient";
 import TableSearch from "../TableSearch";
 import FilterSortToggle from "../FilterSortToggle";
 import FormModal from "../FormModal";
-import { Student } from "@prisma/client";
+import { staffrole, Student } from "@prisma/client";
 
 export default function StudentListClient({
   columns,
@@ -16,10 +16,11 @@ export default function StudentListClient({
   relatedData,
   options,
   count,
+  staffrole,
 }: BaseListClientProps & { count: number }) {
   const [selected, setSelected] = useState<string[]>([]);
   const [localData, setLocalData] = useState(data); // 👈 keep a client copy
-
+  const [currentStaff] = useState<staffrole>(staffrole!);
   const toggleSelection = (id: string) => {
     setSelected((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
@@ -58,6 +59,8 @@ export default function StudentListClient({
     });
   };
   const { classOptions = [], gradeOptions = [] } = options || {};
+  const allowedStaff = role === "staff" && currentStaff === "PENILAIAN";
+  const allowedRole = role === "admin" || allowedStaff;
   return (
     <div className="space-y-4 mt-3">
       <div className="flex items-center justify-between">
@@ -87,7 +90,7 @@ export default function StudentListClient({
                 { label: "ID Desc", value: "id_desc" },
               ]}
             />
-            {role === "admin" && (
+            {allowedRole && (
               <>
                 <FormModal
                   table="student"
@@ -118,7 +121,7 @@ export default function StudentListClient({
 
       <Table columns={columns}>
         <tr className="text-left text-gray-500 text-sm">
-          {role === "admin" && (
+          {allowedRole && (
             <td className="px-4 py-2">
               <input
                 type="checkbox"
@@ -151,6 +154,7 @@ export default function StudentListClient({
               relatedData={relatedData}
               onDeleted={handleDeleteOptimistic}
               onChanged={handleChanged}
+              allowedStaff={allowedRole}
             />
           ))
         )}

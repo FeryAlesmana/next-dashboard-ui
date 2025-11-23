@@ -11,13 +11,14 @@ const ClassesTableClient = ({
   relatedData,
   onDeleted,
   onChanged,
+  allowedStaff,
 }: BaseTableClientProps) => {
   return (
     <tr
       key={data.id}
       className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight"
     >
-      {role === "admin" && (
+      {allowedStaff && (
         <td className="px-4 py-2">
           <input
             type="checkbox"
@@ -50,7 +51,7 @@ const ClassesTableClient = ({
       {/* data.students ? `${data.students._count}/ ${data.capacity}` : "-" */}
       <td>
         <div className="flex items-center gap-2">
-          {role === "admin" && (
+          {allowedStaff && (
             <>
               <FormModal
                 table="class"

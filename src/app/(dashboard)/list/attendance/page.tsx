@@ -1,9 +1,13 @@
 import Link from "next/link";
-import { getCurrentUser, normalizeSearchParams } from "@/lib/utils";
+import {
+  getCurrentStaff,
+  getCurrentUser,
+  normalizeSearchParams,
+} from "@/lib/utils";
 import prisma from "@/lib/prisma";
 import TableSearch from "@/components/TableSearch";
 import Pagination from "@/components/Pagination";
-import { Lesson, Subject, Class, Teacher } from "@prisma/client";
+import { Lesson, Subject, Class, Teacher, staffrole } from "@prisma/client";
 import Image from "next/image";
 
 const ITEM_PER_PAGE = 10;
@@ -30,8 +34,19 @@ export default async function AttendancePage({
   let lessons: LessonWithRelations[] = [];
   let students: any[] = [];
   let className = "";
-
+  let staffRole: staffrole;
   switch (role) {
+    case "staff":
+      const staffrole = await getCurrentStaff(userId!);
+      staffRole = staffrole;
+      if (search) {
+        query.OR = [
+          { subject: { name: { contains: search, mode: "insensitive" } } },
+          { class: { name: { contains: search, mode: "insensitive" } } },
+          { teacher: { name: { contains: search, mode: "insensitive" } } },
+        ];
+      }
+      break;
     case "student": {
       const student = await prisma.student.findUnique({
         where: { id: userId! },

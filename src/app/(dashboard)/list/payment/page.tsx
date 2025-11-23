@@ -10,10 +10,20 @@ import StudentPaymentView, {
 import prisma from "@/lib/prisma";
 import {
   generateSemesters,
+  getCurrentStaff,
   getCurrentUser,
   normalizeSearchParams,
+  toIntOrNotFound,
 } from "@/lib/utils";
-import { PaymentLog, PaymentType, Prisma, Student } from "@prisma/client";
+import {
+  PaymentLog,
+  PaymentStatus,
+  PaymentType,
+  Prisma,
+  staffrole,
+  Student,
+} from "@prisma/client";
+import { notFound } from "next/navigation";
 import z from "zod";
 
 const PaymentLogListPage = async ({
@@ -32,9 +42,15 @@ const PaymentLogListPage = async ({
   const { page, limit, ...queryParams } = sp;
   const p = page ? parseInt(page) : 1;
   const perPage = limit === "all" ? 50 : parseInt(limit ?? "10");
-
+  let staffRole: staffrole;
+  if (role === "staff") {
+    const staffrole = await getCurrentStaff(userId!);
+    staffRole = staffrole;
+  }
+  const allowedStaff = role === "staff" && staffRole! === "ACCOUNTING";
+  const allowedRole = role === "admin" || allowedStaff;
   const columns = [
-    ...(role === "admin"
+    ...(role === "admin" || allowedStaff
       ? [
           {
             header: "Select",
@@ -75,7 +91,7 @@ const PaymentLogListPage = async ({
       accessor: "dueDate",
       className: "hidden md:table-cell",
     },
-    ...(role === "admin"
+    ...(allowedRole
       ? [
           {
             header: "Aksi",
@@ -213,6 +229,7 @@ const PaymentLogListPage = async ({
     start: z.string().datetime(),
     end: z.string().datetime(),
   });
+
   if (queryParams) {
     for (const [key, value] of Object.entries(queryParams)) {
       if (value !== undefined && value !== "")
@@ -234,19 +251,32 @@ const PaymentLogListPage = async ({
             } as Prisma.StudentWhereInput;
             break;
           case "id":
-            query.id = parseInt(value);
+            const id = toIntOrNotFound(value);
+            query.id = id;
             break;
           case "status":
-            query.status = value as any;
+            if (Object.values(PaymentStatus).includes(value as PaymentStatus)) {
+              query.status = value as PaymentStatus;
+            } else {
+              // Ignore the parameter or log a warning if the value is invalid
+              return notFound();
+            }
             break;
           case "classId":
-            query.classId = parseInt(value);
+            const classId = toIntOrNotFound(value);
+            query.classId = classId;
             break;
           case "gradeId":
-            query.gradeId = parseInt(value);
+            const gradeId = toIntOrNotFound(value);
+            query.gradeId = gradeId;
             break;
           case "paymentType":
-            query.paymentType = value as PaymentType;
+            if (Object.values(PaymentType).includes(value as PaymentType)) {
+              query.paymentType = value as PaymentType;
+            } else {
+              // Ignore the parameter or log a warning if the value is invalid
+              return notFound();
+            }
             break;
           case "semester":
             try {
@@ -273,10 +303,12 @@ const PaymentLogListPage = async ({
               case "id_desc":
                 orderBy = { id: "asc" };
                 break;
+              default:
+                return notFound();
             }
             break;
           default:
-            break;
+            return notFound();
         }
     }
   }
@@ -415,6 +447,7 @@ const PaymentLogListPage = async ({
             columns={columns}
             relatedData={relatedData}
             options={options}
+            staffrole={staffRole!}
           />
         </div>
         {/* PAGINATION */}
