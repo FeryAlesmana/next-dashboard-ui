@@ -39,7 +39,32 @@ const UpdateManyResultsForm = ({
       ids,
     },
   });
-  console.log(data, "isi data di UpdateResults");
+  const selected =
+    ids && data ? data.filter((item: any) => ids.includes(item.id)) : [];
+  const hasExam = selected.some((d: any) => d.examId);
+  const hasAssignment = selected.some((d: any) => d.assignmentId);
+  console.log(data, "data s");
+  console.log(hasExam, "Exam Ids");
+  console.log(hasAssignment, "Assignment Ids");
+  let autoType: "" | "Ujian" | "Tugas" = "";
+  let isMixed = false;
+
+  if (hasExam && hasAssignment) {
+    isMixed = true;
+    autoType = "";
+  } else if (hasExam) {
+    autoType = "Ujian";
+  } else if (hasAssignment) {
+    autoType = "Tugas";
+  }
+
+  console.log(autoType, "autoType");
+
+  // force Jenis Penilaian
+  useEffect(() => {
+    setSelectedType(autoType);
+    setValue("selectedType", autoType);
+  }, [autoType]);
 
   const initialState = { success: false, error: false, message: "" };
   const [state, formAction] = useActionState(updateResults, initialState);
@@ -54,7 +79,6 @@ const UpdateManyResultsForm = ({
   }, [state.success, state.error]);
 
   useEffect(() => {
-    setValue("selectedType", selectedType);
     if (state.success) {
       toast("Berhasil memperbarui siswa.");
       if (state.data && onChanged) {
@@ -63,7 +87,7 @@ const UpdateManyResultsForm = ({
       setOpen(false);
       router.refresh();
     }
-  }, [state, setOpen, router, setValue, selectedType, onChanged]);
+  }, [state, setOpen, router, setValue, onChanged]);
 
   if (!ids || ids.length === 0) {
     return <span>Tidak ada data yang dipilih.</span>;
@@ -99,168 +123,171 @@ const UpdateManyResultsForm = ({
       <span className="text-center font-medium">
         {ids.length} Nilai akan diperbarui.
       </span>
-      <InputField
-        label="Nilai (Score)"
-        name="score"
-        type="number"
-        register={register}
-        error={errors?.score}
-        placeholder="0 - 100"
-      />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <InputField
+          label="Nilai (Score)"
+          name="score"
+          type="number"
+          register={register}
+          error={errors?.score}
+          placeholder="0 - 100"
+          table="teacher"
+        />
 
-      <div className="flex flex-col gap-2 w-full md:w-1/4">
-        <label className="text-xs text-gray-400">Jenis Penilaian</label>
-        <select
-          className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
-          value={selectedType}
-          onChange={(e) =>
-            setSelectedType(e.target.value as "" | "Ujian" | "Tugas")
-          }
-        >
-          <option value="">-- Pilih Jenis --</option>
-          <option value="Ujian">Ujian</option>
-          <option value="Tugas">Tugas</option>
-        </select>
+        {!isMixed && (
+          <div className="flex flex-col gap-2">
+            <label className="text-xs text-gray-400">Jenis Penilaian</label>
+            <select
+              className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
+              value={selectedType}
+              disabled // <-- ALWAYS LOCKED
+            >
+              <option value="Ujian">Ujian</option>
+              <option value="Tugas">Tugas</option>
+            </select>
+          </div>
+        )}
+
+        {selectedType === "Ujian" && (
+          <div className="flex flex-col gap-2">
+            <label className="text-xs text-gray-400">Ujian</label>
+
+            <Controller
+              name="examId"
+              control={control}
+              defaultValue={data?.examId || ""}
+              render={({ field }) => {
+                return (
+                  <Select
+                    {...field}
+                    options={examOption}
+                    className="text-sm"
+                    classNamePrefix="select"
+                    placeholder="Cari Ujian..."
+                    onChange={(selectedOption) =>
+                      field.onChange(selectedOption?.value)
+                    }
+                    value={
+                      examOption.find(
+                        (opt: { value: number; label: string }) =>
+                          opt.value === field.value
+                      ) || null
+                    }
+                  />
+                );
+              }}
+            />
+
+            {errors.examId?.message && (
+              <p className="text-xs text-red-400">
+                {errors.examId.message.toString()}
+              </p>
+            )}
+          </div>
+        )}
+
+        {selectedType === "Tugas" && (
+          <div className="flex flex-col gap-2">
+            <label className="text-xs text-gray-400">Tugas</label>
+
+            <Controller
+              name="assignmentId"
+              control={control}
+              defaultValue={data?.assignmentId || ""}
+              render={({ field }) => {
+                return (
+                  <Select
+                    {...field}
+                    options={assOption}
+                    className="text-sm"
+                    classNamePrefix="select"
+                    placeholder="Cari Tugas..."
+                    onChange={(selectedOption) =>
+                      field.onChange(selectedOption?.value)
+                    }
+                    value={
+                      assOption.find(
+                        (opt: { value: number; label: string }) =>
+                          opt.value === field.value
+                      ) || null
+                    }
+                  />
+                );
+              }}
+            />
+
+            {errors.assignmentId?.message && (
+              <p className="text-xs text-red-400">
+                {errors.assignmentId.message.toString()}
+              </p>
+            )}
+          </div>
+        )}
+
+        {selectedType.length > 0 && (
+          <div className="flex flex-col gap-2">
+            <label className="text-xs text-gray-400">Tipe Nilai</label>
+
+            <Controller
+              name="resultType"
+              control={control}
+              defaultValue={data?.resultType || ""}
+              render={({ field }) => {
+                const examTypes = [
+                  "UJIAN_HARIAN",
+                  "UJIAN_TENGAH_SEMESTER",
+                  "UJIAN_AKHIR_SEMESTER",
+                ];
+
+                const assignmentTypes = [
+                  "TUGAS_HARIAN",
+                  "TUGAS_AKHIR",
+                  "PEKERJAAN_RUMAH",
+                ];
+
+                const resultOption = Object.entries(resTypes)
+                  .filter(([key]) => {
+                    if (selectedType === "Ujian")
+                      return examTypes.includes(key);
+                    if (selectedType === "Tugas")
+                      return assignmentTypes.includes(key);
+                    return true;
+                  })
+                  .map(([key, value]) => ({
+                    label: key
+                      .replace(/_/g, " ")
+                      .toLowerCase()
+                      .replace(/\b\w/g, (c) => c.toUpperCase()),
+                    value,
+                  }));
+
+                return (
+                  <Select
+                    {...field}
+                    options={resultOption}
+                    className="text-sm"
+                    classNamePrefix="select"
+                    placeholder="Cari Tipe..."
+                    onChange={(selectedOption) =>
+                      field.onChange(selectedOption?.value)
+                    }
+                    value={
+                      resultOption.find((opt) => opt.value === field.value) ||
+                      null
+                    }
+                  />
+                );
+              }}
+            />
+
+            {errors.resultType?.message && (
+              <p className="text-xs text-red-400">
+                {errors.resultType.message.toString()}
+              </p>
+            )}
+          </div>
+        )}
       </div>
-
-      {selectedType === "Ujian" && (
-        <div className="flex flex-col gap-2 w-full md:w-1/4">
-          <label className="text-xs text-gray-400">Ujian</label>
-
-          <Controller
-            name="examId"
-            control={control}
-            defaultValue={data?.examId || ""}
-            render={({ field }) => {
-              return (
-                <Select
-                  {...field}
-                  options={examOption}
-                  className="text-sm"
-                  classNamePrefix="select"
-                  placeholder="Cari Ujian..."
-                  onChange={(selectedOption) =>
-                    field.onChange(selectedOption?.value)
-                  }
-                  value={
-                    examOption.find(
-                      (opt: { value: number; label: string }) =>
-                        opt.value === field.value
-                    ) || null
-                  }
-                />
-              );
-            }}
-          />
-
-          {errors.examId?.message && (
-            <p className="text-xs text-red-400">
-              {errors.examId.message.toString()}
-            </p>
-          )}
-        </div>
-      )}
-
-      {selectedType === "Tugas" && (
-        <div className="flex flex-col gap-2 w-full md:w-1/4">
-          <label className="text-xs text-gray-400">Tugas</label>
-
-          <Controller
-            name="assignmentId"
-            control={control}
-            defaultValue={data?.assignmentId || ""}
-            render={({ field }) => {
-              return (
-                <Select
-                  {...field}
-                  options={assOption}
-                  className="text-sm"
-                  classNamePrefix="select"
-                  placeholder="Cari Tugas..."
-                  onChange={(selectedOption) =>
-                    field.onChange(selectedOption?.value)
-                  }
-                  value={
-                    assOption.find(
-                      (opt: { value: number; label: string }) =>
-                        opt.value === field.value
-                    ) || null
-                  }
-                />
-              );
-            }}
-          />
-
-          {errors.assignmentId?.message && (
-            <p className="text-xs text-red-400">
-              {errors.assignmentId.message.toString()}
-            </p>
-          )}
-        </div>
-      )}
-
-      {selectedType.length > 0 && (
-        <div className="flex flex-col gap-2 w-full md:w-1/4">
-          <label className="text-xs text-gray-400">Tipe Nilai</label>
-
-          <Controller
-            name="resultType"
-            control={control}
-            defaultValue={data?.resultType || ""}
-            render={({ field }) => {
-              const examTypes = [
-                "UJIAN_HARIAN",
-                "UJIAN_TENGAH_SEMESTER",
-                "UJIAN_AKHIR_SEMESTER",
-              ];
-
-              const assignmentTypes = [
-                "TUGAS_HARIAN",
-                "TUGAS_AKHIR",
-                "PEKERJAAN_RUMAH",
-              ];
-
-              const resultOption = Object.entries(resTypes)
-                .filter(([key]) => {
-                  if (selectedType === "Ujian") return examTypes.includes(key);
-                  if (selectedType === "Tugas")
-                    return assignmentTypes.includes(key);
-                  return true;
-                })
-                .map(([key, value]) => ({
-                  label: key
-                    .replace(/_/g, " ")
-                    .toLowerCase()
-                    .replace(/\b\w/g, (c) => c.toUpperCase()),
-                  value,
-                }));
-
-              return (
-                <Select
-                  {...field}
-                  options={resultOption}
-                  className="text-sm"
-                  classNamePrefix="select"
-                  placeholder="Cari Tipe..."
-                  onChange={(selectedOption) =>
-                    field.onChange(selectedOption?.value)
-                  }
-                  value={
-                    resultOption.find((opt) => opt.value === field.value) ||
-                    null
-                  }
-                />
-              );
-            }}
-          />
-
-          {errors.resultType?.message && (
-            <p className="text-xs text-red-400">
-              {errors.resultType.message.toString()}
-            </p>
-          )}
-        </div>
-      )}
 
       {(state.error || Object.keys(errors).length > 0) && (
         <span className="text-red-500">

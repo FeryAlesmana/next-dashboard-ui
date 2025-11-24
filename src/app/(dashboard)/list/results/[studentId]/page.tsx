@@ -50,13 +50,14 @@ const SingleResultPage = async ({
               teacher: true,
             },
           },
+          grade: { select: { level: true } },
         },
       },
-      grade: { select: { level: true } },
+      
     },
   });
 
-  if (!student || !student.class || !student.grade) return notFound();
+  if (!student || !student.class || !student.class?.grade?.level) return notFound();
 
   const query: Prisma.ResultWhereInput = {};
   if (queryParams) {
@@ -100,7 +101,7 @@ const SingleResultPage = async ({
   });
 
   const lessons = student.class.lessons;
-  const gradeLevel = student.grade.level;
+  const gradeLevel = student.class?.grade?.level;
   // Group results by subject-teacher pair
   const createdAt = student.createdAt;
 

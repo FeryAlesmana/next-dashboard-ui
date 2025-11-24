@@ -17,6 +17,8 @@ export async function GET() {
     // 1. Get PPDB Settings
     const setting = await prisma.pPDBSetting.findFirst();
     const { userId } = await getCurrentUser();
+    const currentStaffRole = await getCurrentStaff(userId!);
+
     if (!setting) {
       // If settings are not found, the application cannot determine the status
       const ppdbStatus = {
@@ -36,9 +38,10 @@ export async function GET() {
     const now = new Date();
     const start = setting.startDate;
     const end = setting.endDate;
-    let ppdbStatus: any;
-    // 1. Belum dimulai
+    let ppdbStatus;
+
     if (now < start) {
+      // 1. Belum mulai
       ppdbStatus = {
         open: false,
         reason: "NOT_STARTED",
@@ -47,10 +50,8 @@ export async function GET() {
         quota: setting.quota,
         usedQuota: 0,
       };
-    }
-
-    // 2. Sudah selesai
-    if (now > end) {
+    } else if (now > end) {
+      // 2. Sudah selesai
       ppdbStatus = {
         open: false,
         reason: "ENDED",
@@ -59,40 +60,35 @@ export async function GET() {
         quota: setting.quota,
         usedQuota: 0,
       };
+    } else {
+      // 3. Dalam periode → cek quota
+      const ppdbCount = await prisma.pPDB.count({
+        where: {
+          createdAt: { gte: start, lte: end },
+        },
+      });
+
+      if (ppdbCount >= setting.quota) {
+        ppdbStatus = {
+          open: false,
+          reason: "QUOTA_FULL",
+          startDate: start,
+          endDate: end,
+          quota: setting.quota,
+          usedQuota: ppdbCount,
+        };
+      } else {
+        ppdbStatus = {
+          open: true,
+          reason: "OPEN",
+          startDate: start,
+          endDate: end,
+          quota: setting.quota,
+          usedQuota: ppdbCount,
+        };
+      }
     }
 
-    // 3. Hitung PPDB yang mendaftar dalam periode
-    const ppdbCount = await prisma.pPDB.count({
-      where: {
-        createdAt: {
-          gte: start,
-          lte: end,
-        },
-      },
-    });
-    let currentStaffRole;
-    // 4. Kuota penuh
-    currentStaffRole = await getCurrentStaff(userId!);
-    if (ppdbCount >= setting.quota) {
-      ppdbStatus = {
-        open: false,
-        reason: "QUOTA_FULL",
-        startDate: start,
-        endDate: end,
-        quota: setting.quota,
-        usedQuota: ppdbCount,
-      };
-    } else if (now >= start && now <= end) {
-      // Sedang berlangsung (Ongoing) - Mock successful check
-      ppdbStatus = {
-        open: true,
-        reason: "OPEN",
-        startDate: start,
-        endDate: end,
-        quota: setting.quota,
-        usedQuota: ppdbCount, // Mock usage
-      };
-    }
     // 5. PPDB Buka
     return NextResponse.json({ ppdbStatus, currentStaffRole });
   } catch (err) {

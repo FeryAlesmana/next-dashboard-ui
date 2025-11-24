@@ -11,8 +11,8 @@ type SingleStudent = Student & {
   class: {
     lessons: { subject: Subject | null; teacher: Teacher | null }[];
     name: string;
+    grade: { level: number } | null;
   } | null;
-  grade: { level: number } | null;
 };
 const SingleResultPageClient = ({
   student,

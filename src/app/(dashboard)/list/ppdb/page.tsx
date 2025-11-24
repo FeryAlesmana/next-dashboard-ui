@@ -50,8 +50,8 @@ const PpdbPage = async ({
         ]
       : []),
     {
-      header: "No",
-      accessor: "nomor",
+      header: "ID PPDB",
+      accessor: "id",
       className: "hidden md:table-cell",
     },
     {

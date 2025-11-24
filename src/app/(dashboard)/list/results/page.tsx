@@ -37,9 +37,26 @@ const ResultListPage = async ({
   const p = page ? parseInt(page) : 1;
   const perPage = limit === "all" ? 50 : parseInt(limit ?? "10");
   let staffRole: staffrole;
+  let semesterOptions: any = [];
   if (role === "staff") {
     const staffrole = await getCurrentStaff(userId!);
     staffRole = staffrole;
+
+    const oldest = await prisma.student.findFirst({
+      orderBy: { createdAt: "asc" },
+      select: { createdAt: true, grade: { select: { level: true } } },
+    });
+
+    const highest = await prisma.grade.aggregate({
+      _max: { level: true },
+    });
+    if (oldest) {
+      semesterOptions = generateSemesters(
+        oldest.createdAt,
+        highest._max.level ?? 3,
+        role
+      );
+    }
   }
   const allowedStaff = role === "staff" && staffRole! === "PENILAIAN";
   const allowedRole = role === "admin" || role === "teacher" || allowedStaff;
@@ -193,7 +210,6 @@ const ResultListPage = async ({
     }
   }
   //ROLE CONDITIONS
-  let semesterOptions: any = [];
 
   // ROLE CONDITION
   switch (role) {
@@ -502,6 +518,7 @@ const ResultListPage = async ({
     students: studentData,
     exams: exams,
     assignments: assignments,
+    semesterOptions,
   };
   const gradesSet = new Set<number>();
   classes.forEach((cls) => gradesSet.add(cls.gradeId!));

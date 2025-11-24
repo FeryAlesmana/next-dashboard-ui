@@ -27,6 +27,7 @@ export default function PPDBPage() {
       const data = await res.json();
       setPpdbStatus(data?.ppdbStatus);
       setCurrentStaff(data?.currentStaffRole);
+      console.log(data, "data ppdb");
     }
     fetchStatus();
   }, []);

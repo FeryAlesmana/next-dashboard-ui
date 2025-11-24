@@ -960,11 +960,13 @@ export const mresultSchema = z.object({
   examId: z.coerce
     .number({ message: "Id Ujian wajib diisi!" })
     .optional()
-    .nullable(),
+    .nullable()
+    .or(z.literal("")),
   assignmentId: z.coerce
     .number({ message: "Id Tugas wajib diisi!" })
     .optional()
-    .nullable(),
+    .nullable()
+    .or(z.literal("")),
   selectedType: z.enum(["Ujian", "Tugas", ""], {
     message: "Tipe Hasil wajib diisi!",
   }),
@@ -1126,6 +1128,11 @@ export const exportPaymentsSchema = z
   );
 
 export type ExportPaymentsSchema = z.infer<typeof exportPaymentsSchema>;
+export const exportResultSchema = z.object({
+  semester: z.string().optional(),
+});
+
+export type ExportResultSchema = z.infer<typeof exportResultSchema>;
 
 export const staffSchema = z.object({
   id: z.string().optional(),

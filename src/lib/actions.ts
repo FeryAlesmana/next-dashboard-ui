@@ -47,10 +47,12 @@ import {
   ExportPaymentsSchema,
   CreatestaffSchema,
   UpdatestaffSchema,
+  ExportResultSchema,
 } from "./formValidationSchema";
 import prisma from "./prisma";
 import { clerkClient } from "@clerk/nextjs/server";
 import extractCloudinaryPublicId, {
+  calculateSubjectScore,
   decryptPassword,
   getCurrentUser,
   getPeriodRange,
@@ -69,6 +71,7 @@ import { error } from "console";
 import { disconnect } from "process";
 import { Decimal } from "@prisma/client/runtime/library";
 import { logPaymentChange } from "./paymentLogChange";
+import z from "zod";
 
 export type CurrentState = {
   success: boolean;
@@ -2728,21 +2731,26 @@ export const updateResults = async (
     }
 
     // Prepare common data to update based on selectedType
+
+    // Build update data with optional fields
     const updateData: any = {
-      ...(score !== "" && {
-        score: score,
-      }),
-      ...(resultType !== "" && {
-        resultType: resultType,
-      }),
+      ...(score !== "" && score !== undefined && { score }),
+      ...(resultType !== "" && resultType !== undefined && { resultType }),
     };
 
+    // Handle logic: only update exam/assignment if provided
     if (selectedType === "Ujian") {
-      updateData.examId = examId;
-      updateData.assignmentId = null;
-    } else if (selectedType === "Tugas") {
-      updateData.assignmentId = assignmentId;
-      updateData.examId = null;
+      if (examId !== "" && examId !== undefined) {
+        updateData.examId = examId;
+        updateData.assignmentId = null; // remove if switching type
+      }
+    }
+
+    if (selectedType === "Tugas") {
+      if (assignmentId !== "" && assignmentId !== undefined) {
+        updateData.assignmentId = assignmentId;
+        updateData.examId = null; // remove if switching type
+      }
     }
 
     // Prisma does not have a native "updateMany" that sets different values per record,
@@ -5332,3 +5340,280 @@ export const deleteStaffs = async (
     return { success: false, error: true, message };
   }
 };
+
+export async function exportResultToExcel(
+  prevState: any,
+  data: ExportResultSchema
+) {
+  try {
+    // Validate input (semester range)
+    const semester = data.semester; // this is already a JSON string like {"start":"..","end":".."}
+
+    const semesterSchema = z.object({
+      start: z.string().datetime(),
+      end: z.string().datetime(),
+    });
+
+    const parsed = semesterSchema.parse(JSON.parse(semester!));
+
+    // Fetch all results within date range
+    const results = await prisma.result.findMany({
+      where: {
+        createdAt: {
+          gte: new Date(parsed.start),
+          lte: new Date(parsed.end),
+        },
+      },
+      include: {
+        student: true,
+        exam: true,
+        assignment: true,
+      },
+      orderBy: {
+        studentId: "asc",
+      },
+    });
+
+    const students = await prisma.student.findMany({
+      where: {
+        // Filter students who were created/active within the date range
+        createdAt: {
+          gte: new Date(parsed.start),
+          lte: new Date(parsed.end),
+        },
+      },
+      include: {
+        student_details: true, // For NISN
+        class: {
+          include: {
+            lessons: {
+              include: {
+                subject: true, // For Mata Pelajaran name
+                teacher: true, // For Nama Guru
+              },
+            },
+          },
+        },
+        // Include results, ensuring we get the lessonId for aggregation
+        results: {
+          include: {
+            exam: { select: { lessonId: true } },
+            assignment: { select: { lessonId: true } },
+          },
+        },
+      },
+      orderBy: [{ classId: "asc" }, { name: "asc" }],
+    });
+
+    // 2. Setup Workbook
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = "School System";
+    workbook.created = new Date();
+
+    const sheet = workbook.addWorksheet("Laporan Nilai Semester");
+
+    // Define a fixed column structure for the Subject Score Table
+    const SUBJECT_COLUMNS = [
+      { header: "No", key: "no", width: 8 },
+      { header: "Mata Pelajaran", key: "subject", width: 30 },
+      { header: "Nama Guru", key: "teacher", width: 30 },
+      { header: "Tugas", key: "tugas", width: 10 },
+      { header: "UH", key: "uh", width: 10 },
+      { header: "UTS", key: "uts", width: 10 },
+      { header: "UAS", key: "uas", width: 10 },
+      { header: "Rata-rata", key: "average", width: 15 },
+    ];
+
+    // 3. Process Data and Populate Sheet
+    let currentRow = 1;
+
+    for (const student of students) {
+      const lessons = student.class?.lessons || [];
+      const studentResults = student.results || [];
+      const studentName = student.name || "Nama Tidak Diketahui";
+      const studentNISN = student.student_details?.nisn || "-";
+      const studentClass = student.class?.name || "-";
+
+      if (lessons.length === 0) {
+        // Skip students without lessons or class data
+        continue;
+      }
+
+      // A. Student Information Header (Merged Cells)
+
+      // Row 1: Student Name
+      sheet.getCell(`A${currentRow}`).value = `Nama Murid: ${studentName}`;
+      sheet.getCell(`A${currentRow}`).font = { bold: true, size: 12 };
+      sheet.mergeCells(`A${currentRow}:D${currentRow}`);
+      currentRow++;
+
+      // Row 2: NISN and Class
+      sheet.getCell(`A${currentRow}`).value = `NISN: ${studentNISN}`;
+      sheet.getCell(`A${currentRow}`).font = { bold: true, size: 10 };
+
+      sheet.getCell(`C${currentRow}`).value = `Kelas: ${studentClass}`;
+      sheet.getCell(`C${currentRow}`).font = { bold: true, size: 10 };
+      sheet.mergeCells(`C${currentRow}:E${currentRow}`);
+
+      currentRow += 2; // Add a space after the header
+
+      // B. Subject Score Table Header
+      sheet.columns = SUBJECT_COLUMNS;
+      const headerRow = sheet.addRow(SUBJECT_COLUMNS.map((c) => c.header));
+      headerRow.eachCell((cell) => {
+        cell.font = { bold: true, color: { argb: "FF4C4C4C" } }; // Dark gray text
+        cell.alignment = { horizontal: "center", vertical: "middle" };
+        cell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FFEEF2F5" },
+        }; // Light purple/gray background
+        cell.border = {
+          top: { style: "thin" },
+          left: { style: "thin" },
+          bottom: { style: "medium" },
+          right: { style: "thin" },
+        };
+      });
+      currentRow++;
+
+      // C. Subject Score Rows
+      let totalAverageScore = 0;
+      const subjectAverages: number[] = [];
+
+      lessons.forEach((lesson, index) => {
+        const lessonId = lesson.id;
+
+        // 1. Calculate Aggregated Scores
+        const tugas = calculateSubjectScore(studentResults, lessonId, [
+          "TUGAS_HARIAN",
+          "PEKERJAAN_RUMAH",
+        ]);
+        const UH = calculateSubjectScore(studentResults, lessonId, [
+          "UJIAN_HARIAN",
+        ]);
+        const uts = calculateSubjectScore(studentResults, lessonId, [
+          "UJIAN_TENGAH_SEMESTER",
+        ]);
+        const uas = calculateSubjectScore(studentResults, lessonId, [
+          "UJIAN_AKHIR_SEMESTER",
+        ]);
+
+        // 2. Calculate Subject Average (matching the UI logic: round(sum of 4 scores / 4))
+        const avg = Math.round((tugas + UH + uts + uas) / 4);
+        subjectAverages.push(avg);
+
+        // 3. Add Row to Sheet
+        const dataRow = sheet.addRow({
+          no: index + 1,
+          subject: lesson.subject?.name || "-",
+          teacher: lesson.teacher?.name || "-",
+          tugas: tugas > 0 ? tugas : "-",
+          uh: UH > 0 ? UH : "-",
+          uts: uts > 0 ? uts : "-",
+          uas: uas > 0 ? uas : "-",
+          average: avg,
+        });
+
+        // Apply styles to data rows
+        dataRow.eachCell((cell, colNumber) => {
+          cell.alignment = {
+            horizontal: colNumber > 3 ? "center" : "left", // Center scores
+            vertical: "middle",
+          };
+          cell.border = {
+            top: { style: "thin" },
+            left: { style: "thin" },
+            bottom: { style: "thin" },
+            right: { style: "thin" },
+          };
+          if (colNumber === 8) {
+            // Rata-rata column
+            cell.font = {
+              bold: true,
+              color: { argb: avg >= 75 ? "FF10B981" : "FFEF4444" },
+            }; // Green or Red based on mock passing score 75
+          }
+        });
+
+        currentRow++;
+      });
+
+      // D. Overall Student Average Footer
+      if (subjectAverages.length > 0) {
+        const overallAverage = Math.round(
+          subjectAverages.reduce((acc, curr) => acc + curr, 0) /
+            subjectAverages.length
+        );
+
+        const footerRow = sheet.addRow([]); // Add empty row
+        // Merge cells for the label (Columns A to F)
+        sheet.mergeCells(`A${currentRow}:F${currentRow}`);
+
+        sheet.getCell(`A${currentRow}`).value = "Rata-Rata Nilai Keseluruhan";
+        sheet.getCell(`A${currentRow}`).font = { bold: true, size: 11 };
+        sheet.getCell(`A${currentRow}`).alignment = {
+          horizontal: "center",
+          vertical: "middle",
+        };
+        sheet.getCell(`A${currentRow}`).fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FFEDE9FE" },
+        }; // Light purple background
+
+        // Set the overall average score (Column G)
+        sheet.getCell(`G${currentRow}`).value = overallAverage;
+        sheet.mergeCells(`G${currentRow}:H${currentRow}`); // Merge G and H for the score
+        sheet.getCell(`G${currentRow}`).font = {
+          bold: true,
+          size: 12,
+          color: { argb: "FF4F46E5" },
+        }; // Indigo color
+        sheet.getCell(`G${currentRow}`).alignment = {
+          horizontal: "center",
+          vertical: "middle",
+        };
+        sheet.getCell(`G${currentRow}`).fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FFEDE9FE" },
+        };
+
+        currentRow++;
+      }
+
+      // E. Add spacing between students
+      currentRow++;
+      sheet.addRow([]);
+      currentRow++;
+    }
+    // ===== Save File =====
+    const fileName = `Laporan_Nilai_${Date.now()}.xlsx`;
+    const tmpDir = os.tmpdir();
+    const filePath = path.join(tmpDir, fileName);
+
+    await workbook.xlsx.writeFile(filePath);
+
+    const downloadUrl = `/api/download?file=${fileName}`;
+
+    return {
+      ...prevState,
+      fileName,
+      filePath,
+      downloadUrl,
+      success: true,
+      error: false,
+      message: "Laporan nilai berhasil diexport!",
+    };
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === "string"
+        ? error
+        : "Unknown error";
+
+    return { success: false, error: true, message };
+  }
+}

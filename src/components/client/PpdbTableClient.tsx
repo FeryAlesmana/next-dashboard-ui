@@ -16,7 +16,7 @@ export default function PpdbTableClient({
   return (
     <>
       <tr className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight">
-        {role === "admin" && (
+        {allowedStaff && (
           <td className="px-4 py-2">
             <input
               type="checkbox"

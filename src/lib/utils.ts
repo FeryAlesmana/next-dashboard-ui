@@ -41,10 +41,10 @@ function sanitizeToJson(value: any): any {
 }
 
 export function toIntOrNotFound(value: string) {
-    const parsed = parseInt(value);
-    if (isNaN(parsed)) return notFound();
-    return parsed;
-  }
+  const parsed = parseInt(value);
+  if (isNaN(parsed)) return notFound();
+  return parsed;
+}
 
 export function sanitizePaymentLogSnapshot(snapshot: any) {
   const clean: Partial<Record<PaymentLogField, any>> = {};
@@ -331,7 +331,7 @@ export function normalizeRow(row: any) {
 export const generateSemesters = (
   createdAt: Date,
   gradeLevel: number,
-  role: "admin" | "teacher" | "student" | "parent" = "student"
+  role: "admin" | "teacher" | "student" | "parent" | "staff" = "student"
 ): Semester[] => {
   const now = new Date();
   const currentYear = now.getFullYear();
@@ -999,3 +999,30 @@ export async function normalizeSearchParams(
   });
   return normalized;
 }
+
+export const calculateSubjectScore = (
+  results: any,
+  lessonId: number,
+  resultTypes: string[]
+) => {
+  // Determine the source of lessonId based on the result type
+  const filteredResults = results.filter((r: any) => {
+    let resultLessonId = null;
+    if (r.exam && r.exam.lessonId) resultLessonId = r.exam.lessonId;
+    if (r.assignment && r.assignment.lessonId)
+      resultLessonId = r.assignment.lessonId;
+
+    const isCorrectType = resultTypes.includes(r.resultType);
+
+    return resultLessonId === lessonId && isCorrectType;
+  });
+
+  if (filteredResults.length === 0) return 0;
+
+  // Calculate the average score for the filtered results and round it
+  const totalScore = filteredResults.reduce(
+    (sum: number, r: any) => sum + r.score,
+    0
+  );
+  return Math.round(totalScore / filteredResults.length);
+};

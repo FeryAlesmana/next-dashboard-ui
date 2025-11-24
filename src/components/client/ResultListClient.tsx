@@ -166,12 +166,19 @@ export default function ResultListClient({
               ]}
             />
             {allowedRole && (
-              <FormModal
-                table="result"
-                type="create"
-                relatedData={relatedData}
-                onChanged={handleChanged}
-              ></FormModal>
+              <>
+                <FormModal
+                  table="result"
+                  type="create"
+                  relatedData={relatedData}
+                  onChanged={handleChanged}
+                ></FormModal>
+                <FormModal
+                  table="exportResults"
+                  type="readMany"
+                  relatedData={relatedData}
+                ></FormModal>
+              </>
             )}
           </div>
         </div>

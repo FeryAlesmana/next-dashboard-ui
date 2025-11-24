@@ -32,7 +32,9 @@ export default function PromotionBanner({
   if (open) {
     message = (
       <>
-        <span className="text-yellow-300 font-semibold">PPDB Dibuka!</span>{" "}
+        <span className="text-yellow-300 font-semibold">
+          PPDB Telah Dibuka!
+        </span>{" "}
         Daftar sekarang periode{" "}
         <span className="font-semibold">{format(startDate)}</span> sampai{" "}
         <span className="font-semibold">{format(endDate)}</span> —
@@ -45,14 +47,17 @@ export default function PromotionBanner({
   } else if (reason === "NOT_STARTED") {
     message = (
       <>
-        PPDB belum dibuka (dibuka{" "}
-        <span className="font-semibold">{format(startDate)}!</span>)
+        PPDB belum dibuka (Akan dibuka pada Tanggal{" "}
+        <span className=" text-yellow-300 font-semibold">
+          {format(startDate)}!
+        </span>
+        )
       </>
     );
   } else if (reason === "ENDED") {
     message = (
       <>
-        PPDB sudah ditutup pada{" "}
+        PPDB sudah ditutup pada Tanggal{" "}
         <span className="font-semibold">{format(endDate)}!</span>
       </>
     );
