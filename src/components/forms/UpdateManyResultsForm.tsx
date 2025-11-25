@@ -43,9 +43,9 @@ const UpdateManyResultsForm = ({
     ids && data ? data.filter((item: any) => ids.includes(item.id)) : [];
   const hasExam = selected.some((d: any) => d.examId);
   const hasAssignment = selected.some((d: any) => d.assignmentId);
-  console.log(data, "data s");
-  console.log(hasExam, "Exam Ids");
-  console.log(hasAssignment, "Assignment Ids");
+  // console.log(data, "data s");
+  // console.log(hasExam, "Exam Ids");
+  // console.log(hasAssignment, "Assignment Ids");
   let autoType: "" | "Ujian" | "Tugas" = "";
   let isMixed = false;
 
@@ -64,7 +64,7 @@ const UpdateManyResultsForm = ({
   useEffect(() => {
     setSelectedType(autoType);
     setValue("selectedType", autoType);
-  }, [autoType]);
+  }, [autoType, setValue]);
 
   const initialState = { success: false, error: false, message: "" };
   const [state, formAction] = useActionState(updateResults, initialState);

@@ -163,7 +163,7 @@ export default function SubjectListClient({
               relatedData={relatedData}
               onDeleted={handleDeleteOptimistic}
               onChanged={handleChanged}
-              
+              allowedStaff={allowedRole}
             />
           ))
         )}

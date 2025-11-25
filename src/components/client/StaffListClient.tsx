@@ -9,6 +9,8 @@ import TableSearch from "../TableSearch";
 import FormModal from "../FormModal";
 import { Teacher } from "@prisma/client";
 import StaffTableClient from "./StaffTableClient";
+import { useMediaQuery } from "@/lib/useMediaQuery"; 
+import { MobileStaffCard } from "./MobileStaffCard";
 
 export default function StaffListClient({
   columns,
@@ -20,6 +22,9 @@ export default function StaffListClient({
 }: BaseListClientProps & { count: number }) {
   const [selected, setSelected] = useState<string[]>([]);
   const [localData, setLocalData] = useState(data); // 👈 keep a client copy
+
+  //const allowedRole = role === "admin";
+  const isMobile = useMediaQuery("(max-width: 768px)"); 
 
   const toggleSelection = (id: string) => {
     setSelected((prev) =>
@@ -59,6 +64,8 @@ export default function StaffListClient({
     });
   };
   const { staffRoles = [] } = options || {};
+
+  
   return (
     <div className="space-y-4 mt-3">
       {/* TOP */}
@@ -112,7 +119,33 @@ export default function StaffListClient({
         handleChanged={handleChanged}
         handleManyChanged={handleManyChanged}
       />
+      {isMobile ? (
+        // MOBILE VIEW
 
+        <div className="space-y-3">
+          {localData.length === 0 ? (
+            <div className=" p-4">
+              <div className="text-gray-500 text-sm text-center py-6">
+                Tidak ada data untuk table ini
+              </div>
+            </div>
+          ) : (
+            localData.map((row) => (
+              <MobileStaffCard
+                key={row.id}
+                data={row}
+                selected={selected}
+                onToggle={toggleSelection}
+                relatedData={relatedData}
+                onDeleted={handleDeleteOptimistic}
+                onChanged={handleChanged}
+                role={role}
+              />
+            ))
+          )}
+        </div>
+      ) : (
+        // DESKTOP TABLE VIEW
       <Table columns={columns}>
         <tr className="text-left text-gray-500 text-sm">
           {role === "admin" && (
@@ -152,6 +185,7 @@ export default function StaffListClient({
           ))
         )}
       </Table>
+      )}
     </div>
   );
 }

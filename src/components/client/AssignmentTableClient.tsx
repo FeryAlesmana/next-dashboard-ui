@@ -29,6 +29,7 @@ export default function AssignmentTableClient({
   } as const;
 
   const isOverdue = new Date(data.dueDate) < new Date();
+  const allowedRole = role === "admin" || role === "teacher" || allowedStaff;
   return (
     <>
       <tr
@@ -36,7 +37,7 @@ export default function AssignmentTableClient({
           isOverdue ? "bg-red-100" : "even:bg-slate-50"
         }`}
       >
-        {role === "admin" && (
+        {(role === "admin" || allowedStaff) && (
           <td className="px-4 py-2">
             <input
               type="checkbox"
@@ -46,7 +47,7 @@ export default function AssignmentTableClient({
           </td>
         )}
 
-        <td className="flex items-center p-4 gap-4">
+        <td className="hidden md:table-cell items-center p-4 gap-4 ">
           {data.lesson.subject?.name || "-"}
         </td>
         <td>{data.lesson.class.name}</td>
@@ -69,9 +70,9 @@ export default function AssignmentTableClient({
         <td className="hidden md:table-cell">
           {data.assType ? AssignmentsTypeLabel[data.assType as assTypes] : "-"}
         </td>
-        <td>
+        <td className=" hidden md:table-cell">
           <div className="flex items-center gap-2">
-            {allowedStaff && (
+            {allowedRole && (
               <>
                 <FormModal
                   table="assignment"

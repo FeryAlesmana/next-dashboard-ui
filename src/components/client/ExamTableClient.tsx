@@ -66,24 +66,26 @@ export default function ExamTableClient({
           {data.exType ? examTypeLabel[data.exType as exTypes] : "-"}
         </td>
         <td>
-          <div className="flex items-center gap-2">
-            {allowedRole && (
-              <>
-                <FormModal
-                  table="exam"
-                  type="update"
-                  data={data}
-                  relatedData={relatedData}
-                  onChanged={onChanged}
-                ></FormModal>
-                <FormModal
-                  table="exam"
-                  type="delete"
-                  id={data.id}
-                  onDeleted={() => onDeleted?.([data.id])}
-                ></FormModal>
-              </>
-            )}
+          <div className="hidden md:table-cell">
+            <div className="flex items-center gap-2">
+              {allowedRole && (
+                <>
+                  <FormModal
+                    table="exam"
+                    type="update"
+                    data={data}
+                    relatedData={relatedData}
+                    onChanged={onChanged}
+                  ></FormModal>
+                  <FormModal
+                    table="exam"
+                    type="delete"
+                    id={data.id}
+                    onDeleted={() => onDeleted?.([data.id])}
+                  ></FormModal>
+                </>
+              )}
+            </div>
           </div>
         </td>
       </tr>

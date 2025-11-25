@@ -9,6 +9,8 @@ import FilterSortToggle from "../FilterSortToggle";
 import FormModal from "../FormModal";
 import { Semester } from "./StudentPaymentView";
 import { staffrole } from "@prisma/client";
+import { MobileResultCard } from "./MobileResultCard";
+import { useMediaQuery } from "@/lib/useMediaQuery";
 
 export default function ResultListClient({
   columns,
@@ -104,6 +106,8 @@ export default function ResultListClient({
   ];
   const allowedStaff = role === "staff" && currentStaff === "PENILAIAN";
   const allowedRole = role === "admin" || role === "teacher" || allowedStaff;
+  const isMobile = useMediaQuery("(max-width: 768px)");
+
   return (
     <div className="space-y-4 mt-3">
       {/* TOP */}
@@ -194,46 +198,76 @@ export default function ResultListClient({
         handleManyChanged={handleManyChanged}
       />
 
-      <Table columns={columns}>
-        <tr className="text-left text-gray-500 text-sm">
-          {(role === "admin" || allowedStaff) && (
-            <td className="px-4 py-2">
-              <input
-                type="checkbox"
-                checked={selected.length === data.length}
-                onChange={(e) =>
-                  setSelected(e.target.checked ? data.map((s) => s.id) : [])
-                }
+      {isMobile ? (
+        // MOBILE VIEW
+
+        <div className="space-y-3">
+          {localData.length === 0 ? (
+            <div className=" p-4">
+              <div className="text-gray-500 text-sm text-center py-6">
+                Tidak ada data untuk table ini
+              </div>
+            </div>
+          ) : (
+            localData.map((row) => (
+              <MobileResultCard
+                key={row.id}
+                data={row}
+                selected={selected}
+                onToggle={toggleSelection}
+                relatedData={relatedData}
+                onDeleted={handleDeleteOptimistic}
+                onChanged={handleChanged}
+                role={role}
+                allowedStaff={allowedStaff}
               />
-            </td>
+            ))
           )}
-          {/* other headers */}
-        </tr>
-        {localData.length === 0 ? (
-          <tr>
-            <td
-              colSpan={columns.length + (role === "admin" ? 1 : 0)}
-              className="text-center text-gray-500 py-6"
-            >
-              Tidak ada data untuk table ini
-            </td>
+        </div>
+      ) : (
+        // DESKTOP TABLE VIEW
+        <Table columns={columns}>
+          <tr className="text-left text-gray-500 text-sm">
+            {(role === "admin" || allowedStaff) && (
+              <td className="px-4 py-2">
+                <input
+                  type="checkbox"
+                  checked={selected.length === data.length}
+                  onChange={(e) =>
+                    setSelected(e.target.checked ? data.map((s) => s.id) : [])
+                  }
+                />
+              </td>
+            )}
+            {/* other headers */}
           </tr>
-        ) : (
-          localData.map((row) => (
-            <ResultTableClient
-              key={row.id}
-              data={row}
-              role={role}
-              selected={selected}
-              onToggle={toggleSelection}
-              relatedData={relatedData}
-              onDeleted={handleDeleteOptimistic}
-              onChanged={handleChanged}
-              allowedStaff={allowedStaff}
-            />
-          ))
-        )}
-      </Table>
+
+          {localData.length === 0 ? (
+            <tr>
+              <td
+                colSpan={columns.length + (role === "admin" ? 1 : 0)}
+                className="text-center text-gray-500 py-6"
+              >
+                Tidak ada data untuk table ini
+              </td>
+            </tr>
+          ) : (
+            localData.map((row) => (
+              <ResultTableClient
+                key={row.id}
+                data={row}
+                role={role}
+                selected={selected}
+                onToggle={toggleSelection}
+                relatedData={relatedData}
+                onDeleted={handleDeleteOptimistic}
+                onChanged={handleChanged}
+                allowedStaff={allowedStaff} //<==Perhatiin nilai ini
+              />
+            ))
+          )}
+        </Table>
+      )}
     </div>
   );
 }

@@ -37,7 +37,7 @@ const SubjectListPage = async ({
   const allowedStaff = role === "staff" && staffRole! === "PENJADWALAN";
   const allowedRole = role === "admin" || allowedStaff;
   const columns = [
-    ...(role === "admin" || allowedStaff
+    ...(allowedRole
       ? [
           {
             header: "Select",

@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
@@ -15,13 +15,13 @@ model Admin {
 }
 
 model Staff {
-  id         String     @id
+  id         String          @id
   name       String
-  username   String     @unique
-  password   String     @unique
+  username   String          @unique
+  password   String          @unique
   staffroles staffrole?
-  email      String?    @unique
-  phone      String     @unique
+  email      String?         @unique
+  phone      String          @unique
   address    String
   rw         String
   rt         String
@@ -32,7 +32,8 @@ model Staff {
   img        String?
   sex        UserSex
   birthday   DateTime
-  createdAt  DateTime   @default(now())
+  createdAt  DateTime        @default(now())
+  perfomId   PerformanceLog[]
 }
 
 enum staffrole {
@@ -557,4 +558,17 @@ enum ChangeAction {
   UPDATE
   DELETE
   REVERT
+}
+
+model PerformanceLog {
+  id      String @id @default(uuid())
+  staffId String 
+  staff   Staff  @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  // Example metrics
+  score Int
+  month String // e.g. "2025-01"
+  note  String? // optional remarks
+
+  createdAt DateTime @default(now())
 }

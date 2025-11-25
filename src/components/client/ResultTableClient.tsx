@@ -36,8 +36,8 @@ export default function ResultTableClient({
         )}
 
         <td className="p-4 hidden md:table-cell">{data?.subject || "-"}</td>
-        <td>{data.student}</td>
-        <td>{data.score}</td>
+        <td className="hidden md:table-cell">{data.student}</td>
+        <td className="hidden md:table-cell">{data.score}</td>
         <td className="hidden md:table-cell">{data.teacher}</td>
         <td className="hidden md:table-cell">{data.class}</td>
         <td className="hidden md:table-cell">
@@ -55,7 +55,7 @@ export default function ResultTableClient({
             : " - "}
         </td>
 
-        <td>
+        <td className="hidden md:table-cell">
           <div className="flex items-center gap-2">
             {allowedRole && (
               <>

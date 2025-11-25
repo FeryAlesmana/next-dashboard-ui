@@ -1184,3 +1184,13 @@ export const updateStaffSchema = staffSchema.extend({
     .optional(),
 });
 export type UpdatestaffSchema = z.infer<typeof updateStaffSchema>;
+
+export const performanceSchema = z.object({
+  id: z.string().optional(),
+  staffId: z.string().nonempty("Staff ID wajib diisi"),
+  month: z.string().nonempty("Bulan wajib diisi"),
+  score: z.coerce.number().min(0).max(100),
+  note: z.string().optional(),
+});
+
+export type PerformanceSchema = z.infer<typeof performanceSchema>;

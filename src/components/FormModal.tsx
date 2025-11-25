@@ -18,6 +18,7 @@ import {
   deleteParents,
   deletePaymentLog,
   deletePaymentLogs,
+  deletePerfomance,
   deletePpdb,
   deletePPDBs,
   deleteResult,
@@ -59,6 +60,7 @@ import ImportPaymentsForm from "./forms/ImportPaymentsForm";
 import ExportPaymentsForm from "./forms/ExportPaymentsForm";
 import { createPortal } from "react-dom";
 import ExportResultsForm from "./forms/ExportResultsForm";
+import PerformanceForm from "./forms/PerfomanceForm";
 // import StudentForm from "./forms/StudentForm";
 // import TeacherForm from "./forms/TeacherForm";
 
@@ -79,6 +81,7 @@ const deleteActionMap = {
   paymentLog: deletePaymentLog,
   user: deleteUser,
   staff: deleteStaff,
+  staffPerfomance: deletePerfomance,
 };
 
 const singleDeleteMap = {
@@ -98,6 +101,7 @@ const singleDeleteMap = {
   paymentLog: deletePaymentLog,
   user: deleteUser,
   staff: deleteStaff,
+  staffPerfomance: deletePerfomance,
 };
 
 const bulkDeleteMap = {
@@ -117,6 +121,7 @@ const bulkDeleteMap = {
   paymentLog: deletePaymentLogs,
   user: deleteManyUsers,
   staff: deleteStaffs,
+  staffPerfomance: deletePPDBs,
 };
 
 const TeacherForm = dynamic(() => import("./forms/TeacherForm"), {
@@ -604,6 +609,48 @@ const FormModal = ({
         )}
       </>
     );
+  if (table === "staffPerfomance" && type !== "delete")
+    return (
+      <>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-yellow-600 font-medium cursor-pointer select-none">
+            Tambah
+          </span>
+          <button
+            id="staffPerfTrigger"
+            className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow hover:brightness-90 shadow-md transition"
+            onClick={() => setOpen(true)}
+            title="Tambah Perfoma staff"
+          >
+            <Image src={`/create.png`} alt="" width={15} height={16} />
+          </button>
+          
+        </div>
+
+        {open && (
+          <div className="w-screen h-screen fixed left-0 top-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">
+            <div
+              className="bg-white p-4 rounded-md relative 
+                       w-[90%] md:w-[70%] lg:w-[60%] xl:w-[50%] 2xl:w-[40%]"
+            >
+              <PerformanceForm
+                type={type}
+                setOpen={setOpen}
+                data={data}
+                staffId={id as string}
+              />
+
+              <div
+                className="absolute top-4 right-4 cursor-pointer"
+                onClick={() => setOpen(false)}
+              >
+                <Image src="/close.png" width={14} height={14} alt="" />
+              </div>
+            </div>
+          </div>
+        )}
+      </>
+    );
 
   if (type === "readMany") {
     switch (table) {
@@ -1045,7 +1092,7 @@ const FormModal = ({
             </div>
             {open && (
               <div className="w-screen h-screen absolute left-0 top-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">
-                <div className="bg-white p-4 rounded-md relative w-[95%] h-[95%] md:w-[90%] lg:w-[85%] xl:w-[80%] 2xl:w-[75%] overflow-y-auto">
+                <div className="bg-white p-4 rounded-md relative w-[700px] h-auto">
                   <UpdateManyAssignmentsForm
                     ids={ids as number[]}
                     setOpen={setOpen}
@@ -1089,7 +1136,7 @@ const FormModal = ({
             </div>
             {open && (
               <div className="w-screen h-screen absolute left-0 top-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">
-                <div className="bg-white p-4 rounded-md relative w-[95%] h-[95%] md:w-[90%] lg:w-[85%] xl:w-[80%] 2xl:w-[75%] overflow-y-auto">
+                <div className="bg-white p-4 rounded-md relative w-[700px] h-auto">
                   <UpdateManyExamsForm
                     ids={ids as number[]}
                     setOpen={setOpen}

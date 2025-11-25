@@ -17,7 +17,10 @@ export default function LessonTableClient({
   allowedStaff,
 }: BaseTableClientProps) {
   const [open, setOpend] = useState(false);
-
+  function toNormalCase(str: string): string {
+    if (!str) return "";
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+  }
   return (
     <>
       <tr className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight">
@@ -30,9 +33,7 @@ export default function LessonTableClient({
             />
           </td>
         )}
-
-        <td className="hidden md:table-cell">{data?.id}</td>
-        <td className="flex items-center p-4 gap-4">
+        <td className="hidden md:table-cell items-center p-4 gap-4">
           {data.subject?.name || "-"}
         </td>
         <td className="hidden md:table-cell">{data.class.name}</td>
@@ -54,7 +55,7 @@ export default function LessonTableClient({
             hour12: false,
           })}
         </td>
-        <td>{data.day}</td>
+        <td className="hidden md:table-cell">{toNormalCase(data.day)}</td>
         <td className="hidden md:table-cell">
           {data.teacher ? `${data.teacher.name} ` : "Tidak ada guru"}
         </td>

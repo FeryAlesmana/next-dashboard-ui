@@ -26,7 +26,8 @@ export type TableName =
   | "ppdb-setting"
   | "importPayments"
   | "exportPayments"
-  | "exportResults";
+  | "exportResults"
+  | "staffPerfomance";
 
 export type FormContainerProps = {
   table: TableName;

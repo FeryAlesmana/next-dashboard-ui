@@ -48,6 +48,7 @@ import {
   CreatestaffSchema,
   UpdatestaffSchema,
   ExportResultSchema,
+  PerformanceSchema,
 } from "./formValidationSchema";
 import prisma from "./prisma";
 import { clerkClient } from "@clerk/nextjs/server";
@@ -5488,6 +5489,7 @@ export async function exportResultToExcel(
         const tugas = calculateSubjectScore(studentResults, lessonId, [
           "TUGAS_HARIAN",
           "PEKERJAAN_RUMAH",
+          "TUGAS_AKHIR",
         ]);
         const UH = calculateSubjectScore(studentResults, lessonId, [
           "UJIAN_HARIAN",
@@ -5617,3 +5619,85 @@ export async function exportResultToExcel(
     return { success: false, error: true, message };
   }
 }
+
+export async function createPerformance(
+  prevState: any,
+  payload: PerformanceSchema
+) {
+  try {
+    await prisma.performanceLog.create({
+      data: {
+        staffId: payload.staffId,
+        month: payload.month,
+        score: payload.score,
+        note: payload.note || null,
+      },
+    });
+
+    return {
+      success: true,
+      error: false,
+      message: "Perfoma Staff berhasil dibuat!",
+    };
+  } catch (err: any) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === "string"
+        ? error
+        : "Unknown error";
+
+    return { success: false, error: true, message };
+  }
+}
+
+export async function updatePerformance(
+  prevState: any,
+  payload: PerformanceSchema
+) {
+  try {
+    await prisma.performanceLog.update({
+      where: {
+        id: payload.id,
+      },
+      data: {
+        score: payload.score,
+        note: payload.note || null,
+      },
+    });
+
+    return {
+      success: true,
+      error: false,
+      message: "Perfoma Staff berhasil Diedit!",
+    };
+  } catch (err: any) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === "string"
+        ? error
+        : "Unknown error";
+
+    return { success: false, error: true, message };
+  }
+}
+
+export const deletePerfomance = async (
+  currentState: CurrentState,
+  formData: FormData
+): Promise<CurrentState> => {
+  const id = formData.get("id") as string;
+  try {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await prisma.performanceLog.delete({
+      where: {
+        id: id,
+      },
+    });
+    return { success: true, error: false };
+  } catch (error) {
+    console.log(error + " Di server action");
+    return { success: false, error: true };
+  }
+};

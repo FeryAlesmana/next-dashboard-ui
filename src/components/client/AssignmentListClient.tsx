@@ -7,6 +7,8 @@ import TableSearch from "../TableSearch";
 import FilterSortToggle from "../FilterSortToggle";
 import FormModal from "../FormModal";
 import { staffrole } from "@prisma/client";
+import { useMediaQuery } from "@/lib/useMediaQuery";
+import { MobileAssignmentCard } from "./MobileAssignmentClient";
 export type BaseListClientProps = {
   data: any[];
   relatedData?: any;
@@ -66,6 +68,7 @@ export default function AssignmentListClient({
   // console.log(semesterOptions, "semester option");
   const allowedStaff = role === "staff" && currentStaff === "PENILAIAN";
   const allowedRole = role === "admin" || role === "teacher" || allowedStaff;
+  const isMobile = useMediaQuery("(max-width: 768px)");
   return (
     <div className="space-y-4 mt-3">
       {/* TOP */}
@@ -132,47 +135,73 @@ export default function AssignmentListClient({
         handleChanged={handleChanged}
         handleManyChanged={handleManyChanged}
       />
-      {/* LIST */}
-      <Table columns={columns}>
-        <tr key="header" className="text-left text-gray-500 text-sm">
-          {(role === "admin" || allowedStaff) && (
-            <td className="px-4 py-2">
-              <input
-                type="checkbox"
-                checked={selected.length === data.length}
-                onChange={(e) =>
-                  setSelected(e.target.checked ? data.map((s) => s.id) : [])
-                }
+
+      {isMobile ? (
+        <div className="space-y-3">
+          {localData.length === 0 ? (
+            <div className=" p-4">
+              <div className="text-gray-500 text-sm text-center py-6">
+                Tidak ada data untuk table ini
+              </div>
+            </div>
+          ) : (
+            localData.map((row) => (
+              <MobileAssignmentCard
+                key={row.id}
+                data={row}
+                selected={selected}
+                onToggle={toggleSelection}
+                relatedData={relatedData}
+                onDeleted={handleDeleteOptimistic}
+                onChanged={handleChanged}
+                role={role}
+                allowedStaff={allowedStaff}
               />
-            </td>
+            ))
           )}
-          {/* other headers */}
-        </tr>
-        {localData.length === 0 ? (
-          <tr>
-            <td
-              colSpan={columns.length + (role === "admin" ? 1 : 0)}
-              className="text-center text-gray-500 py-6"
-            >
-              Tidak ada data untuk table ini
-            </td>
+        </div>
+      ) : (
+        <Table columns={columns}>
+          <tr key="header" className="text-left text-gray-500 text-sm">
+            {(role === "admin" || allowedStaff) && (
+              <td className="px-4 py-2">
+                <input
+                  type="checkbox"
+                  checked={selected.length === data.length}
+                  onChange={(e) =>
+                    setSelected(e.target.checked ? data.map((s) => s.id) : [])
+                  }
+                />
+              </td>
+            )}
+            {/* other headers */}
           </tr>
-        ) : (
-          localData.map((row) => (
-            <AssignmentTableClient
-              key={row.id}
-              data={row}
-              role={role}
-              selected={selected}
-              onToggle={toggleSelection}
-              relatedData={relatedData}
-              onDeleted={handleDeleteOptimistic}
-              onChanged={handleChanged}
-              allowedStaff={allowedRole}
-            />
-          ))
-        )}
-      </Table>
+          {localData.length === 0 ? (
+            <tr>
+              <td
+                colSpan={columns.length + (role === "admin" ? 1 : 0)}
+                className="text-center text-gray-500 py-6"
+              >
+                Tidak ada data untuk table ini
+              </td>
+            </tr>
+          ) : (
+            localData.map((row) => (
+              <AssignmentTableClient
+                key={row.id}
+                data={row}
+                role={role}
+                selected={selected}
+                onToggle={toggleSelection}
+                relatedData={relatedData}
+                onDeleted={handleDeleteOptimistic}
+                onChanged={handleChanged}
+                allowedStaff={allowedStaff} // allowedRole
+              />
+            ))
+          )}
+        </Table>
+      )}
     </div>
   );
 }

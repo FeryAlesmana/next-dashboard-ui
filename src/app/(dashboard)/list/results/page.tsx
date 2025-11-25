@@ -40,7 +40,7 @@ const ResultListPage = async ({
   let semesterOptions: any = [];
   if (role === "staff") {
     const staffrole = await getCurrentStaff(userId!);
-    staffRole = staffrole;
+    staffRole = staffrole; 
 
     const oldest = await prisma.student.findFirst({
       orderBy: { createdAt: "asc" },

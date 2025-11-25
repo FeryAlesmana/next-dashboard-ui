@@ -5,9 +5,24 @@ import Image from "next/image";
 import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import FormContainer from "@/components/FormContainer";
-import { decryptPassword, getCurrentUser } from "@/lib/utils";
+import {
+  decryptPassword,
+  generateSemesters,
+  getCurrentUser,
+} from "@/lib/utils";
 import EmailCopy from "@/components/EmailCopy";
 import { staffrole } from "@prisma/client";
+import StaffPerformanceChart from "@/components/StaffPerfomanceChart";
+import FormModal from "@/components/FormModal";
+import StaffPerformanceSection from "@/components/StaffPerfomanceSection";
+
+type roleType =
+  | "admin"
+  | "teacher"
+  | "student"
+  | "parent"
+  | "staff"
+  | undefined;
 
 const SingleStaffPage = async ({
   params,
@@ -16,14 +31,30 @@ const SingleStaffPage = async ({
 }) => {
   const { id } = await params;
   const { role } = await getCurrentUser();
+  if (!role) {
+    return notFound(); // Block completely unknown users
+  }
+  let semesterOptions: any = [];
 
+  const oldest = await prisma.student.findFirst({
+    orderBy: { createdAt: "asc" },
+    select: { createdAt: true, grade: { select: { level: true } } },
+  });
+
+  if (oldest) {
+    semesterOptions = generateSemesters(oldest.createdAt, 3, role as roleType);
+  }
   // Block users from viewing others' profiles unless they are admin
 
-  const staff = await prisma.staff.findUnique({
-    where: {
-      id,
-    },
-  });
+  const [staff, perfomancelog] = await prisma.$transaction([
+    prisma.staff.findUnique({
+      where: { id: id },
+    }),
+    prisma.performanceLog.findMany({
+      where: { staffId: id },
+      orderBy: { month: "asc" },
+    }),
+  ]);
 
   if (!staff) {
     return notFound();
@@ -152,14 +183,33 @@ const SingleStaffPage = async ({
           {/*  */}
         </div>
         {/* BOTTOM */}
-        <div className="w-full overflow-x-auto bg-white p-4 rounded-xl shadow-lg">
+        {/* <div className="w-full overflow-x-auto bg-white p-4 rounded-xl shadow-lg">
           <h2 className="text-lg font-semibold mb-4 text-gray-800">
             Recent Activity
           </h2>
-          <p className="text-sm text-gray-500">
-            Staff activity logs would go here...
-          </p>
-        </div>
+          
+        </div> */}
+        {/* <FormModal table="staffPerfomance" type="create" id={id}></FormModal> */}
+        {perfomancelog.length === 0 ? (
+          <div>
+            <div className="text-center text-gray-500 py-6 bg-white rounded-md">
+              <FormModal
+                table="staffPerfomance"
+                type="create"
+                id={id}
+              ></FormModal>
+              Tidak ada data untuk diagram ini
+            </div>
+          </div>
+        ) : (
+          <>
+            <StaffPerformanceSection
+              logs={perfomancelog}
+              staffId={id}
+              role={role!}
+            />
+          </>
+        )}
       </div>
       {/* RIGHT */}
       <div className="w-full xl:w-1/3 flex flex-col gap-4">

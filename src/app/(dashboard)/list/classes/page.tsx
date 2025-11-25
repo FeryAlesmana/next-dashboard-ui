@@ -144,6 +144,7 @@ const ClassListPage = async ({
             class: { select: { id: true, name: true, grade: true } },
           },
         },
+        grade: true,
       },
       take: perPage,
       skip: perPage ? perPage * (p - 1) : undefined,

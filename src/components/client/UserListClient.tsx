@@ -10,6 +10,8 @@ import Link from "next/link";
 import UserTableClient from "./UserTableClient";
 import TableSearch from "../TableSearch";
 import FilterSortToggle from "../FilterSortToggle";
+import { MobileUserCard } from "./MobileUserCard";
+import { useMediaQuery } from "@/lib/useMediaQuery";
 
 type User = {
   id: string;
@@ -34,6 +36,8 @@ export default function UserListClient({
 }) {
   const [selected, setSelected] = useState<string[]>([]);
   const [localData, setLocalData] = useState(rows);
+
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
   const toggleSelection = (id: string) => {
     setSelected((prev) =>
@@ -110,6 +114,34 @@ export default function UserListClient({
         data={localData}
       />
 
+      {isMobile ? (
+        // MOBILE VIEW
+
+        <div className="space-y-3">
+          {localData.length === 0 ? (
+            <div className=" p-4">
+              <div className="text-gray-500 text-sm text-center py-6">
+                Tidak ada data untuk table ini
+              </div>
+            </div>
+          ) : (
+            localData.map((row) => (
+              <MobileUserCard
+                key={row.id}
+                data={row}
+                selected={selected}
+                onToggle={toggleSelection}
+                relatedData={relatedData}
+                onDeleted={handleDeleteOptimistic}
+                onChanged={handleChanged}
+                role={role}
+                allowedStaff={allowedStaff}
+              />
+            ))
+          )}
+        </div>
+      ) : (
+        // DESKTOP TABLE VIEW
       <Table columns={columns}>
         <tr className="text-left text-gray-500 text-sm">
           {role === "admin" && (
@@ -150,6 +182,7 @@ export default function UserListClient({
           ))
         )}
       </Table>
+      )}
     </div>
   );
 }

@@ -8,6 +8,8 @@ import FilterSortToggle from "../FilterSortToggle";
 import TableSearch from "../TableSearch";
 import FormModal from "../FormModal";
 import { Teacher } from "@prisma/client";
+import { useMediaQuery } from "@/lib/useMediaQuery";
+import { MobileTeacherCard } from "./MobileTeacherCard";
 
 export default function TeacherListClient({
   columns,
@@ -19,6 +21,8 @@ export default function TeacherListClient({
 }: BaseListClientProps & { count: number }) {
   const [selected, setSelected] = useState<string[]>([]);
   const [localData, setLocalData] = useState(data); // 👈 keep a client copy
+  //const allowedRole = role === "admin";
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
   const toggleSelection = (id: string) => {
     setSelected((prev) =>
@@ -117,45 +121,73 @@ export default function TeacherListClient({
         handleManyChanged={handleManyChanged}
       />
 
-      <Table columns={columns}>
-        <tr className="text-left text-gray-500 text-sm">
-          {role === "admin" && (
-            <td className="px-4 py-2">
-              <input
-                type="checkbox"
-                checked={selected.length === data.length}
-                onChange={(e) =>
-                  setSelected(e.target.checked ? data.map((s) => s.id) : [])
-                }
+      {isMobile ? (
+        // MOBILE VIEW
+
+        <div className="space-y-3">
+          {localData.length === 0 ? (
+            <div className=" p-4">
+              <div className="text-gray-500 text-sm text-center py-6">
+                Tidak ada data untuk table ini
+              </div>
+            </div>
+          ) : (
+            localData.map((row) => (
+              <MobileTeacherCard
+                key={row.id}
+                data={row}
+                selected={selected}
+                onToggle={toggleSelection}
+                relatedData={relatedData}
+                onDeleted={handleDeleteOptimistic}
+                onChanged={handleChanged}
+                role={role}
               />
-            </td>
+            ))
           )}
-          {/* other headers */}
-        </tr>
-        {localData.length === 0 ? (
-          <tr>
-            <td
-              colSpan={columns.length + (role === "admin" ? 1 : 0)}
-              className="text-center text-gray-500 py-6"
-            >
-              Tidak ada data untuk table ini
-            </td>
+        </div>
+      ) : (
+        // DESKTOP TABLE VIEW
+        <Table columns={columns}>
+          <tr className="text-left text-gray-500 text-sm">
+            {role === "admin" && (
+              <td className="px-4 py-2">
+                <input
+                  type="checkbox"
+                  checked={selected.length === data.length}
+                  onChange={(e) =>
+                    setSelected(e.target.checked ? data.map((s) => s.id) : [])
+                  }
+                />
+              </td>
+            )}
+            {/* other headers */}
           </tr>
-        ) : (
-          localData.map((row) => (
-            <TeacherTableClient
-              key={row.id}
-              data={row}
-              role={role}
-              selected={selected}
-              onToggle={toggleSelection}
-              relatedData={relatedData}
-              onDeleted={handleDeleteOptimistic}
-              onChanged={handleChanged}
-            />
-          ))
-        )}
-      </Table>
+          {localData.length === 0 ? (
+            <tr>
+              <td
+                colSpan={columns.length + (role === "admin" ? 1 : 0)}
+                className="text-center text-gray-500 py-6"
+              >
+                Tidak ada data untuk table ini
+              </td>
+            </tr>
+          ) : (
+            localData.map((row) => (
+              <TeacherTableClient
+                key={row.id}
+                data={row}
+                role={role}
+                selected={selected}
+                onToggle={toggleSelection}
+                relatedData={relatedData}
+                onDeleted={handleDeleteOptimistic}
+                onChanged={handleChanged}
+              />
+            ))
+          )}
+        </Table>
+      )}
     </div>
   );
 }

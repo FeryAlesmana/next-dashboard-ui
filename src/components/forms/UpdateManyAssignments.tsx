@@ -133,15 +133,16 @@ const UpdateManyAssignmentsForm = ({
         <span className="text-center font-medium">
           {ids.length} Tugas akan diperbarui.
         </span>
-        <div className="flex justify-between flex-wrap gap-4 m-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <InputField
             label="Judul"
             name="title"
             defaultValue={data?.title}
             register={register}
             error={errors?.title}
+            table="teacher"
           ></InputField>
-          <div className="flex flex-col gap-2 w-full md:w-1/4">
+          <div className="flex flex-col gap-2 ">
             <label className="text-xs text-gray-400">Tipe Tugas</label>
             <select
               className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
@@ -167,6 +168,7 @@ const UpdateManyAssignmentsForm = ({
             defaultValue={data?.dueDate ? formatDateForInput(data.dueDate) : ""}
             register={register}
             error={errors?.dueDate}
+            table="teacher"
           ></InputField>
         </div>
         {(state.error || Object.keys(errors).length > 0) && (

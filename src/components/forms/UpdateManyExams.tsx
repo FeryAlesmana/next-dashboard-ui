@@ -127,13 +127,14 @@ const UpdateManyExamsForm = ({
         <span className="text-xs text-gray-400 font-medium">
           Informasi Ujian
         </span>
-        <div className="flex justify-between flex-wrap gap-10 m-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <InputField
             label="Nama Ujian"
             name="title"
             defaultValue={data?.title}
             register={register}
             error={errors?.title}
+            table="teacher"
           ></InputField>
           <InputField
             label="Waktu mulai"
@@ -144,6 +145,7 @@ const UpdateManyExamsForm = ({
             register={register}
             error={errors?.startTime}
             type="datetime-local"
+            table="teacher"
           ></InputField>
           <InputField
             label="Waktu selesai"
@@ -152,9 +154,10 @@ const UpdateManyExamsForm = ({
             register={register}
             error={errors?.endTime}
             type="datetime-local"
+            table="teacher"
           ></InputField>
 
-          <div className="flex flex-col gap-2 w-full md:w-1/4">
+          <div className="flex flex-col gap-2 ">
             <label className="text-xs text-gray-400">Tipe Ujian</label>
             <select
               className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"

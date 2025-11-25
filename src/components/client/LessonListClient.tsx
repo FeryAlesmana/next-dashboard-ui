@@ -9,6 +9,8 @@ import FormModal from "../FormModal";
 import LessonTableClient from "./LessonTableClient";
 import { Semester } from "./StudentPaymentView";
 import { staffrole } from "@prisma/client";
+import { useMediaQuery } from "@/lib/useMediaQuery"; 
+import { MobileLessonCard } from "./MobileLessonCard";
 
 export default function LessonListClient({
   columns,
@@ -58,6 +60,8 @@ export default function LessonListClient({
   } = options || {};
   const allowedStaff = role === "staff" && currentStaff === "PENJADWALAN";
   const allowedRole = role === "admin" || allowedStaff;
+  const isMobile = useMediaQuery("(max-width: 768px)");
+
   return (
     <div className="space-y-4 mt-3">
       {/* TOP */}
@@ -131,6 +135,33 @@ export default function LessonListClient({
         handleChanged={handleChanged}
         handleManyChanged={handleManyChanged}
       />
+      {isMobile ? (
+        // MOBILE VIEW
+
+        <div className="space-y-3">
+          {localData.length === 0 ? (
+            <div className=" p-4">
+              <div className="text-gray-500 text-sm text-center py-6">
+                Tidak ada data untuk table ini
+              </div>
+            </div>
+          ) : (
+            localData.map((row) => (
+              <MobileLessonCard
+                key={row.id}
+                data={row}
+                selected={selected}
+                onToggle={toggleSelection}
+                relatedData={relatedData}
+                onDeleted={handleDeleteOptimistic}
+                onChanged={handleChanged}
+                role={role}
+                allowedStaff={allowedRole}
+              />
+            ))
+          )}
+        </div>
+      ) : (
 
       <Table columns={columns}>
         <tr className="text-left text-gray-500 text-sm">
@@ -172,6 +203,7 @@ export default function LessonListClient({
           ))
         )}
       </Table>
+      )}
     </div>
   );
 }

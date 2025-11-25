@@ -57,7 +57,8 @@ export default function StaffTableClient({
         </td>
         <td className="hidden md:table-cell">{data.phone}</td>
         <td className="hidden md:table-cell">{data.address}</td>
-        <td>
+
+        <td className="hidden md:table-cell">
           <div className="flex items-center gap-2">
             <Link href={`/list/staffs/${data.id}`}>
               <button className="w-7 h-7 flex items-center justify-center rounded-full bg-lamaSky shadow-md">
