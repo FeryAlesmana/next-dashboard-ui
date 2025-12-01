@@ -74,6 +74,21 @@ export default function StudentListClient({
         <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
           <TableSearch></TableSearch>
           <div className="flex items-center gap-4 self-end">
+            {allowedRole && (
+              <>
+                <FormModal
+                  table="student"
+                  type="create"
+                  relatedData={relatedData}
+                  onChanged={handleChanged}
+                ></FormModal>
+                <FormModal
+                  table="importStudents"
+                  type="createMany"
+                  onChanged={handleManyChanged}
+                />
+              </>
+            )}
             <FilterSortToggle
               filterFields={[
                 {
@@ -94,21 +109,6 @@ export default function StudentListClient({
                 { label: "ID Desc", value: "id_desc" },
               ]}
             />
-            {allowedRole && (
-              <>
-                <FormModal
-                  table="student"
-                  type="create"
-                  relatedData={relatedData}
-                  onChanged={handleChanged}
-                ></FormModal>
-                <FormModal
-                  table="importStudents"
-                  type="createMany"
-                  onChanged={handleManyChanged}
-                />
-              </>
-            )}
           </div>
         </div>
       </div>

@@ -10,6 +10,7 @@ import PaymenTableClient from "./PaymentTableClient";
 import Link from "next/link";
 import Image from "next/image";
 import { staffrole } from "@prisma/client";
+import { useMediaQuery } from "@/lib/useMediaQuery";
 
 export default function PaymentListClient({
   columns,
@@ -88,6 +89,88 @@ export default function PaymentListClient({
   } = options || {};
   const allowedStaff = role === "staff" && currentStaff === "ACCOUNTING";
   const allowedRole = role === "admin" || allowedStaff;
+  const isMobile = useMediaQuery("(max-width: 768px)");
+  const getResponsiveColumns = ({
+    role,
+    allowedStaff,
+    allowedRole,
+    isMobile,
+  }: {
+    role: string;
+    allowedStaff: boolean;
+    allowedRole: boolean;
+    isMobile: boolean;
+  }) => {
+    // Helper function to conditionally truncate the header
+    const getHeader = (desktop: any, mobile: any) =>
+      isMobile ? mobile : desktop;
+
+    const columns = [
+      ...(allowedRole
+        ? [
+            {
+              // Checkbox header often doesn't need text on mobile
+              header: getHeader("Select", "✅"),
+              accessor: "checkbox",
+            },
+          ]
+        : []),
+      {
+        header: getHeader("Nama Murid", "Nama Murid"),
+        accessor: "studentId",
+      },
+      {
+        // Nama Calon siswa -> Nama Siswa
+        header: getHeader("NISN", "NISN"),
+        accessor: "nisn",
+        className: "hidden md:table-cell",
+      },
+      {
+        // Tanggal Submit -> Tgl Submit
+        header: getHeader("Jenis Pembayaran", "Jenis"),
+        accessor: "paymentType",
+      },
+      {
+        // Status Formulir -> Status
+        header: getHeader("Jumlah Tagihan", "Jumlah"),
+        accessor: "amount",
+        className: "hidden md:table-cell",
+      },
+      {
+        header: "Status",
+        accessor: "status",
+        className: "hidden md:table-cell",
+      },
+      {
+        header: "Jumlah Pembayaran",
+        accessor: "paidAmount",
+        className: "hidden md:table-cell",
+      },
+      {
+        header: "Tenggat Waktu",
+        accessor: "dueDate",
+        className: "hidden md:table-cell",
+      },
+      ...(allowedRole
+        ? [
+            {
+              // 'Aksi' is already short
+              header: getHeader("Aksi", "Aksi"),
+              accessor: "action",
+            },
+          ]
+        : []),
+    ];
+
+    return columns;
+  };
+
+  const trueCol = getResponsiveColumns({
+    role,
+    allowedStaff,
+    allowedRole,
+    isMobile,
+  });
   return (
     <div className="space-y-4 mt-3">
       {/* TOP */}
@@ -98,6 +181,40 @@ export default function PaymentListClient({
         <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
           <TableSearch />
           <div className="flex items-center gap-4 self-end">
+            {allowedRole && (
+              <>
+                <FormModal
+                  table="paymentLog"
+                  type="create"
+                  onChanged={handleChanged}
+                  relatedData={relatedData}
+                />
+                <FormModal
+                  table="importPayments"
+                  type="createMany"
+                  onChanged={handleManyImport}
+                />
+                <FormModal
+                  table="exportPayments"
+                  type="readMany"
+                  onChanged={handleManyImport}
+                />
+                {role === "admin" && (
+                  <>
+                    <Link href={`payment/changelog`}>
+                      <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow shadow-md">
+                        <Image
+                          src="/changelog.png"
+                          alt=""
+                          width={16}
+                          height={16}
+                        />
+                      </button>
+                    </Link>
+                  </>
+                )}
+              </>
+            )}
             <FilterSortToggle
               filterFields={[
                 {
@@ -139,41 +256,6 @@ export default function PaymentListClient({
                 { label: "ID Desc", value: "id_desc" },
               ]}
             />
-
-            {allowedRole && (
-              <>
-                <FormModal
-                  table="paymentLog"
-                  type="create"
-                  onChanged={handleChanged}
-                  relatedData={relatedData}
-                />
-                <FormModal
-                  table="importPayments"
-                  type="createMany"
-                  onChanged={handleManyImport}
-                />
-                <FormModal
-                  table="exportPayments"
-                  type="readMany"
-                  onChanged={handleManyImport}
-                />
-                {role === "admin" && (
-                  <>
-                    <Link href={`payment/changelog`}>
-                      <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow shadow-md">
-                        <Image
-                          src="/changelog.png"
-                          alt=""
-                          width={16}
-                          height={16}
-                        />
-                      </button>
-                    </Link>
-                  </>
-                )}
-              </>
-            )}
           </div>
         </div>
       </div>
@@ -188,7 +270,7 @@ export default function PaymentListClient({
         onDeleted={handleDeleteOptimistic}
       />
 
-      <Table columns={columns}>
+      <Table columns={trueCol}>
         <tr className="text-left text-gray-500 text-sm">
           {allowedRole && (
             <td className="px-4 py-2">

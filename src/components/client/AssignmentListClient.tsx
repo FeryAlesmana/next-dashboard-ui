@@ -77,6 +77,14 @@ export default function AssignmentListClient({
         <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
           <TableSearch></TableSearch>
           <div className="flex items-center gap-4 self-end">
+            {allowedRole && (
+              <FormModal
+                table="assignment"
+                type="create"
+                relatedData={relatedData}
+                onChanged={handleChanged}
+              ></FormModal>
+            )}
             <FilterSortToggle
               filterFields={[
                 {
@@ -114,14 +122,6 @@ export default function AssignmentListClient({
                 { label: "Deadline", value: "dl" },
               ]}
             />
-            {allowedRole && (
-              <FormModal
-                table="assignment"
-                type="create"
-                relatedData={relatedData}
-                onChanged={handleChanged}
-              ></FormModal>
-            )}
           </div>
         </div>
       </div>

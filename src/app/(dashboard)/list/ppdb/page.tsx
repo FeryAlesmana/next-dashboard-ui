@@ -213,6 +213,11 @@ const PpdbPage = async ({
           <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
             <TableSearch></TableSearch>
             <div className="flex items-center gap-4 self-end">
+              <FormModal
+                table="ppdb-setting"
+                type="update"
+                data={settingData}
+              />
               <FilterSortToggle
                 filterFields={[
                   {
@@ -234,11 +239,6 @@ const PpdbPage = async ({
                   { label: "ID Asc", value: "id_asc" },
                   { label: "ID Desc", value: "id_desc" },
                 ]}
-              />
-              <FormModal
-                table="ppdb-setting"
-                type="update"
-                data={settingData}
               />
             </div>
           </div>

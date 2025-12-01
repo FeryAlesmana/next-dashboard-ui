@@ -10,8 +10,8 @@ import Link from "next/link";
 import UserTableClient from "./UserTableClient";
 import TableSearch from "../TableSearch";
 import FilterSortToggle from "../FilterSortToggle";
-import { MobileUserCard } from "./MobileUserCard";
 import { useMediaQuery } from "@/lib/useMediaQuery";
+import { MobileUserCard } from "./MobileUserCard";
 
 type User = {
   id: string;
@@ -73,6 +73,14 @@ export default function UserListClient({
         <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
           <TableSearch />
           <div className="flex items-center gap-4 self-end">
+            {role === "admin" && (
+              <FormModal
+                table="user"
+                type="create"
+                relatedData={relatedData}
+                onChanged={handleChanged}
+              ></FormModal>
+            )}
             <FilterSortToggle
               filterFields={[
                 {
@@ -94,15 +102,6 @@ export default function UserListClient({
               ]}
               hideperPage={true}
             />
-
-            {role === "admin" && (
-              <FormModal
-                table="user"
-                type="create"
-                relatedData={relatedData}
-                onChanged={handleChanged}
-              ></FormModal>
-            )}
           </div>
         </div>
       </div>
@@ -135,53 +134,52 @@ export default function UserListClient({
                 onDeleted={handleDeleteOptimistic}
                 onChanged={handleChanged}
                 role={role}
-                allowedStaff={allowedStaff}
               />
             ))
           )}
         </div>
       ) : (
         // DESKTOP TABLE VIEW
-      <Table columns={columns}>
-        <tr className="text-left text-gray-500 text-sm">
-          {role === "admin" && (
-            <th className="px-4 py-2">
-              <input
-                type="checkbox"
-                checked={selected.length === localData.length}
-                onChange={(e) =>
-                  setSelected(
-                    e.target.checked ? localData.map((r) => r.id) : []
-                  )
-                }
-              />
-            </th>
-          )}
-        </tr>
-        {localData.length === 0 ? (
-          <tr>
-            <td
-              colSpan={columns.length + (role === "admin" ? 1 : 0)}
-              className="text-center text-gray-500 py-6"
-            >
-              Tidak ada data untuk table ini
-            </td>
+        <Table columns={columns}>
+          <tr className="text-left text-gray-500 text-sm">
+            {role === "admin" && (
+              <th className="px-4 py-2">
+                <input
+                  type="checkbox"
+                  checked={selected.length === localData.length}
+                  onChange={(e) =>
+                    setSelected(
+                      e.target.checked ? localData.map((r) => r.id) : []
+                    )
+                  }
+                />
+              </th>
+            )}
           </tr>
-        ) : (
-          localData.map((row) => (
-            <UserTableClient
-              key={row.id}
-              data={row}
-              role={role}
-              selected={selected}
-              onToggle={toggleSelection}
-              relatedData={relatedData}
-              onDeleted={handleDeleteOptimistic}
-              onChanged={handleChanged}
-            />
-          ))
-        )}
-      </Table>
+          {localData.length === 0 ? (
+            <tr>
+              <td
+                colSpan={columns.length + (role === "admin" ? 1 : 0)}
+                className="text-center text-gray-500 py-6"
+              >
+                Tidak ada data untuk table ini
+              </td>
+            </tr>
+          ) : (
+            localData.map((row) => (
+              <UserTableClient
+                key={row.id}
+                data={row}
+                role={role}
+                selected={selected}
+                onToggle={toggleSelection}
+                relatedData={relatedData}
+                onDeleted={handleDeleteOptimistic}
+                onChanged={handleChanged}
+              />
+            ))
+          )}
+        </Table>
       )}
     </div>
   );

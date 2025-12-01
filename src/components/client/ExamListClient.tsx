@@ -67,6 +67,14 @@ export default function ExamListClient({
         <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
           <TableSearch></TableSearch>
           <div className="flex items-center gap-4 self-end">
+            {allowedRole && (
+              <FormModal
+                table="exam"
+                type="create"
+                relatedData={relatedData}
+                onChanged={handleChanged}
+              ></FormModal>
+            )}
             <FilterSortToggle
               filterFields={[
                 {
@@ -98,14 +106,6 @@ export default function ExamListClient({
                 { label: "ID Desc", value: "id_desc" },
               ]}
             />
-            {allowedRole && (
-              <FormModal
-                table="exam"
-                type="create"
-                relatedData={relatedData}
-                onChanged={handleChanged}
-              ></FormModal>
-            )}
           </div>
         </div>
       </div>

@@ -6,9 +6,8 @@ import { assTypes, exTypes, resTypes } from "@prisma/client";
 import NameListPopover from "../NamePopover";
 import Link from "next/link";
 import Image from "next/image";
-import TeacherListPopover from "../TeacherListPopover";
 
-export function MobileTeacherCard({
+export function MobileUserCard({
   data,
   selected,
   onToggle,
@@ -16,7 +15,6 @@ export function MobileTeacherCard({
   onChanged,
   onDeleted,
   role,
-  allowedStaff,
 }: BaseTableClientProps) {
   const [open, setOpen] = useState(false);
   return (
@@ -54,12 +52,7 @@ export function MobileTeacherCard({
                 {data.name}
               </div>
 
-              <p className="text-xs text-gray-500 overflow-hidden text-ellipsis whitespace-nowrap max-w-full">
-                {data?.email || "-"}
-              </p>
-              {/* <div className="text-sm text-gray-600 overflow-hidden text-ellipsis whitespace-nowrap max-w-full">
-                Username : {data.username}
-              </div> */}
+              <p className="text-xs text-gray-500">Role : {data.role}</p>
             </div>
           </div>
         </div>
@@ -75,52 +68,71 @@ export function MobileTeacherCard({
 
       {open && (
         <div className="mt-3 pt-3 border-t space-y-3 text-sm text-gray-700 ml-3">
-          <div className="space-y-1">
+          <div className="space-y-1 min-w-0">
             <div className="font-medium flex min-w-0">
-              <span className="shrink-0"> Username :</span>
+              <span className="shrink-0">Email :</span>
               <span className="font-normal overflow-hidden text-ellipsis whitespace-nowrap ml-1 min-w-0">
-                {data.username}
-              </span>
-            </div>
-            {/* <div className="font-medium">
-              Mata Pelajaran :{" "}
-              <span className="font-normal">
-                {data.subjects
-                  .map((subject: { name: string }) => subject.name)
-                  .join(",") || "-"}
-              </span>
-            </div>
-            <div className="font-medium">
-              Kelas :{" "}
-              <span className="font-normal">
-                {data.classes
-                  .map((classdata: { name: string }) => classdata.name)
-                  .join(",") || "-"}
-              </span>
-            </div> */}
-            <div className="font-medium">
-              Mata Pelajaran :{" "}
-              <TeacherListPopover
-                label="Mata Pelajaran"
-                items={data.subjects}
-              />
-            </div>
-            <div className="font-medium">
-              Kelas : <TeacherListPopover label="Kelas" items={data.classes} />
-            </div>
-            {/* <div className="font-medium">
-              Alamat : <span className="font-normal">{data.address}</span>
-            </div> */}
-            <div className="font-medium flex min-w-0">
-              <span className="shrink-0"> Alamat :</span>
-              <span className="font-normal overflow-hidden text-ellipsis whitespace-nowrap ml-1 min-w-0">
-                {data.address}
+                {data.email}
               </span>
             </div>
 
-            <div className="font-medium">
-              No. Telepon : <span className="font-normal">{data.phone}</span>
+            <div className="font-medium flex min-w-0">
+              <span className="shrink-0"> User di database :</span>
+              <span className="font-normal overflow-hidden text-ellipsis whitespace-nowrap ml-1 min-w-0">
+                {data.dbName}
+              </span>
             </div>
+            {data.role === "admin" ? (
+              <div className="font-medium">
+                Profile :{" "}
+                <button
+                  className="w-5 h-5 rounded-full ml-3 cursor-not-allowed"
+                  disabled
+                  title="Profil User"
+                >
+                  <Image src="/morev.png" alt="" width={16} height={16} />
+                </button>
+              </div>
+            ) : data.dbName === "-" ? (
+              <div className="font-medium">
+                Profile :{" "}
+                <button
+                  className="w-5 h-5 rounded-full ml-3 "
+                  title="Profile unavailable"
+                  disabled
+                >
+                  <Image src="/morev.png" alt="" width={16} height={16} />
+                </button>
+              </div>
+            ) : data.role === "parent" ? (
+              <div className="font-medium">
+                Profile :{" "}
+                <Link
+                  href={`/list/parents?search=${encodeURIComponent(
+                    data.dbName
+                  )}`}
+                >
+                  <button
+                    className="w-5 h-5 rounded-full ml-3 "
+                    title="Profil User"
+                  >
+                    <Image src="/morev.png" alt="" width={16} height={16} />
+                  </button>
+                </Link>
+              </div>
+            ) : (
+              <div className="font-medium">
+                Profile :{" "}
+                <Link href={`/list/${data.role}s/${data.id}`}>
+                  <button
+                    className="w-5 h-5 rounded-full ml-3 "
+                    title="Profil User"
+                  >
+                    <Image src="/morev.png" alt="" width={16} height={16} />
+                  </button>
+                </Link>
+              </div>
+            )}
           </div>
 
           {role === "admin" && (
@@ -128,7 +140,7 @@ export function MobileTeacherCard({
               {/* Update */}
               <div className="flex items-center gap-2">
                 <FormModal
-                  table="teacher"
+                  table="user"
                   type="update"
                   data={data}
                   relatedData={relatedData}
@@ -142,7 +154,7 @@ export function MobileTeacherCard({
               {/* Delete */}
               <div className="flex items-center gap-2">
                 <FormModal
-                  table="teacher"
+                  table="user"
                   type="delete"
                   id={data.id}
                   onDeleted={() => onDeleted?.([data.id])}

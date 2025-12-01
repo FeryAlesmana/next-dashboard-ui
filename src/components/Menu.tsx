@@ -121,21 +121,7 @@ export default function Menu({ onLinkClick }: { onLinkClick: () => void }) {
           href: "/list/lessons",
           visible: ["admin", "teacher", "student", "parent"],
         },
-        // {
-        //   icon: "/jadwal.png",
-        //   label: "Jadwal",
-        //   visible: ["admin", "teacher", "student", "parent"],
-        //   children: [
-        //     {
-        //       label: "Jadwal Kelas",
-        //       href: "/list/lessons",
-        //     },
-        //     {
-        //       label: "Kehadiran",
-        //       href: "/list/lessons/attendance",
-        //     },
-        //   ],
-        // },
+
         {
           icon: "/exam.png",
           label: "Ujian",
@@ -329,6 +315,7 @@ export default function Menu({ onLinkClick }: { onLinkClick: () => void }) {
               <Link
                 key={item.label}
                 href={href!}
+                onClick={() => onLinkClick?.()}
                 className={`flex gap-4 py-2 md:px-2 rounded-md ${
                   isActive
                     ? "bg-lamaSkyLight font-medium text-black"

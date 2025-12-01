@@ -27,7 +27,7 @@ export function MobileResultCard({
 
   return (
     <div className="border rounded-lg p-4 bg-white shadow-sm">
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between min-w-0">
         {/* Checkbox */}
         {(role === "admin" || allowedStaff) && (
           <input
@@ -38,16 +38,15 @@ export function MobileResultCard({
           />
         )}
 
-        <div className="ml-3 flex-1">
+        <div className="ml-3 flex-1 min-w-0">
           <div
-            className="font-medium  max-w-full md:max-w-[300px] 
-                           overflow-hidden text-ellipsis whitespace-nowrap"
+            className="font-medium overflow-hidden text-ellipsis whitespace-nowrap max-w-full"
             title={data.student}
           >
             {data.student}
           </div>
           <div className="text-sm text-gray-600">Nilai: {data.score}</div>
-          <div className="text-xs text-gray-400">
+          <div className="text-xs text-gray-400 overflow-hidden text-ellipsis whitespace-nowrap max-w-full">
             {data.selectedType} •{" "}
             {data.resultType
               ? resultTypelabel[data.resultType as resTypes]
@@ -71,8 +70,11 @@ export function MobileResultCard({
               Mata Pelajaran:{" "}
               <span className="font-normal">{data.subject}</span>
             </div>
-            <div className="font-medium">
-              Guru: <span className="font-normal">{data.teacher}</span>
+            <div className="font-medium flex min-w-0">
+              <span className="shrink-0">Guru :</span>
+              <span className="font-normal overflow-hidden text-ellipsis whitespace-nowrap ml-1 min-w-0">
+                {data.teacher}
+              </span>
             </div>
             <div className="font-medium">
               Kelas: <span className="font-normal">{data.class}</span>

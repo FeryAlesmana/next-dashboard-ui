@@ -56,7 +56,11 @@ export default function FilterSortToggle({
       </div>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-max z-50 bg-white rounded-lg shadow-lg p-4 ">
+        <div
+          className="absolute right-0 mt-2 z-50 bg-white rounded-xl shadow-2xl p-4 border border-gray-100 
+                       min-w-[280px] max-w-[calc(100vw-32px)] // Added min-w to prevent excessive compression on mobile
+                       sm:max-w-lg lg:w-max" // Allows it to be wider on tablet/desktop
+        >
           <FilterSortBar
             filterFields={filterFields}
             sortOptions={sortOptions}

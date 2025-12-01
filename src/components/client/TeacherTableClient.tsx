@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import FormModal from "../FormModal";
 import { BaseTableClientProps } from "./AssignmentTableClient";
+import TeacherListPopover from "../TeacherListPopover";
 
 export default function TeacherTableClient({
   data,
@@ -46,14 +47,10 @@ export default function TeacherTableClient({
         </td>
         <td className="hidden md:table-cell">{data.username}</td>
         <td className="hidden md:table-cell">
-          {data.subjects
-            .map((subject: { name: string }) => subject.name)
-            .join(",") || "-"}
+          <TeacherListPopover label="Mata Pelajaran" items={data.subjects} />
         </td>
         <td className="hidden md:table-cell">
-          {data.classes
-            .map((classdata: { name: string }) => classdata.name)
-            .join(",") || "-"}
+          <TeacherListPopover label="Kelas" items={data.classes} />
         </td>
         <td className="hidden md:table-cell">{data.phone}</td>
         <td className="hidden md:table-cell">{data.address}</td>

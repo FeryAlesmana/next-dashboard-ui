@@ -72,6 +72,21 @@ export default function TeacherListClient({
         <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
           <TableSearch></TableSearch>
           <div className="flex items-center gap-4 self-end">
+            {role === "admin" && (
+              <>
+                <FormModal
+                  table="teacher"
+                  type="create"
+                  relatedData={relatedData}
+                  onChanged={handleChanged}
+                ></FormModal>
+                <FormModal
+                  table="importTeachers"
+                  type="createMany"
+                  onChanged={handleManyChanged}
+                />
+              </>
+            )}
             <FilterSortToggle
               filterFields={[
                 {
@@ -92,21 +107,6 @@ export default function TeacherListClient({
                 { label: "ID Desc", value: "id_desc" },
               ]}
             />
-            {role === "admin" && (
-              <>
-                <FormModal
-                  table="teacher"
-                  type="create"
-                  relatedData={relatedData}
-                  onChanged={handleChanged}
-                ></FormModal>
-                <FormModal
-                  table="importTeachers"
-                  type="createMany"
-                  onChanged={handleManyChanged}
-                />
-              </>
-            )}
           </div>
         </div>
       </div>

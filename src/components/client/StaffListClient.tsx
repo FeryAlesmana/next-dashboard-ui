@@ -9,7 +9,7 @@ import TableSearch from "../TableSearch";
 import FormModal from "../FormModal";
 import { Teacher } from "@prisma/client";
 import StaffTableClient from "./StaffTableClient";
-import { useMediaQuery } from "@/lib/useMediaQuery"; 
+import { useMediaQuery } from "@/lib/useMediaQuery";
 import { MobileStaffCard } from "./MobileStaffCard";
 
 export default function StaffListClient({
@@ -24,7 +24,7 @@ export default function StaffListClient({
   const [localData, setLocalData] = useState(data); // 👈 keep a client copy
 
   //const allowedRole = role === "admin";
-  const isMobile = useMediaQuery("(max-width: 768px)"); 
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
   const toggleSelection = (id: string) => {
     setSelected((prev) =>
@@ -65,7 +65,6 @@ export default function StaffListClient({
   };
   const { staffRoles = [] } = options || {};
 
-  
   return (
     <div className="space-y-4 mt-3">
       {/* TOP */}
@@ -76,21 +75,6 @@ export default function StaffListClient({
         <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
           <TableSearch></TableSearch>
           <div className="flex items-center gap-4 self-end">
-            <FilterSortToggle
-              filterFields={[
-                {
-                  name: "byRole",
-                  label: "Peran Staff",
-                  options: staffRoles,
-                },
-              ]}
-              sortOptions={[
-                { label: "A-Z", value: "az" },
-                { label: "Z-A", value: "za" },
-                { label: "ID Asc", value: "id_asc" },
-                { label: "ID Desc", value: "id_desc" },
-              ]}
-            />
             {role === "admin" && (
               <>
                 <FormModal
@@ -106,6 +90,21 @@ export default function StaffListClient({
                 /> */}
               </>
             )}
+            <FilterSortToggle
+              filterFields={[
+                {
+                  name: "byRole",
+                  label: "Peran Staff",
+                  options: staffRoles,
+                },
+              ]}
+              sortOptions={[
+                { label: "A-Z", value: "az" },
+                { label: "Z-A", value: "za" },
+                { label: "ID Asc", value: "id_asc" },
+                { label: "ID Desc", value: "id_desc" },
+              ]}
+            />
           </div>
         </div>
       </div>
@@ -146,45 +145,45 @@ export default function StaffListClient({
         </div>
       ) : (
         // DESKTOP TABLE VIEW
-      <Table columns={columns}>
-        <tr className="text-left text-gray-500 text-sm">
-          {role === "admin" && (
-            <td className="px-4 py-2">
-              <input
-                type="checkbox"
-                checked={selected.length === data.length}
-                onChange={(e) =>
-                  setSelected(e.target.checked ? data.map((s) => s.id) : [])
-                }
-              />
-            </td>
-          )}
-          {/* other headers */}
-        </tr>
-        {localData.length === 0 ? (
-          <tr>
-            <td
-              colSpan={columns.length + (role === "admin" ? 1 : 0)}
-              className="text-center text-gray-500 py-6"
-            >
-              Tidak ada data untuk table ini
-            </td>
+        <Table columns={columns}>
+          <tr className="text-left text-gray-500 text-sm">
+            {role === "admin" && (
+              <td className="px-4 py-2">
+                <input
+                  type="checkbox"
+                  checked={selected.length === data.length}
+                  onChange={(e) =>
+                    setSelected(e.target.checked ? data.map((s) => s.id) : [])
+                  }
+                />
+              </td>
+            )}
+            {/* other headers */}
           </tr>
-        ) : (
-          localData.map((row) => (
-            <StaffTableClient
-              key={row.id}
-              data={row}
-              role={role}
-              selected={selected}
-              onToggle={toggleSelection}
-              relatedData={relatedData}
-              onDeleted={handleDeleteOptimistic}
-              onChanged={handleChanged}
-            />
-          ))
-        )}
-      </Table>
+          {localData.length === 0 ? (
+            <tr>
+              <td
+                colSpan={columns.length + (role === "admin" ? 1 : 0)}
+                className="text-center text-gray-500 py-6"
+              >
+                Tidak ada data untuk table ini
+              </td>
+            </tr>
+          ) : (
+            localData.map((row) => (
+              <StaffTableClient
+                key={row.id}
+                data={row}
+                role={role}
+                selected={selected}
+                onToggle={toggleSelection}
+                relatedData={relatedData}
+                onDeleted={handleDeleteOptimistic}
+                onChanged={handleChanged}
+              />
+            ))
+          )}
+        </Table>
       )}
     </div>
   );

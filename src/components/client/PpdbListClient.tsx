@@ -5,6 +5,7 @@ import BulkActions from "../BulkActions";
 import PpdbTableClient from "./PpdbTableClient";
 import { BaseListClientProps } from "./AssignmentListClient";
 import { staffrole } from "@prisma/client";
+import { useMediaQuery } from "@/lib/useMediaQuery";
 
 export default function PpdbListClient({
   columns,
@@ -48,6 +49,74 @@ export default function PpdbListClient({
   };
   const allowedStaff = role === "staff" && currentStaff === "PENILAIAN";
   const allowedRole = role === "admin" || allowedStaff;
+  const isMobile = useMediaQuery("(max-width: 768px)");
+  const getResponsiveColumns = ({
+    role,
+    allowedStaff,
+    allowedRole,
+    isMobile,
+  }: {
+    role: string;
+    allowedStaff: boolean;
+    allowedRole: boolean;
+    isMobile: boolean;
+  }) => {
+    // Helper function to conditionally truncate the header
+    const getHeader = (desktop: any, mobile: any) =>
+      isMobile ? mobile : desktop;
+
+    const columns = [
+      ...(allowedRole
+        ? [
+            {
+              // Checkbox header often doesn't need text on mobile
+              header: getHeader("Select", "✅"),
+              accessor: "checkbox",
+            },
+          ]
+        : []),
+      {
+        // ID PPDB -> ID
+        header: getHeader("ID PPDB", "ID"),
+        accessor: "id",
+        className: "hidden md:table-cell",
+      },
+      {
+        // Nama Calon siswa -> Nama Siswa
+        header: getHeader("Nama Calon siswa", "Nama Siswa"),
+        accessor: "name",
+      },
+      {
+        // Tanggal Submit -> Tgl Submit
+        header: getHeader("Tanggal Submit", "Tgl Submit"),
+        accessor: "createdAt",
+        className: "hidden md:table-cell",
+      },
+      {
+        // Status Formulir -> Status
+        header: getHeader("Status Formulir", "Status"),
+        accessor: "isvalid",
+      },
+      ...(allowedRole
+        ? [
+            {
+              // 'Aksi' is already short
+              header: getHeader("Aksi", "Aksi"),
+              accessor: "action",
+            },
+          ]
+        : []),
+    ];
+
+    return columns;
+  };
+
+  const trueCol = getResponsiveColumns({
+    role,
+    allowedStaff,
+    allowedRole,
+    isMobile,
+  });
   return (
     <div className="space-y-4 mt-3">
       <BulkActions
@@ -61,7 +130,7 @@ export default function PpdbListClient({
         handleManyChanged={handleManyChanged}
       />
 
-      <Table columns={columns}>
+      <Table columns={trueCol}>
         <tr className="text-left text-gray-500 text-sm">
           {allowedRole && (
             <td className="px-4 py-2">

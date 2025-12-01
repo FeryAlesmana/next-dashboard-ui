@@ -44,6 +44,8 @@ const BigCalendar = ({
       endAccessor="end"
       views={["work_week", "day", "month"]}
       view={view}
+      popup
+      popupOffset={{ x: 10, y: 10 }}
       style={{ height: "600px" }}
       // defaultDate={data[0]?.start ?? new Date()}
       messages={messages}

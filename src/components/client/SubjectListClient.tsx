@@ -9,6 +9,8 @@ import FormModal from "../FormModal";
 import SubjectTableClient from "./SubjectTableClient";
 import { Semester } from "./StudentPaymentView";
 import { staffrole } from "@prisma/client";
+import { useMediaQuery } from "@/lib/useMediaQuery";
+import { MobileSubjectCard } from "./MobileSubjectCard";
 
 export default function SubjectListClient({
   columns,
@@ -60,6 +62,8 @@ export default function SubjectListClient({
   } = options || {};
   const allowedStaff = role === "staff" && currentStaff === "PENJADWALAN";
   const allowedRole = role === "admin" || allowedStaff;
+  const isMobile = useMediaQuery("(max-width: 768px)");
+
   return (
     <div className="space-y-4 mt-3">
       {/* TOP */}
@@ -70,6 +74,14 @@ export default function SubjectListClient({
         <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
           <TableSearch></TableSearch>
           <div className="flex items-center gap-4 self-end">
+            {allowedRole && (
+              <FormModal
+                table="subject"
+                type="create"
+                relatedData={relatedData}
+                onChanged={handleChanged}
+              ></FormModal>
+            )}
             <FilterSortToggle
               filterFields={[
                 {
@@ -106,14 +118,6 @@ export default function SubjectListClient({
                 { label: "ID Desc", value: "id_desc" },
               ]}
             />
-            {allowedRole && (
-              <FormModal
-                table="subject"
-                type="create"
-                relatedData={relatedData}
-                onChanged={handleChanged}
-              ></FormModal>
-            )}
           </div>
         </div>
       </div>
@@ -128,46 +132,74 @@ export default function SubjectListClient({
         handleManyChanged={handleManyChanged}
       />
 
-      <Table columns={columns}>
-        <tr className="text-left text-gray-500 text-sm">
-          {allowedRole && (
-            <td className="px-4 py-2">
-              <input
-                type="checkbox"
-                checked={selected.length === data.length}
-                onChange={(e) =>
-                  setSelected(e.target.checked ? data.map((s) => s.id) : [])
-                }
+      {isMobile ? (
+        // MOBILE VIEW
+
+        <div className="space-y-3">
+          {localData.length === 0 ? (
+            <div className=" p-4">
+              <div className="text-gray-500 text-sm text-center py-6">
+                Tidak ada data untuk table ini
+              </div>
+            </div>
+          ) : (
+            localData.map((row) => (
+              <MobileSubjectCard
+                key={row.id}
+                data={row}
+                selected={selected}
+                onToggle={toggleSelection}
+                relatedData={relatedData}
+                onDeleted={handleDeleteOptimistic}
+                onChanged={handleChanged}
+                role={role}
+                allowedStaff={allowedRole}
               />
-            </td>
+            ))
           )}
-          {/* other headers */}
-        </tr>
-        {localData.length === 0 ? (
-          <tr>
-            <td
-              colSpan={columns.length + (role === "admin" ? 1 : 0)}
-              className="text-center text-gray-500 py-6"
-            >
-              Tidak ada data untuk table ini
-            </td>
+        </div>
+      ) : (
+        <Table columns={columns}>
+          <tr className="text-left text-gray-500 text-sm">
+            {allowedRole && (
+              <td className="px-4 py-2">
+                <input
+                  type="checkbox"
+                  checked={selected.length === data.length}
+                  onChange={(e) =>
+                    setSelected(e.target.checked ? data.map((s) => s.id) : [])
+                  }
+                />
+              </td>
+            )}
+            {/* other headers */}
           </tr>
-        ) : (
-          localData.map((row) => (
-            <SubjectTableClient
-              key={row.id}
-              data={row}
-              role={role}
-              selected={selected}
-              onToggle={toggleSelection}
-              relatedData={relatedData}
-              onDeleted={handleDeleteOptimistic}
-              onChanged={handleChanged}
-              allowedStaff={allowedRole}
-            />
-          ))
-        )}
-      </Table>
+          {localData.length === 0 ? (
+            <tr>
+              <td
+                colSpan={columns.length + (role === "admin" ? 1 : 0)}
+                className="text-center text-gray-500 py-6"
+              >
+                Tidak ada data untuk table ini
+              </td>
+            </tr>
+          ) : (
+            localData.map((row) => (
+              <SubjectTableClient
+                key={row.id}
+                data={row}
+                role={role}
+                selected={selected}
+                onToggle={toggleSelection}
+                relatedData={relatedData}
+                onDeleted={handleDeleteOptimistic}
+                onChanged={handleChanged}
+                allowedStaff={allowedRole}
+              />
+            ))
+          )}
+        </Table>
+      )}
     </div>
   );
 }

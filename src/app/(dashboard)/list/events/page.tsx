@@ -330,6 +330,9 @@ const EventListPage = async ({
           <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
             <TableSearch></TableSearch>
             <div className="flex items-center gap-4 self-end">
+              {role === "admin" && (
+                <FormContainer table="event" type="create"></FormContainer>
+              )}
               <FilterSortToggle
                 filterFields={[
                   {
@@ -361,9 +364,6 @@ const EventListPage = async ({
                   { label: "ID Desc", value: "id_desc" },
                 ]}
               />
-              {role === "admin" && (
-                <FormContainer table="event" type="create"></FormContainer>
-              )}
             </div>
           </div>
         </div>

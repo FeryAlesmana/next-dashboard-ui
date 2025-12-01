@@ -66,6 +66,14 @@ const ClassesListClient = ({
         <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
           <TableSearch></TableSearch>
           <div className="flex items-center gap-4 self-end">
+            {allowedRole && (
+              <FormModal
+                table="class"
+                type="create"
+                relatedData={relatedData}
+                onChanged={handleChanged}
+              ></FormModal>
+            )}
             <FilterSortToggle
               filterFields={[
                 {
@@ -93,14 +101,6 @@ const ClassesListClient = ({
                 { label: "Kapasitas Desc", value: "cp_desc" },
               ]}
             />
-            {allowedRole && (
-              <FormModal
-                table="class"
-                type="create"
-                relatedData={relatedData}
-                onChanged={handleChanged}
-              ></FormModal>
-            )}
           </div>
         </div>
       </div>

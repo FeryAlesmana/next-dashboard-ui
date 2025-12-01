@@ -24,7 +24,7 @@ export function MobileStaffCard({
   }
   return (
     <div className="border rounded-lg p-4 bg-white shadow-sm">
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between min-w-0">
         {/* LEFT SIDE: Checkbox + Image + Text */}
         <div className="flex items-start">
           {/* Checkbox */}
@@ -38,7 +38,7 @@ export function MobileStaffCard({
           )}
 
           {/* Image + Text */}
-          <div className="flex items-start gap-3">
+          <div className="flex items-start gap-3 min-w-0">
             {/* Image */}
             <Image
               src={data.img || "/noAvatar.png"}
@@ -49,19 +49,15 @@ export function MobileStaffCard({
             />
 
             {/* Text */}
-            <div className="flex flex-col">
+            <div className="flex flex-col min-w-0">
               <div
-                className="font-medium max-w-full md:max-w-[300px]
-                        overflow-hidden text-ellipsis whitespace-nowrap"
+                className="font-medium overflow-hidden text-ellipsis whitespace-nowrap max-w-full"
                 title={data.name}
               >
                 {data.name}
               </div>
 
               <p className="text-xs text-gray-500">{data?.email || "-"}</p>
-              <div className="text-sm text-gray-600">
-                Username : {data.username}
-              </div>
             </div>
           </div>
         </div>
@@ -78,9 +74,19 @@ export function MobileStaffCard({
       {open && (
         <div className="mt-3 pt-3 border-t space-y-3 text-sm text-gray-700 ml-3">
           <div className="space-y-1">
-            <div className="font-medium">
-              Alamat : <span className="font-normal">{data.address}</span>
+            <div className="font-medium flex min-w-0">
+              <span className="shrink-0"> Username :</span>
+              <span className="font-normal overflow-hidden text-ellipsis whitespace-nowrap ml-1 min-w-0">
+                {data.username}
+              </span>
             </div>
+            <div className="font-medium flex min-w-0">
+              <span className="shrink-0"> Alamat :</span>
+              <span className="font-normal overflow-hidden text-ellipsis whitespace-nowrap ml-1 min-w-0">
+                {data.address}
+              </span>
+            </div>
+
             <div className="font-medium">
               Jenis Staff :{" "}
               <span className="font-normal">

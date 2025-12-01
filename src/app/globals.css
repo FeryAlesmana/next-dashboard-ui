@@ -1,8 +1,7 @@
-@import 'leaflet/dist/leaflet.css';
+@import "leaflet/dist/leaflet.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
 
 .react-calendar {
   width: 100% !important;
@@ -54,6 +53,16 @@
   display: none !important;
 }
 
+@media (max-width: 768px) {
+  .rbc-toolbar-label {
+    font-size: 14px !important;
+  }
+
+  .rbc-time-header {
+    font-size: 12px !important;
+  }
+}
+
 .rbc-time-content {
   border: none !important;
 }
@@ -78,7 +87,15 @@
   padding: 10px !important;
   margin: 10px !important;
   width: 99% !important;
+  font-size: 13px !important;
+  padding: 2px 4px !important;
 }
+@media (max-width: 480px) {
+  .rbc-event {
+    font-size: 10px !important;
+  }
+}
+
 .rbc-event:nth-child(1) {
   background-color: #e2f8ff !important;
 }
@@ -113,4 +130,3 @@
 .leaflet-container img.leaflet-marker-icon {
   display: block;
 }
-

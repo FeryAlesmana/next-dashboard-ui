@@ -59,11 +59,15 @@ const FilterSortBar = ({
     <div
       className={`transition-all duration-300 ease-in-out overflow-hidden ${className}`}
     >
-      <div className="flex flex-col lg:flex-row flex-wrap gap-2 items-start lg:items-center justify-start mb-4">
+      <div className="flex flex-col sm:flex-row flex-wrap gap-3 items-start justify-start mb-4">
+        {" "}
         {filterFields.map((field) => {
           const selectedValue = filters[field.name]?.toString() || "";
           return (
-            <div key={field.name} className="w-min-[200px]">
+            <div
+              key={field.name}
+              className="w-full sm:w-auto sm:min-w-[150px] flex-grow"
+            >
               <Select
                 instanceId={field.name}
                 placeholder={`Filter by ${field.label}`}
@@ -117,39 +121,40 @@ const FilterSortBar = ({
             </div>
           );
         })}
-
-        {sortOptions.length > 0 && (
-          <select
-            className="border px-2 py-1 rounded-md text-sm"
-            value={sort}
-            onChange={(e) => {
-              setSort(e.target.value);
-              updateQuery("sort", e.target.value);
-            }}
-          >
-            <option value="">Sort by</option>
-            {sortOptions.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        )}
-        {hideperPage === false && (
-          <select
-            className="border px-2 py-1 rounded-md text-sm"
-            value={limit}
-            onChange={(e) => {
-              setLimit(e.target.value);
-              updateQuery("limit", e.target.value);
-            }}
-          >
-            <option value="10">Show 10</option>
-            <option value="20">Show 20</option>
-            <option value="30">Show 30</option>
-            <option value="50">Show 50</option>
-          </select>
-        )}
+        <div className="flex flex-wrap gap-3 w-full sm:w-auto">
+          {sortOptions.length > 0 && (
+            <select
+              className="border px-2 py-1 rounded-md text-sm"
+              value={sort}
+              onChange={(e) => {
+                setSort(e.target.value);
+                updateQuery("sort", e.target.value);
+              }}
+            >
+              <option value="">Sort by</option>
+              {sortOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          )}
+          {hideperPage === false && (
+            <select
+              className="border px-2 py-1 rounded-md text-sm"
+              value={limit}
+              onChange={(e) => {
+                setLimit(e.target.value);
+                updateQuery("limit", e.target.value);
+              }}
+            >
+              <option value="10">Show 10</option>
+              <option value="20">Show 20</option>
+              <option value="30">Show 30</option>
+              <option value="50">Show 50</option>
+            </select>
+          )}
+        </div>
       </div>
     </div>
   );

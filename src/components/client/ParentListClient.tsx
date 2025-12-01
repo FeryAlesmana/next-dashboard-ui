@@ -7,6 +7,8 @@ import { BaseListClientProps } from "./AssignmentListClient";
 import TableSearch from "../TableSearch";
 import FilterSortToggle from "../FilterSortToggle";
 import FormModal from "../FormModal";
+import { useMediaQuery } from "@/lib/useMediaQuery";
+import { MobileParentCard } from "./MobileParentCard";
 
 export default function ParentListClient({
   columns,
@@ -17,7 +19,7 @@ export default function ParentListClient({
 }: BaseListClientProps) {
   const [selected, setSelected] = useState<string[]>([]);
   const [localData, setLocalData] = useState(data); // 👈 keep a client copy
-
+  const isMobile = useMediaQuery("(max-width: 768px)");
   const toggleSelection = (id: string) => {
     setSelected((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
@@ -60,6 +62,14 @@ export default function ParentListClient({
         <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
           <TableSearch></TableSearch>
           <div className="flex items-center gap-4 self-end">
+            {role === "admin" && (
+              <FormModal
+                table="parent"
+                type="create"
+                relatedData={relatedData}
+                onChanged={handleChanged}
+              ></FormModal>
+            )}
             <FilterSortToggle
               filterFields={[
                 {
@@ -80,14 +90,6 @@ export default function ParentListClient({
                 { label: "ID Desc", value: "id_desc" },
               ]}
             />
-            {role === "admin" && (
-              <FormModal
-                table="parent"
-                type="create"
-                relatedData={relatedData}
-                onChanged={handleChanged}
-              ></FormModal>
-            )}
           </div>
         </div>
       </div>
@@ -101,46 +103,72 @@ export default function ParentListClient({
         handleChanged={handleChanged}
         handleManyChanged={handleManyChanged}
       />
+      {isMobile ? (
+        // MOBILE VIEW
 
-      <Table columns={columns}>
-        <tr className="text-left text-gray-500 text-sm">
-          {role === "admin" && (
-            <td className="px-4 py-2">
-              <input
-                type="checkbox"
-                checked={selected.length === data.length}
-                onChange={(e) =>
-                  setSelected(e.target.checked ? data.map((s) => s.id) : [])
-                }
+        <div className="space-y-3">
+          {localData.length === 0 ? (
+            <div className=" p-4">
+              <div className="text-gray-500 text-sm text-center py-6">
+                Tidak ada data untuk table ini
+              </div>
+            </div>
+          ) : (
+            localData.map((row) => (
+              <MobileParentCard
+                key={row.id}
+                data={row}
+                selected={selected}
+                onToggle={toggleSelection}
+                relatedData={relatedData}
+                onDeleted={handleDeleteOptimistic}
+                onChanged={handleChanged}
+                role={role}
               />
-            </td>
+            ))
           )}
-          {/* other headers */}
-        </tr>
-        {localData.length === 0 ? (
-          <tr>
-            <td
-              colSpan={columns.length + (role === "admin" ? 1 : 0)}
-              className="text-center text-gray-500 py-6"
-            >
-              Tidak ada data untuk table ini
-            </td>
+        </div>
+      ) : (
+        <Table columns={columns}>
+          <tr className="text-left text-gray-500 text-sm">
+            {role === "admin" && (
+              <td className="px-4 py-2">
+                <input
+                  type="checkbox"
+                  checked={selected.length === data.length}
+                  onChange={(e) =>
+                    setSelected(e.target.checked ? data.map((s) => s.id) : [])
+                  }
+                />
+              </td>
+            )}
+            {/* other headers */}
           </tr>
-        ) : (
-          localData.map((row) => (
-            <ParentTableClient
-              key={row.id}
-              data={row}
-              role={role}
-              selected={selected}
-              onToggle={toggleSelection}
-              relatedData={relatedData}
-              onDeleted={handleDeleteOptimistic}
-              onChanged={handleChanged}
-            />
-          ))
-        )}
-      </Table>
+          {localData.length === 0 ? (
+            <tr>
+              <td
+                colSpan={columns.length + (role === "admin" ? 1 : 0)}
+                className="text-center text-gray-500 py-6"
+              >
+                Tidak ada data untuk table ini
+              </td>
+            </tr>
+          ) : (
+            localData.map((row) => (
+              <ParentTableClient
+                key={row.id}
+                data={row}
+                role={role}
+                selected={selected}
+                onToggle={toggleSelection}
+                relatedData={relatedData}
+                onDeleted={handleDeleteOptimistic}
+                onChanged={handleChanged}
+              />
+            ))
+          )}
+        </Table>
+      )}
     </div>
   );
 }

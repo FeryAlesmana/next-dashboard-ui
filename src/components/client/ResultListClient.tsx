@@ -116,6 +116,21 @@ export default function ResultListClient({
         <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
           <TableSearch></TableSearch>
           <div className="flex items-center gap-4 self-end">
+            {allowedRole && (
+              <>
+                <FormModal
+                  table="result"
+                  type="create"
+                  relatedData={relatedData}
+                  onChanged={handleChanged}
+                ></FormModal>
+                <FormModal
+                  table="exportResults"
+                  type="readMany"
+                  relatedData={relatedData}
+                ></FormModal>
+              </>
+            )}
             <FilterSortToggle
               filterFields={[
                 {
@@ -169,21 +184,6 @@ export default function ResultListClient({
                 { label: "ID Desc", value: "id_desc" },
               ]}
             />
-            {allowedRole && (
-              <>
-                <FormModal
-                  table="result"
-                  type="create"
-                  relatedData={relatedData}
-                  onChanged={handleChanged}
-                ></FormModal>
-                <FormModal
-                  table="exportResults"
-                  type="readMany"
-                  relatedData={relatedData}
-                ></FormModal>
-              </>
-            )}
           </div>
         </div>
       </div>

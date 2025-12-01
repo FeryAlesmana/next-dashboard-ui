@@ -24,7 +24,7 @@ export function MobileLessonCard({
   }
   return (
     <div className="border rounded-lg p-4 bg-white shadow-sm">
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between min-w-0">
         {/* Checkbox */}
         {allowedStaff && (
           <input
@@ -35,10 +35,9 @@ export function MobileLessonCard({
           />
         )}
 
-        <div className="ml-3 flex-1">
+        <div className="ml-3 flex-1 min-w-0">
           <div
-            className="font-medium max-w-full md:max-w-[300px] 
-                           overflow-hidden text-ellipsis whitespace-nowrap"
+            className="font-medium overflow-hidden text-ellipsis whitespace-nowrap max-w-full"
             title={data.subject?.name || "-"}
           >
             {data.subject?.name || "-"}
