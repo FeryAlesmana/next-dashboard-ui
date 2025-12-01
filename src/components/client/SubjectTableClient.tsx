@@ -4,6 +4,7 @@ import FormModal from "../FormModal";
 import ExpandableList from "../ExpandableList";
 import NameListPopover from "../NamePopover";
 import { BaseTableClientProps } from "./AssignmentTableClient";
+import TeacherListPopover from "../TeacherListPopover";
 
 export default function SubjectTableClient({
   data,
@@ -40,6 +41,9 @@ export default function SubjectTableClient({
             }))}
             label="Guru"
           />
+        </td>
+        <td className="p-4">
+          <TeacherListPopover label="Jadwal" items={data.lessons} />
         </td>
         <td>
           <div className="flex items-center gap-2">

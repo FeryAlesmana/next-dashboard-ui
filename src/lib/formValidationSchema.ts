@@ -300,6 +300,7 @@ export const eventSchema = z
     startTime: z.coerce.date({ message: "Waktu mulai event wajib diisi!" }),
     endTime: z.coerce.date({ message: "Waktu ahir event wajib diisi!" }),
     classId: z.coerce.number({ message: "Id kelas wajib di isi" }),
+    img: z.string().optional().nullable(),
   })
   .refine((data) => data.endTime > data.startTime, {
     message: "Waktu selesai tidak boleh lebih awal dari waktu mulai!",
@@ -314,6 +315,7 @@ export const announcementSchema = z.object({
   description: z.string().min(10, { message: "Deskripsi wajib diisi!" }),
   date: z.coerce.date({ message: "Tanggal wajib diisi!" }),
   classId: z.number().nullable(),
+  img: z.string().optional().nullable(),
 });
 
 export type AnnouncementSchema = z.infer<typeof announcementSchema>;

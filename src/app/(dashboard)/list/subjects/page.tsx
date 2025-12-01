@@ -60,6 +60,10 @@ const SubjectListPage = async ({
       header: "Guru",
       accessor: "teachers",
     },
+    {
+      header: "Jadwal",
+      accessor: "lessons",
+    },
     ...(allowedRole
       ? [
           {
@@ -163,6 +167,7 @@ const SubjectListPage = async ({
       orderBy,
       include: {
         teachers: true,
+        lessons: true,
       },
       take: perPage,
       skip: perPage ? perPage * (p - 1) : undefined,

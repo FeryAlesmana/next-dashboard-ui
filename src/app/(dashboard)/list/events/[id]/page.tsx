@@ -1,5 +1,6 @@
 // app/events/[id]/page.tsx
 import prisma from "@/lib/prisma";
+import Image from "next/image";
 
 const EventDetailPage = async ({
   params,
@@ -16,6 +17,16 @@ const EventDetailPage = async ({
 
   return (
     <div className="max-w-2xl mx-auto mt-6 p-6 bg-white rounded-lg shadow-md">
+      {event.img && (
+        <div className="w-full mb-4 relative h-64">
+          <Image
+            src={event.img}
+            alt={event.title}
+            fill
+            className="object-cover rounded-md border"
+          />
+        </div>
+      )}
       {/* Title */}
       <h1 className="text-2xl font-bold text-lamaPurple mb-2">{event.title}</h1>
 

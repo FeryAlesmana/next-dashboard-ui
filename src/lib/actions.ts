@@ -1573,6 +1573,7 @@ export const createEvent = async (
         startTime: new Date(data.startTime),
         endTime: new Date(data.endTime),
         classId: data.classId,
+        img: data.img ?? null,
       },
     });
     return { success: true, error: false, data: createEvent };
@@ -1596,6 +1597,7 @@ export const updateEvent = async (
         startTime: new Date(data.startTime),
         endTime: new Date(data.endTime),
         classId: data.classId,
+        ...(data.img && { img: data.img }),
       },
     });
     return { success: true, error: false, data: updateEvent };
@@ -1644,6 +1646,7 @@ export const createAnnouncement = async (
         description: data.description,
         date: new Date(),
         classId: classId,
+        img: data.img ?? null,
       },
     });
     return { success: true, error: false };
@@ -1667,6 +1670,7 @@ export const updateAnnouncement = async (
         description: data.description,
         date: new Date(),
         classId: data.classId,
+        ...(data.img && { img: data.img }),
       },
     });
     return { success: true, error: false };
@@ -5226,7 +5230,7 @@ export const updateStaff = async (
         ? error
         : "Unknown error";
 
-    console.error("updateTeacher error:", error);
+    console.error("UpdateStaff error:", error);
     return { success: false, error: true, message };
   }
 };

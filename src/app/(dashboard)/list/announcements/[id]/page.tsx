@@ -1,5 +1,6 @@
 // app/events/[id]/page.tsx
 import prisma from "@/lib/prisma";
+import Image from "next/image";
 
 const AnnouncementDetailPage = async ({
   params,
@@ -21,6 +22,16 @@ const AnnouncementDetailPage = async ({
 
   return (
     <div className="max-w-2xl mx-auto mt-6 p-6 bg-white rounded-lg shadow-md">
+      {announcement.img && (
+        <div className="w-full mb-4 relative h-64">
+          <Image
+            src={announcement.img}
+            alt={announcement.title}
+            fill
+            className="object-cover rounded-md border"
+          />
+        </div>
+      )}
       {/* Title */}
       <h1 className="text-2xl font-bold text-lamaPurple mb-2">
         {announcement.title}

@@ -15,6 +15,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { createEvent, CurrentState, updateEvent } from "@/lib/actions";
 import ConfirmDialog from "../ConfirmDialog";
+import UploadPhoto from "../UploadPhoto";
 
 const EventsForm = ({
   setOpen,
@@ -57,6 +58,7 @@ const EventsForm = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [formData, setFormData] = useState<EventSchema | null>(null);
+  const [img, setImg] = useState<any>();
   const router = useRouter();
 
   useEffect(() => {
@@ -91,7 +93,11 @@ const EventsForm = ({
     const valid = await trigger();
     if (valid) {
       handleSubmit((data) => {
-        setFormData(data);
+        const payload: any = {
+          ...data,
+          img: img?.secure_url,
+        };
+        setFormData(payload);
         setShowConfirm(true);
       })();
     } else {
@@ -115,6 +121,10 @@ const EventsForm = ({
           Informasi Acara
         </span>
         <div className="flex justify-between flex-wrap gap-4 m-4 mb-8">
+          <UploadPhoto
+            imageUrl={img?.secure_url || data?.img}
+            onUpload={(url) => setImg({ secure_url: url })}
+          />
           <InputField
             label="Nama Event"
             name="title"

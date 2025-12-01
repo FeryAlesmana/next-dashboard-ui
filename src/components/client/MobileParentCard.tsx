@@ -2,8 +2,6 @@
 import { useState } from "react";
 import FormModal from "../FormModal";
 import { BaseTableClientProps } from "./AssignmentTableClient";
-import Image from "next/image";
-import TeacherListPopover from "../TeacherListPopover";
 import NameListPopover from "../NamePopover";
 
 export function MobileParentCard({

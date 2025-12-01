@@ -23,7 +23,7 @@ import {
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import ConfirmDialog from "../ConfirmDialog";
-
+import UploadPhoto from "../UploadPhoto";
 
 const AnnouncementForm = ({
   setOpen,
@@ -69,6 +69,7 @@ const AnnouncementForm = ({
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [img, setImg] = useState<any>();
 
   useEffect(() => {
     if (!state.success && !state.error) return;
@@ -93,8 +94,12 @@ const AnnouncementForm = ({
   const handleSubmitForm = handleSubmit((formData) => {
     setIsSubmitting(true);
     setShowConfirm(false);
+    const payload: any = {
+      ...formData,
+      img: img?.secure_url,
+    };
     startTransition(() => {
-      formAction(formData);
+      formAction(payload);
     });
   });
 
@@ -124,6 +129,10 @@ const AnnouncementForm = ({
           Informasi Pengumuman
         </span>
         <div className="flex justify-between flex-wrap gap-4 m-4">
+          <UploadPhoto
+            imageUrl={img?.secure_url || data?.img}
+            onUpload={(url) => setImg({ secure_url: url })}
+          />
           <InputField
             label="Judul"
             name="title"

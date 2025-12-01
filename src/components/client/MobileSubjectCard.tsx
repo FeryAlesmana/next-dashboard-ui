@@ -15,7 +15,10 @@ export function MobileSubjectCard({
   allowedStaff,
 }: BaseTableClientProps) {
   const [open, setOpen] = useState(false);
-
+  function toNormalCase(str: string): string {
+    if (!str) return "";
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+  }
   return (
     <div className="border rounded-lg p-4 bg-white shadow-sm">
       <div className="flex items-start justify-between min-w-0">
@@ -62,18 +65,32 @@ export function MobileSubjectCard({
       {open && (
         <div className="mt-3 pt-3 border-t space-y-3 text-sm text-gray-700 ml-3">
           <div className="space-y-1">
-            <div className="font-medium">
-              Tingkat : <span className="font-normal">{data.grade.level}</span>
-            </div>
-            <div className="font-medium">
-              Wali Kelas :{" "}
-              <span className="font-normal">
-                {" "}
-                {data.supervisor
-                  ? `${data.supervisor.name ?? ""} `.trim()
-                  : "-"}
-              </span>
-            </div>
+            <div className="font-medium">Jadwal:</div>
+
+            {data.lessons.length === 0 ? (
+              <div className="text-sm text-gray-500">Tidak ada jadwal</div>
+            ) : (
+              <ul className="text-sm space-y-1">
+                {data.lessons.map((lesson: any) => (
+                  <li key={lesson.id} className="flex flex-col">
+                    <span className="text-gray-500 text-xs">
+                      {toNormalCase(lesson.day)} •{" "}
+                      {new Date(lesson.startTime).toLocaleTimeString("id-ID", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        hour12: false, // 24-hour format
+                      })}{" "}
+                      -{" "}
+                      {new Date(lesson.endTime).toLocaleTimeString("id-ID", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        hour12: false,
+                      })}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
           {allowedStaff && (

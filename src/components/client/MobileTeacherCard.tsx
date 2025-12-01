@@ -82,22 +82,6 @@ export function MobileTeacherCard({
                 {data.username}
               </span>
             </div>
-            {/* <div className="font-medium">
-              Mata Pelajaran :{" "}
-              <span className="font-normal">
-                {data.subjects
-                  .map((subject: { name: string }) => subject.name)
-                  .join(",") || "-"}
-              </span>
-            </div>
-            <div className="font-medium">
-              Kelas :{" "}
-              <span className="font-normal">
-                {data.classes
-                  .map((classdata: { name: string }) => classdata.name)
-                  .join(",") || "-"}
-              </span>
-            </div> */}
             <div className="font-medium">
               Mata Pelajaran :{" "}
               <TeacherListPopover

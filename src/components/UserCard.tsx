@@ -8,19 +8,25 @@ const UserCard = async ({
 }: {
   type: "staff" | "teacher" | "student" | "parent";
 }) => {
-  let data: number;
+  let data: number = 0;
 
   const client = await clerkClient();
 
-  if (type === "staff") {
-    data = await prisma.staff.count();
-  } else if (type === "teacher") {
-    data = await prisma.teacher.count();
-  } else if (type === "student") {
-    data = await prisma.student.count();
-  } else {
-    // parent
-    data = await prisma.parent.count();
+  switch (type) {
+    case "staff":
+      data = await prisma.staff.count();
+      break;
+    case "teacher":
+      data = await prisma.teacher.count();
+      break;
+    case "student":
+      data = await prisma.student.count();
+      break;
+    case "parent":
+      data = await prisma.parent.count();
+      break;
+    default:
+      data = 0;
   }
   // console.log(data);
   const now = new Date();
