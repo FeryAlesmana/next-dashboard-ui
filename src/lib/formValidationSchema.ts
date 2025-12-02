@@ -299,7 +299,7 @@ export const eventSchema = z
       .min(10, { message: "Deskripsi wajib diisi minimal 10 karakter!" }),
     startTime: z.coerce.date({ message: "Waktu mulai event wajib diisi!" }),
     endTime: z.coerce.date({ message: "Waktu ahir event wajib diisi!" }),
-    classId: z.coerce.number({ message: "Id kelas wajib di isi" }),
+    classId: z.coerce.number().nullable().optional(),
     img: z.string().optional().nullable(),
   })
   .refine((data) => data.endTime > data.startTime, {
@@ -314,7 +314,7 @@ export const announcementSchema = z.object({
   title: z.string().min(4, { message: "Event wajib diisi!" }),
   description: z.string().min(10, { message: "Deskripsi wajib diisi!" }),
   date: z.coerce.date({ message: "Tanggal wajib diisi!" }),
-  classId: z.number().nullable(),
+  classId: z.coerce.number().nullable().optional(),
   img: z.string().optional().nullable(),
 });
 
@@ -1042,18 +1042,18 @@ export const mexamSchema = z
       .optional(),
   })
   .refine(
-  (data) => {
-    // If either start or end is empty, skip validation
-    if (!data.startTime || !data.endTime) return true;
+    (data) => {
+      // If either start or end is empty, skip validation
+      if (!data.startTime || !data.endTime) return true;
 
-    // Otherwise validate normally
-    return data.endTime > data.startTime;
-  },
-  {
-    message: "Waktu selesai tidak boleh lebih awal dari waktu mulai!",
-    path: ["endTime"],
-  }
-);
+      // Otherwise validate normally
+      return data.endTime > data.startTime;
+    },
+    {
+      message: "Waktu selesai tidak boleh lebih awal dari waktu mulai!",
+      path: ["endTime"],
+    }
+  );
 
 export type MexamSchema = z.infer<typeof mexamSchema>;
 

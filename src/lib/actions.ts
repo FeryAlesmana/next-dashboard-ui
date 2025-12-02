@@ -1566,13 +1566,14 @@ export const createEvent = async (
   data: EventSchema
 ) => {
   try {
+  const classId = data.classId === 0 ? null : data.classId;
     const createEvent = await prisma.event.create({
       data: {
         title: data.title,
         description: data.description,
         startTime: new Date(data.startTime),
         endTime: new Date(data.endTime),
-        classId: data.classId,
+         classId: classId,
         img: data.img ?? null,
       },
     });
@@ -1586,7 +1587,9 @@ export const updateEvent = async (
   currentState: CurrentState,
   data: EventSchema
 ) => {
+  
   try {
+   const classId = data.classId === 0 ? null : data.classId;
     const updateEvent = await prisma.event.update({
       where: {
         id: data.id,
@@ -1596,7 +1599,7 @@ export const updateEvent = async (
         description: data.description,
         startTime: new Date(data.startTime),
         endTime: new Date(data.endTime),
-        classId: data.classId,
+       classId: classId,
         ...(data.img && { img: data.img }),
       },
     });
@@ -1638,8 +1641,7 @@ export const createAnnouncement = async (
   data: AnnouncementSchema
 ) => {
   try {
-    const classIdRaw = data.classId; // comes from the form
-    const classId = classIdRaw === undefined ? null : data.classId;
+    const classId = data.classId === 0 ? null : data.classId;
     await prisma.announcement.create({
       data: {
         title: data.title,
@@ -1661,6 +1663,7 @@ export const updateAnnouncement = async (
   data: AnnouncementSchema
 ) => {
   try {
+    const classId = data.classId === 0 ? null : data.classId;
     await prisma.announcement.update({
       where: {
         id: data.id,
@@ -1669,7 +1672,7 @@ export const updateAnnouncement = async (
         title: data.title,
         description: data.description,
         date: new Date(),
-        classId: data.classId,
+        classId: classId,
         ...(data.img && { img: data.img }),
       },
     });

@@ -118,6 +118,22 @@ const AnnouncementForm = ({
   }, [state, type, setOpen, router]);
 
   const { kelas2 = [] } = relatedData ?? {};
+  const toLocalInputValue = (date: Date | string) => {
+    const d = new Date(date);
+    const pad = (n: number) => n.toString().padStart(2, "0");
+
+    return (
+      d.getFullYear() +
+      "-" +
+      pad(d.getMonth() + 1) +
+      "-" +
+      pad(d.getDate()) +
+      "T" +
+      pad(d.getHours()) +
+      ":" +
+      pad(d.getMinutes())
+    );
+  };
 
   return (
     <>
@@ -154,14 +170,12 @@ const AnnouncementForm = ({
             <label className="text-xs text-gray-400">Kelas</label>
             <select
               className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
-              {...register("classId", {
-                setValueAs: (v) => (v === "" ? null : Number(v)),
-              })}
-              defaultValue={data?.classId == null ? "" : String(data.classId)}
+              {...register("classId")}
+              defaultValue={data?.classId ? String(data.classId) : ""}
             >
               <option value="">Semua Kelas</option>
               {kelas2.map((kelas: { id: number; name: string }) => (
-                <option value={kelas.id} key={kelas.id}>
+                <option value={String(kelas.id)} key={kelas.id}>
                   {kelas.name}
                 </option>
               ))}

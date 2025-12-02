@@ -106,9 +106,21 @@ const EventsForm = ({
   };
 
   const { classes } = relatedData;
-  const formatDateForInput = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toISOString().slice(0, 16);
+  const toLocalInputValue = (date: Date | string) => {
+    const d = new Date(date);
+    const pad = (n: number) => n.toString().padStart(2, "0");
+
+    return (
+      d.getFullYear() +
+      "-" +
+      pad(d.getMonth() + 1) +
+      "-" +
+      pad(d.getDate()) +
+      "T" +
+      pad(d.getHours()) +
+      ":" +
+      pad(d.getMinutes())
+    );
   };
 
   return (
@@ -147,8 +159,9 @@ const EventsForm = ({
             <select
               className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
               {...register("classId")}
-              defaultValue={data?.classId}
+              defaultValue={data?.classId ?? ""}
             >
+              <option value="">Semua Kelas</option>
               {classes.map((kelas: { id: number; name: string }) => (
                 <option value={kelas.id} key={kelas.id}>
                   {kelas.name}
@@ -167,7 +180,7 @@ const EventsForm = ({
             label="Waktu mulai"
             name="startTime"
             defaultValue={
-              data?.startTime ? formatDateForInput(data.startTime) : ""
+              data?.startTime ? toLocalInputValue(data.startTime) : ""
             }
             register={register}
             error={errors?.startTime}
@@ -176,7 +189,7 @@ const EventsForm = ({
           <InputField
             label="Waktu berakhir"
             name="endTime"
-            defaultValue={data?.endTime ? formatDateForInput(data.endTime) : ""}
+            defaultValue={data?.endTime ? toLocalInputValue(data.endTime) : ""}
             register={register}
             error={errors?.endTime}
             type="datetime-local"

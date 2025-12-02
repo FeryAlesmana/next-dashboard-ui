@@ -68,7 +68,7 @@ const AnnouncementListPage = async ({
       className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight"
     >
       <td className="flex items-center p-4 gap-4">{item.title}</td>
-      <td>{item.class?.name || "-"}</td>
+      <td>{item.class?.name || "Semua Kelas"}</td>
       <td className="hidden md:table-cell">
         {new Intl.DateTimeFormat("en-US").format(item.date)}
       </td>
