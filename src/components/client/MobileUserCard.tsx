@@ -82,57 +82,58 @@ export function MobileUserCard({
                 {data.dbName}
               </span>
             </div>
-            {data.role === "admin" ? (
-              <div className="font-medium">
-                Profile :{" "}
-                <button
-                  className="w-5 h-5 rounded-full ml-3 cursor-not-allowed"
-                  disabled
-                  title="Profil User"
-                >
-                  <Image src="/morev.png" alt="" width={16} height={16} />
-                </button>
-              </div>
-            ) : data.dbName === "-" ? (
-              <div className="font-medium">
-                Profile :{" "}
-                <button
-                  className="w-5 h-5 rounded-full ml-3 "
-                  title="Profile unavailable"
-                  disabled
-                >
-                  <Image src="/morev.png" alt="" width={16} height={16} />
-                </button>
-              </div>
-            ) : data.role === "parent" ? (
-              <div className="font-medium">
-                Profile :{" "}
+            <div className="font-medium flex items-center gap-2 mt-1">
+              <span>Profile :</span>
+
+              {/* Admin → disabled */}
+              {data.role === "admin" && (
+                <div className="flex flex-col items-start">
+                  <span className="text-[10px] text-gray-500 md:hidden">
+                    Not available
+                  </span>
+                </div>
+              )}
+
+              {/* dbName missing → disabled */}
+              {data.role !== "admin" && data.dbName === "-" && (
+                <div className="flex flex-col items-start">
+                  <span className="text-[10px] text-gray-500 md:hidden">
+                    Not available
+                  </span>
+                </div>
+              )}
+
+              {/* Parent → linked by search */}
+              {data.role === "parent" && data.dbName !== "-" && (
                 <Link
                   href={`/list/parents?search=${encodeURIComponent(
                     data.dbName
                   )}`}
+                  className="flex flex-col items-start"
                 >
-                  <button
-                    className="w-5 h-5 rounded-full ml-3 "
-                    title="Profil User"
-                  >
-                    <Image src="/morev.png" alt="" width={16} height={16} />
+                  <button className="w-6 h-6 rounded-full" title="Open Profile">
+                    <Image src="/morev.png" alt="" width={18} height={18} />
                   </button>
                 </Link>
-              </div>
-            ) : (
-              <div className="font-medium">
-                Profile :{" "}
-                <Link href={`/list/${data.role}s/${data.id}`}>
-                  <button
-                    className="w-5 h-5 rounded-full ml-3 "
-                    title="Profil User"
+              )}
+
+              {/* Other roles → direct link */}
+              {data.role !== "admin" &&
+                data.role !== "parent" &&
+                data.dbName !== "-" && (
+                  <Link
+                    href={`/list/${data.role}s/${data.id}`}
+                    className="flex flex-col items-start"
                   >
-                    <Image src="/morev.png" alt="" width={16} height={16} />
-                  </button>
-                </Link>
-              </div>
-            )}
+                    <button
+                      className="w-6 h-6 rounded-full"
+                      title="Open Profile"
+                    >
+                      <Image src="/morev.png" alt="" width={18} height={18} />
+                    </button>
+                  </Link>
+                )}
+            </div>
           </div>
 
           {role === "admin" && (

@@ -4,6 +4,7 @@ import { useState } from "react";
 import TableSearch from "./TableSearch";
 import FilterSortToggle from "./FilterSortToggle";
 import { toast } from "react-toastify";
+import Link from "next/link";
 
 export default function ChangeLogClient({
   groups,
@@ -127,7 +128,10 @@ const ChangeGroup = ({ group }: { group: any }) => {
       {/* HEADER */}
       <div className="flex justify-between items-center">
         <div>
-          <p className="font-semibold text-lg">{group.user}</p>
+          <p className="font-semibold text-lg">
+            <span className="hidden md:inline">Username : </span>
+            {group.user}
+          </p>
           <p className="text-sm text-gray-500">
             Role: {group.role} | {group.date}
           </p>
@@ -198,6 +202,15 @@ const ChangeItem = ({ item, index }: { item: any; index: number }) => {
         <div>
           <p className="font-semibold">
             {index}. {item.action}
+            {/* SHOW LINK ONLY IF UPDATE */}
+            {item.action === "UPDATE" && item.paymentLogId && (
+              <Link
+                href={`/list/payment/?id=${item.paymentLogId}`}
+                className="ml-2 text-blue-600 underline text-xs"
+              >
+                Lihat Record
+              </Link>
+            )}
           </p>
           <p className="text-xs text-gray-500">
             {new Date(item.createdAt).toLocaleString("id-ID")}

@@ -102,6 +102,7 @@ const ParentsListPage = async ({
                 },
               },
               { phone: { contains: value, mode: "insensitive" } },
+              { username: { contains: value, mode: "insensitive" } },
             ];
             break;
           case "classId":

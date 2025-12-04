@@ -8,7 +8,7 @@ export default function PPDBBanner({ reason }: { reason: string }) {
 
   return (
     <div className="bg-red-600 text-white p-4 rounded-lg text-center mb-4">
-      {message || "PPDB tidak tersedia saat ini."}
+      {message || "PPDB masih ditutup saat ini."}
     </div>
   );
 }

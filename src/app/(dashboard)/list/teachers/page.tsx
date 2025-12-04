@@ -97,6 +97,7 @@ const TeacherListPage = async ({
           case "search":
             query.OR = [
               { name: { contains: value, mode: "insensitive" } },
+              { username: { contains: value, mode: "insensitive" } },
               { id: { contains: value, mode: "insensitive" } },
               { phone: { contains: value, mode: "insensitive" } },
             ];

@@ -16,7 +16,6 @@ export async function logPaymentChange({
 }) {
   const user = await currentUser();
   const role = user?.publicMetadata?.role as string | undefined;
-
   await prisma.paymentLogChange.create({
     data: {
       paymentLogId,

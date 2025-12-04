@@ -56,9 +56,9 @@ export const PartialPaymentFields = ({
           <label className="text-sm">Jumlah Dibayar</label>
           <input
             type="number"
-            {...register(`installments.${i}.amount`, {
-              valueAsNumber: true,
-            })}
+            inputMode="decimal"
+            step="0.01"
+            {...register(`installments.${i}.amount`)}
             className="border rounded p-2 w-full mb-2"
             min={1}
           />

@@ -117,14 +117,7 @@ export default function CreatePaymentLogPage({
     }
 
     if (type === "update" && data) {
-      // const relatedInstallments = installment
-      //   .filter((inst: any) => inst.paymentLogId === data.id)
-      //   .map((inst: any) => ({
-      //     amount: inst.amount,
-      //     paidAt: inst.paidAt
-      //       ? new Date(inst.paidAt).toISOString().split("T")[0]
-      //       : undefined,
-      //   }));
+      setValue("remainingAmount", relatedData.remainingAmount[data.id]);
       reset({
         paymentType: data.paymentType ?? "TUITION",
         amount: data.amount ?? 0,
@@ -149,7 +142,7 @@ export default function CreatePaymentLogPage({
         // installmentCount: relatedInstallments.length || 1,
       });
     }
-  }, [setValue, reset, data, type, installment]);
+  }, [setValue, reset, data, type, installment, relatedData]);
   useEffect(() => {
     if (watchedValues.status === "PAID") {
       const amount = getValues("amount") || 0;
@@ -229,15 +222,10 @@ export default function CreatePaymentLogPage({
       router.refresh();
     }
   }, [state, type, setOpen, router, onChanged, formData]);
-  // useEffect(() => {
-  //   if (watchedValues.status === "PAID") {
-  //     const rawAmount = getValues("amount"); // number | "" | undefined
-  //     const normalizedAmount =
-  //       typeof rawAmount === "number" ? rawAmount : undefined; // only keep number
-
-  //     setValue("amountPaid", normalizedAmount);
-  //   }
-  // }, [watchedValues.status, getValues, setValue]);
+  const safeRemainingAmount =
+    type === "update"
+      ? relatedData?.remainingAmount?.[data?.id] ?? 0
+      : watch("amount") ?? 0; // when creating, remaining = total amount
 
   return (
     <div className="max-w-4xl mx-auto p-4">
@@ -337,7 +325,7 @@ export default function CreatePaymentLogPage({
               setValue={setValue}
               watch={watch}
               errors={errors}
-              remainingAmount={relatedData.remainingAmount[data.id]}
+              remainingAmount={safeRemainingAmount}
             />
           )}
 

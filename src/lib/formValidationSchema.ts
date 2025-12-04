@@ -848,6 +848,7 @@ export const paymentLogSchema = z
         })
       )
       .optional(),
+    remainingAmount: z.number().optional(),
   })
   .refine(
     (data) =>
@@ -879,6 +880,18 @@ export const paymentLogSchema = z
     {
       message:
         "Jumlah pembayaran harus lebih kecil dari total saat Sebagian Dibayar",
+      path: ["installments"],
+    }
+  )
+  .refine(
+    (data) =>
+      // 🔥 HARD RULE: partial payments cannot exceed remaining amount
+      data.status === "PARTIALLY_PAID" && data.remainingAmount
+        ? (data.installments ?? []).reduce((sum, i) => sum + i.amount, 0) <=
+          data.remainingAmount
+        : true,
+    {
+      message: "Total angsuran tidak boleh melebihi sisa tagihan!",
       path: ["installments"],
     }
   );

@@ -98,6 +98,17 @@ const UserListPage = async ({
         img: true,
       },
     });
+    const staffUser = await prisma.staff.findUnique({
+      where: { id: stringId },
+      select: {
+        id: true,
+        name: true,
+
+        password: true,
+        email: true,
+        img: true,
+      },
+    });
 
     const parentUserRaw = await prisma.parent.findUnique({
       where: { id: stringId },
@@ -110,7 +121,8 @@ const UserListPage = async ({
       },
     });
     const parentUser = parentUserRaw ? { ...parentUserRaw, img: null } : null;
-    const foundUser = studentUser || teacherUser || parentUser || undefined;
+    const foundUser =
+      studentUser || teacherUser || parentUser || staffUser || undefined;
 
     rows.push({
       id: u.id,

@@ -88,6 +88,7 @@ const StaffListPage = async ({
             { name: { contains: safeValue, mode: "insensitive" } },
             { id: { contains: safeValue, mode: "insensitive" } },
             { phone: { contains: safeValue, mode: "insensitive" } },
+            { username: { contains: value, mode: "insensitive" } },
           ];
           break;
         case "byRole":

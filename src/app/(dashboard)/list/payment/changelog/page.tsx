@@ -100,6 +100,9 @@ const ChangeLog = async ({
         }
     }
   }
+  if (!orderBy) {
+    orderBy = { createdAt: "desc" }; // newest first
+  }
 
   const [logs, count] = await prisma.$transaction([
     prisma.paymentLogChange.findMany({

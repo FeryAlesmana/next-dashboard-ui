@@ -1566,14 +1566,14 @@ export const createEvent = async (
   data: EventSchema
 ) => {
   try {
-  const classId = data.classId === 0 ? null : data.classId;
+    const classId = data.classId === 0 ? null : data.classId;
     const createEvent = await prisma.event.create({
       data: {
         title: data.title,
         description: data.description,
         startTime: new Date(data.startTime),
         endTime: new Date(data.endTime),
-         classId: classId,
+        classId: classId,
         img: data.img ?? null,
       },
     });
@@ -1587,9 +1587,8 @@ export const updateEvent = async (
   currentState: CurrentState,
   data: EventSchema
 ) => {
-  
   try {
-   const classId = data.classId === 0 ? null : data.classId;
+    const classId = data.classId === 0 ? null : data.classId;
     const updateEvent = await prisma.event.update({
       where: {
         id: data.id,
@@ -1599,7 +1598,7 @@ export const updateEvent = async (
         description: data.description,
         startTime: new Date(data.startTime),
         endTime: new Date(data.endTime),
-       classId: classId,
+        classId: classId,
         ...(data.img && { img: data.img }),
       },
     });
@@ -3550,15 +3549,6 @@ export async function createPaymentLog(
   prevState: CurrentState,
   payload: PaymentLogSchema
 ): Promise<CurrentState> {
-  const { role } = await getCurrentUser();
-  if (role !== "admin") {
-    return {
-      success: false,
-      error: true,
-      message: "Hanya admin yang dapat membuat tagihan.",
-    };
-  }
-
   try {
     const { recipientType, recipientId, ...paymentData } = payload;
 
@@ -3692,15 +3682,6 @@ export async function updatePaymentLog(
   prevState: CurrentState,
   data: PaymentLogSchema
 ): Promise<CurrentState> {
-  const { role } = await getCurrentUser();
-  if (role !== "admin") {
-    return {
-      success: false,
-      error: true,
-      message: "Hanya admin yang dapat membuat tagihan.",
-    };
-  }
-
   try {
     // 1️⃣ Fetch old record safely
     const oldRecord = await prisma.paymentLog.findUnique({
@@ -3866,14 +3847,6 @@ export async function updatePaymentLogs(
   prevState: CurrentState,
   data: MpaymentLogSchema
 ): Promise<CurrentState> {
-  const { role } = await getCurrentUser();
-  if (role !== "admin") {
-    return {
-      success: false,
-      error: true,
-      message: "Hanya admin yang dapat mengubah tagihan.",
-    };
-  }
   try {
     const { ids, ...paymentData } = data;
 
@@ -4100,7 +4073,6 @@ export const createUserDB = async (
     }
     const transformedRow = {
       id: user.id,
-
       img: updatedUser && "img" in updatedUser ? updatedUser.img : "",
       name: user.username || "-",
       dbName: updatedUser && "name" in updatedUser ? updatedUser.name : "-",
