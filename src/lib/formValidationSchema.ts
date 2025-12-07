@@ -852,44 +852,87 @@ export const paymentLogSchema = z
   })
   .refine(
     (data) =>
-      ["PAID", "PARTIALLY_PAID"].includes(data.status)
-        ? (data.installments ?? []).length > 0
+      data.remainingAmount === 0
+        ? true // skip all installment requirements
         : true,
     {
-      message: "Minimal satu pembayaran wajib diisi",
+      message: "",
       path: ["installments"],
     }
   )
   .refine(
-    (data) =>
-      data.status === "PAID"
-        ? (data.installments ?? []).reduce((sum, i) => sum + i.amount, 0) ===
-          data.amount
-        : true,
+    (data) => {
+      if (data.status !== "PAID") return true;
+      if (data.remainingAmount === 0) return true; // fully paid already
+      if ((data.installments ?? []).length === 0) return true; // editing only
+
+      const total = data.installments!.reduce((s, i) => s + i.amount, 0);
+      return total === data.amount;
+    },
     {
       message: "Jumlah pembayaran harus sama dengan total saat Lunas",
       path: ["installments"],
     }
   )
+
+  // ⭐ Rule 3: If status is PARTIALLY_PAID → allow empty installments if editing
   .refine(
-    (data) =>
-      data.status === "PARTIALLY_PAID"
-        ? (data.installments ?? []).reduce((sum, i) => sum + i.amount, 0) <
-          data.amount
-        : true,
+    (data) => {
+      if (data.status !== "PARTIALLY_PAID") return true;
+
+      // if no remaining — user is only editing
+      if (data.remainingAmount === 0) return true;
+
+      const inst = data.installments ?? [];
+
+      // If user is editing without adding new installments → allow
+      if (inst.length === 0) return true;
+
+      const total = inst.reduce((s, i) => s + i.amount, 0);
+
+      return total < data.amount;
+    },
     {
       message:
         "Jumlah pembayaran harus lebih kecil dari total saat Sebagian Dibayar",
       path: ["installments"],
     }
   )
+
+  // ⭐ Rule 4: Prevent overpayment on new installments only
   .refine(
-    (data) =>
-      // 🔥 HARD RULE: partial payments cannot exceed remaining amount
-      data.status === "PARTIALLY_PAID" && data.remainingAmount
-        ? (data.installments ?? []).reduce((sum, i) => sum + i.amount, 0) <=
-          data.remainingAmount
-        : true,
+    (data) => {
+      console.log("=== ZOD REMAINING CHECK ===");
+      console.log("remainingAmount:", data.remainingAmount);
+      console.log("installments:", data.installments);
+      console.log(
+        "total installments:",
+        (data.installments ?? []).reduce((s, i) => s + i.amount, 0)
+      );
+
+      if (data.remainingAmount === undefined) {
+        console.log("→ PASS: remainingAmount undefined");
+        return true;
+      }
+
+      const inst = data.installments ?? [];
+
+      if (inst.length === 0) {
+        console.log("→ PASS: no new installments (editing only)");
+        return true;
+      }
+
+      const total = inst.reduce((s, i) => s + i.amount, 0);
+
+      console.log("computed total:", total);
+      console.log("allowed max:", data.remainingAmount);
+
+      const result = total <= data.remainingAmount;
+
+      console.log("→ RESULT:", result ? "PASS" : "FAIL (overpayment!)");
+
+      return result;
+    },
     {
       message: "Total angsuran tidak boleh melebihi sisa tagihan!",
       path: ["installments"],

@@ -22,6 +22,10 @@ import {
 import { BaseFormProps } from "./AssignmentForm";
 import Select from "react-select";
 import { PartialPaymentFields } from "../PartialPaymentFields";
+import { PaymentStatus } from "@prisma/client";
+import InstallmentPopover from "../InstallmentPopover";
+import { RupiahInput } from "../RupiahInput";
+import { QuickAddButtons } from "../QuickActButton";
 
 const FORM_KEY = "payment_log_draft_form";
 
@@ -105,8 +109,85 @@ export default function CreatePaymentLogPage({
     gradeData = [],
     installment,
   } = relatedData ?? [];
-
+  const usedInstallment = Array.isArray(installment)
+    ? installment.filter((inst) => inst.paymentLogId === data.id)
+    : [];
+  const [LoadedInstallment, setLoadedInstallment] = useState(usedInstallment);
   // Muat draft dari localStorage atau data untuk update
+  const watchedAmount = watch("amount");
+  const watchedDueDate = watch("dueDate");
+  const watchedInstallments = watch("installments"); // 👈 important
+  useEffect(() => {
+    const dbInstallments = Array.isArray(installment)
+      ? installment.filter((inst) => inst.paymentLogId === data.id)
+      : [];
+
+    const formInstallments = watchedInstallments ?? [];
+
+    // Merge logic: new ones replace nothing, they just append!
+    const mergedInstallments = [...dbInstallments, ...formInstallments].map(
+      (i) => {
+        let amt = i.amount;
+
+        // Empty field → treat as 0
+        if (amt === "" || amt === null || amt === undefined) {
+          amt = 0;
+        } else {
+          // Otherwise convert string → number
+          amt = Number(amt);
+        }
+
+        return {
+          ...i,
+          amount: amt,
+        };
+      }
+    );
+
+    console.log(mergedInstallments, "mergedInstallments");
+    const totalPaid = mergedInstallments.reduce(
+      (sum, i) => sum + Number(i.amount || 0),
+      0
+    );
+    const originalAmount = data.amount;
+    console.log(originalAmount, "originalAmount");
+    const remainingAmount = originalAmount - totalPaid;
+    console.log(remainingAmount, "remainingAmount");
+    // store remaining amount
+    setValue("remainingAmount", remainingAmount);
+
+    // decide status
+    let paymentStatus: PaymentStatus = "PENDING";
+
+    if (mergedInstallments.length > 0) {
+      if (remainingAmount <= 0) {
+        paymentStatus = "PAID";
+      } else {
+        paymentStatus = "PARTIALLY_PAID";
+      }
+    } else {
+      // No installments
+      if (new Date(watchedDueDate) < new Date()) {
+        paymentStatus = "OVERDUE";
+      }
+    }
+    setValue("status", paymentStatus);
+  }, [
+    watchedInstallments,
+    watchedAmount,
+    watchedDueDate,
+    data.id,
+    data.amount,
+    installment,
+    setValue,
+  ]);
+
+  const safeRemainingAmount =
+    type === "update"
+      ? relatedData?.remainingAmount?.[data?.id] ?? 0
+      : watch("amount") ?? 0; // when creating, remaining = total amount
+  // console.log(safeRemainingAmount, "safe remaining Amount");
+
   useEffect(() => {
     const saved = localStorage.getItem(FORM_KEY);
     if (saved) {
@@ -115,16 +196,13 @@ export default function CreatePaymentLogPage({
         setValue(key as keyof PaymentLogSchema, values[key]);
       }
     }
-
     if (type === "update" && data) {
-      setValue("remainingAmount", relatedData.remainingAmount[data.id]);
       reset({
         paymentType: data.paymentType ?? "TUITION",
         amount: data.amount ?? 0,
         dueDate: data.dueDate
           ? new Date(data.dueDate).toISOString().split("T")[0]
           : "",
-        status: data.status ?? "PENDING",
         description: data.description ?? "",
         paymentMethod: data.paymentMethod ?? "",
         receiptNumber: data.receiptNumber ?? "",
@@ -138,28 +216,10 @@ export default function CreatePaymentLogPage({
           ? "class"
           : "grade",
         recipientId: data.studentId ?? data.classId ?? data.gradeId ?? "",
-        // installments: relatedInstallments,
-        // installmentCount: relatedInstallments.length || 1,
+        installments: [],
       });
     }
   }, [setValue, reset, data, type, installment, relatedData]);
-  useEffect(() => {
-    if (watchedValues.status === "PAID") {
-      const amount = getValues("amount") || 0;
-      const paidAt =
-        getValues("paidAt") || new Date().toISOString().split("T")[0];
-
-      setValue("installments", [
-        {
-          amount: amount,
-          paidAt: paidAt,
-        },
-      ]);
-
-      // Optionally, update installmentCount if your PartialPaymentFields uses it
-      setValue("installmentCount", 1);
-    }
-  }, [watchedValues.status, getValues, setValue]);
 
   // Muat data siswa, kelas, dan angkatan
   const normalizePaymentData = (formData: PaymentLogSchema) => {
@@ -168,7 +228,7 @@ export default function CreatePaymentLogPage({
     if (formData.status === "PAID") {
       // Full payment — just push amountPaid as one installment
       installments.push({
-        amount: formData.amount,
+        amount: formData.remainingAmount ?? formData.amount,
         paidAt: formData.paidAt || new Date().toISOString().split("T")[0],
       });
     } else if (formData.status === "PARTIALLY_PAID") {
@@ -222,10 +282,7 @@ export default function CreatePaymentLogPage({
       router.refresh();
     }
   }, [state, type, setOpen, router, onChanged, formData]);
-  const safeRemainingAmount =
-    type === "update"
-      ? relatedData?.remainingAmount?.[data?.id] ?? 0
-      : watch("amount") ?? 0; // when creating, remaining = total amount
+  console.log(errors);
 
   return (
     <div className="max-w-4xl mx-auto p-4">
@@ -259,11 +316,26 @@ export default function CreatePaymentLogPage({
           </div>
 
           <div>
-            <label className="block mb-1 font-medium">Jumlah (IDR)</label>
-            <input
-              type="number"
-              {...register("amount", { valueAsNumber: true })}
-              className="w-full border rounded px-3 py-2"
+            <label className="block mb-1 font-medium">Total Tagihan</label>
+            <Controller
+              name="amount"
+              control={control}
+              render={({ field }) => (
+                <div>
+                  <RupiahInput value={field.value} onChange={field.onChange} />
+
+                  <QuickAddButtons
+                    current={field.value}
+                    onChange={(num: number) =>
+                      setValue("amount", num, {
+                        shouldDirty: true,
+                        shouldTouch: true,
+                        shouldValidate: true,
+                      })
+                    }
+                  />
+                </div>
+              )}
             />
             {errors.amount && (
               <p className="text-red-600">{errors.amount.message}</p>
@@ -287,6 +359,7 @@ export default function CreatePaymentLogPage({
             <select
               {...register("status")}
               className="w-full border rounded px-3 py-2"
+              disabled
             >
               <option value="PENDING">Menunggu</option>
               <option value="PAID">Lunas</option>
@@ -318,15 +391,30 @@ export default function CreatePaymentLogPage({
             </>
           )}
 
-          {watchedValues.status === "PARTIALLY_PAID" && (
-            <PartialPaymentFields
-              control={control}
-              register={register}
-              setValue={setValue}
-              watch={watch}
-              errors={errors}
-              remainingAmount={safeRemainingAmount}
-            />
+          {watchedValues.paymentMethod === "Cicilan" && (
+            <>
+              <InstallmentPopover
+                relatedInstallments={LoadedInstallment}
+                onDeleted={(id) => {
+                  // Remove from state when deleted
+                  setLoadedInstallment((prev) =>
+                    prev.filter((i) => i.id !== id)
+                  );
+                  setValue(
+                    "installments",
+                    usedInstallment.filter((i) => i.id !== id)
+                  );
+                }}
+              />
+              <PartialPaymentFields
+                control={control}
+                register={register}
+                setValue={setValue}
+                watch={watch}
+                errors={errors}
+                remainingAmount={safeRemainingAmount}
+              />
+            </>
           )}
 
           <div>
@@ -357,6 +445,7 @@ export default function CreatePaymentLogPage({
               <option value="Transfer">Transfer Bank</option>
               <option value="QRIS">QRIS</option>
               <option value="Debit">Debit</option>
+              <option value="Cicilan">Cicilan</option>
             </select>
 
             {errors.paymentMethod && (

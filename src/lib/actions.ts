@@ -3728,48 +3728,78 @@ export async function updatePaymentLog(
       gradeId = student?.class?.gradeId ?? null;
     }
 
-    const existingInstallments = await prisma.paymentInstallment.findMany({
-      where: { paymentLogId: data.id },
-    });
+    const dbInstallments = oldRecord.paymentInstallments || [];
 
-    const totalPaid = existingInstallments.reduce((sum, i) => {
-      const amountAsNumber =
-        i.amount instanceof Decimal ? i.amount.toNumber() : Number(i.amount);
+    // 5️⃣ New installments from the form
+    const formInstallments = paymentData.installments ?? [];
 
-      return sum + amountAsNumber;
-    }, 0);
+    // Filter only valid new payments (avoid null/0/empty values)
+    const validNewInstallments = formInstallments.filter(
+      (i) => Number(i.amount) > 0
+    );
 
-    // remaining amount left to pay
-    const remainingAmount = paymentData.amount - totalPaid;
-    // Only keep new installments that are > 0 and not exceeding remainingAmount
-    const newInstallments: { amount: number; paidAt?: string }[] = (
-      paymentData.installments ?? []
-    ).filter((i) => i.amount > 0);
+    // MERGE them:
+    const mergedInstallments = [...dbInstallments, ...validNewInstallments];
 
-    // If totalPaid already equals amount, ignore newInstallments
+    // Convert amounts → number safely
+    const normalizedInstallments = mergedInstallments.map((i) => ({
+      ...i,
+      amount: Number(i.amount) || 0,
+    }));
+
+    // Total already paid (DB + form)
+    const totalPaid = normalizedInstallments.reduce(
+      (sum, i) => sum + i.amount,
+      0
+    );
+    console.log("SERVER totalPaid:", totalPaid);
+
+    // 5️⃣ Overpayment Protection
+    if (totalPaid > paymentData.amount) {
+      return {
+        success: false,
+        error: true,
+        message: `Total cicilan (${totalPaid}) tidak boleh melebihi jumlah tagihan (${paymentData.amount}).`,
+      };
+    }
+
+    const totalRemainingAmount = paymentData.amount - totalPaid;
+    console.log("SERVER remaining:", totalRemainingAmount);
+    let finalStatus: PaymentStatus = paymentData.status;
+    if (totalRemainingAmount <= 0) {
+      finalStatus = "PAID";
+    } else if (totalPaid > 0) {
+      finalStatus = "PARTIALLY_PAID";
+    } else {
+      finalStatus = paymentData.status; // fallback
+    }
+
+    // 6️⃣ Determine paidAt only when new installments are created
+    let finalPaidAt: Date | null = oldRecord.paidAt;
+
+    if (
+      (paymentData.status === PaymentStatus.PAID ||
+        paymentData.status === PaymentStatus.PARTIALLY_PAID) &&
+      validNewInstallments.length > 0
+    ) {
+      const lastInst = validNewInstallments[validNewInstallments.length - 1];
+
+      finalPaidAt = lastInst?.paidAt ? new Date(lastInst.paidAt) : new Date();
+    }
+
+    // 7️⃣ Create installments only if valid
     const installmentAction =
-      remainingAmount > 0 && newInstallments.length > 0
+      validNewInstallments.length > 0
         ? {
             createMany: {
-              data: newInstallments.map((i) => ({
-                amount: i.amount,
+              data: validNewInstallments.map((i) => ({
+                amount: Number(i.amount),
                 paidAt: i.paidAt ? new Date(i.paidAt) : null,
               })),
             },
           }
         : undefined;
 
-    let finalPaidAt: Date | null = null;
-    if (
-      paymentData.status === PaymentStatus.PAID ||
-      paymentData.status === PaymentStatus.PARTIALLY_PAID
-    ) {
-      // Use the last installment's paidAt if available
-      const lastInstallment = newInstallments[newInstallments.length - 1];
-      finalPaidAt =
-        (lastInstallment?.paidAt && new Date(lastInstallment.paidAt)) ||
-        (paymentData.paidAt ? new Date(paymentData.paidAt) : new Date());
-    }
     const updatedPayment = await prisma.paymentLog.update({
       where: {
         id: data.id,
@@ -3777,7 +3807,7 @@ export async function updatePaymentLog(
       data: {
         amount: paymentData.amount,
         paymentType: paymentData.paymentType,
-        status: paymentData.status,
+        status: finalStatus,
         dueDate: new Date(paymentData.dueDate),
         description: paymentData.description || null,
         paymentMethod: paymentData.paymentMethod || null,

@@ -359,6 +359,7 @@ const PaymentLogListPage = async ({
           id: true,
           amount: true,
           paymentLogId: true, // assuming relation
+          paidAt: true,
         },
       }),
     ]);

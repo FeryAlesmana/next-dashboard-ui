@@ -5,6 +5,7 @@ import { BaseTableClientProps } from "./AssignmentTableClient";
 import PaymentInstallmentsPreview from "../PaymentInstallmentsPreview";
 import { useState } from "react";
 import MobileMenu from "../MobileMenu";
+import { PaymentStatus } from "@prisma/client";
 
 export default function PaymenTableClient({
   data,
@@ -14,9 +15,17 @@ export default function PaymenTableClient({
   relatedData,
   onDeleted,
   onChanged,
-  allowedStaff
+  allowedStaff,
 }: BaseTableClientProps) {
   const [open, setOpend] = useState(false);
+  let paymentStatus: PaymentStatus = "PENDING";
+  let lewat: boolean = false;
+
+  if (data.status !== "PAID" && new Date(data.dueDate) < new Date()) {
+    paymentStatus = "OVERDUE";
+    lewat = true;
+  }
+
   return (
     <>
       <tr className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight">
@@ -84,8 +93,18 @@ export default function PaymenTableClient({
           })}
         </td>
         <td className="hidden md:table-cell">
-          <span
-            className={`px-2 py-1 rounded-full text-xs font-medium
+          {lewat ? (
+            <span
+              className={`px-2 py-1 rounded-full text-xs font-medium
+              ${paymentStatus === "OVERDUE" ? "bg-red-100 text-red-800" : ""}
+             
+            `}
+            >
+              {paymentStatus === "OVERDUE" && "Terlambat"}
+            </span>
+          ) : (
+            <span
+              className={`px-2 py-1 rounded-full text-xs font-medium
               ${
                 data.status === "PENDING" ? "bg-yellow-100 text-yellow-800" : ""
               }
@@ -97,12 +116,13 @@ export default function PaymenTableClient({
                   : ""
               }
             `}
-          >
-            {data.status === "PENDING" && "Belum Dibayar"}
-            {data.status === "PAID" && "Lunas"}
-            {data.status === "OVERDUE" && "Terlambat"}
-            {data.status === "PARTIALLY_PAID" && "Dibayar Sebagian"}
-          </span>
+            >
+              {data.status === "PENDING" && "Belum Dibayar"}
+              {data.status === "PAID" && "Lunas"}
+              {data.status === "OVERDUE" && "Terlambat"}
+              {data.status === "PARTIALLY_PAID" && "Dibayar Sebagian"}
+            </span>
+          )}
         </td>
         <td className="hidden md:table-cell">
           <PaymentInstallmentsPreview
