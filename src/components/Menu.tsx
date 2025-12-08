@@ -142,11 +142,11 @@ export default function Menu({ onLinkClick }: { onLinkClick: () => void }) {
         },
         {
           icon: "/finance.png",
-          label: "Pembayaran",
+          label: "Keuangan",
           visible: ["admin"],
           children: [
             {
-              label: "Riwayat Pembayaran",
+              label: "Pembayaran & Tagihan",
               href: "/list/payment",
             },
             {

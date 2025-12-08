@@ -3592,6 +3592,56 @@ export async function createPaymentLog(
       },
     });
 
+    let installmentAction: any = undefined;
+
+    if (studentIds.length === 1) {
+      const formInstallments = paymentData.installments ?? [];
+
+      // Valid installments (avoid empty or zero values)
+      const validNewInstallments = formInstallments.filter(
+        (i) => Number(i.amount) > 0
+      );
+
+      // Convert amounts → number
+      const normalizedInstallments = validNewInstallments.map((i) => ({
+        amount: Number(i.amount) || 0,
+        paidAt: i.paidAt ? new Date(i.paidAt) : null,
+      }));
+
+      // Total cicilan
+      const totalPaid = normalizedInstallments.reduce(
+        (sum, i) => sum + i.amount,
+        0
+      );
+
+      // ❌ Protect from overpayment
+      if (totalPaid > paymentData.amount) {
+        return {
+          success: false,
+          error: true,
+          message: `Total cicilan (${totalPaid}) tidak boleh melebihi jumlah tagihan (${paymentData.amount}).`,
+        };
+      }
+
+      // Determine final payment status
+      let finalStatus: PaymentStatus = paymentData.status;
+      const remaining = paymentData.amount - totalPaid;
+
+      if (remaining <= 0) finalStatus = "PAID";
+      else if (totalPaid > 0) finalStatus = "PARTIALLY_PAID";
+
+      // Prepare installmentAction for Prisma
+      installmentAction =
+        validNewInstallments.length > 0
+          ? {
+              create: normalizedInstallments,
+            }
+          : undefined;
+
+      // Override status in paymentData
+      paymentData.status = finalStatus;
+    }
+
     // ✅ Create payment logs with both classId and gradeId from the student itself
     await prisma.paymentLog.createMany({
       data: studentData.map((student) => ({
@@ -3607,6 +3657,22 @@ export async function createPaymentLog(
         gradeId: student.class?.gradeId || null,
       })),
     });
+
+    if (studentIds.length === 1 && installmentAction) {
+      const created = await prisma.paymentLog.findFirst({
+        where: { studentId: studentIds[0] },
+        orderBy: { createdAt: "desc" },
+      });
+
+      if (created) {
+        await prisma.paymentLog.update({
+          where: { id: created.id },
+          data: {
+            paymentInstallments: installmentAction,
+          },
+        });
+      }
+    }
     const createdPayments = await prisma.paymentLog.findMany({
       where: {
         studentId: { in: studentData.map((s) => s.id) },

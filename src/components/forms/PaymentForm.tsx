@@ -109,17 +109,33 @@ export default function CreatePaymentLogPage({
     gradeData = [],
     installment,
   } = relatedData ?? [];
+  const paymentLogId = data?.id ?? null;
   const usedInstallment = Array.isArray(installment)
-    ? installment.filter((inst) => inst.paymentLogId === data.id)
+    ? paymentLogId
+      ? installment.filter((inst) => inst.paymentLogId === paymentLogId)
+      : []
     : [];
   const [LoadedInstallment, setLoadedInstallment] = useState(usedInstallment);
   // Muat draft dari localStorage atau data untuk update
   const watchedAmount = watch("amount");
   const watchedDueDate = watch("dueDate");
   const watchedInstallments = watch("installments"); // 👈 important
+  const watchedPaymentMethod = watch("paymentMethod"); // 👈 important
+  const recipientIds = watch("recipientType") || [];
+  const isMultipleRecipients = recipientIds !== "student";
   useEffect(() => {
+    if (isMultipleRecipients && watchedPaymentMethod === "Cicilan") {
+      setValue("paymentMethod", "");
+    }
+  }, [isMultipleRecipients, watchedPaymentMethod, setValue]);
+
+  useEffect(() => {
+    const paymentLogId = data?.id ?? null;
+
     const dbInstallments = Array.isArray(installment)
-      ? installment.filter((inst) => inst.paymentLogId === data.id)
+      ? paymentLogId
+        ? installment.filter((inst) => inst.paymentLogId === paymentLogId)
+        : []
       : [];
 
     const formInstallments = watchedInstallments ?? [];
@@ -149,10 +165,10 @@ export default function CreatePaymentLogPage({
       (sum, i) => sum + Number(i.amount || 0),
       0
     );
-    const originalAmount = data.amount;
-    console.log(originalAmount, "originalAmount");
+    const originalAmount = data?.amount ?? Number(watchedAmount) ?? 0;
+    // console.log(originalAmount, "originalAmount");
     const remainingAmount = originalAmount - totalPaid;
-    console.log(remainingAmount, "remainingAmount");
+    // console.log(remainingAmount, "remainingAmount");
     // store remaining amount
     setValue("remainingAmount", remainingAmount);
 
@@ -176,15 +192,15 @@ export default function CreatePaymentLogPage({
     watchedInstallments,
     watchedAmount,
     watchedDueDate,
-    data.id,
-    data.amount,
+    data?.id,
+    data?.amount,
     installment,
     setValue,
   ]);
 
   const safeRemainingAmount =
     type === "update"
-      ? relatedData?.remainingAmount?.[data?.id] ?? 0
+      ? relatedData?.remainingAmount?.[data?.id ?? ""] ?? 0
       : watch("amount") ?? 0; // when creating, remaining = total amount
   // console.log(safeRemainingAmount, "safe remaining Amount");
 
@@ -391,31 +407,31 @@ export default function CreatePaymentLogPage({
             </>
           )}
 
-          {watchedValues.paymentMethod === "Cicilan" && (
-            <>
-              <InstallmentPopover
-                relatedInstallments={LoadedInstallment}
-                onDeleted={(id) => {
-                  // Remove from state when deleted
-                  setLoadedInstallment((prev) =>
-                    prev.filter((i) => i.id !== id)
-                  );
-                  setValue(
-                    "installments",
-                    usedInstallment.filter((i) => i.id !== id)
-                  );
-                }}
-              />
-              <PartialPaymentFields
-                control={control}
-                register={register}
-                setValue={setValue}
-                watch={watch}
-                errors={errors}
-                remainingAmount={safeRemainingAmount}
-              />
-            </>
-          )}
+          {watchedValues.paymentMethod === "Cicilan" &&
+            !isMultipleRecipients && (
+              <>
+                <InstallmentPopover
+                  relatedInstallments={LoadedInstallment}
+                  onDeleted={(id) => {
+                    setLoadedInstallment((prev) =>
+                      prev.filter((i) => i.id !== id)
+                    );
+                    setValue(
+                      "installments",
+                      usedInstallment.filter((i) => i.id !== id)
+                    );
+                  }}
+                />
+                <PartialPaymentFields
+                  control={control}
+                  register={register}
+                  setValue={setValue}
+                  watch={watch}
+                  errors={errors}
+                  remainingAmount={safeRemainingAmount}
+                />
+              </>
+            )}
 
           <div>
             <label className="block mb-1 font-medium">
@@ -430,28 +446,24 @@ export default function CreatePaymentLogPage({
             )}
           </div>
 
-          <div>
-            <label className="block mb-1 font-medium">Metode Pembayaran</label>
+          <select
+            {...register("paymentMethod")}
+            className="w-full border rounded px-3 py-2 bg-white"
+            defaultValue=""
+          >
+            <option value="" disabled>
+              Pilih Metode
+            </option>
+            <option value="Tunai">Tunai</option>
+            <option value="Transfer">Transfer Bank</option>
+            <option value="QRIS">QRIS</option>
+            <option value="Debit">Debit</option>
 
-            <select
-              {...register("paymentMethod")}
-              className="w-full border rounded px-3 py-2 bg-white"
-              defaultValue=""
-            >
-              <option value="" disabled>
-                Pilih Metode
-              </option>
-              <option value="Tunai">Tunai</option>
-              <option value="Transfer">Transfer Bank</option>
-              <option value="QRIS">QRIS</option>
-              <option value="Debit">Debit</option>
-              <option value="Cicilan">Cicilan</option>
-            </select>
-
-            {errors.paymentMethod && (
-              <p className="text-red-600">{errors.paymentMethod.message}</p>
-            )}
-          </div>
+            {/* Disable Cicilan when >1 recipients */}
+            <option value="Cicilan" disabled={isMultipleRecipients}>
+              Cicilan {isMultipleRecipients ? "(Hanya untuk 1 siswa)" : ""}
+            </option>
+          </select>
 
           <div>
             <label className="block mb-1 font-medium">
