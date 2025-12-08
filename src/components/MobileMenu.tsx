@@ -51,7 +51,7 @@ export default function MobileMenu({
           </Link>
         );
 
-      case "paymentLog":
+      case "bill":
         return (
           <div className="hover:bg-gray-100 active:bg-gray-200 cursor-pointer p-3">
             <PaymentInstallmentsPreview
@@ -59,6 +59,27 @@ export default function MobileMenu({
               totalAmount={Number(data.amount)}
               limit={1}
             />
+            <div className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 active:bg-gray-200 cursor-pointer">
+              <FormModal
+                table="payment"
+                type="create"
+                id={data.id}
+                data={data}
+                onChanged={onChanged}
+                relatedData={relatedData}
+              />
+              <span className="text-sm text-gray-700">Tambah pembayaran</span>
+            </div>
+            <div className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 active:bg-gray-200 cursor-pointer">
+              <FormModal
+                table="payment"
+                type="update"
+                data={data}
+                relatedData={relatedData}
+                onChanged={onChanged}
+              />
+              <span className="text-sm text-gray-700">Edit pembayaran</span>
+            </div>
           </div>
         );
 

@@ -333,15 +333,6 @@ const forms: {
       onChanged={onChanged}
     />
   ),
-  payment: (setOpen, type, data, relatedData, onChanged) => (
-    <NewPaymentForm
-      type={type}
-      setOpen={setOpen}
-      data={data}
-      relatedData={relatedData}
-      onChanged={onChanged}
-    />
-  ),
   bill: (setOpen, type, data, relatedData, onChanged) => (
     <BillForm
       type={type}
@@ -674,6 +665,75 @@ const FormModal = ({
         )}
       </>
     );
+  if (table === "payment") {
+    return (
+      <>
+        <div className="inline-flex items-center gap-2 px-1">
+          {/* <span className="text-sm text-yellow-600 font-medium cursor-pointer select-none">
+                Tambah
+              </span> */}
+          <button
+            title={
+              type === "create"
+                ? "Tambah Data"
+                : type === "update"
+                ? "Perbarui Data"
+                : "Hapus"
+            }
+            className={`
+    w-7 h-7 flex items-center justify-center rounded-full transition
+    ${bgColor + " hover:brightness-90 shadow-md"}
+  `}
+            onClick={() => setOpen(true)}
+          >
+            <Image
+              src={
+                type === "deleteMany"
+                  ? "/deleteDark.png"
+                  : type === "delete"
+                  ? "/deletefix.png"
+                  : `/${type}.png`
+              }
+              alt=""
+              width={15}
+              height={15}
+            />
+          </button>
+        </div>
+
+        {open &&
+          createPortal(
+            <div
+              className="fixed inset-0 z-[5000] bg-black bg-opacity-60 
+        flex items-center justify-center p-4"
+            >
+              <div className="max-h-[90vh] overflow-y-auto w-full flex justify-center">
+                <div
+                  className="bg-white p-4 rounded-md relative 
+                           w-[95%] h-[95%] md:w-[90%] lg:w-[85%] xl:w-[80%] 2xl:w-[75%]"
+                >
+                  <NewPaymentForm
+                    type={(type as "create") || "update"}
+                    setOpen={setOpen}
+                    data={data}
+                    relatedData={relatedData}
+                    onChanged={onChanged}
+                  />
+
+                  <div
+                    className="absolute top-4 right-4 cursor-pointer"
+                    onClick={() => setOpen(false)}
+                  >
+                    <Image src="/close.png" width={14} height={14} alt="" />
+                  </div>
+                </div>
+              </div>
+            </div>,
+            document.body
+          )}
+      </>
+    );
+  }
 
   if (type === "readMany") {
     switch (table) {

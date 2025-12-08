@@ -148,12 +148,6 @@ export default function PaymenTableClient({
                 relatedData={relatedData}
                 onChanged={onChanged}
               />
-              <FormModal
-                type="delete"
-                table="payment"
-                id={data.id}
-                onDeleted={() => onDeleted?.([data.id])}
-              />
             </>
           )}
         </td>
@@ -199,7 +193,7 @@ export default function PaymenTableClient({
 
           {open && (
             <MobileMenu
-              table="paymentLog"
+              table="bill"
               onClose={() => setOpend(false)}
               data={data}
               role={role}

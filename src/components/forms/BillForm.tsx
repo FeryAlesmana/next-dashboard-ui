@@ -35,14 +35,12 @@ export default function BillForm({
   } = useForm<BillLogSchema>({
     resolver: zodResolver(billLogSchema),
     defaultValues: {
-      paymentType: data.paymentType,
-      amount: data.amount,
-      dueDate: data.dueDate
-        ? new Date(data.dueDate).toISOString().split("T")[0]
-        : "",
-      description: data.description ?? "",
+      paymentType: "TUITION",
+      amount: 0,
+      dueDate: "",
+      description: "",
       recipientType: "student",
-      recipientId: data.studentId,
+      recipientId: "",
     },
   });
 
@@ -97,7 +95,24 @@ export default function BillForm({
       setShowConfirm(false);
     }
   };
-
+  useEffect(() => {
+    if (type === "update" && data) {
+      reset({
+        paymentType: data.paymentType ?? "TUITION",
+        amount: data.amount ?? 0,
+        dueDate: data.dueDate
+          ? new Date(data.dueDate).toISOString().split("T")[0]
+          : "",
+        description: data.description ?? "",
+        recipientType: data.studentId
+          ? "student"
+          : data.classId
+          ? "class"
+          : "grade",
+        recipientId: data.studentId ?? data.classId ?? data.gradeId ?? "",
+      });
+    }
+  }, [setValue, reset, data, type, relatedData]);
   useEffect(() => {
     if (state.success) {
       const updatedItem = state.data ?? formData;
