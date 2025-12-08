@@ -100,26 +100,16 @@ export const PartialPaymentFields = ({
       {/* Installment-level and field-level errors */}
       {errors.installments && (
         <div className="text-red-600 text-sm space-y-1 mt-2">
-          {Array.isArray(errors.installments) &&
-            errors.installments.map((err: any, i: number) => (
-              <div key={i}>
-                {err?.amount?.message && (
-                  <p>
-                    Pembayaran #{i + 1}: {err.amount.message}
-                  </p>
-                )}
-                {err?.paidAt?.message && (
-                  <p>
-                    Pembayaran #{i + 1}: {err.paidAt.message}
-                  </p>
-                )}
-              </div>
-            ))}
+          {Object.entries(errors.installments).map(([key, val]: any, i) => {
+            if (!val) return null;
+            if (Array.isArray(val)) return null; // handled elsewhere
 
-          {/* If Zod reports a top-level error (e.g. "installments exceed remaining") */}
-          {typeof errors.installments.message === "string" && (
-            <p>{errors.installments.message}</p>
-          )}
+            if (typeof val.message === "string") {
+              return <p key={i}>{val.message}</p>;
+            }
+
+            return null;
+          })}
         </div>
       )}
 

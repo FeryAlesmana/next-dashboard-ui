@@ -49,6 +49,8 @@ import {
   UpdatestaffSchema,
   ExportResultSchema,
   PerformanceSchema,
+  BillLogSchema,
+  PaymentSchema,
 } from "./formValidationSchema";
 import prisma from "./prisma";
 import { clerkClient } from "@clerk/nextjs/server";
@@ -3595,7 +3597,18 @@ export async function createPaymentLog(
     let installmentAction: any = undefined;
 
     if (studentIds.length === 1) {
-      const formInstallments = paymentData.installments ?? [];
+      // 5️⃣ New installments from the form
+      let formInstallments = paymentData.installments ?? [];
+
+      // 🔥 If NOT Cicilan → auto-create 1 full-payment installment
+      if (paymentData.paymentMethod !== "Cicilan") {
+        formInstallments = [
+          {
+            amount: paymentData.amount,
+            paidAt: paymentData.paidAt,
+          },
+        ];
+      }
 
       // Valid installments (avoid empty or zero values)
       const validNewInstallments = formInstallments.filter(
@@ -3797,8 +3810,17 @@ export async function updatePaymentLog(
     const dbInstallments = oldRecord.paymentInstallments || [];
 
     // 5️⃣ New installments from the form
-    const formInstallments = paymentData.installments ?? [];
+    let formInstallments = paymentData.installments ?? [];
 
+    // 🔥 If NOT Cicilan → auto-create 1 full-payment installment
+    if (paymentData.paymentMethod !== "Cicilan") {
+      formInstallments = [
+        {
+          amount: paymentData.amount,
+          paidAt: paymentData.paidAt,
+        },
+      ];
+    }
     // Filter only valid new payments (avoid null/0/empty values)
     const validNewInstallments = formInstallments.filter(
       (i) => Number(i.amount) > 0
@@ -5776,3 +5798,522 @@ export const deletePerfomance = async (
     return { success: false, error: true };
   }
 };
+
+export async function createBill(
+  prevState: CurrentState,
+  payload: BillLogSchema
+): Promise<CurrentState> {
+  try {
+    const { recipientType, recipientId, ...bill } = payload;
+
+    let studentIds: string[] = [];
+
+    if (recipientType === "student") {
+      studentIds = [recipientId as string];
+    } else if (recipientType === "class") {
+      const classData = await prisma.class.findUnique({
+        where: { id: parseInt(recipientId) },
+        include: { students: { select: { id: true } } },
+      });
+      studentIds = classData?.students.map((s) => s.id) ?? [];
+    } else {
+      const gradeData = await prisma.grade.findUnique({
+        where: { id: parseInt(recipientId) },
+        include: { students: { select: { id: true } } },
+      });
+      studentIds = gradeData?.students.map((s) => s.id) ?? [];
+    }
+
+    if (studentIds.length === 0) {
+      return {
+        success: false,
+        error: true,
+        message: "Tidak ada siswa yang dipilih untuk tagihan ini.",
+      };
+    }
+
+    // ✅ Fetch classId and gradeId for each student
+    const studentData = await prisma.student.findMany({
+      where: { id: { in: studentIds } },
+      select: {
+        id: true,
+        classId: true,
+        class: {
+          select: {
+            gradeId: true,
+          },
+        },
+      },
+    });
+    await prisma.paymentLog.createMany({
+      data: studentData.map((student) => ({
+        studentId: student.id,
+        amount: bill.amount,
+        paymentType: bill.paymentType,
+        status: "PENDING",
+        dueDate: new Date(bill.dueDate),
+        description: bill.description || null,
+        paymentMethod: null,
+        receiptNumber: null,
+        classId: student.classId,
+        gradeId: student.class?.gradeId || null,
+      })),
+    });
+    const createdPayments = await prisma.paymentLog.findMany({
+      where: {
+        studentId: { in: studentData.map((s) => s.id) },
+        paymentType: bill.paymentType,
+        dueDate: new Date(bill.dueDate),
+      },
+      include: {
+        student: {
+          select: {
+            name: true,
+            class: {
+              select: {
+                name: true,
+              },
+            },
+            student_details: { select: { nisn: true } },
+          },
+        },
+      },
+    });
+
+    await Promise.all(
+      createdPayments.map((payment) =>
+        logPaymentChange({
+          action: "CREATE",
+          paymentLogId: payment.id,
+          newValue: payment,
+        })
+      )
+    );
+
+    function safeDecimal(value: Decimal) {
+      return value && typeof value === "object" && value.toNumber
+        ? value.toNumber()
+        : value;
+    }
+    function safePaymentLogArray(payments: any) {
+      return payments.map((p: any) => ({
+        ...p,
+        amount: safeDecimal(p.amount),
+      }));
+    }
+    const safePayments = safePaymentLogArray(createdPayments);
+    return {
+      success: true,
+      error: false,
+      message: "Tagihan berhasil dibuat.",
+      data: safePayments,
+    };
+  } catch (error) {
+    console.error(error);
+    return {
+      success: false,
+      error: true,
+      message: "Gagal membuat tagihan." + error,
+    };
+  }
+}
+
+export async function updateBill(
+  prevState: CurrentState,
+  data: BillLogSchema
+): Promise<CurrentState> {
+  try {
+    // 1️⃣ Fetch old record safely
+    const oldRecord = await prisma.paymentLog.findUnique({
+      where: { id: data.id },
+      include: { paymentInstallments: true },
+    });
+
+    if (!oldRecord) {
+      return {
+        success: false,
+        error: true,
+        message: "Tagihan tidak ditemukan.",
+      };
+    }
+
+    const { recipientType, recipientId, ...bill } = data;
+
+    let classId: number | null = null;
+    let gradeId: number | null = null;
+
+    if (recipientType === "class") {
+      const classData = await prisma.class.findUnique({
+        where: { id: parseInt(recipientId) },
+        include: { grade: true },
+      });
+      classId = classData?.id ?? null;
+      gradeId = classData?.gradeId ?? null;
+    } else if (recipientType === "grade") {
+      gradeId = parseInt(recipientId);
+    } else if (recipientType === "student") {
+      const student = await prisma.student.findUnique({
+        where: { id: recipientId as string },
+        select: {
+          classId: true,
+          id: true,
+          class: {
+            select: {
+              gradeId: true,
+            },
+          },
+        },
+      });
+      classId = student?.classId ?? null;
+      gradeId = student?.class?.gradeId ?? null;
+    }
+
+    const updatedPayment = await prisma.paymentLog.update({
+      where: {
+        id: data.id,
+      },
+      data: {
+        studentId: recipientId,
+        amount: bill.amount,
+        paymentType: bill.paymentType,
+        dueDate: new Date(bill.dueDate),
+        description: bill.description || null,
+        paymentMethod: null,
+        receiptNumber: null,
+        classId,
+        gradeId,
+      },
+      include: {
+        student: {
+          select: {
+            name: true,
+
+            img: true,
+            class: {
+              select: {
+                name: true,
+              },
+            },
+            student_details: { select: { nisn: true } },
+          },
+        },
+        paymentInstallments: true,
+      },
+    });
+    function safeDecimal(value: Decimal) {
+      return value && typeof value === "object" && value.toNumber
+        ? value.toNumber()
+        : value;
+    }
+
+    const safePayment = {
+      ...updatedPayment,
+      amount: safeDecimal(updatedPayment.amount),
+      paymentInstallments: updatedPayment.paymentInstallments.map((inst) => ({
+        ...inst,
+        amount: safeDecimal(inst.amount),
+      })),
+    };
+    logPaymentChange({
+      action: "UPDATE",
+      paymentLogId: safePayment.id,
+      oldValue: oldRecord,
+      newValue: safePayment,
+    });
+    return {
+      success: true,
+      error: false,
+      message: "Tagihan berhasil diperbarui.",
+      data: safePayment,
+    };
+  } catch (err) {
+    console.error(err);
+    return {
+      success: false,
+      error: true,
+      message: "Gagal memperbarui tagihan.",
+    };
+  }
+}
+
+export async function createPayment(
+  prevState: CurrentState,
+  payload: PaymentSchema
+): Promise<CurrentState> {
+  try {
+    // 1. Fetch bill + existing installments
+    const bill = await prisma.paymentLog.findUnique({
+      where: { id: payload.id },
+      include: { paymentInstallments: true },
+    });
+
+    if (!bill) {
+      return {
+        success: false,
+        error: true,
+        message: "Tagihan tidak ditemukan.",
+      };
+    }
+
+    // Extract usable data
+    const { paymentMethod, receiptNumber, installments, paidAt } = payload;
+
+    // 🔥 Build new installment list depending on method
+    let newInstallments = [];
+
+    if (paymentMethod === "Cicilan") {
+      newInstallments = (installments ?? [])
+        .filter((i) => Number(i.amount) > 0)
+        .map((i) => ({
+          amount: Number(i.amount),
+          paidAt: i.paidAt ? new Date(i.paidAt) : new Date(),
+        }));
+    } else {
+      // Single payment
+      if (!payload.amount || Number(payload.amount) <= 0) {
+        return {
+          success: false,
+          error: true,
+          message: "Jumlah pembayaran tidak valid.",
+        };
+      }
+
+      newInstallments = [
+        {
+          amount: Number(payload.amount),
+          paidAt: paidAt ? new Date(paidAt) : new Date(),
+        },
+      ];
+    }
+
+    // 2. Overpayment check
+    const existingTotalPaid = bill.paymentInstallments.reduce(
+      (sum, i) => sum + Number(i.amount),
+      0
+    );
+
+    const newTotalPaid = newInstallments.reduce(
+      (sum, i) => sum + Number(i.amount),
+      0
+    );
+
+    const finalTotalPaid = existingTotalPaid + newTotalPaid;
+
+    if (finalTotalPaid > Number(bill.amount)) {
+      return {
+        success: false,
+        error: true,
+        message: `Total pembayaran (${finalTotalPaid}) melebihi jumlah tagihan (${bill.amount}).`,
+      };
+    }
+
+    // 3. Determine status
+    let finalStatus: PaymentStatus = "PENDING";
+
+    if (finalTotalPaid === Number(bill.amount)) {
+      finalStatus = "PAID";
+    } else if (finalTotalPaid > 0) {
+      finalStatus = "PARTIALLY_PAID";
+    }
+
+    // 4. Insert new installments
+    await prisma.paymentInstallment.createMany({
+      data: newInstallments.map((i) => ({
+        paymentLogId: bill.id,
+        amount: i.amount,
+        paidAt: i.paidAt,
+      })),
+    });
+
+    // 5. Last payment time
+    const lastPaidAt =
+      newInstallments[newInstallments.length - 1]?.paidAt ?? bill.paidAt;
+
+    // 6. Update paymentLog
+    const updatedBill = await prisma.paymentLog.update({
+      where: { id: bill.id },
+      data: {
+        paymentMethod,
+        receiptNumber,
+        status: finalStatus,
+        paidAt: lastPaidAt,
+      },
+      include: {
+        student: {
+          select: {
+            name: true,
+            img: true,
+            class: { select: { name: true } },
+            student_details: { select: { nisn: true } },
+          },
+        },
+        paymentInstallments: true,
+      },
+    });
+
+    // Cleanup Decimal → number
+    const cleanAmount = (v: any) => (v?.toNumber ? v.toNumber() : v);
+
+    const safePayment = {
+      ...updatedBill,
+      amount: cleanAmount(updatedBill.amount),
+      paymentInstallments: updatedBill.paymentInstallments.map((i) => ({
+        ...i,
+        amount: cleanAmount(i.amount),
+      })),
+    };
+
+    // Logging
+    logPaymentChange({
+      action: "CREATE",
+      paymentLogId: bill.id,
+      newValue: safePayment,
+    });
+
+    return {
+      success: true,
+      error: false,
+      message: "Pembayaran berhasil dicatat.",
+      data: safePayment,
+    };
+  } catch (error) {
+    console.error(error);
+    return {
+      success: false,
+      error: true,
+      message: "Gagal mencatat pembayaran. " + error,
+    };
+  }
+}
+
+export async function updatePayment(
+  prevState: CurrentState,
+  payload: PaymentSchema
+): Promise<CurrentState> {
+  try {
+    const paymentId = payload.id;
+
+    // 1️⃣ Get existing installments
+    const existing = await prisma.paymentLog.findUnique({
+      where: { id: paymentId },
+      include: { paymentInstallments: true },
+    });
+    const { ...paymentData } = payload;
+    if (!existing) {
+      return { success: false, error: true, message: "Payment not found" };
+    }
+
+    const dbInstallments = existing.paymentInstallments;
+    const formInstallments = paymentData.installments ?? [];
+
+    // 2️⃣ Calculate new total BEFORE updating DB
+    const mergedInstallments = dbInstallments.map((inst) => {
+      const updated = formInstallments.find((f) => f.id === inst.id);
+      return updated
+        ? {
+            ...inst,
+            amount: Number(updated.amount) || 0,
+            paidAt: updated.paidAt ? new Date(updated.paidAt) : null,
+          }
+        : inst;
+    });
+
+    const totalPaid = mergedInstallments.reduce(
+      (sum, i) => sum + Number(i.amount || 0),
+      0
+    );
+
+    if (totalPaid > paymentData.amount) {
+      return {
+        success: false,
+        error: true,
+        message: `Total cicilan (${totalPaid}) melebihi jumlah tagihan (${paymentData.amount}).`,
+      };
+    }
+
+    // 3️⃣ Determine status BEFORE updating DB
+    let finalStatus: PaymentStatus = "PENDING";
+
+    if (totalPaid >= paymentData.amount) {
+      finalStatus = "PAID";
+    } else if (totalPaid > 0) {
+      finalStatus = "PARTIALLY_PAID";
+    }
+
+    // Determine lastPaidAt
+    const paidHistory = mergedInstallments
+      .filter((i) => i.paidAt)
+      .sort(
+        (a, b) => new Date(a.paidAt!).getTime() - new Date(b.paidAt!).getTime()
+      );
+
+    const lastPaidAt = paidHistory.length
+      ? paidHistory[paidHistory.length - 1].paidAt
+      : null;
+
+    // 4️⃣ After validation → update installments
+    for (const inst of formInstallments) {
+      await prisma.paymentInstallment.update({
+        where: { id: inst.id },
+        data: {
+          amount: Number(inst.amount),
+          paidAt: inst.paidAt ? new Date(inst.paidAt) : null,
+        },
+      });
+    }
+
+    // 5️⃣ Update payment log AFTER installments update
+    const updatedPayment = await prisma.paymentLog.update({
+      where: { id: paymentId },
+      data: {
+        paymentMethod: paymentData.paymentMethod,
+        receiptNumber: paymentData.receiptNumber,
+        status: finalStatus,
+        paidAt: lastPaidAt,
+      },
+      include: {
+        paymentInstallments: true,
+        student: {
+          select: {
+            name: true,
+            img: true,
+            class: { select: { name: true } },
+            student_details: { select: { nisn: true } },
+          },
+        },
+      },
+    });
+
+    // Cleanup Decimal → number
+    const cleanAmount = (v: any) => (v?.toNumber ? v.toNumber() : v);
+
+    const safePayment = {
+      ...updatedPayment,
+      amount: cleanAmount(updatedPayment.amount),
+      paymentInstallments: updatedPayment.paymentInstallments.map((i) => ({
+        ...i,
+        amount: cleanAmount(i.amount),
+      })),
+    };
+
+    // Logging
+    logPaymentChange({
+      action: "UPDATE",
+      paymentLogId: paymentData.id,
+      newValue: safePayment,
+    });
+
+    return {
+      success: true,
+      error: false,
+      data: safePayment,
+      message: "Berhasil Update Payment",
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: true,
+      message: "Gagal Update Payment" + error,
+    };
+  }
+}

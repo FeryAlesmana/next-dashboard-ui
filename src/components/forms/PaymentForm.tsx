@@ -128,8 +128,31 @@ export default function CreatePaymentLogPage({
       setValue("paymentMethod", "");
     }
   }, [isMultipleRecipients, watchedPaymentMethod, setValue]);
+  useEffect(() => {
+    if (!watchedValues.paymentMethod) return;
+
+    const isCicilan = watchedValues.paymentMethod === "Cicilan";
+
+    if (!isCicilan) {
+      // For Tunai, Transfer, QRIS, Debit
+      setValue("amountPaid", data.amount);
+      setValue("status", "PAID");
+      setValue("remainingAmount", 0);
+
+      // Clear installments completely
+      setValue("installments", []);
+    }
+  }, [watchedValues.paymentMethod, data.amount, setValue]);
 
   useEffect(() => {
+    const isCicilan = watchedValues.paymentMethod === "Cicilan";
+
+    // 🔥 Override logic for non-installment payments
+    if (!isCicilan) {
+      setValue("status", "PAID");
+      setValue("remainingAmount", 0);
+      return;
+    }
     const paymentLogId = data?.id ?? null;
 
     const dbInstallments = Array.isArray(installment)
@@ -196,6 +219,7 @@ export default function CreatePaymentLogPage({
     data?.amount,
     installment,
     setValue,
+    watchedValues.paymentMethod,
   ]);
 
   const safeRemainingAmount =
@@ -357,6 +381,27 @@ export default function CreatePaymentLogPage({
               <p className="text-red-600">{errors.amount.message}</p>
             )}
           </div>
+          {watchedValues.paymentMethod !== "Cicilan" && (
+            <div>
+              <label className="block mb-1 font-medium">Total Dibayar</label>
+              <Controller
+                name="amountPaid"
+                control={control}
+                render={({ field }) => (
+                  <div>
+                    <RupiahInput
+                      value={field.value}
+                      onChange={field.onChange}
+                      disabled={true}
+                    />
+                  </div>
+                )}
+              />
+              {errors.amount && (
+                <p className="text-red-600">{errors.amount.message}</p>
+              )}
+            </div>
+          )}
 
           <div>
             <label className="block mb-1 font-medium">Tenggat Waktu</label>

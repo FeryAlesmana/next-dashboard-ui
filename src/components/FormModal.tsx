@@ -178,6 +178,12 @@ const MeetingForm = dynamic(() => import("./forms/MeetingForm"), {
 const PaymentForm = dynamic(() => import("./forms/PaymentForm"), {
   loading: () => <h1>Loading...</h1>,
 });
+const NewPaymentForm = dynamic(() => import("./forms/NewPaymentForm"), {
+  loading: () => <h1>Loading...</h1>,
+});
+const BillForm = dynamic(() => import("./forms/BillForm"), {
+  loading: () => <h1>Loading...</h1>,
+});
 const UserForm = dynamic(() => import("./forms/UserForm"), {
   loading: () => <h1>Loading...</h1>,
 });
@@ -320,6 +326,24 @@ const forms: {
   ),
   paymentLog: (setOpen, type, data, relatedData, onChanged) => (
     <PaymentForm
+      type={type}
+      setOpen={setOpen}
+      data={data}
+      relatedData={relatedData}
+      onChanged={onChanged}
+    />
+  ),
+  payment: (setOpen, type, data, relatedData, onChanged) => (
+    <NewPaymentForm
+      type={type}
+      setOpen={setOpen}
+      data={data}
+      relatedData={relatedData}
+      onChanged={onChanged}
+    />
+  ),
+  bill: (setOpen, type, data, relatedData, onChanged) => (
+    <BillForm
       type={type}
       setOpen={setOpen}
       data={data}
@@ -624,7 +648,6 @@ const FormModal = ({
           >
             <Image src={`/create.png`} alt="" width={15} height={16} />
           </button>
-          
         </div>
 
         {open && (

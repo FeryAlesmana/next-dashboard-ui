@@ -7,6 +7,7 @@ import {
   exTypes,
   KPS,
   parents,
+  PaymentType,
   resTypes,
   staffrole,
   TTinggal,
@@ -837,7 +838,7 @@ export const paymentLogSchema = z
     receiptNumber: z.string().optional(),
     recipientType: z.enum(["student", "class", "grade"]),
     recipientId: z.string().min(1, "Penerima wajib dipilih"),
-
+    amountPaid: z.coerce.number().optional(),
     paidAt: z.string().optional(), // ISO date
     installmentCount: z.coerce.number().optional(),
     installments: z
@@ -894,8 +895,8 @@ export const paymentLogSchema = z
     },
     {
       message:
-        "Jumlah pembayaran harus lebih kecil dari total saat Sebagian Dibayar",
-      path: ["installments"],
+        "Jumlah pembayaran harus lebih kecil dari total saat Metode Pembayaran Cicilan",
+      path: ["installments", "paymentMethod"],
     }
   )
 
@@ -1282,3 +1283,95 @@ export const performanceSchema = z.object({
 });
 
 export type PerformanceSchema = z.infer<typeof performanceSchema>;
+
+export const billLogSchema = z.object({
+  id: z.coerce.number().optional(),
+  // studentId: z.string().min(1, { message: "Nama murid wajib diisi!" }),
+  paymentType: z.nativeEnum(PaymentType),
+  amount: z.number().min(1, "Jumlah harus lebih dari 0"),
+  dueDate: z.string().min(1, "Tenggat waktu wajib diisi"),
+  description: z.string().optional(),
+  recipientType: z.enum(["student", "class", "grade"]),
+  recipientId: z.string().min(1, "Penerima wajib dipilih"),
+});
+
+export type BillLogSchema = z.infer<typeof billLogSchema>;
+
+export const paymentSchema = z
+  .object({
+    id: z.coerce.number().optional(),
+    // studentId: z.string().min(1, { message: "Nama murid wajib diisi!" }),
+    paymentType: z.nativeEnum(PaymentType),
+    amount: z.number().min(1, "Jumlah harus lebih dari 0"),
+    dueDate: z.string().min(1, "Tenggat waktu wajib diisi"),
+    description: z.string().optional(),
+    paymentMethod: z.string().optional(),
+    receiptNumber: z.string().optional(),
+    recipientType: z.enum(["student", "class", "grade"]),
+    recipientId: z.string().min(1, "Penerima wajib dipilih"),
+    amountPaid: z.coerce.number().optional(),
+    paidAt: z.string().optional(), // ISO date
+    installmentCount: z.coerce.number().optional(),
+    installments: z
+      .array(
+        z.object({
+          id: z.coerce.number().optional(),
+          amount: z.coerce.number().min(1, "Jumlah harus > 0"),
+          paidAt: z.string().min(1, "Tanggal harus diisi").optional(),
+        })
+      )
+      .optional(),
+    remainingAmount: z.number().optional(),
+  })
+  .refine(
+    (data) =>
+      data.remainingAmount === 0
+        ? true // skip all installment requirements
+        : true,
+    {
+      message: "",
+      path: ["installments"],
+    }
+  )
+
+  // ⭐ Rule 4: Prevent overpayment on new installments only
+  .refine(
+    (data) => {
+      console.log("=== ZOD REMAINING CHECK ===");
+      console.log("remainingAmount:", data.remainingAmount);
+      console.log("installments:", data.installments);
+      console.log(
+        "total installments:",
+        (data.installments ?? []).reduce((s, i) => s + i.amount, 0)
+      );
+
+      if (data.remainingAmount === undefined) {
+        console.log("→ PASS: remainingAmount undefined");
+        return true;
+      }
+
+      const inst = data.installments ?? [];
+
+      if (inst.length === 0) {
+        console.log("→ PASS: no new installments (editing only)");
+        return true;
+      }
+
+      const total = inst.reduce((s, i) => s + i.amount, 0);
+
+      console.log("computed total:", total);
+      console.log("allowed max:", data.remainingAmount);
+
+      const result = total <= data.remainingAmount;
+
+      console.log("→ RESULT:", result ? "PASS" : "FAIL (overpayment!)");
+
+      return result;
+    },
+    {
+      message: "Total angsuran tidak boleh melebihi sisa tagihan!",
+      path: ["installments"],
+    }
+  );
+
+export type PaymentSchema = z.infer<typeof paymentSchema>;

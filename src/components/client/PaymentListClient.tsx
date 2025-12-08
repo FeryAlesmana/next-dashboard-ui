@@ -184,7 +184,7 @@ export default function PaymentListClient({
             {allowedRole && (
               <>
                 <FormModal
-                  table="paymentLog"
+                  table="bill"
                   type="create"
                   onChanged={handleChanged}
                   relatedData={relatedData}

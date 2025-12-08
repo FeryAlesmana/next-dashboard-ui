@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 
-export function RupiahInput({ value, onChange }: any) {
+export function RupiahInput({ value, onChange, disabled }: any) {
   const [display, setDisplay] = useState("");
   const inputRef = useRef<HTMLInputElement | null>(null);
 
@@ -54,6 +54,7 @@ export function RupiahInput({ value, onChange }: any) {
     <input
       ref={inputRef}
       type="text"
+      disabled={disabled}
       value={display}
       onChange={handleInput}
       className="border rounded p-2 w-full font-medium"

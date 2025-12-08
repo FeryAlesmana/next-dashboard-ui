@@ -27,7 +27,9 @@ export type TableName =
   | "importPayments"
   | "exportPayments"
   | "exportResults"
-  | "staffPerfomance";
+  | "staffPerfomance"
+  | "bill"
+  | "payment";
 
 export type FormContainerProps = {
   table: TableName;

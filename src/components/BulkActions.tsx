@@ -30,7 +30,9 @@ export default function BulkActions({
     | "ppdb"
     | "paymentLog"
     | "user"
-    | "staff";
+    | "staff"
+    | "bill"
+    | "payment";
   onReset: () => void;
   onDeleted?: (ids: (string | number)[]) => void;
   handleChanged?: (item: any) => void;
@@ -46,7 +48,7 @@ export default function BulkActions({
     "subject",
     "lesson",
     "user",
-    "staff"
+    "staff",
   ]; // extend later if needed
   return (
     <AnimatePresence>

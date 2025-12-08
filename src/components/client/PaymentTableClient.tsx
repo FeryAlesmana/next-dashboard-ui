@@ -130,6 +130,32 @@ export default function PaymenTableClient({
             totalAmount={Number(data.amount)}
             limit={1}
           />
+          {allowedStaff && (
+            <>
+              <FormModal
+                table="payment"
+                type="create"
+                id={data.id}
+                data={data}
+                onChanged={onChanged}
+                relatedData={relatedData}
+              />
+              <FormModal
+                type="update"
+                table="payment"
+                id={data.id}
+                data={data}
+                relatedData={relatedData}
+                onChanged={onChanged}
+              />
+              <FormModal
+                type="delete"
+                table="payment"
+                id={data.id}
+                onDeleted={() => onDeleted?.([data.id])}
+              />
+            </>
+          )}
         </td>
 
         <td className="hidden md:table-cell">
@@ -145,7 +171,7 @@ export default function PaymenTableClient({
               <>
                 <FormModal
                   type="update"
-                  table="paymentLog"
+                  table="bill"
                   id={data.id}
                   data={data}
                   relatedData={relatedData}
@@ -153,7 +179,7 @@ export default function PaymenTableClient({
                 />
                 <FormModal
                   type="delete"
-                  table="paymentLog"
+                  table="bill"
                   id={data.id}
                   onDeleted={() => onDeleted?.([data.id])}
                 />
