@@ -18,6 +18,18 @@ export default function StaffTableClient({
     // Capitalize the first letter
     return lower.charAt(0).toUpperCase() + lower.slice(1);
   };
+  function translateStaffRole(role: string): string {
+    switch (role) {
+      case "PENILAIAN":
+        return "Penilaian & Kesiswaan";
+      case "PENJADWALAN":
+        return "Penjadwalan";
+      case "ACCOUNTING":
+        return "Akuntansi";
+      default:
+        return role;
+    }
+  }
 
   return (
     <>
@@ -53,7 +65,7 @@ export default function StaffTableClient({
         </td>
         <td className="hidden md:table-cell">{data.username}</td>
         <td className="hidden md:table-cell">
-          {toTitleCase(data.staffroles) || "-"}
+          {translateStaffRole(data.staffroles) || "-"}
         </td>
         <td className="hidden md:table-cell">{data.phone}</td>
         <td className="hidden md:table-cell">{data.address}</td>

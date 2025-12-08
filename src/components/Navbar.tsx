@@ -13,6 +13,7 @@ interface UserProfile {
   name: string;
   img: string;
   role: string;
+  staffRole?: string;
 }
 
 const Navbar = ({ onToggleMenu }: NavbarProps) => {
@@ -22,6 +23,7 @@ const Navbar = ({ onToggleMenu }: NavbarProps) => {
     name: "Loading...",
     img: "/avatar.png",
     role: "",
+    staffRole: "",
   });
   useEffect(() => {
     const fetchProfile = async () => {
@@ -59,6 +61,20 @@ const Navbar = ({ onToggleMenu }: NavbarProps) => {
       container.removeEventListener("scroll", handleScroll);
     };
   }, []);
+
+  function translateStaffRole(role: string): string {
+    switch (role) {
+      case "PENILAIAN":
+        return "Penilaian & Kesiswaan";
+      case "PENJADWALAN":
+        return "Penjadwalan";
+      case "ACCOUNTING":
+        return "Akuntansi";
+      default:
+        return role;
+    }
+  }
+
   return (
     <div
       className={`
@@ -93,8 +109,12 @@ const Navbar = ({ onToggleMenu }: NavbarProps) => {
           >
             {userProfile.name}
           </span>
-          <span className="text-[10px] text-gray-500 text-right">
-            {userProfile.role}
+          <span className="text-[10px] text-gray-500 text-right p-1">
+            {userProfile.role === "staff" ? (
+              <span>{translateStaffRole(userProfile.staffRole!)}</span>
+            ) : (
+              <span>{userProfile.role}</span>
+            )}
           </span>
         </div>
         <div className="w-9 h-9 rounded-full overflow-hidden">

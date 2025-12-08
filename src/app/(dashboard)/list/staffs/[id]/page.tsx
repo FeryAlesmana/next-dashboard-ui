@@ -77,6 +77,19 @@ const SingleStaffPage = async ({
     }
   };
 
+  function translateStaffRole(role?: string): string {
+    switch (role) {
+      case "PENILAIAN":
+        return "Penilaian & Kesiswaan";
+      case "PENJADWALAN":
+        return "Penjadwalan";
+      case "ACCOUNTING":
+        return "Akuntansi";
+      default:
+        return "Tidak Dikenal";
+    }
+  }
+
   const roleBadgeStyle = getRoleBadgeStyle(staff.staffroles!);
   return (
     <div className="p-4 flex gap-4 flex-col xl:flex-row flex-1 font-sans">
@@ -118,7 +131,7 @@ const SingleStaffPage = async ({
                 <span
                   className={`text-xs font-semibold px-3 py-1 rounded-full w-fit ${roleBadgeStyle} shadow-sm`}
                 >
-                  {staff.staffroles || "-"}
+                  {translateStaffRole(staff.staffroles!) || "-"}
                 </span>
 
                 {/* SEX AND RELIGION (NEW FIELDS) */}

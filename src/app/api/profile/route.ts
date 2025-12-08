@@ -17,5 +17,6 @@ export async function GET() {
     name: profile?.name ?? "Admin",
     img: profile?.img ?? "/avatar.png",
     role,
+    staffRole: profile?.staffRole
   });
 }

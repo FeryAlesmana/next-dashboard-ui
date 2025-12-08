@@ -581,27 +581,37 @@ export const getProfileByClerkIdAndRole = async (
 
   switch (role) {
     case "student":
-      return (
-        (await prisma.student.findUnique({
-          where: { id: clerkId },
-          select: { name: true, img: true },
-        })) ?? { name: "Siswa", img: defaultImg }
-      );
+      const student = await prisma.student.findUnique({
+        where: { id: clerkId },
+        select: { name: true, img: true },
+      });
+      return {
+        name: student?.name ?? "Siswa",
+        img: student?.img ?? defaultImg,
+        staffRole: undefined,
+      };
 
     case "teacher":
-      return (
-        (await prisma.teacher.findUnique({
-          where: { id: clerkId },
-          select: { name: true, img: true },
-        })) ?? { name: "Guru", img: defaultImg }
-      );
+      const teacher = await prisma.teacher.findUnique({
+        where: { id: clerkId },
+        select: { name: true, img: true },
+      });
+      return {
+        name: teacher?.name ?? "Guru",
+        img: teacher?.img ?? defaultImg,
+        staffRole: undefined,
+      };
+
     case "staff":
-      return (
-        (await prisma.staff.findUnique({
-          where: { id: clerkId },
-          select: { name: true, img: true },
-        })) ?? { name: "Staff", img: defaultImg }
-      );
+      const staff = await prisma.staff.findUnique({
+        where: { id: clerkId },
+        select: { name: true, img: true, staffroles: true },
+      });
+      return {
+        name: staff?.name ?? "Staff",
+        img: staff?.img ?? defaultImg,
+        staffRole: staff?.staffroles ?? "",
+      };
 
     case "parent":
       const parent = await prisma.parent.findUnique({
@@ -611,10 +621,15 @@ export const getProfileByClerkIdAndRole = async (
       return {
         name: parent?.name ?? "Wali Murid",
         img: defaultImg,
+        staffRole: undefined,
       };
 
     default:
-      return { name: "Admin", img: defaultImg };
+      return {
+        name: "Admin",
+        img: defaultImg,
+        staffRole: undefined,
+      };
   }
 };
 

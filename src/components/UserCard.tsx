@@ -10,8 +10,6 @@ const UserCard = async ({
 }) => {
   let data: number = 0;
 
-  const client = await clerkClient();
-
   switch (type) {
     case "staff":
       data = await prisma.staff.count();
@@ -36,6 +34,12 @@ const UserCard = async ({
     month: "2-digit",
     year: "numeric",
   });
+  const typeMap: Record<string, string> = {
+    staff: "Staf",
+    teacher: "Guru",
+    student: "Siswa",
+    parent: "Wali Murid",
+  };
   return (
     <div className="rounded-2xl odd:bg-lamaBlue even:bg-lamaYellow p-4 flex-1 min-w-[130px]">
       <div className="flex justify-between items-center">
@@ -47,7 +51,9 @@ const UserCard = async ({
         </Link>
       </div>
       <h1 className="text-2xl font-semibold my-4">{data}</h1>
-      <h2 className="capitalize text-sm font-medium text-gray-500">{type}s</h2>
+      <h2 className="capitalize text-sm font-medium text-gray-500">
+        {typeMap[type]}
+      </h2>
     </div>
   );
 };
