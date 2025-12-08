@@ -11,6 +11,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { staffrole } from "@prisma/client";
 import { useMediaQuery } from "@/lib/useMediaQuery";
+import { MobilePaymentCard } from "./MobilePaymentCard";
 
 export default function PaymentListClient({
   columns,
@@ -171,6 +172,9 @@ export default function PaymentListClient({
     allowedRole,
     isMobile,
   });
+
+  const isMobileNew = useMediaQuery("(max-width: 768px)");
+
   return (
     <div className="space-y-4 mt-3">
       {/* TOP */}
@@ -269,47 +273,72 @@ export default function PaymentListClient({
         handleManyChanged={handleManyChanged}
         onDeleted={handleDeleteOptimistic}
       />
-
-      <Table columns={trueCol}>
-        <tr className="text-left text-gray-500 text-sm">
-          {allowedRole && (
-            <td className="px-4 py-2">
-              <input
-                type="checkbox"
-                checked={selected.length === data.length}
-                onChange={(e) =>
-                  setSelected(e.target.checked ? data.map((s) => s.id) : [])
-                }
+      {isMobile ? (
+        <div className="space-y-3">
+          {localData.length === 0 ? (
+            <div className=" p-4">
+              <div className="text-gray-500 text-sm text-center py-6">
+                Tidak ada data untuk table ini
+              </div>
+            </div>
+          ) : (
+            localData.map((row) => (
+              <MobilePaymentCard
+                key={row.id}
+                data={row}
+                selected={selected}
+                onToggle={toggleSelection}
+                relatedData={relatedData}
+                onDeleted={handleDeleteOptimistic}
+                onChanged={handleChanged}
+                role={role}
+                allowedStaff={allowedRole}
               />
-            </td>
+            ))
           )}
-          {/* other headers */}
-        </tr>
-        {localData.length === 0 ? (
-          <tr>
-            <td
-              colSpan={columns.length + (role === "admin" ? 1 : 0)}
-              className="text-center text-gray-500 py-6"
-            >
-              Tidak ada data untuk table ini
-            </td>
+        </div>
+      ) : (
+        <Table columns={trueCol}>
+          <tr className="text-left text-gray-500 text-sm">
+            {allowedRole && (
+              <td className="px-4 py-2">
+                <input
+                  type="checkbox"
+                  checked={selected.length === data.length}
+                  onChange={(e) =>
+                    setSelected(e.target.checked ? data.map((s) => s.id) : [])
+                  }
+                />
+              </td>
+            )}
+            {/* other headers */}
           </tr>
-        ) : (
-          localData.map((row) => (
-            <PaymenTableClient
-              key={row.id}
-              data={row}
-              role={role}
-              selected={selected}
-              onToggle={toggleSelection}
-              relatedData={relatedData}
-              onDeleted={handleDeleteOptimistic}
-              onChanged={handleChanged}
-              allowedStaff={allowedRole}
-            />
-          ))
-        )}
-      </Table>
+          {localData.length === 0 ? (
+            <tr>
+              <td
+                colSpan={columns.length + (role === "admin" ? 1 : 0)}
+                className="text-center text-gray-500 py-6"
+              >
+                Tidak ada data untuk table ini
+              </td>
+            </tr>
+          ) : (
+            localData.map((row) => (
+              <PaymenTableClient
+                key={row.id}
+                data={row}
+                role={role}
+                selected={selected}
+                onToggle={toggleSelection}
+                relatedData={relatedData}
+                onDeleted={handleDeleteOptimistic}
+                onChanged={handleChanged}
+                allowedStaff={allowedRole}
+              />
+            ))
+          )}
+        </Table>
+      )}
     </div>
   );
 }

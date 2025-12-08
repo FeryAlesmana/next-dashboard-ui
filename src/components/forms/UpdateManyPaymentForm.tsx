@@ -10,7 +10,7 @@ import React, {
   useState,
 } from "react";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "react-toastify";
 import {
@@ -20,6 +20,8 @@ import {
 import { CurrentState, updatePaymentLogs } from "@/lib/actions";
 import { PaymentStatus } from "@prisma/client";
 import ConfirmDialog from "../ConfirmDialog";
+import { QuickAddButtons } from "../QuickActButton";
+import { RupiahInput } from "../RupiahInput";
 
 const FORM_KEY = "payment_log_draft_form";
 
@@ -114,7 +116,6 @@ export default function CreatePaymentLogPage({
         paymentType: first.paymentType as MpaymentLogSchema["paymentType"],
         amount: first.amount,
         dueDate: new Date(first.dueDate).toISOString().split("T")[0],
-        status: first.status as MpaymentLogSchema["status"],
         recipientType,
         recipientId,
       };
@@ -131,6 +132,7 @@ export default function CreatePaymentLogPage({
     getValues,
     setValue,
     watch,
+    control,
     formState: { errors },
   } = useForm<MpaymentLogSchema>({
     resolver: zodResolver(mPaymentLogSchema),
@@ -180,16 +182,7 @@ export default function CreatePaymentLogPage({
       setIsSubmitting(false);
     }
   }, [state, setOpen, router, onChanged]);
-  useEffect(() => {
-    if (watchedValues.status === "PAID") {
-      const rawAmount = getValues("amount"); // number | "" | undefined
-      const normalizedAmount =
-        typeof rawAmount === "number" ? rawAmount : undefined; // only keep number
-
-      setValue("amountPaid", normalizedAmount);
-    }
-  }, [watchedValues.status, getValues, setValue]);
-
+ 
   //   useEffect(() => {
   //     if (ids && ids.length > 0) {
   //       setValue("ids", ids);
@@ -274,11 +267,26 @@ export default function CreatePaymentLogPage({
           </div>
 
           <div>
-            <label className="block mb-1 font-medium">Jumlah (IDR)</label>
-            <input
-              type="number"
-              {...register("amount", { valueAsNumber: true })}
-              className="w-full border rounded px-3 py-2"
+            <label className="block mb-1 font-medium">Total Tagihan</label>
+            <Controller
+              name="amount"
+              control={control}
+              render={({ field }) => (
+                <div>
+                  <RupiahInput value={field.value} onChange={field.onChange} />
+
+                  <QuickAddButtons    
+                    current={field.value}
+                    onChange={(num: number) =>
+                      setValue("amount", num, {
+                        shouldDirty: true,
+                        shouldTouch: true,
+                        shouldValidate: true,
+                      })
+                    }
+                  />
+                </div>
+              )}
             />
             {errors.amount && (
               <p className="text-red-600">{errors.amount.message}</p>
@@ -297,56 +305,7 @@ export default function CreatePaymentLogPage({
             )}
           </div>
 
-          <div>
-            <label className="block mb-1 font-medium">Status</label>
-            <select
-              {...register("status")}
-              className="w-full border rounded px-3 py-2"
-            >
-              <option value="PENDING">Menunggu</option>
-              <option value="PAID">Lunas</option>
-              <option value="OVERDUE">Terlambat</option>
-              <option value="PARTIALLY_PAID">Sebagian Dibayar</option>
-            </select>
-            {errors.status && (
-              <p className="text-red-600">{errors.status.message}</p>
-            )}
-          </div>
-
-          {/* Conditionally render fields based on status */}
-          {(watchedValues.status === "PAID" ||
-            watchedValues.status === "PARTIALLY_PAID") && (
-            <>
-              <div>
-                <label className="block mb-1 font-medium">
-                  Tanggal Pembayaran
-                </label>
-                <input
-                  type="date"
-                  {...register("paidAt")}
-                  className="w-full border rounded px-3 py-2"
-                />
-                {errors.paidAt && (
-                  <p className="text-red-600">{errors.paidAt.message}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block mb-1 font-medium">Jumlah Dibayar</label>
-                <input
-                  type="number"
-                  {...register("amountPaid", { valueAsNumber: true })}
-                  readOnly={watchedValues.status === "PAID"}
-                  className={`w-full border rounded px-3 py-2 ${
-                    watchedValues.status === "PAID"
-                      ? "bg-gray-100 cursor-not-allowed"
-                      : ""
-                  }`}
-                />
-              </div>
-            </>
-          )}
-
+         
           <div>
             <label className="block mb-1 font-medium">
               Deskripsi (Opsional)
@@ -360,93 +319,10 @@ export default function CreatePaymentLogPage({
             )}
           </div>
 
-          <div>
-            <label className="block mb-1 font-medium">Metode Pembayaran</label>
-            <input
-              type="text"
-              {...register("paymentMethod")}
-              hidden
-              className="w-full border rounded px-3 py-2"
-            />
-            {errors.paymentMethod && (
-              <p className="text-red-600">{errors.paymentMethod.message}</p>
-            )}
-          </div>
-          <span className="items-center justify-center text-center">
-            {" "}
-            TUNAI
-          </span>
-
-          <div>
-            <label className="block mb-1 font-medium">
-              Nomor Kuitansi (Opsional)
-            </label>
-            <input
-              type="text"
-              {...register("receiptNumber")}
-              className="w-full border rounded px-3 py-2"
-            />
-            {errors.receiptNumber && (
-              <p className="text-red-600">{errors.receiptNumber.message}</p>
-            )}
-          </div>
-
-          {/* <div>
-            <label className="block mb-1 font-medium">Tipe Penerima</label>
-            <select
-              {...register("recipientType")}
-              className="w-full border rounded px-3 py-2"
-            >
-              <option value="student">Satu Siswa</option>
-              <option value="class">Satu Kelas</option>
-              <option value="grade">Satu Angkatan</option>
-            </select>
-            {errors.recipientType && (
-              <p className="text-red-600">{errors.recipientType.message}</p>
-            )}
-          </div>
-
-          <div>
-            <label className="block mb-1 font-medium">Penerima</label>
-            <select
-              {...register("recipientId")}
-              className="w-full border rounded px-3 py-2"
-            >
-              <option value="">Pilih Penerima</option>
-              {watchedValues.recipientType === "student" &&
-                studentData.map((student: { id: string; name: string }) => (
-                  <option key={student.id} value={student.id}>
-                    {student.name}
-                  </option>
-                ))}
-              {watchedValues.recipientType === "class" &&
-                classData.map(
-                  (kelas: {
-                    id: string;
-                    name: string;
-                    // capacity: number;
-                    // _count: { students: number };
-                  }) => (
-                    <option key={kelas.id} value={String(kelas.id)}>
-                      {kelas.name}
-                    </option>
-                  )
-                )}
-              {watchedValues.recipientType === "grade" &&
-                gradeData.map((grade: { id: string; level: string }) => (
-                  <option key={grade.id} value={String(grade.id)}>
-                    Angkatan {grade.level}
-                  </option>
-                ))}
-            </select>
-            {errors.recipientId && (
-              <p className="text-red-600">{errors.recipientId.message}</p>
-            )}
-          </div>
-
-          {errors.ids && <p className="text-red-600">{errors.ids.message}</p>} */}
-
+         
           <div className="text-center pt-4">
+             <div className="flex flex-col lg:flex-row items-center justify-center gap-3">
+
             <button
               type="submit"
               className="bg-blue-600 text-white font-semibold px-6 py-3 rounded hover:bg-blue-700 flex items-center justify-center gap-2"
@@ -464,6 +340,8 @@ export default function CreatePaymentLogPage({
             >
               Batal
             </button>
+             </div>
+
           </div>
           {(state.error || Object.keys(errors).length > 0) && (
             <span className="text-red-500">

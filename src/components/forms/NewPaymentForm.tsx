@@ -437,8 +437,8 @@ export default function NewPaymentForm({
                 {isSubmitting
                   ? "Memproses..."
                   : type === "create"
-                  ? "Buat Tagihan"
-                  : "Update Tagihan"}
+                  ? "Simpan Pembayaran"
+                  : "Update Pembayaran"}
               </button>
 
               <button

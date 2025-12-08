@@ -3979,41 +3979,18 @@ export async function updatePaymentLogs(
       ...(paymentData.paymentType !== "" && {
         paymentType: paymentData.paymentType,
       }),
-      ...(paymentData.status !== "" && { status: paymentData.status }),
       ...(paymentData.dueDate && { dueDate: new Date(paymentData.dueDate) }),
       ...(paymentData.description !== "" && {
         description: paymentData.description,
       }),
-      ...(paymentData.paymentMethod !== "" && {
-        paymentMethod: paymentData.paymentMethod,
-      }),
-      ...(paymentData.receiptNumber !== "" && {
-        receiptNumber: paymentData.receiptNumber,
-      }),
       ...(classId !== null && { classId }),
       ...(gradeId !== null && { gradeId }),
-      ...(paymentData.paidAt !== null && {
-        paidAt: new Date(paymentData.paidAt!),
-      }),
     };
 
     await prisma.paymentLog.updateMany({
       where: { id: { in: selectedIdsAsNumbers } },
       data: updateData,
     });
-    if (paymentData.amountPaid) {
-      await Promise.all(
-        selectedIdsAsNumbers.map((id) =>
-          prisma.paymentInstallment.create({
-            data: {
-              amount: paymentData.amountPaid!,
-              paidAt: paymentData.paidAt ? new Date(paymentData.paidAt) : null,
-              paymentLogId: id, // FK relation
-            },
-          })
-        )
-      );
-    }
     const updatedPayments = await prisma.paymentLog.findMany({
       where: {
         id: { in: selectedIdsAsNumbers },
@@ -4033,11 +4010,23 @@ export async function updatePaymentLogs(
         },
       },
     });
+    function safeDecimal(value: Decimal) {
+      return value && typeof value === "object" && value.toNumber
+        ? value.toNumber()
+        : value;
+    }
+    function safePaymentLogArray(payments: any) {
+      return payments.map((p: any) => ({
+        ...p,
+        amount: safeDecimal(p.amount),
+      }));
+    }
+    const safePayments = safePaymentLogArray(updatedPayments);
     return {
       success: true,
       error: false,
       message: "Tagihan berhasil diperbarui.",
-      data: updatedPayments,
+      data: safePayments,
     };
   } catch (err) {
     console.error(err);
@@ -6134,7 +6123,9 @@ export async function createPayment(
       where: { id: bill.id },
       data: {
         paymentMethod,
-        receiptNumber,
+        ...(bill.receiptNumber !== "" && {
+        receiptNumber: bill.receiptNumber,
+      }),
         status: finalStatus,
         paidAt: lastPaidAt,
       },
@@ -6267,7 +6258,9 @@ export async function updatePayment(
       where: { id: paymentId },
       data: {
         paymentMethod: paymentData.paymentMethod,
+         ...(paymentData.receiptNumber !== "" && {
         receiptNumber: paymentData.receiptNumber,
+      }),
         status: finalStatus,
         paidAt: lastPaidAt,
       },

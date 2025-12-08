@@ -946,7 +946,7 @@ export const mPaymentLogSchema = z
   .object({
     ids: z.array(z.number().min(1)),
     paymentType: z
-      .enum(["TUITION", "EXTRACURRICULAR", "UNIFORM", "BOOKS", "OTHER"])
+      .nativeEnum(PaymentType)
       .or(z.literal(""))
       .optional(),
     amount: z
@@ -959,46 +959,11 @@ export const mPaymentLogSchema = z
       .min(1, "Tenggat waktu wajib diisi")
       .or(z.literal(""))
       .optional(),
-    status: z
-      .enum(["PENDING", "PAID", "OVERDUE", "PARTIALLY_PAID"])
-      .or(z.literal(""))
-      .optional(),
+    
     description: z.string().or(z.literal("")).optional(),
-    paymentMethod: z.string().or(z.literal("")).optional(),
-    receiptNumber: z.string().or(z.literal("")).optional(),
-
-    paidAt: z.string().optional(), // ISO date
-    amountPaid: z.number().optional(),
+    
   })
-  .refine(
-    (data) =>
-      ["PAID", "PARTIALLY_PAID"].includes(data.status!) ? !!data.paidAt : true,
-    {
-      message: "Tanggal pembayaran wajib diisi",
-      path: ["paidAt"],
-    }
-  )
-  .refine(
-    (data) =>
-      data.status !== "PAID" ||
-      (data.amountPaid !== undefined && data.amountPaid === data.amount),
-    {
-      message: "Jumlah dibayar harus sama dengan total saat status Lunas",
-      path: ["amountPaid"],
-    }
-  )
-  .refine(
-    (data) =>
-      data.status !== "PARTIALLY_PAID" ||
-      (typeof data.amountPaid === "number" &&
-        typeof data.amount === "number" &&
-        data.amountPaid < data.amount),
-    {
-      message:
-        "Jumlah dibayar harus lebih kecil dari total saat Sebagian Dibayar",
-      path: ["amountPaid"],
-    }
-  );
+
 
 export type MpaymentLogSchema = z.infer<typeof mPaymentLogSchema>;
 

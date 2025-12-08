@@ -666,6 +666,12 @@ const FormModal = ({
       </>
     );
   if (table === "payment") {
+    const bgColor2 =
+   type === "create"
+     ? "bg-lamaGreen"
+     : type === "update"
+     ? "bg-lamaBlue"
+     : "bg-lamaRed";
     return (
       <>
         <div className="inline-flex items-center gap-2 px-1">
@@ -682,16 +688,14 @@ const FormModal = ({
             }
             className={`
     w-7 h-7 flex items-center justify-center rounded-full transition
-    ${bgColor + " hover:brightness-90 shadow-md"}
+    ${bgColor2 + " hover:brightness-90 shadow-md"}
   `}
             onClick={() => setOpen(true)}
           >
             <Image
               src={
-                type === "deleteMany"
-                  ? "/deleteDark.png"
-                  : type === "delete"
-                  ? "/deletefix.png"
+                type === "create"
+                  ? "/money.png"
                   : `/${type}.png`
               }
               alt=""
@@ -1085,8 +1089,11 @@ const FormModal = ({
               </button>
             </div>
             {open && (
-              <div className="w-screen h-screen absolute left-0 top-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">
-                <div className="bg-white p-4 rounded-md relative w-[95%] h-[95%] md:w-[90%] lg:w-[85%] xl:w-[80%] 2xl:w-[75%] overflow-y-auto">
+              <div className="fixed inset-0 z-[5000] bg-black bg-opacity-60 
+        flex items-center justify-center p-4">
+                <div className="bg-white p-4 rounded-md relative
+    w-[90%] md:w-[70%] lg:w-[60%] xl:w-[50%] 2xl:w-[40%]
+    max-h-[90vh] overflow-y-auto">
                   <UpdateManyPaymentsForm
                     ids={ids as number[]}
                     setOpen={setOpen}
