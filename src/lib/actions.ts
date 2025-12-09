@@ -5858,6 +5858,7 @@ export async function createBill(
         student: {
           select: {
             name: true,
+            img: true,
             class: {
               select: {
                 name: true,
@@ -5957,7 +5958,7 @@ export async function updateBill(
       gradeId = student?.class?.gradeId ?? null;
     }
 
-    const updatedPayment = await prisma.paymentLog.update({
+    await prisma.paymentLog.update({
       where: {
         id: data.id,
       },
@@ -5972,11 +5973,14 @@ export async function updateBill(
         classId,
         gradeId,
       },
+    });
+
+    const updatedPayment = await prisma.paymentLog.findUnique({
+      where: { id: data.id },
       include: {
         student: {
           select: {
             name: true,
-
             img: true,
             class: {
               select: {
@@ -5993,6 +5997,13 @@ export async function updateBill(
       return value && typeof value === "object" && value.toNumber
         ? value.toNumber()
         : value;
+    }
+    if (!updatedPayment) {
+      return {
+        success: false,
+        error: true,
+        message: "Gagal menemukan tagihan.",
+      };
     }
 
     const safePayment = {
@@ -6119,28 +6130,43 @@ export async function createPayment(
       newInstallments[newInstallments.length - 1]?.paidAt ?? bill.paidAt;
 
     // 6. Update paymentLog
-    const updatedBill = await prisma.paymentLog.update({
+    await prisma.paymentLog.update({
       where: { id: bill.id },
       data: {
         paymentMethod,
-        ...(bill.receiptNumber !== "" && {
-        receiptNumber: bill.receiptNumber,
-      }),
+        ...(receiptNumber !== "" && {
+          receiptNumber: receiptNumber,
+        }),
         status: finalStatus,
         paidAt: lastPaidAt,
       },
+    });
+    const updatedBill = await prisma.paymentLog.findUnique({
+      where: { id: bill.id },
       include: {
         student: {
           select: {
             name: true,
             img: true,
-            class: { select: { name: true } },
+            class: {
+              select: {
+                name: true,
+              },
+            },
             student_details: { select: { nisn: true } },
           },
         },
         paymentInstallments: true,
       },
     });
+
+    if (!updatedBill) {
+      return {
+        success: false,
+        error: true,
+        message: "Gagal menemukan tagihan.",
+      };
+    }
 
     // Cleanup Decimal → number
     const cleanAmount = (v: any) => (v?.toNumber ? v.toNumber() : v);
@@ -6254,13 +6280,13 @@ export async function updatePayment(
     }
 
     // 5️⃣ Update payment log AFTER installments update
-    const updatedPayment = await prisma.paymentLog.update({
+    await prisma.paymentLog.update({
       where: { id: paymentId },
       data: {
         paymentMethod: paymentData.paymentMethod,
-         ...(paymentData.receiptNumber !== "" && {
-        receiptNumber: paymentData.receiptNumber,
-      }),
+        ...(paymentData.receiptNumber !== "" && {
+          receiptNumber: paymentData.receiptNumber,
+        }),
         status: finalStatus,
         paidAt: lastPaidAt,
       },
@@ -6276,6 +6302,31 @@ export async function updatePayment(
         },
       },
     });
+    const updatedPayment = await prisma.paymentLog.findUnique({
+      where: { id: paymentId },
+      include: {
+        student: {
+          select: {
+            name: true,
+            img: true,
+            class: {
+              select: {
+                name: true,
+              },
+            },
+            student_details: { select: { nisn: true } },
+          },
+        },
+        paymentInstallments: true,
+      },
+    });
+    if (!updatedPayment) {
+      return {
+        success: false,
+        error: true,
+        message: "Gagal menemukan tagihan.",
+      };
+    }
 
     // Cleanup Decimal → number
     const cleanAmount = (v: any) => (v?.toNumber ? v.toNumber() : v);
