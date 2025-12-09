@@ -7,12 +7,14 @@ function safeNumber(val: any) {
     ? val.toNumber()
     : Number(val);
 }
-
-export async function DELETE(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
-  const installmentId = Number(params.id);
+type Params = {
+  params: Promise<{
+    id: string;
+  }>;
+};
+export async function DELETE(req: Request, { params }: Params) {
+  const { id } = await params;
+  const installmentId = Number(id);
   if (!installmentId || isNaN(installmentId)) {
     return NextResponse.json(
       { success: false, error: true, message: "Invalid installment id" },
