@@ -1,6 +1,7 @@
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/utils";
 import Link from "next/link";
+import { CollapsibleImage } from "./ColapsibleImage";
 
 const EventList = async ({ dateParam }: { dateParam: string | undefined }) => {
   const date = dateParam ? new Date(dateParam) : new Date();
@@ -88,6 +89,7 @@ const EventList = async ({ dateParam }: { dateParam: string | undefined }) => {
         </div>
         <p className="text-gray-400 mt-2 text-sm">{event.description}</p>
       </Link>
+      {event.img && <CollapsibleImage src={event.img} />}
     </div>
   ));
 };
