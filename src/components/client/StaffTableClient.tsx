@@ -12,12 +12,6 @@ export default function StaffTableClient({
   onDeleted,
   onChanged,
 }: BaseTableClientProps) {
-  const toTitleCase = (str: string) => {
-    if (!str) return "-";
-    const lower = str.toLowerCase();
-    // Capitalize the first letter
-    return lower.charAt(0).toUpperCase() + lower.slice(1);
-  };
   function translateStaffRole(role: string): string {
     switch (role) {
       case "PENILAIAN":

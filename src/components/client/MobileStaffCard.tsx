@@ -18,9 +18,19 @@ export function MobileStaffCard({
   allowedStaff,
 }: BaseTableClientProps) {
   const [open, setOpen] = useState(false);
-  function toNormalCase(str: string): string {
-    if (!str) return "";
-    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+
+
+  function translateStaffRole(role: string): string {
+    switch (role) {
+      case "PENILAIAN":
+        return "Penilaian & Kesiswaan";
+      case "PENJADWALAN":
+        return "Penjadwalan";
+      case "ACCOUNTING":
+        return "Akuntansi";
+      default:
+        return role;
+    }
   }
   return (
     <div className="border rounded-lg p-4 bg-white shadow-sm">
@@ -90,11 +100,19 @@ export function MobileStaffCard({
             <div className="font-medium">
               Jenis Staff :{" "}
               <span className="font-normal">
-                {toNormalCase(data.staffroles) || "-"}
+                {translateStaffRole(data.staffroles) || "-"}
               </span>
             </div>
             <div className="font-medium">
               No. Telepon : <span className="font-normal">{data.phone}</span>
+            </div>
+            <div className="font-medium">
+              Profile :{" "}
+              <Link href={`/list/staffs/${data.id}`}>
+                <button className="w-5 h-5 rounded-full ml-3 ">
+                  <Image src="/morev.png" alt="" width={16} height={16} />
+                </button>
+              </Link>
             </div>
           </div>
 

@@ -547,10 +547,15 @@ export const updateTeacher = async (
           password: encryptPassword(data.password!),
         }),
         name: data.name,
-
         email: data.email || null,
         phone: data.phone,
         address: data.address,
+         rw: data.rw,
+        rt: data.rt,
+        kelurahan: data.kelurahan,
+        kecamatan: data.kecamatan,
+        kota: data.kota,
+         religion: data.religion,
         ...(data.img && { img: data.img }),
         sex: data.sex,
         birthday: new Date(data.birthday),
@@ -846,7 +851,6 @@ export const createStudent = async (
         username: data.username,
         password: encryptPassword(data.password),
         name: data.name,
-
         email: data.email,
         phone: data.phone,
         address: data.address,
@@ -1062,7 +1066,6 @@ export const updateStudent = async (
 
     let user;
     if (data.withUser) {
-      let clerkUserId = data.id;
       try {
         user = await client.users.updateUser(data.id, {
           username: data.username,
@@ -1073,7 +1076,6 @@ export const updateStudent = async (
         });
         if (user) {
           console.log("✅ User Sucessfully Updated:", user.id);
-          clerkUserId = user.id;
         }
       } catch (error) {
         console.warn(
@@ -1111,7 +1113,6 @@ export const updateStudent = async (
           password: encryptPassword(data.password!),
         }),
         name: data.name,
-
         email: data.email || null,
         phone: data.phone,
         address: data.address,
@@ -1120,6 +1121,7 @@ export const updateStudent = async (
         kelurahan: data.kelurahan,
         kecamatan: data.kecamatan,
         kota: data.kota,
+         religion: data.religion,
         ...(data.img && { img: data.img }),
         sex: data.sex,
         birthday: new Date(data.birthday),
@@ -2000,7 +2002,6 @@ export const createParent = async (
         username: data.username,
         password: encryptPassword(data.password),
         name: data.name,
-
         email: data.email,
         sex: data.sex,
         waliMurid: data.waliMurid,
@@ -5243,6 +5244,7 @@ export const updateStaff = async (
   data: UpdatestaffSchema
 ) => {
   try {
+    console.log(data + "Data in update Staff");
     if (!data.id) {
       console.log(data.id + "Data.id");
 
@@ -5252,11 +5254,15 @@ export const updateStaff = async (
     if (data.withUser) {
       try {
         user = await client.users.updateUser(data.id, {
-          username: data.username,
+          ...(data.username !== "" && {
+            username: data.username,
+          }),
           ...(data.password !== "" && {
             password: data.password,
           }),
-          firstName: data.name,
+          ...(data.name !== "" && {
+            firstName: data.name,
+          }),
         });
         if (user) {
           console.log("✅ User Sucessfully Updated:", user.id);
@@ -5288,13 +5294,19 @@ export const updateStaff = async (
           password: encryptPassword(data.password!),
         }),
         name: data.name,
-        email: data.email || null,
+        email: data.email,
         phone: data.phone,
         address: data.address,
-        ...(data.img && { img: data.img }),
+        rw: data.rw,
+        rt: data.rt,
+        kelurahan: data.kelurahan,
+        kecamatan: data.kecamatan,
+        kota: data.kota,
+        religion: data.religion,
         sex: data.sex,
         birthday: new Date(data.birthday),
         staffroles: data.staffrole,
+        ...(data.img && { img: data.img }),
       },
     });
     const updatedStaff = await prisma.staff.findUnique({
