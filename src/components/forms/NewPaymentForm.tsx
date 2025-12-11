@@ -38,7 +38,7 @@ export default function NewPaymentForm({
   } = useForm<PaymentSchema>({
     resolver: zodResolver(paymentSchema),
     defaultValues: {
-      paymentMethod: data.paymentMethod ?? "",
+      paymentMethod: data.paymentMethod ?? "Tunai",
       receiptNumber: data.receiptNumber ?? "",
       recipientType: "student",
       paidAt: data.paidAt
@@ -392,18 +392,21 @@ export default function NewPaymentForm({
               <p className="text-red-600">{errors.recipientId.message}</p>
             )}
           </div>
-
-          <div>
-            <label className="block mb-1 font-medium">Tanggal Pembayaran</label>
-            <input
-              type="date"
-              {...register("paidAt")}
-              className="w-full border rounded px-3 py-2"
-            />
-            {errors.paidAt && (
-              <p className="text-red-600">{errors.paidAt.message}</p>
-            )}
-          </div>
+          {watchedValues.paymentMethod !== "Cicilan" && (
+            <div>
+              <label className="block mb-1 font-medium">
+                Tanggal Pembayaran
+              </label>
+              <input
+                type="date"
+                {...register("paidAt")}
+                className="w-full border rounded px-3 py-2"
+              />
+              {errors.paidAt && (
+                <p className="text-red-600">{errors.paidAt.message}</p>
+              )}
+            </div>
+          )}
 
           <div>
             <label className="block mb-1 font-medium">

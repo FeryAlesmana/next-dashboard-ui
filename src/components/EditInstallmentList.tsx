@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { RupiahInput } from "./RupiahInput";
 import { QuickAddButtons } from "./QuickActButton";
 
@@ -12,17 +12,34 @@ export default function EditInstallmentsList({
   errors,
   remainingAmount,
 }: any) {
-  const [items, setItems] = useState(
-    installments.map((i: any) => ({
+  const [items, setItems] = useState<
+    { id: number; amount: number; paidAt: string | null }[]
+  >([]);
+
+  // 🔥 Sync with parent when installments change
+  useEffect(() => {
+    const mapped = installments.map((i: any) => ({
       ...i,
-      paidAt: i.paidAt ? new Date(i.paidAt).toISOString().split("T")[0] : "", // ALWAYS string for the date input + zod
-    }))
-  );
+      paidAt: i.paidAt ? new Date(i.paidAt).toISOString().split("T")[0] : "",
+    }));
+
+    setItems(mapped);
+    setValue("installments", mapped); // sync with RHF
+  }, [installments, setValue]);
+
   const winstall = watch("installments") || [];
   const total = winstall.reduce(
     (sum: number, x: any) => sum + Number(x.amount || 0),
     0
   );
+
+  const existingTotal = installments.reduce(
+    (sum: number, x: any) => sum + Number(x.amount),
+    0
+  );
+
+  const maxEditable = existingTotal + remainingAmount;
+  const isInvalid = total > maxEditable;
 
   const updateItem = (index: number, field: any, value: any) => {
     const updated = [...items];
@@ -87,11 +104,12 @@ export default function EditInstallmentsList({
       )}
       <div className="flex justify-between items-center text-sm pt-2 border-t border-gray-200">
         <span className="text-gray-500">
-          Sisa Tagihan: IDR {remainingAmount?.toLocaleString("id-ID") || 0}
+          Maksimal: IDR {maxEditable.toLocaleString("id-ID")}
         </span>
+
         <span
           className={`font-semibold ${
-            total > remainingAmount ? "text-red-600" : "text-green-600"
+            isInvalid ? "text-red-600" : "text-green-600"
           }`}
         >
           Total Input: IDR {total.toLocaleString("id-ID")}

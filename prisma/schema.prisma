@@ -3,9 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  // directUrl = env("DIRECT_URL")
 }
 
 model Admin {
@@ -494,12 +494,13 @@ enum PaymentStatus {
 }
 
 model PaymentInstallment {
-  id           Int        @id @default(autoincrement())
-  paymentLogId Int
-  paymentLog   PaymentLog @relation(fields: [paymentLogId], references: [id], onDelete: Cascade)
-  amount       Decimal    @db.Decimal(12, 2)
-  paidAt       DateTime?
-  createdAt    DateTime   @default(now())
+  id                Int                @id @default(autoincrement())
+  paymentLogId      Int
+  paymentLog        PaymentLog         @relation(fields: [paymentLogId], references: [id], onDelete: Cascade)
+  amount            Decimal            @db.Decimal(12, 2)
+  paidAt            DateTime?
+  createdAt         DateTime           @default(now())
+  installmentChange PaymentLogChange[]
 }
 
 model HeroSlide {
@@ -542,6 +543,9 @@ model PaymentLogChange {
   paymentLogId Int?
   paymentLog   PaymentLog? @relation(fields: [paymentLogId], references: [id], onDelete: SetNull)
 
+  installmentId     Int?
+  paymentIstallment PaymentInstallment? @relation(fields: [installmentId], references: [id], onDelete: SetNull)
+
   action   ChangeAction
   oldValue Json?
   newValue Json?
@@ -555,7 +559,9 @@ model PaymentLogChange {
 
 enum ChangeAction {
   CREATE
+  CREATE_INSTALLMENTS
   UPDATE
+  UPDATE_INSTALLMENTS
   DELETE
   REVERT
 }

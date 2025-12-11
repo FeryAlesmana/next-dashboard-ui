@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import SemesterSelect from "../SemesterSelect";
 import StudentParentTableSkeleton from "../StudentParentTableSkeleton";
 import PaymentInstallmentsPreview from "../PaymentInstallmentsPreview";
+import { PaymentStatus } from "@prisma/client";
 
 type Semester = {
   label: string;
@@ -192,68 +193,81 @@ export default function ParentPaymentView({
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-100 text-center">
-                    {student.payments.map((pay: any) => (
-                      <tr
-                        key={pay.id}
-                        className="even:bg-slate-50 hover:bg-lamaPurpleLight"
-                      >
-                        <td className="p-3">
-                          {pay.paymentType === "TUITION" && "SPP"}
-                          {pay.paymentType === "EXTRACURRICULAR" &&
-                            "Ekstrakulikuler"}
-                          {pay.paymentType === "UNIFORM" && "Seragam"}
-                          {pay.paymentType === "BOOKS" && "Buku"}
-                          {pay.paymentType === "OTHER" && "Lainnya"}
-                        </td>
-                        <td className="p-3">
-                          Rp {pay.amount.toLocaleString("id-ID")}
-                        </td>
-                        <td className="p-3">
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium
-                              ${
-                                pay.status === "PENDING"
-                                  ? "bg-yellow-100 text-yellow-800"
-                                  : ""
-                              }
-                              ${
-                                pay.status === "PAID"
-                                  ? "bg-green-100 text-green-800"
-                                  : ""
-                              }
-                              ${
-                                pay.status === "OVERDUE"
-                                  ? "bg-red-100 text-red-800"
-                                  : ""
-                              }
-                              ${
-                                pay.status === "PARTIALLY_PAID"
-                                  ? "bg-blue-100 text-blue-800"
-                                  : ""
-                              }`}
-                          >
-                            {pay.status === "PENDING" && "Belum Dibayar"}
-                            {pay.status === "PAID" && "Lunas"}
-                            {pay.status === "OVERDUE" && "Terlambat"}
-                            {pay.status === "PARTIALLY_PAID" &&
-                              "Dibayar Sebagian"}
-                          </span>
-                        </td>
-                        <td className="p-3">
-                          {new Date(pay.dueDate).toLocaleDateString("id-ID")}
-                        </td>
-                        <td className="p-3">
-                          <PaymentInstallmentsPreview
-                            installments={pay.paymentInstallments}
-                            totalAmount={Number(pay.amount)}
-                            limit={1}
-                          />
-                        </td>
+                    {student.payments.map((pay: any) => {
+                      let paymentStatus: PaymentStatus = "PENDING";
+                      let lewat: boolean = false;
 
-                        <td className="p-3">{pay.paymentMethod || "-"}</td>
-                        <td className="p-3">{pay.description || "-"}</td>
-                      </tr>
-                    ))}
+                      if (
+                        pay.status !== "PAID" &&
+                        new Date(pay.dueDate) < new Date()
+                      ) {
+                        paymentStatus = "OVERDUE";
+                        lewat = true;
+                      }
+
+                      return (
+                        <tr
+                          key={pay.id}
+                          className="even:bg-slate-50 hover:bg-lamaPurpleLight"
+                        >
+                          <td className="p-3">
+                            {pay.paymentType === "TUITION" && "SPP"}
+                            {pay.paymentType === "EXTRACURRICULAR" &&
+                              "Ekstrakulikuler"}
+                            {pay.paymentType === "UNIFORM" && "Seragam"}
+                            {pay.paymentType === "BOOKS" && "Buku"}
+                            {pay.paymentType === "OTHER" && "Lainnya"}
+                          </td>
+                          <td className="p-3">
+                            Rp {pay.amount.toLocaleString("id-ID")}
+                          </td>
+                          <td className="p-3">
+                            {lewat ? (
+                              <span
+                                className={`px-2 py-1 rounded-full text-xs font-medium
+              ${paymentStatus === "OVERDUE" ? "bg-red-100 text-red-800" : ""}
+             
+            `}
+                              >
+                                {paymentStatus === "OVERDUE" && "Terlambat"}
+                              </span>
+                            ) : (
+                              <span
+                                className={`px-2 py-1 rounded-full text-xs font-medium
+              ${pay.status === "PENDING" ? "bg-yellow-100 text-yellow-800" : ""}
+              ${pay.status === "PAID" ? "bg-green-100 text-green-800" : ""}
+              ${pay.status === "OVERDUE" ? "bg-red-100 text-red-800" : ""}
+              ${
+                pay.status === "PARTIALLY_PAID"
+                  ? "bg-blue-100 text-blue-800"
+                  : ""
+              }
+            `}
+                              >
+                                {pay.status === "PENDING" && "Belum Dibayar"}
+                                {pay.status === "PAID" && "Lunas"}
+                                {pay.status === "OVERDUE" && "Terlambat"}
+                                {pay.status === "PARTIALLY_PAID" &&
+                                  "Dibayar Sebagian"}
+                              </span>
+                            )}
+                          </td>
+                          <td className="p-3">
+                            {new Date(pay.dueDate).toLocaleDateString("id-ID")}
+                          </td>
+                          <td className="p-3">
+                            <PaymentInstallmentsPreview
+                              installments={pay.paymentInstallments}
+                              totalAmount={Number(pay.amount)}
+                              limit={1}
+                            />
+                          </td>
+
+                          <td className="p-3">{pay.paymentMethod || "-"}</td>
+                          <td className="p-3">{pay.description || "-"}</td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

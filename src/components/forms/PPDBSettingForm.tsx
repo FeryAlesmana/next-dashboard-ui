@@ -97,6 +97,7 @@ const PPDBSettingForm = ({ setOpen, type, data }: Props) => {
   useEffect(() => {
     if (state.success) {
       toast("Pengaturan PPDB berhasil disimpan!");
+      setIsSubmitting(false);
       setOpen?.(false);
       router.refresh();
     }
@@ -134,13 +135,18 @@ const PPDBSettingForm = ({ setOpen, type, data }: Props) => {
           />
         </div>
 
-        <button
-          type="submit"
-          className="px-4 py-2 bg-blue-600 text-white rounded"
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? "Menyimpan..." : "Simpan Pengaturan"}
-        </button>
+        <div className="text-center pt-4 justify-items-center">
+          <button
+            type="submit"
+            className="bg-blue-600 text-white font-semibold px-6 py-3 rounded hover:bg-blue-700 flex items-center justify-center gap-2"
+            disabled={isSubmitting}
+          >
+            {isSubmitting && (
+              <span className="animate-spin inline-block w-5 h-5 border-2 border-white border-t-blue-400 rounded-full mr-2"></span>
+            )}
+            {isSubmitting ? "Menyimpan ..." : "Simpan Pengaturan"}
+          </button>
+        </div>
       </form>
 
       {showConfirm && (

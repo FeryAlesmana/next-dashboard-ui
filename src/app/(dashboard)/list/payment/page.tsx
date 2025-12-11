@@ -239,6 +239,7 @@ const PaymentLogListPage = async ({
               ...(query.student ?? {}),
               OR: [
                 { name: { contains: value, mode: "insensitive" } },
+                { id: { contains: value, mode: "insensitive" } },
                 {
                   student_details: {
                     nisn: {

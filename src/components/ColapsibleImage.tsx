@@ -14,7 +14,7 @@ export function CollapsibleImage({ src }: { src: string }) {
       <div
         className={`
           relative w-full transition-all duration-300 overflow-hidden 
-          ${open ? "max-h-[600px]" : "max-h-[150px]"}
+          ${open ? "max-h-[600px]" : "max-h-[100px]"}
         `}
       >
         {/* Image itself */}
@@ -32,7 +32,7 @@ export function CollapsibleImage({ src }: { src: string }) {
 
       {/* Label below */}
       <div className="bg-black/20 text-white text-xs py-1 text-center">
-        {open ? "Tutup" : "Buka"}
+        {open ? "Tutup" : "Tampilkan"}
       </div>
     </div>
   );

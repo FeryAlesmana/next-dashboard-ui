@@ -4,8 +4,8 @@ import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import { ToastContainer } from "react-toastify";
 import ResponsiveToast from "@/components/ResponsiveToast";
-
 const inter = Inter({ subsets: ["latin"] });
+import { idID } from "@clerk/localizations";
 
 export const metadata: Metadata = {
   title: "SMP Islamiyah",
@@ -18,7 +18,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
+    <ClerkProvider localization={idID}>
       <html lang="en">
         <body className={inter.className}>
           {children} <ResponsiveToast />

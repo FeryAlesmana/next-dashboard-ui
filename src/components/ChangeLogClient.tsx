@@ -216,13 +216,15 @@ const ChangeItem = ({ item, index }: { item: any; index: number }) => {
             {new Date(item.createdAt).toLocaleString("id-ID")}
           </p>
         </div>
-        <button
-          disabled={loading}
-          onClick={revertChange}
-          className="px-2 py-1 text-sm bg-red-100 text-red-600 rounded hover:bg-red-200 disabled:opacity-50"
-        >
-          {loading ? "Reverting..." : "Revert"}
-        </button>
+        {item.action !== "REVERT" && (
+          <button
+            disabled={loading}
+            onClick={revertChange}
+            className="px-2 py-1 text-sm bg-red-100 text-red-600 rounded hover:bg-red-200 disabled:opacity-50"
+          >
+            {loading ? "Reverting..." : "Revert"}
+          </button>
+        )}
       </div>
 
       {/* DIFF BLOCK */}

@@ -1,6 +1,8 @@
 import { logPaymentChange } from "@/lib/paymentLogChange";
 import prisma from "@/lib/prisma";
+import { toPaymentLogUpdateInput } from "@/lib/utils";
 import { currentUser } from "@clerk/nextjs/server";
+import { PaymentStatus } from "@prisma/client";
 import { NextResponse } from "next/server";
 type Params = {
   params: Promise<{
@@ -24,32 +26,6 @@ export async function POST(req: Request, { params }: Params) {
   const action = log.action;
   const oldValue = log.oldValue as any;
   const newValue = log.newValue as any;
-  function toPaymentLogUpdateInput(snapshot: any): any {
-    if (!snapshot) return {};
-    const allowedFields = {
-      studentId: true,
-      amount: true,
-      paymentType: true,
-      status: true,
-      dueDate: true,
-      paidAt: true,
-      description: true,
-      paymentMethod: true,
-      receiptNumber: true,
-      classId: true,
-      gradeId: true,
-    };
-
-    const cleaned: any = {};
-
-    for (const key in snapshot) {
-      if (key in allowedFields) {
-        cleaned[key as keyof typeof allowedFields] = snapshot[key];
-      }
-    }
-
-    return cleaned;
-  }
 
   let reverted: any = null;
 
@@ -70,12 +46,126 @@ export async function POST(req: Request, { params }: Params) {
 
     await logPaymentChange({
       action: "REVERT",
+      paymentLogId: reverted.paymentLogId,
       oldValue: newValue, // value that was created
       newValue: null,
     });
 
     return NextResponse.json({ success: true, reverted });
   }
+  if (action === "CREATE_INSTALLMENTS") {
+    if (!log.paymentLogId) {
+      return new NextResponse("Missing paymentLogId for revert", {
+        status: 400,
+      });
+    }
+
+    const createdInst = newValue?.installments || [];
+    const idsToDelete = createdInst.map((i: any) => i.id);
+
+    if (idsToDelete.length > 0) {
+      await prisma.paymentInstallment.deleteMany({
+        where: { id: { in: idsToDelete } },
+      });
+    }
+
+    // Fetch the updated payment log after deletion
+    const updated = await prisma.paymentLog.findUnique({
+      where: { id: log.paymentLogId },
+      include: { paymentInstallments: true },
+    });
+
+    // Log the revert
+    await logPaymentChange({
+      action: "REVERT",
+      paymentLogId: log.paymentLogId,
+      oldValue: newValue,
+      newValue: updated,
+    });
+
+    return NextResponse.json({
+      success: true,
+      reverted: updated,
+    });
+  }
+  if (action === "UPDATE_INSTALLMENTS") {
+    if (!log.paymentLogId) {
+      return new NextResponse("Missing paymentLogId for revert", {
+        status: 400,
+      });
+    }
+
+    const oldInst =
+      oldValue?.paymentInstallments || oldValue?.installments || [];
+
+    // 1️⃣ Remove current installments
+    await prisma.paymentInstallment.deleteMany({
+      where: { paymentLogId: log.paymentLogId },
+    });
+
+    // 2️⃣ Restore old installments
+    if (oldInst.length > 0) {
+      await prisma.paymentInstallment.createMany({
+        data: oldInst.map((i: any) => ({
+          paymentLogId: log.paymentLogId!,
+          amount: Number(i.amount),
+          paidAt: i.paidAt ? new Date(i.paidAt) : null,
+        })),
+      });
+    }
+    // 3️⃣ Fetch restored installments
+    const restored = await prisma.paymentInstallment.findMany({
+      where: { paymentLogId: log.paymentLogId },
+    });
+
+    // 4️⃣ Recalculate totals
+    const totalPaid = restored.reduce(
+      (sum, inst) => sum + Number(inst.amount || 0),
+      0
+    );
+
+    const paymentLog = await prisma.paymentLog.findUnique({
+      where: { id: log.paymentLogId },
+    });
+
+    if (!paymentLog) {
+      return new NextResponse("PaymentLog not found", { status: 404 });
+    }
+
+    let finalStatus: PaymentStatus = "PENDING";
+    if (totalPaid >= Number(paymentLog.amount)) {
+      finalStatus = "PAID";
+    } else if (totalPaid > 0) {
+      finalStatus = "PARTIALLY_PAID";
+    }
+
+    // 5️⃣ Update the paymentLog status & remaining amount
+    await prisma.paymentLog.update({
+      where: { id: paymentLog.id },
+      data: {
+        status: finalStatus,
+      },
+    });
+    // 3️⃣ Fetch updated paymentLog
+    const updated = await prisma.paymentLog.findUnique({
+      where: { id: log.paymentLogId },
+      include: { paymentInstallments: true },
+    });
+
+    // 4️⃣ Log revert
+    await logPaymentChange({
+      action: "REVERT",
+      paymentLogId: log.paymentLogId,
+      oldValue: newValue,
+      newValue: oldValue,
+    });
+
+    return NextResponse.json({
+      success: true,
+      reverted: updated,
+    });
+  }
+
   if (action === "UPDATE") {
     console.log(oldValue, "Old Value in Revert");
 
@@ -123,8 +213,21 @@ export async function POST(req: Request, { params }: Params) {
       return new NextResponse("No previous state to recreate", { status: 400 });
     }
 
+    // extract installments from oldValue
+    const oldInstallments =
+      oldValue.paymentInstallments?.map((i: any) => ({
+        amount: Number(i.amount),
+        paidAt: i.paidAt ? new Date(i.paidAt) : null,
+      })) || [];
+
     const recreated = await prisma.paymentLog.create({
-      data: toPaymentLogUpdateInput(oldValue),
+      data: {
+        ...toPaymentLogUpdateInput(oldValue),
+        paymentInstallments: oldInstallments.length
+          ? { createMany: { data: oldInstallments } }
+          : undefined,
+      },
+      include: { paymentInstallments: true },
     });
 
     reverted = recreated;

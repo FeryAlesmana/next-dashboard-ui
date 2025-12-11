@@ -65,6 +65,7 @@ import extractCloudinaryPublicId, {
   normalizePaymentRow,
   normalizeRow,
   normalizeSex,
+  toPaymentLogUpdateInput,
 } from "./utils";
 import { Agama, Degree, parents, PaymentStatus, Prisma } from "@prisma/client";
 import { encryptPassword } from "./utils";
@@ -550,12 +551,12 @@ export const updateTeacher = async (
         email: data.email || null,
         phone: data.phone,
         address: data.address,
-         rw: data.rw,
+        rw: data.rw,
         rt: data.rt,
         kelurahan: data.kelurahan,
         kecamatan: data.kecamatan,
         kota: data.kota,
-         religion: data.religion,
+        religion: data.religion,
         ...(data.img && { img: data.img }),
         sex: data.sex,
         birthday: new Date(data.birthday),
@@ -893,6 +894,7 @@ export const createStudent = async (
             dokumenAkte: data.dokumenAkte || null,
             dokumenPasfoto: data.dokumenPasfoto || null,
             dokumenKKKTP: data.dokumenKKKTP || null,
+            awards_lvl: data.awards_lvl || null,
           },
         },
       },
@@ -1121,7 +1123,7 @@ export const updateStudent = async (
         kelurahan: data.kelurahan,
         kecamatan: data.kecamatan,
         kota: data.kota,
-         religion: data.religion,
+        religion: data.religion,
         ...(data.img && { img: data.img }),
         sex: data.sex,
         birthday: new Date(data.birthday),
@@ -1163,6 +1165,7 @@ export const updateStudent = async (
         dokumenAkte: data.dokumenAkte || null,
         dokumenPasfoto: data.dokumenPasfoto || null,
         dokumenKKKTP: data.dokumenKKKTP || null,
+        awards_lvl: data.awards_lvl || null,
       },
     });
 
@@ -3011,6 +3014,7 @@ export const updatePpdb = async (
         awards_lvl: data.awards_lvl || null,
         awards_date: data.awards_date ? new Date(data.awards_date) : null,
         scholarship: data.scholarship || null,
+        scholarship_date: data.scholarship_date || null,
         scholarship_detail: data.scholarship_detail || null,
         ...(data.dokumenIjazah !== "" && { dokumenIjazah: data.dokumenIjazah }),
         ...(data.dokumenAkte !== "" && { dokumenAkte: data.dokumenAkte }),
@@ -3707,6 +3711,7 @@ export async function createPaymentLog(
             student_details: { select: { nisn: true } },
           },
         },
+        paymentInstallments: true,
       },
     });
 
@@ -3715,6 +3720,7 @@ export async function createPaymentLog(
         logPaymentChange({
           action: "CREATE",
           paymentLogId: payment.id,
+          oldValue: null,
           newValue: payment,
         })
       )
@@ -4048,11 +4054,20 @@ export const deletePaymentLog = async (
   try {
     const before = await prisma.paymentLog.findUnique({
       where: { id: idAsNumber },
+      include: { paymentInstallments: true },
     });
+    if (!before) {
+      return {
+        success: false,
+        error: true,
+        message: "No previous state to recreate",
+      };
+    }
     await logPaymentChange({
       action: "DELETE",
-      paymentLogId: before?.id,
+      paymentLogId: before.id,
       oldValue: before,
+      newValue: null,
     });
     await new Promise((resolve) => setTimeout(resolve, 1000));
     await prisma.paymentLog.delete({
@@ -4084,11 +4099,20 @@ export const deletePaymentLogs = async (
       try {
         const before = await prisma.paymentLog.findUnique({
           where: { id: idAsNumber },
+          include: { paymentInstallments: true },
         });
+        if (!before) {
+          return {
+            success: false,
+            error: true,
+            message: "No previous state to recreate",
+          };
+        }
         await logPaymentChange({
           action: "DELETE",
-          paymentLogId: before?.id,
+          paymentLogId: before.id,
           oldValue: before,
+          newValue: null,
         });
         await prisma.paymentLog.delete({ where: { id: idAsNumber } });
       } catch (innerError) {
@@ -5879,6 +5903,7 @@ export async function createBill(
             student_details: { select: { nisn: true } },
           },
         },
+        paymentInstallments: true,
       },
     });
 
@@ -5887,6 +5912,7 @@ export async function createBill(
         logPaymentChange({
           action: "CREATE",
           paymentLogId: payment.id,
+          oldValue: null,
           newValue: payment,
         })
       )
@@ -6192,11 +6218,23 @@ export async function createPayment(
       })),
     };
 
-    // Logging
-    logPaymentChange({
-      action: "CREATE",
+    // After createMany
+    const createdInstallments = await prisma.paymentInstallment.findMany({
+      where: { paymentLogId: bill.id },
+      orderBy: { createdAt: "desc" },
+      take: newInstallments.length,
+    });
+
+    // Log installment creation
+    await logPaymentChange({
+      action: "CREATE_INSTALLMENTS",
       paymentLogId: bill.id,
-      newValue: safePayment,
+      installmentId: null, // multiple → null
+      oldValue: null,
+      newValue: {
+        paymentLogId: bill.id,
+        installments: createdInstallments,
+      },
     });
 
     return {
@@ -6280,6 +6318,11 @@ export async function updatePayment(
       ? paidHistory[paidHistory.length - 1].paidAt
       : null;
 
+    const oldInstallments = await prisma.paymentInstallment.findMany({
+      where: { paymentLogId: paymentId },
+      orderBy: { createdAt: "asc" },
+    });
+
     // 4️⃣ After validation → update installments
     for (const inst of formInstallments) {
       await prisma.paymentInstallment.update({
@@ -6290,6 +6333,26 @@ export async function updatePayment(
         },
       });
     }
+
+    const newInstallments = await prisma.paymentInstallment.findMany({
+      where: { paymentLogId: paymentId },
+      orderBy: { createdAt: "asc" },
+    });
+
+    // 4️⃣ Log
+    await logPaymentChange({
+      action: "UPDATE_INSTALLMENTS",
+      paymentLogId: paymentId,
+
+      oldValue: {
+        paymentId,
+        paymentInstallments: oldInstallments,
+      },
+      newValue: {
+        paymentId,
+        paymentInstallments: newInstallments,
+      },
+    });
 
     // 5️⃣ Update payment log AFTER installments update
     await prisma.paymentLog.update({
@@ -6351,13 +6414,6 @@ export async function updatePayment(
         amount: cleanAmount(i.amount),
       })),
     };
-
-    // Logging
-    logPaymentChange({
-      action: "UPDATE",
-      paymentLogId: paymentData.id,
-      newValue: safePayment,
-    });
 
     return {
       success: true,

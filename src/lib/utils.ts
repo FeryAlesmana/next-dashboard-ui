@@ -39,6 +39,44 @@ function sanitizeToJson(value: any): any {
 
   return value; // string, number, boolean, null
 }
+export function toPaymentLogUpdateInput(snapshot: any): any {
+  if (!snapshot) return {};
+  const allowedFields = {
+    studentId: true,
+    amount: true,
+    paymentType: true,
+    status: true,
+    dueDate: true,
+    paidAt: true,
+    description: true,
+    paymentMethod: true,
+    receiptNumber: true,
+    classId: true,
+    gradeId: true,
+  };
+
+  const cleaned: any = {};
+
+  for (const key in snapshot) {
+    if (key in allowedFields) {
+      cleaned[key as keyof typeof allowedFields] = snapshot[key];
+    }
+  }
+
+  return cleaned;
+}
+
+function sanitizeInstallments(list: any[]) {
+  if (!list) return [];
+
+  return list.map((inst) => ({
+    id: inst.id ?? null,
+    amount: Prisma.Decimal.isDecimal(inst.amount)
+      ? inst.amount.toNumber()
+      : Number(inst.amount),
+    paidAt: inst.paidAt ? new Date(inst.paidAt).toISOString() : null,
+  }));
+}
 
 export function toIntOrNotFound(value: string) {
   const parsed = parseInt(value);
@@ -47,23 +85,27 @@ export function toIntOrNotFound(value: string) {
 }
 
 export function sanitizePaymentLogSnapshot(snapshot: any) {
-  const clean: Partial<Record<PaymentLogField, any>> = {};
+  if (!snapshot) return null;
+
+  const base: any = {};
 
   for (const key of PAYMENT_LOG_FIELDS) {
     if (snapshot[key] !== undefined) {
-      clean[key] = sanitizeToJson(snapshot[key]);
+      base[key] = sanitizeToJson(snapshot[key]);
     }
   }
 
-  return clean;
-}
+  let rawInstallments =
+    snapshot.paymentInstallments || snapshot.installments || [];
 
-export function safeJSON(obj: any) {
-  return JSON.parse(
-    JSON.stringify(obj, (_, value) =>
-      value && value.toNumber ? value.toNumber() : value
-    )
-  );
+  // ⬅ FIX: Wrap single object into array
+  if (!Array.isArray(rawInstallments)) {
+    rawInstallments = [rawInstallments];
+  }
+
+  base.paymentInstallments = sanitizeInstallments(rawInstallments);
+
+  return base;
 }
 
 const PAYMENT_TYPE_MAP: Record<
