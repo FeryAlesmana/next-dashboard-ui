@@ -18,12 +18,14 @@ export async function GET() {
     const penunjang = await prisma.supportActivity.findMany({
       orderBy: { createdAt: "asc" },
     });
+    const ppdbSettings = await prisma.pPDBSetting.findFirst({});
 
     return NextResponse.json({
       heroSlides,
       gallery,
       eskul,
       penunjang,
+      ppdbSettings,
     });
   } catch (error) {
     console.error("Failed to fetch homepage data", error);

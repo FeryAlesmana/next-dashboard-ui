@@ -23,7 +23,7 @@ import { CurrentState, updatePPDBSetting } from "@/lib/actions";
 import InputField from "../InputField";
 
 type Props = {
-  setOpen: Dispatch<SetStateAction<boolean>>;
+  setOpen?: Dispatch<SetStateAction<boolean>>;
   type: "update";
   data?: any; // your initial PPDB settings
 };
@@ -97,7 +97,7 @@ const PPDBSettingForm = ({ setOpen, type, data }: Props) => {
   useEffect(() => {
     if (state.success) {
       toast("Pengaturan PPDB berhasil disimpan!");
-      setOpen(false);
+      setOpen?.(false);
       router.refresh();
     }
   }, [state, setOpen, router]);

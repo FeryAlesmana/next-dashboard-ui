@@ -5,6 +5,9 @@ import Image from "next/image";
 import HeroSettings from "@/components/HeroSettingComp";
 import EskulSettings from "@/components/EskulSettingComp";
 import LoadingScreen from "@/components/LoadingScreen";
+import FormModal from "@/components/FormModal";
+import { PPDBSetting } from "@prisma/client";
+import PPDBSettingForm from "@/components/forms/PPDBSettingForm";
 
 type HomepageData = {
   heroSlides: { id: number; url: string }[];
@@ -19,12 +22,14 @@ type GalleryImage = {
 };
 const Settings = () => {
   const [gallery, setGallery] = useState<GalleryImage[]>([]);
+  const [psetting, setPsetting] = useState<PPDBSetting[]>([]);
   const [loading, setLoading] = useState(true);
   const [gloading, setgLoading] = useState(true);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [savingId, setSavingId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [open, setOpen] = useState(true);
 
   useEffect(() => {
     fetchData();
@@ -35,6 +40,7 @@ const Settings = () => {
       const res = await fetch(`/api/homepage-data`);
       const data = await res.json();
       setGallery(data.gallery);
+      setPsetting(data.ppdbSettings)
       setgLoading(false);
     } catch (err) {
       console.error("Failed to load homepage data", err);
@@ -54,7 +60,10 @@ const Settings = () => {
     for (const file of Array.from(files)) {
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("upload_preset", `${process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}`);
+      formData.append(
+        "upload_preset",
+        `${process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}`
+      );
 
       const uploadRes = await fetch(
         `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/upload`,
@@ -213,6 +222,10 @@ const Settings = () => {
 
       {/* Eskul */}
       <EskulSettings />
+      <section>
+        
+        <PPDBSettingForm type="update" data={psetting}/>
+      </section>
     </div>
   );
 };
