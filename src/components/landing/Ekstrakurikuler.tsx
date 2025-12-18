@@ -71,6 +71,7 @@ const Ekstrakurikuler = ({
                 src={item.imageUrl}
                 alt={item.name}
                 className="w-full h-40 object-cover rounded-lg mb-4 border-2 border-white/30 hover:border-orange-400 transition"
+                unoptimized
               />
               <h3 className="text-lg font-semibold text-white">{item.name}</h3>
             </div>

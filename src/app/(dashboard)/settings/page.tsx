@@ -5,16 +5,9 @@ import Image from "next/image";
 import HeroSettings from "@/components/HeroSettingComp";
 import EskulSettings from "@/components/EskulSettingComp";
 import LoadingScreen from "@/components/LoadingScreen";
-import FormModal from "@/components/FormModal";
 import { PPDBSetting } from "@prisma/client";
 import PPDBSettingForm from "@/components/forms/PPDBSettingForm";
 
-type HomepageData = {
-  heroSlides: { id: number; url: string }[];
-  gallery: { id: number; imageUrl: string; caption?: string }[];
-  eskul: { id: number; name: string; imageUrl: string }[];
-  penunjang: { id: number; name: string; imageUrl: string }[];
-};
 type GalleryImage = {
   id: number;
   imageUrl: string;
@@ -29,7 +22,95 @@ const Settings = () => {
   const [savingId, setSavingId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [open, setOpen] = useState(true);
+  const [progress, setProgress] = useState(0);
+  const [totalFiles, setTotalFiles] = useState(0);
+
+  const resizeImage = (
+    file: File,
+    maxSize = 1080,
+    quality = 0.8
+  ): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const img = new window.Image();
+
+      const reader = new FileReader();
+
+      reader.onload = () => {
+        img.src = reader.result as string;
+      };
+
+      img.onload = () => {
+        let { width, height } = img;
+
+        // Maintain aspect ratio
+        if (width > height && width > maxSize) {
+          height = (height * maxSize) / width;
+          width = maxSize;
+        } else if (height > maxSize) {
+          width = (width * maxSize) / height;
+          height = maxSize;
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return reject("Canvas error");
+
+        ctx.drawImage(img, 0, 0, width, height);
+
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) return reject("Compression failed");
+
+            resolve(
+              new File([blob], file.name.replace(/\.[^/.]+$/, ".jpg"), {
+                type: "image/jpeg",
+              })
+            );
+          },
+          "image/jpeg",
+          quality
+        );
+      };
+
+      img.onerror = reject;
+      reader.onerror = reject;
+
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const uploadSingleFile = async (file: File, onProgress: () => void) => {
+    const resizedFile = await resizeImage(file, 1080, 0.8);
+
+    const formData = new FormData();
+    formData.append("file", resizedFile);
+    formData.append(
+      "upload_preset",
+      process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET!
+    );
+
+    const res = await fetch(
+      `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/upload`,
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
+
+    if (!res.ok) throw new Error("Upload failed");
+
+    const data = await res.json();
+
+    onProgress();
+
+    return {
+      imageUrl: data.secure_url,
+      name: file.name.replace(/\.[^/.]+$/, ""),
+    };
+  };
 
   useEffect(() => {
     fetchData();
@@ -40,7 +121,7 @@ const Settings = () => {
       const res = await fetch(`/api/homepage-data`);
       const data = await res.json();
       setGallery(data.gallery);
-      setPsetting(data.ppdbSettings)
+      setPsetting(data.ppdbSettings);
       setgLoading(false);
     } catch (err) {
       console.error("Failed to load homepage data", err);
@@ -53,40 +134,39 @@ const Settings = () => {
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const files = e.target.files;
-    if (!files) return;
+    if (!files || files.length === 0) return;
+
     setUploading(true);
-    const uploaded: { imageUrl: string; caption?: string }[] = [];
+    setProgress(0);
+    setTotalFiles(files.length);
 
-    for (const file of Array.from(files)) {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append(
-        "upload_preset",
-        `${process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}`
+    let uploadedCount = 0;
+
+    try {
+      const uploadPromises = Array.from(files).map((file) =>
+        uploadSingleFile(file, () => {
+          uploadedCount++;
+          setProgress(Math.round((uploadedCount / files.length) * 100));
+        })
       );
 
-      const uploadRes = await fetch(
-        `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/upload`,
-        { method: "POST", body: formData }
-      );
+      const uploaded = await Promise.all(uploadPromises);
 
-      const uploadData = await uploadRes.json();
-      const nameWithoutExt = file.name.replace(/\.[^/.]+$/, "");
-      uploaded.push({
-        imageUrl: uploadData.secure_url,
-        caption: nameWithoutExt, // optional, you can change later
+      await fetch("/api/gallery", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ images: uploaded }),
       });
+
+      await fetchData();
+    } catch (err) {
+      console.error(err);
+      alert("Upload failed. Please try again.");
+    } finally {
+      setUploading(false);
+      setProgress(0);
+      setTotalFiles(0);
     }
-
-    await fetch("/api/gallery", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ images: uploaded }),
-    });
-
-    fetchData();
-
-    setUploading(false);
   };
 
   const handleCaptionSave = async (id: number, caption: string) => {
@@ -135,17 +215,25 @@ const Settings = () => {
         Pengaturan Home Page
       </h1>
       {/* Hero Section */}
-      <HeroSettings />
+      <HeroSettings resizeImage={resizeImage} />
 
       {/* Gallery */}
       <section className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
         <h2 className="text-lg font-bold mb-2">Gallery</h2>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col gap-2 w-full max-w-sm">
           {uploading ? (
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
-              Uploading...
-            </div>
+            <>
+              <div className="text-sm text-gray-600">
+                Uploading {progress}% ({totalFiles} files)
+              </div>
+
+              <div className="w-full h-2 bg-gray-200 rounded overflow-hidden">
+                <div
+                  className="h-full bg-blue-500 transition-all duration-300"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+            </>
           ) : (
             <input
               type="file"
@@ -173,6 +261,7 @@ const Settings = () => {
                     className="w-full h-48 object-contain rounded bg-gray-100"
                     width={400}
                     height={400}
+                    unoptimized
                   />
                 )}
 
@@ -221,10 +310,9 @@ const Settings = () => {
       </section>
 
       {/* Eskul */}
-      <EskulSettings />
+      <EskulSettings resizeImage={resizeImage} />
       <section>
-        
-        <PPDBSettingForm type="update" data={psetting}/>
+        <PPDBSettingForm type="update" data={psetting} />
       </section>
     </div>
   );

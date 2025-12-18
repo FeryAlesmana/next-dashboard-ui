@@ -192,7 +192,7 @@ export default function Menu({ onLinkClick }: { onLinkClick: () => void }) {
         },
         {
           icon: "/setting.png",
-          label: "Settings",
+          label: "Pengaturan",
           href: "/settings",
           visible: ["admin"],
         },

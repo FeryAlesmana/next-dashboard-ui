@@ -10,6 +10,15 @@ const UploadPhoto = ({ imageUrl, onUpload }: UploadPreviewProps) => {
   return (
     <CldUploadWidget
       uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}
+      options={{
+        multiple: false,
+        maxFiles: 1,
+        maxFileSize: 5 * 1024 * 1024, // 5MB
+        clientAllowedFormats: ["jpg", "jpeg", "png", "webp"],
+        sources: ["local", "camera"],
+        resourceType: "image",
+        cropping: false,
+      }}
       onSuccess={(result, { widget }) => {
         const info = result?.info as { secure_url?: string };
         if (info?.secure_url) {

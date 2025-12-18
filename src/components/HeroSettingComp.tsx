@@ -8,11 +8,18 @@ type slideHero = {
   imageUrl: string;
 };
 
-const HeroSettings = () => {
+const HeroSettings = ({
+  resizeImage,
+}: {
+  resizeImage: (file: File, maxSize: number, quality: number) => Promise<File>;
+}) => {
   const [hero, setHero] = useState<slideHero[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [totalFiles, setTotalFiles] = useState(0);
+
   useEffect(() => {
     fetchHero();
   }, []);
@@ -24,38 +31,71 @@ const HeroSettings = () => {
     setLoading(false);
   };
 
+  const uploadSingleFile = async (file: File, onProgress: () => void) => {
+    const resizedFile = await resizeImage(file, 1080, 0.8);
+
+    const formData = new FormData();
+    formData.append("file", resizedFile);
+    formData.append(
+      "upload_preset",
+      process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET!
+    );
+
+    const res = await fetch(
+      `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/upload`,
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
+
+    if (!res.ok) throw new Error("Upload failed");
+
+    const data = await res.json();
+
+    onProgress();
+
+    return {
+      imageUrl: data.secure_url,
+      name: file.name.replace(/\.[^/.]+$/, ""),
+    };
+  };
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (!files) return;
+    if (!files || files.length === 0) return;
 
     setUploading(true);
-    const uploaded: { imageUrl: string }[] = [];
+    setProgress(0);
+    setTotalFiles(files.length);
 
-    for (const file of Array.from(files)) {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("upload_preset", `${process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}`);
+    let uploadedCount = 0;
 
-      const uploadRes = await fetch(
-        `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/upload`,
-        { method: "POST", body: formData }
+    try {
+      const uploadPromises = Array.from(files).map((file) =>
+        uploadSingleFile(file, () => {
+          uploadedCount++;
+          setProgress(Math.round((uploadedCount / files.length) * 100));
+        })
       );
 
-      const uploadData = await uploadRes.json();
+      const uploaded = await Promise.all(uploadPromises);
 
-      uploaded.push({
-        imageUrl: uploadData.secure_url,
+      await fetch("/api/hero", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ images: uploaded }),
       });
+
+      await fetchHero();
+    } catch (err) {
+      console.error(err);
+      alert("Upload failed. Please try again.");
+    } finally {
+      setUploading(false);
+      setProgress(0);
+      setTotalFiles(0);
     }
-
-    await fetch("/api/hero", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ images: uploaded }),
-    });
-
-    fetchHero();
-    setUploading(false);
   };
 
   const handleDelete = async (id: number) => {
@@ -87,12 +127,20 @@ const HeroSettings = () => {
   return (
     <section className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
       <h2 className="text-lg font-bold mb-2">Hero</h2>
-      <div className="flex items-center gap-4">
+      <div className="flex flex-col gap-2 w-full max-w-sm">
         {uploading ? (
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
-            Uploading...
-          </div>
+          <>
+            <div className="text-sm text-gray-600">
+              Uploading {progress}% ({totalFiles} files)
+            </div>
+
+            <div className="w-full h-2 bg-gray-200 rounded overflow-hidden">
+              <div
+                className="h-full bg-blue-500 transition-all duration-300"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </>
         ) : (
           <input
             type="file"

@@ -9,13 +9,50 @@ type EskulSchema = {
   id: number;
 };
 
-const EskulSettings = () => {
+const EskulSettings = ({
+  resizeImage,
+}: {
+  resizeImage: (file: File, maxSize: number, quality: number) => Promise<File>;
+}) => {
   const [eskul, setEskul] = useState<EskulSchema[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [savingId, setSavingId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [totalFiles, setTotalFiles] = useState(0);
+
+  const uploadSingleFile = async (file: File, onProgress: () => void) => {
+    const resizedFile = await resizeImage(file, 1080, 0.8);
+
+    const formData = new FormData();
+    formData.append("file", resizedFile);
+    formData.append(
+      "upload_preset",
+      process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET!
+    );
+
+    const res = await fetch(
+      `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/upload`,
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
+
+    if (!res.ok) throw new Error("Upload failed");
+
+    const data = await res.json();
+
+    onProgress();
+
+    return {
+      imageUrl: data.secure_url,
+      name: file.name.replace(/\.[^/.]+$/, ""),
+    };
+  };
+
   useEffect(() => {
     fetchEskul();
   }, []);
@@ -29,39 +66,41 @@ const EskulSettings = () => {
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (!files) return;
+    if (!files || files.length === 0) return;
 
     setUploading(true);
-    const uploaded: { imageUrl: string; name: string }[] = [];
+    setProgress(0);
+    setTotalFiles(files.length);
 
-    for (const file of Array.from(files)) {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("upload_preset", `${process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}`);
+    let uploadedCount = 0;
 
-      const uploadRes = await fetch(
-        `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/upload`,
-        { method: "POST", body: formData }
+    try {
+      const uploadPromises = Array.from(files).map((file) =>
+        uploadSingleFile(file, () => {
+          uploadedCount++;
+          setProgress(Math.round((uploadedCount / files.length) * 100));
+        })
       );
 
-      const uploadData = await uploadRes.json();
-      // 🔥 Remove file extension from name
-      const nameWithoutExt = file.name.replace(/\.[^/.]+$/, "");
-      uploaded.push({
-        imageUrl: uploadData.secure_url,
-        name: nameWithoutExt,
+      const uploaded = await Promise.all(uploadPromises);
+
+      await fetch("/api/eskul", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ images: uploaded }),
       });
+
+      await fetchEskul();
+    } catch (err) {
+      console.error(err);
+      alert("Upload failed. Please try again.");
+    } finally {
+      setUploading(false);
+      setProgress(0);
+      setTotalFiles(0);
     }
-
-    await fetch("/api/eskul", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ images: uploaded }),
-    });
-
-    fetchEskul();
-    setUploading(false);
   };
+
   const handleNameSave = async (id: number, name: string) => {
     setSavingId(id);
     await fetch(`/api/eskul/${id}`, {
@@ -103,12 +142,20 @@ const EskulSettings = () => {
   return (
     <section className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
       <h2 className="text-lg font-bold mb-2">Eskul</h2>
-      <div className="flex items-center gap-4">
+      <div className="flex flex-col gap-2 w-full max-w-sm">
         {uploading ? (
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
-            Uploading...
-          </div>
+          <>
+            <div className="text-sm text-gray-600">
+              Uploading {progress}% ({totalFiles} files)
+            </div>
+
+            <div className="w-full h-2 bg-gray-200 rounded overflow-hidden">
+              <div
+                className="h-full bg-blue-500 transition-all duration-300"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </>
         ) : (
           <input
             type="file"
@@ -119,6 +166,7 @@ const EskulSettings = () => {
           />
         )}
       </div>
+
       <div className="mt-4 grid grid-cols-4 gap-4">
         {eskul.length === 0 ? (
           <div className="col-span-4 flex items-center justify-center h-24 border-2 border-dashed border-gray-300 rounded bg-gray-50 text-gray-500">
@@ -136,6 +184,7 @@ const EskulSettings = () => {
                   className="w-full h-48 object-contain rounded bg-gray-100"
                   width={160}
                   height={160}
+                  unoptimized
                 />
               )}
               <div className="mt-2 text-center">

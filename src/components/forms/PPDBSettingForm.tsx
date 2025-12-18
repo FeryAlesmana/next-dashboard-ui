@@ -151,7 +151,7 @@ const PPDBSettingForm = ({ setOpen, type, data }: Props) => {
 
       {showConfirm && (
         <ConfirmDialog
-          message={"Simpan perubahan pengaturan PPDB?"}
+          message={"Simpan perubahan?"}
           onConfirm={handleConfirmSubmit}
           onCancel={() => setShowConfirm(false)}
         />
