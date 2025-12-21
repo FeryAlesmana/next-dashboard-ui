@@ -256,13 +256,20 @@ const PaymentLogListPage = async ({
             query.id = id;
             break;
           case "status":
-            if (Object.values(PaymentStatus).includes(value as PaymentStatus)) {
+            if (value === "OVERDUE") {
+              query.AND = [
+                { status: { not: "PAID" } },
+                { dueDate: { lt: new Date() } },
+              ];
+            } else if (
+              Object.values(PaymentStatus).includes(value as PaymentStatus)
+            ) {
               query.status = value as PaymentStatus;
             } else {
-              // Ignore the parameter or log a warning if the value is invalid
               return notFound();
             }
             break;
+
           case "classId":
             const classId = toIntOrNotFound(value);
             query.classId = classId;
