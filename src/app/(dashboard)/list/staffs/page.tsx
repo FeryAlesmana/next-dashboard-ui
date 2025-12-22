@@ -147,6 +147,7 @@ const StaffListPage = async ({
     password: decryptPassword(staff.password),
   }));
   const staffRoles = [
+    { label: "Penilaian & Kesiswaan", value: "PENILAIAN" },
     { label: "Penjadwalan", value: "PENJADWALAN" },
     { label: "Akutansi", value: "ACCOUNTING" },
   ];
