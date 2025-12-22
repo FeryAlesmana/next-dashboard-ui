@@ -80,7 +80,6 @@ const StaffListPage = async ({
       if (value === undefined || value === null || value === "") {
         continue;
       }
-      const ALLOWED_ROLES: staffrole[] = ["PENJADWALAN", "ACCOUNTING"];
       const safeValue = String(value).trim();
       switch (key) {
         case "search":
@@ -92,7 +91,7 @@ const StaffListPage = async ({
           ];
           break;
         case "byRole":
-          if (ALLOWED_ROLES.includes(safeValue as staffrole)) {
+          if (Object.values(staffrole).includes(safeValue as staffrole)) {
             query.staffroles = safeValue as staffrole;
           } else {
             // Ignore the parameter or log a warning if the value is invalid
