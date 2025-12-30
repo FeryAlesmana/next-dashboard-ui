@@ -36,7 +36,7 @@ export default function Home() {
       const res = await fetch(`/api/homepage-data`, {
         cache: "no-store", // supaya selalu ambil fresh
       });
-      const ppdbRes = await fetch(`/api/ppdb-status`, { cache: "no-store" });
+      const ppdbRes = await fetch(`/api/ppdb-status`);
       if (ppdbRes.ok) {
         const ppdbStatusdata = await ppdbRes.json();
         setPpdbStatus(ppdbStatusdata?.ppdbStatus);

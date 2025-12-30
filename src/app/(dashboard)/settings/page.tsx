@@ -115,6 +115,7 @@ const Settings = () => {
   };
 
   useEffect(() => {
+    setgLoading(true);
     fetchData();
   }, []);
 
@@ -196,21 +197,6 @@ const Settings = () => {
   };
 
   if (loading) return <LoadingScreen />;
-  if (gloading) {
-    return (
-      <section className="p-6">
-        <h2 className="text-lg font-bold mb-2">Gallery</h2>
-        <div className="mt-4 grid grid-cols-4 gap-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div
-              key={i}
-              className="border rounded p-2 animate-pulse bg-gray-100 h-32"
-            />
-          ))}
-        </div>
-      </section>
-    );
-  }
 
   return (
     <div className="space-y-10 p-6">
@@ -221,96 +207,111 @@ const Settings = () => {
       <HeroSettings resizeImage={resizeImage} />
 
       {/* Gallery */}
-      <section className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
-        <h2 className="text-lg font-bold mb-2">Gallery</h2>
-        <div className="flex flex-col gap-2 w-full max-w-sm">
-          {uploading ? (
-            <>
-              <div className="text-sm text-gray-600">
-                Uploading {progress}% ({totalFiles} files)
-              </div>
 
-              <div className="w-full h-2 bg-gray-200 rounded overflow-hidden">
-                <div
-                  className="h-full bg-blue-500 transition-all duration-300"
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
-            </>
-          ) : (
-            <input
-              type="file"
-              multiple
-              accept="image/*"
-              onChange={handleGalleryUpload}
-              disabled={uploading}
-            />
-          )}
-        </div>
-        <div className="mt-4 grid grid-cols-4 gap-4">
-          {gallery.length === 0 ? (
-            <div className="col-span-4 flex items-center justify-center h-24 border-2 border-dashed border-gray-300 rounded bg-gray-50 text-gray-500">
-              Belum ada Item untuk Komponen ini
-            </div>
-          ) : (
-            gallery.map((item) => (
-              <div key={item.id} className="border rounded p-2 relative">
-                {deletingId === item.id ? (
-                  <div className="w-full h-24 bg-gray-200 animate-pulse rounded" />
-                ) : (
-                  <Image
-                    src={item.imageUrl}
-                    alt={item.caption ?? "gallery"}
-                    className="w-full h-48 object-contain rounded bg-gray-100"
-                    width={400}
-                    height={400}
-                    unoptimized
-                  />
-                )}
-
-                <div className="mt-2 text-center">
-                  {editingId === item.id ? (
-                    <input
-                      type="text"
-                      defaultValue={item.caption ?? ""}
-                      autoFocus
-                      className="border rounded px-2 py-1 w-full text-sm"
-                      onBlur={(e) =>
-                        handleCaptionSave(item.id, e.target.value.trim())
-                      }
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          handleCaptionSave(
-                            item.id,
-                            (e.target as HTMLInputElement).value.trim()
-                          );
-                        }
-                      }}
-                    />
-                  ) : (
-                    <p
-                      className="text-sm cursor-pointer"
-                      onClick={() => setEditingId(item.id)}
-                    >
-                      {savingId === item.id
-                        ? "Saving..."
-                        : item.caption || "Add caption"}
-                    </p>
-                  )}
+      {gloading ? (
+        <section className="p-6">
+          <h2 className="text-lg font-bold mb-2">Gallery</h2>
+          <div className="mt-4 grid grid-cols-4 gap-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div
+                key={i}
+                className="border rounded p-2 animate-pulse bg-gray-100 h-32"
+              />
+            ))}
+          </div>
+        </section>
+      ) : (
+        <section className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
+          <h2 className="text-lg font-bold mb-2">Gallery</h2>
+          <div className="flex flex-col gap-2 w-full max-w-sm">
+            {uploading ? (
+              <>
+                <div className="text-sm text-gray-600">
+                  Uploading {progress}% ({totalFiles} files)
                 </div>
 
-                <button
-                  onClick={() => handleDelete(item.id)}
-                  disabled={deletingId === item.id}
-                  className="absolute top-1 right-1 bg-red-500 text-white text-xs px-2 py-1 rounded disabled:opacity-50"
-                >
-                  ✕
-                </button>
+                <div className="w-full h-2 bg-gray-200 rounded overflow-hidden">
+                  <div
+                    className="h-full bg-blue-500 transition-all duration-300"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+              </>
+            ) : (
+              <input
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={handleGalleryUpload}
+                disabled={uploading}
+              />
+            )}
+          </div>
+          <div className="mt-4 grid grid-cols-4 gap-4">
+            {gallery.length === 0 ? (
+              <div className="col-span-4 flex items-center justify-center h-24 border-2 border-dashed border-gray-300 rounded bg-gray-50 text-gray-500">
+                Belum ada Item untuk Komponen ini
               </div>
-            ))
-          )}
-        </div>
-      </section>
+            ) : (
+              gallery.map((item) => (
+                <div key={item.id} className="border rounded p-2 relative">
+                  {deletingId === item.id ? (
+                    <div className="w-full h-24 bg-gray-200 animate-pulse rounded" />
+                  ) : (
+                    <Image
+                      src={item.imageUrl}
+                      alt={item.caption ?? "gallery"}
+                      className="w-full h-48 object-contain rounded bg-gray-100"
+                      width={400}
+                      height={400}
+                      unoptimized
+                    />
+                  )}
+
+                  <div className="mt-2 text-center">
+                    {editingId === item.id ? (
+                      <input
+                        type="text"
+                        defaultValue={item.caption ?? ""}
+                        autoFocus
+                        className="border rounded px-2 py-1 w-full text-sm"
+                        onBlur={(e) =>
+                          handleCaptionSave(item.id, e.target.value.trim())
+                        }
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            handleCaptionSave(
+                              item.id,
+                              (e.target as HTMLInputElement).value.trim()
+                            );
+                          }
+                        }}
+                      />
+                    ) : (
+                      <p
+                        className="text-sm cursor-pointer"
+                        onClick={() => setEditingId(item.id)}
+                      >
+                        {savingId === item.id
+                          ? "Saving..."
+                          : item.caption || "Add caption"}
+                      </p>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={() => handleDelete(item.id)}
+                    disabled={deletingId === item.id}
+                    className="absolute top-1 right-1 bg-red-500 text-white text-xs px-2 py-1 rounded disabled:opacity-50"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        </section>
+      )}
 
       {/* Eskul */}
       <EskulSettings resizeImage={resizeImage} />

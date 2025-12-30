@@ -64,7 +64,7 @@ export default function PromotionBanner({
   } else if (reason === "QUOTA_FULL") {
     message = "Maaf, kuota PPDB sudah penuh";
   } else {
-    message = "PPDB tidak tersedia saat ini.";
+    message = "PPDB masih belum dibuka saat ini.";
   }
   return (
     <div
