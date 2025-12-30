@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import React from "react";
 
 interface TeamMember {
@@ -11,15 +12,26 @@ interface AboutProps {
   team: TeamMember[];
   websiteName?: string;
   description?: string;
+  role?: string;
 }
 
 const AboutUs: React.FC<AboutProps> = ({
   team,
   websiteName = "Website",
   description = "A platform for managing student data and imports.",
+  role,
 }) => {
   return (
     <div className="about-us-container relative py-24 px-6 text-center">
+      {role === "admin" && (
+        <Link
+          href="/settings"
+          className="absolute top-3 right-3 z-20 bg-white/80 hover:bg-lamaPurple text-black rounded-full p-2 shadow transition"
+          title="Edit slides"
+        >
+          <Image src="/updateDark.png" alt="edit" width={16} height={16} />
+        </Link>
+      )}
       <h1 className="text-3xl md:text-5xl font-extrabold mb-6 leading-tight text-white drop-shadow-lg">
         Tentang {websiteName}
       </h1>

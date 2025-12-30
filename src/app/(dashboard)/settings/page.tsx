@@ -5,8 +5,9 @@ import Image from "next/image";
 import HeroSettings from "@/components/HeroSettingComp";
 import EskulSettings from "@/components/EskulSettingComp";
 import LoadingScreen from "@/components/LoadingScreen";
-import { PPDBSetting } from "@prisma/client";
+import { HomeSetting, PPDBSetting } from "@prisma/client";
 import PPDBSettingForm from "@/components/forms/PPDBSettingForm";
+import CreditSettingForm from "@/components/forms/CreditSettingForm";
 
 type GalleryImage = {
   id: number;
@@ -16,6 +17,7 @@ type GalleryImage = {
 const Settings = () => {
   const [gallery, setGallery] = useState<GalleryImage[]>([]);
   const [psetting, setPsetting] = useState<PPDBSetting[]>([]);
+  const [csetting, setCsetting] = useState<HomeSetting[]>([]);
   const [loading, setLoading] = useState(true);
   const [gloading, setgLoading] = useState(true);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -122,6 +124,7 @@ const Settings = () => {
       const data = await res.json();
       setGallery(data.gallery);
       setPsetting(data.ppdbSettings);
+      setCsetting(data.creditSetting);
       setgLoading(false);
     } catch (err) {
       console.error("Failed to load homepage data", err);
@@ -313,6 +316,9 @@ const Settings = () => {
       <EskulSettings resizeImage={resizeImage} />
       <section>
         <PPDBSettingForm type="update" data={psetting} />
+      </section>
+      <section>
+        <CreditSettingForm data={csetting} />
       </section>
     </div>
   );

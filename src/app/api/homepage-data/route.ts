@@ -19,6 +19,7 @@ export async function GET() {
       orderBy: { createdAt: "asc" },
     });
     const ppdbSettings = await prisma.pPDBSetting.findFirst({});
+    const creditSetting = await prisma.homeSetting.findFirst({});
 
     return NextResponse.json({
       heroSlides,
@@ -26,6 +27,7 @@ export async function GET() {
       eskul,
       penunjang,
       ppdbSettings,
+      creditSetting
     });
   } catch (error) {
     console.error("Failed to fetch homepage data", error);

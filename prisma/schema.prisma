@@ -5,7 +5,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  // directUrl = env("DIRECT_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model Admin {
@@ -577,4 +577,10 @@ model PerformanceLog {
   note  String? // optional remarks
 
   createdAt DateTime @default(now())
+}
+
+model HomeSetting {
+  id Int @id @default(autoincrement())
+  show      Boolean  @default(false)
+  updatedAt DateTime @updatedAt
 }

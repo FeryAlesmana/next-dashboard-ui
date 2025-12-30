@@ -51,6 +51,7 @@ import {
   PerformanceSchema,
   BillLogSchema,
   PaymentSchema,
+  CreditSettingSchema,
 } from "./formValidationSchema";
 import prisma from "./prisma";
 import { clerkClient } from "@clerk/nextjs/server";
@@ -4669,6 +4670,51 @@ export async function updatePPDBSetting(
     };
   } catch (err: any) {
     console.error("Update PPDB Setting Error:", err);
+
+    return {
+      success: false,
+      error: true,
+      message: err?.message || "Terjadi kesalahan.",
+    };
+  }
+}
+
+
+export async function updateCreditsetting(
+  prevState: CurrentState,
+  data: CreditSettingSchema
+): Promise<CurrentState> {
+  try {
+    
+    // If PPDB setting table has only ONE ROW:
+    const existing = await prisma.homeSetting.findFirst();
+
+    if (!existing) {
+      // If not found, create a default row
+      await prisma.homeSetting.create({
+        data: {
+          show: data.show,
+          updatedAt: new Date()
+        },
+      });
+    } else {
+      // Update existing setting
+      await prisma.homeSetting.update({
+        where: { id: existing.id },
+         data: {
+          show: data.show,
+          updatedAt: new Date()
+        },
+      });
+    }
+
+    return {
+      success: true,
+      error: false,
+      message: "Pengaturan Credit berhasil disimpan.",
+    };
+  } catch (err: any) {
+    console.error("Update Credit Setting Error:", err);
 
     return {
       success: false,

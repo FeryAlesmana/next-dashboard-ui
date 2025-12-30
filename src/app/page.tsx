@@ -17,6 +17,7 @@ import { useUser } from "@clerk/nextjs";
 import LocationMap from "@/components/landing/LocationMap";
 import AboutUs from "@/components/landing/AboutUs";
 import PromotionBanner from "@/components/PromotionBanner";
+import HeadmasterProfile from "@/components/landing/HeadMasterProfile";
 interface TeamMember {
   name: string;
   job: string;
@@ -28,6 +29,8 @@ export default function Home() {
 
   const [homeData, setHomeData] = useState<any>();
   const [ppdbStatus, setPpdbStatus] = useState<any>();
+  const [csetting, setCsetting] = useState<{ show: boolean } | null>(null);
+
   useEffect(() => {
     const fetchHomeData = async () => {
       const res = await fetch(`/api/homepage-data`, {
@@ -41,6 +44,7 @@ export default function Home() {
       if (res.ok) {
         const data = await res.json();
         setHomeData(data);
+        setCsetting(data.creditSetting);
       } else {
         toast.error("Fetch Home Data gagal");
       }
@@ -105,7 +109,9 @@ export default function Home() {
           <Kontak />
           <Pendaftaran />
           <CTA />
-          <AboutUs team={team} />
+          <HeadmasterProfile photo="/Pdodo.png" />
+
+          {csetting?.show && <AboutUs team={team} role={role} />}
         </div>
 
         {/* Footer Full Width */}

@@ -942,28 +942,22 @@ export const paymentLogSchema = z
 
 export type PaymentLogSchema = z.infer<typeof paymentLogSchema>;
 
-export const mPaymentLogSchema = z
-  .object({
-    ids: z.array(z.number().min(1)),
-    paymentType: z
-      .nativeEnum(PaymentType)
-      .or(z.literal(""))
-      .optional(),
-    amount: z
-      .number()
-      .min(1, "Jumlah harus lebih dari 0")
-      .or(z.literal(""))
-      .optional(),
-    dueDate: z
-      .string()
-      .min(1, "Tenggat waktu wajib diisi")
-      .or(z.literal(""))
-      .optional(),
-    
-    description: z.string().or(z.literal("")).optional(),
-    
-  })
+export const mPaymentLogSchema = z.object({
+  ids: z.array(z.number().min(1)),
+  paymentType: z.nativeEnum(PaymentType).or(z.literal("")).optional(),
+  amount: z
+    .number()
+    .min(1, "Jumlah harus lebih dari 0")
+    .or(z.literal(""))
+    .optional(),
+  dueDate: z
+    .string()
+    .min(1, "Tenggat waktu wajib diisi")
+    .or(z.literal(""))
+    .optional(),
 
+  description: z.string().or(z.literal("")).optional(),
+});
 
 export type MpaymentLogSchema = z.infer<typeof mPaymentLogSchema>;
 
@@ -1132,6 +1126,12 @@ export const ppdbSettingSchema = z
   );
 
 export type PPDBSettingSchema = z.infer<typeof ppdbSettingSchema>;
+
+export const creditsettingSchema = z.object({
+  show: z.boolean(),
+});
+
+export type CreditSettingSchema = z.infer<typeof creditsettingSchema>;
 
 export const importPaymentsschema = z.object({
   file: z

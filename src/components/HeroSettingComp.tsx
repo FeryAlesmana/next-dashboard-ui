@@ -112,7 +112,7 @@ const HeroSettings = ({
   if (loading)
     return (
       <section className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
-        <h2 className="text-lg font-bold mb-2">Gallery</h2>
+        <h2 className="text-lg font-bold mb-2">Hero Slide</h2>
         <div className="mt-4 grid grid-cols-4 gap-4">
           {Array.from({ length: 4 }).map((_, i) => (
             <div
@@ -126,7 +126,7 @@ const HeroSettings = ({
 
   return (
     <section className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
-      <h2 className="text-lg font-bold mb-2">Hero</h2>
+      <h2 className="text-lg font-bold mb-2">Hero Slide</h2>
       <div className="flex flex-col gap-2 w-full max-w-sm">
         {uploading ? (
           <>
