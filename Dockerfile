@@ -2,23 +2,22 @@ FROM node:22.18.0
 
 WORKDIR /app
 
-# Copy package.json and package-lock.json files
-COPY package*.json ./
+# Copy package files
+COPY package *. json ./
 
-# Install dependencies
+# @ Copy Prisma schema BEFORE npm installl
+COPY prisma ./prisma
+
+# Install dependencies (prisma generate works now)
 RUN npm install
 
-# Copy the rest of the application code
+# Copy rest of the app
 COPY . .
 
-# Generate Database
-RUN npx prisma migrate dev --name init
-
-# Build the Next.js application
+# Build Next.js
 RUN npm run build
 
-# Expose the port the app runs on
 EXPOSE 3000
 
-# Start the Next.js application
+# Start app
 CMD ["npm", "start"]

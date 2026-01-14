@@ -1,7 +1,6 @@
-version: '4.46'
 services:
-  postgress:
-    image: postgress:17
+  postgres:
+    image: postgres:17
     container_name: postgres_db
     environment:
        POSTGRES_USER: Ale
@@ -10,15 +9,15 @@ services:
     ports:
       - '5432:5432'
     volumes:
-      - pgdata=/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/data
   app:
     container_name: nextjs_app
     build: .
     ports:
       - "3000:3000"
-    env_file:
-      - production.env
     environment:
       - DATABASE_URL: postgresql://Ale:FeryAle12@postgres:5432/school
     depends_on:
       - postgres
+volumes:
+  pgdata:

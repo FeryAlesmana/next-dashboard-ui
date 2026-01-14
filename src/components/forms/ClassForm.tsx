@@ -109,6 +109,20 @@ const ClassForm = ({
 
   const { teachers = [], grades = [] } = relatedData ?? {};
 
+  const defGrades = [
+    {
+      id: 1,
+      level: 1,
+    },
+    {
+      id: 2,
+      level: 2,
+    },
+    {
+      id: 3,
+      level: 3,
+    },
+  ];
   const teacherOptions = teachers.map((teacher: any) => ({
     value: teacher.id,
     label: `${teacher.name}`,
@@ -191,7 +205,7 @@ const ClassForm = ({
               {...register("gradeId")}
               defaultValue={data?.gradeId ?? ""}
             >
-              {grades.map((grade: { id: number; level: number }) => (
+              {defGrades.map((grade: { id: number; level: number }) => (
                 <option value={grade.id} key={grade.id}>
                   {grade.level}
                 </option>

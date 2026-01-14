@@ -30,21 +30,6 @@ export function encryptPassword(password: string) {
 
 const grades = [];
 async function main() {
-  // ADMIN
-  await prisma.admin.create({
-    data: {
-      id: "admin1",
-      username: "admin1",
-      password: encryptPassword("admin123"), // plain password
-    },
-  });
-  await prisma.admin.create({
-    data: {
-      id: "admin2",
-      username: "admin2",
-      password: encryptPassword("admin456"),
-    },
-  });
 
   // GRADE & CLASS
   for (let gradeLevel = 1; gradeLevel <= 3; gradeLevel++) {
