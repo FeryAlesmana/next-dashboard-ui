@@ -104,7 +104,7 @@ const TeacherForm = ({
     setShowConfirm(false);
     const payload = {
       ...data,
-      img: img?.secure_url,
+      img: img?.secure_url ?? data?.img,
       withUser,
     };
 
@@ -148,8 +148,12 @@ const TeacherForm = ({
         subjects: data.subjects.map((s: { id: number }) => s.id),
         lessons: data.lessons.map((l: { id: number }) => l.id),
         classes: data.classes.map((c: { id: number }) => c.id),
-        img: img?.secure_url,
       });
+
+      // 👇 initialize img state from DB
+      if (data.img) {
+        setImg({ secure_url: data.img });
+      }
     }
     if (state.success) {
       const updatedItem = state.data ?? data;
