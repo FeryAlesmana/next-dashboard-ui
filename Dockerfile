@@ -3,7 +3,7 @@ FROM node:22.18.0
 WORKDIR /app
 
 # Copy package files
-COPY package *. json ./
+COPY package*.json ./
 
 # @ Copy Prisma schema BEFORE npm installl
 COPY prisma ./prisma
