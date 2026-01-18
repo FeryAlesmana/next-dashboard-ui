@@ -172,14 +172,14 @@ const FormulirPendaftaran = ({
   const [sendingFeedback, setSendingFeedback] = useState(false);
   const createPpdbHandler = async (
     prevState: CurrentState,
-    payload: PpdbSchema
+    payload: PpdbSchema,
   ): Promise<CurrentState> => {
     return await createPpdb(prevState, payload);
   };
 
   const updatePpdbHandler = async (
     prevState: CurrentState,
-    payload: PpdbSchema
+    payload: PpdbSchema,
   ): Promise<CurrentState> => {
     return await updatePpdb(prevState, payload);
   };
@@ -191,14 +191,14 @@ const FormulirPendaftaran = ({
   };
   const [state, formAction] = useActionState(
     type === "create" ? createPpdbHandler : updatePpdbHandler,
-    initialState
+    initialState,
   );
   const [uploadingField, setUploadingField] = useState<
     keyof typeof dokumen | null
   >(null);
   const handleFileUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
-    name: keyof typeof dokumen
+    name: keyof typeof dokumen,
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -255,11 +255,14 @@ const FormulirPendaftaran = ({
         setError(state.field as any, { message: state.message });
       }
       toast(
-        `PPDB telah berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`
+        `PPDB telah berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`,
       );
       setOpen(false);
       localStorage.removeItem(FORM_KEY);
-      router.refresh();
+      setTimeout(() => {
+        setOpen(false);
+        router.refresh();
+      }, 300); // 300ms delay;
       if (onChanged && updatedItem) {
         onChanged(updatedItem); // 🔥 notify parent so it can update localData
       } else {
@@ -276,7 +279,7 @@ const FormulirPendaftaran = ({
       // If the error is a field name (like "nisn"), set it on that field
       if (
         ["nisn", "nik", "npsn", "email", "phone", "no_kps"].includes(
-          state.message
+          state.message,
         )
       ) {
         setError(state.message as keyof PpdbSchema, {
@@ -289,7 +292,7 @@ const FormulirPendaftaran = ({
   // All possible field options for react-select
   const fieldOptions = Object.keys(ppdbSchema.shape)
     .filter(
-      (key) => !["id", "isvalid", "reason", "gradeId", "classId"].includes(key)
+      (key) => !["id", "isvalid", "reason", "gradeId", "classId"].includes(key),
     )
     .map((key) => ({
       value: key,
@@ -328,6 +331,13 @@ const FormulirPendaftaran = ({
     }
   };
   const { classes = [] } = relatedData ?? {};
+
+  const isDokumenLengkap =
+    type !== "create" ||
+    (!!dokumen.ijazah &&
+      !!dokumen.akte &&
+      !!dokumen.kk_ktp_sktm &&
+      !!dokumen.pasfoto);
 
   return (
     <div className="max-w-4xl mx-auto p-4">
@@ -681,7 +691,9 @@ const FormulirPendaftaran = ({
             </div>
 
             <div className="w-full md:w-1/2">
-              <label className="block mb-1 font-medium">Nomor KPS</label>
+              <label className="block mb-1 font-medium">
+                Nomor KPS (Opsional)
+              </label>
               <input
                 {...register("no_kps")}
                 className="w-full border rounded px-3 py-2"
@@ -774,7 +786,9 @@ const FormulirPendaftaran = ({
 
           {/* Prestasi */}
           <div>
-            <label className="block mb-1 font-medium">Jenis Prestasi</label>
+            <label className="block mb-1 font-medium">
+              Jenis Prestasi (Opsional)
+            </label>
             <input
               {...register("awards")}
               className="w-full border rounded px-3 py-2"
@@ -787,7 +801,9 @@ const FormulirPendaftaran = ({
 
           <div className="flex flex-col md:flex-row gap-4">
             <div className="w-full md:w-1/2">
-              <label className="block mb-1 font-medium">Tingkat Prestasi</label>
+              <label className="block mb-1 font-medium">
+                Tingkat Prestasi (Opsional)
+              </label>
               <select
                 {...register("awards_lvl")}
                 className="w-full border rounded px-3 py-2"
@@ -805,7 +821,9 @@ const FormulirPendaftaran = ({
               )}
             </div>
             <div className="w-full md:w-1/2">
-              <label className="block mb-1 font-medium">Tahun Prestasi</label>
+              <label className="block mb-1 font-medium">
+                Tahun Prestasi (Opsional)
+              </label>
               <input
                 type="date"
                 {...register("awards_date")}
@@ -820,7 +838,9 @@ const FormulirPendaftaran = ({
           {/* Beasiswa */}
           <div className="flex flex-col md:flex-row gap-4">
             <div className="w-full md:w-1/3">
-              <label className="block mb-1 font-medium">Beasiswa</label>
+              <label className="block mb-1 font-medium">
+                Beasiswa (Opsional)
+              </label>
               <input
                 {...register("scholarship")}
                 className="w-full border rounded px-3 py-2"
@@ -831,7 +851,9 @@ const FormulirPendaftaran = ({
               )}
             </div>
             <div className="w-full md:w-1/3">
-              <label className="block mb-1 font-medium">Sumber Beasiswa</label>
+              <label className="block mb-1 font-medium">
+                Sumber Beasiswa (Opsional)
+              </label>
               <input
                 {...register("scholarship_detail")}
                 className="w-full border rounded px-3 py-2"
@@ -844,7 +866,9 @@ const FormulirPendaftaran = ({
               )}
             </div>
             <div className="w-full md:w-1/3">
-              <label className="block mb-1 font-medium">Tahun Beasiswa</label>
+              <label className="block mb-1 font-medium">
+                Tahun Beasiswa (Opsional)
+              </label>
               <input
                 type="date"
                 {...register("scholarship_date")}
@@ -859,6 +883,12 @@ const FormulirPendaftaran = ({
           </div>
 
           {/* ==== DATA AYAH ==== */}
+          <h2 className="text-lg font-semibold text-center mt-6 mb-2">
+            DATA AYAH DAN IBU WAJIB DIISI. JIKA TIDAK MEMUNGKINKAN, SILAHKAN ISI
+            DATA WALI
+            <hr />
+          </h2>
+
           <h2 className="text-lg font-semibold text-center mt-6">
             Data Ayah Kandung
           </h2>
@@ -928,6 +958,7 @@ const FormulirPendaftaran = ({
                 {...register("penghasilanAyah")}
                 className="w-full border rounded px-3 py-2"
                 placeholder="Contoh: 5.200.000"
+                type="number"
               />
               {errors.penghasilanAyah && (
                 <p className="text-red-600">{errors.penghasilanAyah.message}</p>
@@ -956,6 +987,7 @@ const FormulirPendaftaran = ({
               {...register("namaIbu")}
               className="w-full border rounded px-3 py-2"
               placeholder="Masukkan nama lengkap Ibu"
+              type="number"
             />
             {errors.namaIbu && (
               <p className="text-red-600">{errors.namaIbu.message}</p>
@@ -1102,6 +1134,7 @@ const FormulirPendaftaran = ({
                 {...register("penghasilanWali")}
                 className="w-full border rounded px-3 py-2"
                 placeholder="Contoh: 5.200.000"
+                type="number"
               />
               {errors.penghasilanWali && (
                 <p className="text-red-600">{errors.penghasilanWali.message}</p>
@@ -1121,9 +1154,14 @@ const FormulirPendaftaran = ({
           </div>
 
           {/* ========== Upload Dokumen ========== */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full mb-4 rounded-md p-4">
             <div className="flex flex-col gap-2">
-              <label className="font-medium">Fotokopi Ijazah / STTB</label>
+              <label className="font-medium flex items-center gap-1">
+                Fotokopi Ijazah / STTB
+                <span className="text-red-500">*</span>
+              </label>
+              <p className="text-xs text-red-300">Wajib diunggah</p>
+
               {!dokumen.ijazah &&
                 !data?.dokumenIjazah &&
                 (uploadingField === "ijazah" ? (
@@ -1204,7 +1242,11 @@ const FormulirPendaftaran = ({
               )}
             </div>
             <div className="flex flex-col gap-2">
-              <label className="font-medium">Fotokopi Akte Kelahiran</label>
+              <label className="font-medium flex items-center gap-1">
+                Fotokopi Akte Kelahiran
+                <span className="text-red-500">*</span>
+              </label>
+              <p className="text-xs text-red-300">Wajib diunggah</p>
               {!dokumen.akte &&
                 !data?.dokumenAkte &&
                 (uploadingField === "akte" ? (
@@ -1285,9 +1327,11 @@ const FormulirPendaftaran = ({
               )}
             </div>
             <div className="flex flex-col gap-2">
-              <label className="font-medium ">
+              <label className="font-medium flex items-center gap-1">
                 Fotokopi KK, KTP Orang Tua, SKTM / KIP
+                <span className="text-red-500">*</span>
               </label>
+              <p className="text-xs text-red-300">Wajib diunggah</p>
               {!dokumen.kk_ktp_sktm &&
                 !data?.dokumenKKKTP &&
                 (uploadingField === "kk_ktp_sktm" ? (
@@ -1374,7 +1418,11 @@ const FormulirPendaftaran = ({
               )}
             </div>
             <div className="flex flex-col gap-2">
-              <label className="font-medium">Foto Siswa</label>
+              <label className="font-medium flex items-center gap-1">
+                Foto Siswa
+                <span className="text-red-500">*</span>
+              </label>
+              <p className="text-xs text-red-300">Wajib diunggah</p>
               {!dokumen.pasfoto &&
                 !data?.dokumenPasfoto &&
                 (uploadingField === "pasfoto" ? (
@@ -1496,7 +1544,7 @@ const FormulirPendaftaran = ({
                                 {kelas._count.students + "/" + kelas.capacity}{" "}
                                 Kapasitas
                               </option>
-                            )
+                            ),
                           )}
                         </select>
                         {errors.classId?.message && (
@@ -1573,8 +1621,11 @@ const FormulirPendaftaran = ({
           <div className="text-center pt-4 justify-items-center">
             <button
               type="submit"
-              className="bg-blue-600 text-white font-semibold px-6 py-3 rounded hover:bg-blue-700 flex items-center justify-center gap-2"
-              disabled={isSubmitting}
+              className={`bg-blue-600 text-white font-semibold px-6 py-3 rounded
+                          hover:bg-blue-700 flex items-center justify-center gap-2
+                          ${isSubmitting || !isDokumenLengkap ? "opacity-60" : ""}
+                        `}
+              disabled={isSubmitting || !isDokumenLengkap}
             >
               {isSubmitting && (
                 <span className="animate-spin inline-block w-5 h-5 border-2 border-white border-t-blue-400 rounded-full mr-2"></span>
@@ -1582,8 +1633,8 @@ const FormulirPendaftaran = ({
               {isSubmitting
                 ? "Memproses..."
                 : type === "create"
-                ? "Kirim Pendaftaraan"
-                : "Update dan Simpan"}
+                  ? "Kirim Pendaftaran"
+                  : "Update dan Simpan"}
             </button>
           </div>
         </form>

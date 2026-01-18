@@ -22,7 +22,7 @@ const Pendaftaran: React.FC = () => {
           <h2 className="text-4xl font-bold drop-shadow">Syarat Pendaftaran</h2>
           <p className="text-white/90 text-lg mt-4 max-w-2xl mx-auto leading-relaxed">
             Silakan lengkapi semua dokumen dan persyaratan berikut untuk
-            mendaftar sebagai siswa baru di SMP Islamiyyah:
+            mendaftar sebagai siswa baru di SMP Islamiyah:
           </p>
         </div>
 

@@ -10,8 +10,8 @@ const Profil: React.FC = () => {
           Profil Sekolah
         </h2>
         <p className="text-white/90 text-lg mb-12 max-w-4xl mx-auto leading-relaxed drop-shadow">
-          SMP Islamiyyah Serua adalah SMPI swasta yang didirikan pertama kali pada tahun 1985.
-          Sekarang SMP Islamiyyah Serua menggunakan kurikulum Merdeka Belajar, dan berada di bawah
+          SMP Islamiyah Serua adalah SMPI swasta yang didirikan pertama kali pada tahun 1985.
+          Sekarang SMP Islamiyah Serua menggunakan kurikulum Merdeka Belajar, dan berada di bawah
           naungan Yayasan Wiyata Mandala Muslimin Indonesia dengan dukungan 25 guru yang kompeten di bidangnya.
         </p>
 

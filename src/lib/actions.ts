@@ -2839,6 +2839,7 @@ export const createPpdb = async (
         kota: data.kota,
         religion: data.religion,
         sex: data.sex,
+        noWa: data.noWhatsapp,
         birthday: new Date(data.birthday),
         asalSekolah: data.asalSekolah,
         birthPlace: data.birthPlace,
@@ -2899,6 +2900,7 @@ export const createPpdb = async (
         dokumenPasfoto: data.dokumenPasfoto || null,
         dokumenKKKTP: data.dokumenKKKTP || null,
         isvalid: false,
+        createdAt: new Date()
       },
     });
 
@@ -3015,7 +3017,7 @@ export const updatePpdb = async (
         awards_lvl: data.awards_lvl || null,
         awards_date: data.awards_date ? new Date(data.awards_date) : null,
         scholarship: data.scholarship || null,
-        scholarship_date: data.scholarship_date || null,
+        scholarship_date: data.scholarship_date ? new Date(data.scholarship_date) : null,
         scholarship_detail: data.scholarship_detail || null,
         ...(data.dokumenIjazah !== "" && { dokumenIjazah: data.dokumenIjazah }),
         ...(data.dokumenAkte !== "" && { dokumenAkte: data.dokumenAkte }),
@@ -3032,7 +3034,7 @@ export const updatePpdb = async (
       /** ----------------------------------------------------
        * 1️⃣ Create Clerk user first (must be outside transaction)
        * ---------------------------------------------------- */
-      let clerkUser;
+      let clerkUser ;
       try {
         clerkUser = await client.users.createUser({
           username: data.name,

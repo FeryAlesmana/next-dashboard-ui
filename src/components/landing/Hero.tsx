@@ -62,7 +62,7 @@ const Hero: React.FC<Slide> = ({ slides, role }) => {
         <h1 className="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight drop-shadow-md">
           Selamat Datang di{" "}
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-200 to-orange-200">
-            SMP Islamiyyah Serua
+            SMP Islamiyah Serua
           </span>
         </h1>
 

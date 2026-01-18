@@ -186,13 +186,13 @@ export const studentSchema = z.object({
   }),
   kps: z
     .nativeEnum(KPS, {
-      message: " KPS Siswa wajib diisi!",
+      message: " Nomor wajib diisi!",
     })
     .or(z.literal(""))
     .optional()
     .nullable(),
   no_kps: z
-    .string({ message: " No KPS Siswa wajib diisi!" })
+    .string({ message: " Nomor wajib diisi!" })
     // .length(16)
     // .regex(/^\d+$/)
     .or(z.literal(""))
@@ -470,7 +470,7 @@ export const ppdbSchema = z.object({
     .regex(/^\d+$/),
   nik: z
     .string({ message: " NIK Calon Siswa wajib diisi!" })
-    .length(20)
+    .length(20, {message: " Panjang NIK harus 20 Karakter"})
     .regex(/^\d+$/),
   address: z.string({ message: " Alamat Calon Siswa wajib diisi!" }).min(1),
   postcode: z.coerce
@@ -512,14 +512,15 @@ export const ppdbSchema = z.object({
   email: z.string({ message: " Email Calon Siswa wajib diisi!" }).email(),
   kps: z
     .nativeEnum(KPS, {
-      message: " KPS Calon Siswa wajib diisi!",
+      message: " Nomor wajib diisi!",
     })
     .optional()
     .nullable()
     .or(z.literal("")),
   no_kps: z
-    .string({ message: " No KPS Calon Siswa wajib diisi!" })
-    .length(16)
+    .string({ message: " Nomor wajib diisi!" })
+    .min(10, {message: "Jumlah digit karakter harus 10-16 digit"})
+    .max(16, {message: "Jumlah digit karakter harus 10-16 digit"})
     .regex(/^\d+$/)
     .optional()
     .nullable()
@@ -605,8 +606,8 @@ export const ppdbSchema = z.object({
     .or(z.literal("")),
   telpAyah: z
     .string({ message: " No telepon Ayah Calon Siswa wajib diisi!" })
-    .min(11)
-    .max(13)
+    .min(11, { message: " Nomor HP Ayah Calon Siswa minimal 11 karakter!" })
+    .max(13, { message: " Nomor HP Ayah Calon Siswa maksimal 13 karakter!" })
     .regex(/^\d+$/)
     .optional()
     .nullable()
@@ -648,8 +649,8 @@ export const ppdbSchema = z.object({
     .or(z.literal("")),
   telpIbu: z
     .string({ message: " No telepon Ibu Calon Siswa wajib diisi!" })
-    .min(11)
-    .max(13)
+    .min(11, { message: " Nomor HP Ibu Calon Siswa minimal 11 karakter!" })
+    .max(13, { message: " Nomor HP Ibu Calon Siswa maksimal 13 karakter!" })
     .regex(/^\d+$/)
     .optional()
     .nullable()
@@ -692,8 +693,8 @@ export const ppdbSchema = z.object({
     .or(z.literal("")),
   telpWali: z
     .string({ message: " No telepon Wali Calon Siswa wajib diisi!" })
-    .min(11)
-    .max(13)
+    .min(11, { message: " Nomor HP Wali Calon Siswa minimal 11 karakter!" })
+    .max(13, { message: " Nomor HP Wali Calon Siswa maksimal 13 karakter!" })
     .regex(/^\d+$/)
     .optional()
     .nullable()

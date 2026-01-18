@@ -14,7 +14,7 @@ const CTA: React.FC = () => {
           Bergabunglah Bersama Kami
         </h2>
         <p className="text-lg md:text-xl mb-8 font-light text-white/90">
-          Mari wujudkan masa depan cemerlang bersama <strong className="font-semibold text-orange-200">SMP Islamiyyah</strong>.
+          Mari wujudkan masa depan cemerlang bersama <strong className="font-semibold text-orange-200">SMP Islamiyah</strong>.
           Pendidikan terbaik untuk generasi terbaik.
         </p>
         <Link href="/daftar">

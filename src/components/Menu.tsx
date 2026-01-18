@@ -119,7 +119,7 @@ export default function Menu({ onLinkClick }: { onLinkClick: () => void }) {
           icon: "/jadwal.png",
           label: "Jadwal",
           href: "/list/lessons",
-          visible: ["admin", "teacher", "student", "parent"],
+          visible: ["admin", "teacher", "student", "parent", "staff"],
         },
 
         {

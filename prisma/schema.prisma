@@ -168,10 +168,10 @@ model PPDB {
   sex                UserSex
   religion           Agama
   asalSekolah        String
-  npsn               String    @unique
-  nisn               String    @unique
-  no_ijz             String    @unique
-  nik                String    @unique
+  npsn               String    
+  nisn               String    
+  no_ijz             String    
+  nik                String    
   address            String
   rw                 String
   rt                 String
@@ -179,13 +179,13 @@ model PPDB {
   kecamatan          String
   kota               String
   postcode           Int
-  phone              String?   @unique
+  phone              String?   
   noWa               String?
   transportation     String
   tempat_tinggal     TTinggal
   kps                KPS?
-  no_kps             String?   @unique
-  email              String?   @unique
+  no_kps             String?   
+  email              String?   
   height             Int
   weight             Int
   distance_from_home Int

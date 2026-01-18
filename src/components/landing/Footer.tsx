@@ -20,7 +20,7 @@ const Footer: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
           {/* Section 1: Info Sekolah */}
           <div className="space-y-4">
-            <h3 className="text-xl font-bold">SMP Islamiyyah Serua</h3>
+            <h3 className="text-xl font-bold">SMP Islamiyah Serua</h3>
             <p className="text-orange-100 text-sm leading-relaxed">
               Mewujudkan generasi unggul, berakhlak, dan berprestasi melalui
               pendidikan berkualitas.
@@ -113,7 +113,7 @@ const Footer: React.FC = () => {
               </div>
               <div className="flex items-center space-x-3">
                 <FaEnvelope className="text-orange-300" />
-                <p>info@smpislamiyyah.sch.id</p>
+                <p>smpsmkserua@gmail.com</p>
               </div>
               <div className="flex items-center space-x-3">
                 <FaClock className="text-orange-300" />
@@ -131,7 +131,7 @@ const Footer: React.FC = () => {
         {/* Bottom Footer */}
         <div className="flex flex-col md:flex-row justify-between items-center text-sm">
           <p className="text-orange-200 mb-4 md:mb-0">
-            © {new Date().getFullYear()} SMP Islamiyyah Serua. All rights
+            © {new Date().getFullYear()} SMP Islamiyah Serua. All rights
             reserved.
           </p>
           <div className="flex flex-wrap justify-center gap-4 md:gap-6"></div>
