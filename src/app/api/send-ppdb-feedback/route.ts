@@ -365,18 +365,18 @@ async function generateFormulirPDF(ppdb: any) {
 }
 
 export async function POST(req: Request) {
-  const { email, message, isValid } = await req.json();
-  console.log(email, message, isValid, "json in api");
+  const { id, message, isValid } = await req.json();
+  console.log(id, message, isValid, "json in api");
 
-  if (!email || !message) {
+  if (!id || !message) {
     return NextResponse.json(
-      { error: "Email dan pesan wajib diisi." },
+      { error: "ID dan pesan wajib diisi." },
       { status: 400 }
     );
   }
 
   // Cari data PPDB dari DB
-  const ppdb = await prisma.pPDB.findUnique({ where: { email } });
+  const ppdb = await prisma.pPDB.findUnique({ where: { id:id } });
   if (!ppdb) {
     return NextResponse.json(
       { error: "Data PPDB tidak ditemukan." },
@@ -420,7 +420,7 @@ export async function POST(req: Request) {
   try {
     const mailOptions: any = {
       from: `"PPDB Sekolah" <${process.env.SMTP_USER}>`,
-      to: email,
+      to: ppdb.email,
       subject: "Notifikasi Formulir PPDB",
       html: htmlContent,
     };

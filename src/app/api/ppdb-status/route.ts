@@ -62,20 +62,23 @@ export async function GET() {
       };
     } else {
       // 3. Dalam periode → cek quota
-      const ppdbCount = await prisma.pPDB.count({
+      const uniqueApplicants = await prisma.pPDB.groupBy({
+        by: ["nisn"],
         where: {
           createdAt: { gte: start, lte: end },
         },
       });
 
-      if (ppdbCount >= setting.quota) {
+      const usedQuota = uniqueApplicants.length;
+
+      if (usedQuota >= setting.quota) {
         ppdbStatus = {
           open: false,
           reason: "QUOTA_FULL",
           startDate: start,
           endDate: end,
           quota: setting.quota,
-          usedQuota: ppdbCount,
+          usedQuota: usedQuota,
         };
       } else {
         ppdbStatus = {
@@ -84,7 +87,7 @@ export async function GET() {
           startDate: start,
           endDate: end,
           quota: setting.quota,
-          usedQuota: ppdbCount,
+          usedQuota: usedQuota,
         };
       }
     }
@@ -95,7 +98,7 @@ export async function GET() {
     console.error(err);
     return NextResponse.json(
       { open: false, reason: "SERVER_ERROR" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

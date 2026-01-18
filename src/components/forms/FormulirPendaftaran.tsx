@@ -317,7 +317,7 @@ const FormulirPendaftaran = ({
       const res = await fetch("/api/send-ppdb-feedback", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: watchedValues.email, message, isValid }),
+        body: JSON.stringify({ id: watchedValues.id, message, isValid }),
       });
       if (res.ok) {
         toast.success("Notifikasi email telah dikirim!");
