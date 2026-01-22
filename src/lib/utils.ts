@@ -3,6 +3,104 @@ import prisma from "./prisma";
 
 import crypto from "crypto";
 
+export function mapPaymentLogToPaymentSchema(
+  log: any
+): PaymentSchema {
+  // 1️⃣ Resolve recipient
+  let recipientType: "student" | "class" | "grade";
+  let recipientId: string;
+
+  if (log.studentId) {
+    recipientType = "student";
+    recipientId = log.studentId;
+  } else if (log.classId) {
+    recipientType = "class";
+    recipientId = String(log.classId);
+  } else if (log.gradeId) {
+    recipientType = "grade";
+    recipientId = String(log.gradeId);
+  } else {
+    throw new Error("Invalid paymentLog: no recipient found");
+  }
+
+  // 2️⃣ Normalize installments (IMPORTANT)
+  const installments =
+    log.paymentInstallments?.length > 0
+      ? log.paymentInstallments.map((i: any) => ({
+          id: i.id,
+          amount: Number(i.amount),
+          paidAt: i.paidAt
+            ? new Date(i.paidAt).toISOString()
+            : undefined,
+        }))
+      : undefined;
+
+  // 3️⃣ Build schema-compatible object
+  const normalized: PaymentSchema = {
+    id: log.id,
+    paymentType: log.paymentType as PaymentType,
+    amount: Number(log.amount),
+    dueDate: new Date(log.dueDate).toISOString(),
+    description: log.description ?? undefined,
+    paymentMethod: log.paymentMethod ?? undefined,
+    receiptNumber: log.receiptNumber ?? undefined,
+
+    recipientType,
+    recipientId,
+
+    amountPaid: log.amountPaid
+      ? Number(log.amountPaid)
+      : undefined,
+
+    paidAt: log.paidAt
+      ? new Date(log.paidAt).toISOString()
+      : undefined,
+
+    installmentCount: log.installmentCount ?? undefined,
+
+    installments,
+
+    // ⭐ CRITICAL FOR YOUR ZOD REFINES
+    remainingAmount:
+      log.remainingAmount !== null
+        ? Number(log.remainingAmount)
+        : undefined,
+  };
+
+  return normalized;
+}
+
+export function mapPaymentLogToBillSchema(
+  log: any
+): BillLogSchema {
+  let recipientType: "student" | "class" | "grade";
+  let recipientId: string;
+
+  if (log.studentId) {
+    recipientType = "student";
+    recipientId = log.studentId;
+  } else if (log.classId) {
+    recipientType = "class";
+    recipientId = String(log.classId);
+  } else if (log.gradeId) {
+    recipientType = "grade";
+    recipientId = String(log.gradeId);
+  } else {
+    throw new Error("Invalid paymentLog: no recipient");
+  }
+
+  return {
+    id: log.id,
+    amount: Number(log.amount),
+    paymentType: log.paymentType,
+    dueDate: new Date(log.dueDate).toISOString(),
+    description: log.description ?? undefined,
+    recipientType,
+    recipientId,
+  };
+}
+
+
 const PAYMENT_LOG_FIELDS = [
   "studentId",
   "amount",
@@ -455,10 +553,11 @@ export function normalizeSex(value: any): "MALE" | "FEMALE" {
 
 import { parse, isValid, format, subDays, addDays } from "date-fns";
 import { id as localeID } from "date-fns/locale";
-import { Attendance, Prisma, resTypes, staffrole } from "@prisma/client";
+import { Attendance, PaymentType, Prisma, resTypes, staffrole } from "@prisma/client";
 import { Semester } from "@/components/client/StudentPaymentView";
 import { Decimal } from "@prisma/client/runtime/library";
 import { notFound } from "next/navigation";
+import { BillLogSchema, PaymentSchema } from "./formValidationSchema";
 export function normalizeBirthday(value: any): string {
   if (!value) return "2000-01-01";
 

@@ -1,19 +1,111 @@
+import {
+  createBill,
+  createPayment,
+  CurrentState,
+  deletePaymentLog,
+  updateBill,
+  updatePayment,
+} from "@/lib/actions";
 import { logPaymentChange } from "@/lib/paymentLogChange";
+import { PaymentSnapshot } from "@/lib/paymentSnapshot";
 import prisma from "@/lib/prisma";
 import { toPaymentLogUpdateInput } from "@/lib/utils";
 import { currentUser } from "@clerk/nextjs/server";
 import { PaymentStatus } from "@prisma/client";
 import { NextResponse } from "next/server";
+
 type Params = {
   params: Promise<{
     id: string;
   }>;
 };
+type RevertContext = {
+  log: any;
+  oldValue: any;
+  newValue: any;
+};
+
+async function restoreSnapshot(snapshot: PaymentSnapshot) {
+  await prisma.$transaction(async (tx) => {
+    // 1. Restore bill
+    await tx.paymentLog.upsert({
+      where: { id: snapshot.paymentLog.id },
+      create: {
+        ...snapshot.paymentLog,
+        amount: snapshot.paymentLog.amount,
+        dueDate: new Date(snapshot.paymentLog.dueDate),
+        paidAt: snapshot.paymentLog.paidAt
+          ? new Date(snapshot.paymentLog.paidAt)
+          : null,
+      },
+      update: {
+        ...snapshot.paymentLog,
+        amount: snapshot.paymentLog.amount,
+        dueDate: new Date(snapshot.paymentLog.dueDate),
+        paidAt: snapshot.paymentLog.paidAt
+          ? new Date(snapshot.paymentLog.paidAt)
+          : null,
+      },
+    });
+
+    // 2. Reset payments
+    await tx.paymentInstallment.deleteMany({
+      where: { paymentLogId: snapshot.paymentLog.id },
+    });
+
+    // 3. Restore payments
+    if (snapshot.installments.length > 0) {
+      await tx.paymentInstallment.createMany({
+        data: snapshot.installments.map((i) => ({
+          paymentLogId: snapshot.paymentLog.id,
+          amount: i.amount,
+          paidAt: i.paidAt ? new Date(i.paidAt) : null,
+        })),
+      });
+    }
+  });
+}
+
+const REVERT_ACTION_MAP: Record<string, (ctx: RevertContext) => Promise<void>> =
+  {
+    CREATE_BILL: async ({ log }) => {
+      await prisma.paymentLog.delete({
+        where: { id: log.paymentLogId },
+      });
+    },
+
+    UPDATE_BILL: async ({ oldValue }) => {
+      await restoreSnapshot(oldValue);
+    },
+
+    DELETE_BILL: async ({ oldValue }) => {
+      await restoreSnapshot(oldValue);
+    },
+
+    CREATE_PAYMENTS: async ({ log }) => {
+      await prisma.paymentLog.delete({
+        where: { id: log.paymentLogId },
+      });
+    },
+
+    UPDATE_PAYMENTS: async ({ oldValue }) => {
+      await restoreSnapshot(oldValue);
+    },
+
+    DELETE_PAYMENTS: async ({ oldValue }) => {
+      await restoreSnapshot(oldValue);
+    },
+    // ✅ REVERT is reversible by swapping values
+    REVERT: async ({ oldValue }) => {
+      await restoreSnapshot(oldValue);
+    },
+  };
+
 export async function POST(req: Request, { params }: Params) {
   const { id } = await params;
   const changeId = parseInt(id);
-  const user = await currentUser();
 
+  const user = await currentUser();
   if (user?.publicMetadata.role !== "admin") {
     return new NextResponse("Unauthorized", { status: 403 });
   }
@@ -22,225 +114,54 @@ export async function POST(req: Request, { params }: Params) {
     where: { id: changeId },
   });
 
-  if (!log) return new NextResponse("Not Found", { status: 404 });
-  const action = log.action;
-  const oldValue = log.oldValue as any;
-  const newValue = log.newValue as any;
-
-  let reverted: any = null;
-
-  // ----------------------------------------
-  //  CASE 1: REVERTING A "CREATE"
-  //  -> Delete the payment log entirely
-  // ----------------------------------------
-  if (action === "CREATE") {
-    if (!log.paymentLogId) {
-      return new NextResponse("Missing paymentLogId for revert", {
-        status: 400,
-      });
-    }
-
-    reverted = await prisma.paymentLog.delete({
-      where: { id: log.paymentLogId },
-    });
-
-    await logPaymentChange({
-      action: "REVERT",
-      paymentLogId: reverted.paymentLogId,
-      oldValue: newValue, // value that was created
-      newValue: null,
-    });
-
-    return NextResponse.json({ success: true, reverted });
+  if (!log) {
+    return new NextResponse("Not Found", { status: 404 });
   }
-  if (action === "CREATE_INSTALLMENTS") {
-    if (!log.paymentLogId) {
-      return new NextResponse("Missing paymentLogId for revert", {
-        status: 400,
-      });
-    }
 
-    const createdInst = newValue?.installments || [];
-    const idsToDelete = createdInst.map((i: any) => i.id);
+  // ❌ Don't allow reverting the same change twice
+  const alreadyReverted = await prisma.paymentLogChange.findFirst({
+    where: {
+      revertedFromId: log.id,
+    },
+  });
 
-    if (idsToDelete.length > 0) {
-      await prisma.paymentInstallment.deleteMany({
-        where: { id: { in: idsToDelete } },
-      });
-    }
+  if (alreadyReverted) {
+    return new NextResponse("This change has already been reverted", {
+      status: 400,
+    });
+  }
 
-    // Fetch the updated payment log after deletion
-    const updated = await prisma.paymentLog.findUnique({
-      where: { id: log.paymentLogId },
-      include: { paymentInstallments: true },
+  const handler = REVERT_ACTION_MAP[log.action];
+  if (!handler) {
+    return new NextResponse("Action not revertible", { status: 400 });
+  }
+
+  try {
+    // ✅ Perform revert
+    await handler({
+      log,
+      oldValue: log.oldValue,
+      newValue: log.newValue,
     });
 
-    // Log the revert
+    // ✅ Mark revert in changelog
     await logPaymentChange({
       action: "REVERT",
-      paymentLogId: log.paymentLogId,
-      oldValue: newValue,
-      newValue: updated,
+      paymentLogId: log.paymentLogId ?? undefined,
+      oldValue: log.newValue,
+      newValue: log.oldValue,
+      revertedFromId: log.id, // 👈 CRITICAL
     });
 
     return NextResponse.json({
       success: true,
-      reverted: updated,
+      revertedPaymentLogId: log.paymentLogId,
     });
-  }
-  if (action === "UPDATE_INSTALLMENTS") {
-    if (!log.paymentLogId) {
-      return new NextResponse("Missing paymentLogId for revert", {
-        status: 400,
-      });
-    }
-
-    const oldInst =
-      oldValue?.paymentInstallments || oldValue?.installments || [];
-
-    // 1️⃣ Remove current installments
-    await prisma.paymentInstallment.deleteMany({
-      where: { paymentLogId: log.paymentLogId },
-    });
-
-    // 2️⃣ Restore old installments
-    if (oldInst.length > 0) {
-      await prisma.paymentInstallment.createMany({
-        data: oldInst.map((i: any) => ({
-          paymentLogId: log.paymentLogId!,
-          amount: Number(i.amount),
-          paidAt: i.paidAt ? new Date(i.paidAt) : null,
-        })),
-      });
-    }
-    // 3️⃣ Fetch restored installments
-    const restored = await prisma.paymentInstallment.findMany({
-      where: { paymentLogId: log.paymentLogId },
-    });
-
-    // 4️⃣ Recalculate totals
-    const totalPaid = restored.reduce(
-      (sum, inst) => sum + Number(inst.amount || 0),
-      0
+  } catch (err) {
+    console.error("REVERT FAILED:", err);
+    return NextResponse.json(
+      { success: false, error: "REVERT_FAILED" },
+      { status: 500 },
     );
-
-    const paymentLog = await prisma.paymentLog.findUnique({
-      where: { id: log.paymentLogId },
-    });
-
-    if (!paymentLog) {
-      return new NextResponse("PaymentLog not found", { status: 404 });
-    }
-
-    let finalStatus: PaymentStatus = "PENDING";
-    if (totalPaid >= Number(paymentLog.amount)) {
-      finalStatus = "PAID";
-    } else if (totalPaid > 0) {
-      finalStatus = "PARTIALLY_PAID";
-    }
-
-    // 5️⃣ Update the paymentLog status & remaining amount
-    await prisma.paymentLog.update({
-      where: { id: paymentLog.id },
-      data: {
-        status: finalStatus,
-      },
-    });
-    // 3️⃣ Fetch updated paymentLog
-    const updated = await prisma.paymentLog.findUnique({
-      where: { id: log.paymentLogId },
-      include: { paymentInstallments: true },
-    });
-
-    // 4️⃣ Log revert
-    await logPaymentChange({
-      action: "REVERT",
-      paymentLogId: log.paymentLogId,
-      oldValue: newValue,
-      newValue: oldValue,
-    });
-
-    return NextResponse.json({
-      success: true,
-      reverted: updated,
-    });
   }
-
-  if (action === "UPDATE") {
-    console.log(oldValue, "Old Value in Revert");
-
-    if (!oldValue) {
-      return new NextResponse("No previous state to revert", { status: 400 });
-    }
-    // 1️⃣ Delete current installments
-    await prisma.paymentInstallment.deleteMany({
-      where: { paymentLogId: log.paymentLogId! },
-    });
-
-    // 2️⃣ Prepare old installments
-    const oldInstallments: { amount: number; paidAt?: Date | null }[] =
-      oldValue.paymentInstallments?.map((i: any) => ({
-        amount: Number(i.amount),
-        paidAt: i.paidAt ? new Date(i.paidAt) : null,
-      })) || [];
-
-    const installmentAction =
-      oldInstallments.length > 0
-        ? { createMany: { data: oldInstallments } }
-        : undefined;
-
-    // 3️⃣ Update paymentLog and restore old installments
-    reverted = await prisma.paymentLog.update({
-      where: { id: log.paymentLogId! },
-      data: {
-        ...toPaymentLogUpdateInput(oldValue),
-        paymentInstallments: installmentAction,
-      },
-      include: { paymentInstallments: true },
-    });
-    await logPaymentChange({
-      action: "REVERT",
-      paymentLogId: reverted.id,
-      oldValue: newValue, // current values
-      newValue: oldValue, // restoring values
-    });
-
-    return NextResponse.json({ success: true, reverted });
-  }
-
-  if (action === "DELETE") {
-    if (!oldValue) {
-      return new NextResponse("No previous state to recreate", { status: 400 });
-    }
-
-    // extract installments from oldValue
-    const oldInstallments =
-      oldValue.paymentInstallments?.map((i: any) => ({
-        amount: Number(i.amount),
-        paidAt: i.paidAt ? new Date(i.paidAt) : null,
-      })) || [];
-
-    const recreated = await prisma.paymentLog.create({
-      data: {
-        ...toPaymentLogUpdateInput(oldValue),
-        paymentInstallments: oldInstallments.length
-          ? { createMany: { data: oldInstallments } }
-          : undefined,
-      },
-      include: { paymentInstallments: true },
-    });
-
-    reverted = recreated;
-
-    await logPaymentChange({
-      action: "REVERT",
-      paymentLogId: recreated.id,
-      oldValue: null,
-      newValue: oldValue,
-    });
-
-    return NextResponse.json({ success: true, reverted });
-  }
-
-  return new NextResponse("Invalid action to revert", { status: 400 });
 }

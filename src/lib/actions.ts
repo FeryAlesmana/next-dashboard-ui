@@ -60,6 +60,7 @@ import extractCloudinaryPublicId, {
   decryptPassword,
   getCurrentUser,
   getPeriodRange,
+  mapPaymentLogToBillSchema,
   mapPaymentType,
   normalizeAgama,
   normalizeBirthday,
@@ -77,6 +78,7 @@ import { disconnect } from "process";
 import { Decimal } from "@prisma/client/runtime/library";
 import { logPaymentChange } from "./paymentLogChange";
 import z from "zod";
+import { snapshotPayment } from "./paymentSnapshot";
 
 export type CurrentState = {
   success: boolean;
@@ -94,7 +96,7 @@ const client = await clerkClient();
 
 export const createSubject = async (
   currentState: CurrentState,
-  data: SubjectSchema
+  data: SubjectSchema,
 ) => {
   try {
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -118,7 +120,7 @@ export const createSubject = async (
 
 export const updateSubject = async (
   currentState: CurrentState,
-  data: SubjectSchema
+  data: SubjectSchema,
 ) => {
   try {
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -144,7 +146,7 @@ export const updateSubject = async (
 };
 export const deleteSubject = async (
   currentState: CurrentState,
-  formData: FormData
+  formData: FormData,
 ): Promise<CurrentState> => {
   const id = formData.get("id") as string;
   try {
@@ -163,7 +165,7 @@ export const deleteSubject = async (
 
 export const deleteSubjects = async (
   currentState: CurrentState,
-  formData: FormData
+  formData: FormData,
 ): Promise<CurrentState> => {
   const ids = formData.getAll("ids") as string[];
 
@@ -192,8 +194,8 @@ export const deleteSubjects = async (
       error instanceof Error
         ? error.message
         : typeof error === "string"
-        ? error
-        : "Unknown error";
+          ? error
+          : "Unknown error";
 
     return { success: false, error: true, message };
   }
@@ -201,7 +203,7 @@ export const deleteSubjects = async (
 
 export const createClass = async (
   currentState: CurrentState,
-  data: ClassSchema
+  data: ClassSchema,
 ): Promise<CurrentState> => {
   try {
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -221,7 +223,7 @@ export const createClass = async (
 
 export const updateClass = async (
   currentState: CurrentState,
-  data: ClassSchema
+  data: ClassSchema,
 ) => {
   try {
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -247,7 +249,7 @@ export const updateClass = async (
 };
 export const deleteClass = async (
   currentState: CurrentState,
-  formData: FormData
+  formData: FormData,
 ): Promise<CurrentState> => {
   const id = formData.get("id") as string;
   try {
@@ -265,7 +267,7 @@ export const deleteClass = async (
 };
 export const deleteClasses = async (
   currentState: CurrentState,
-  formData: FormData
+  formData: FormData,
 ): Promise<CurrentState> => {
   const ids = formData.getAll("ids") as string[];
 
@@ -294,15 +296,15 @@ export const deleteClasses = async (
       error instanceof Error
         ? error.message
         : typeof error === "string"
-        ? error
-        : "Unknown error";
+          ? error
+          : "Unknown error";
 
     return { success: false, error: true, message };
   }
 };
 export const createTeacher = async (
   currentState: CurrentState,
-  data: CreateteacherSchema
+  data: CreateteacherSchema,
 ) => {
   try {
     let user;
@@ -318,7 +320,7 @@ export const createTeacher = async (
         console.log("✅ User Sucessfully created:", user.id);
       } else {
         console.warn(
-          "⚠️ Clerk returned no user info. User may already be created?"
+          "⚠️ Clerk returned no user info. User may already be created?",
         );
       }
     } catch (err: any) {
@@ -399,7 +401,7 @@ export const createTeacher = async (
 
 export const importTeachers = async (
   currentState: CurrentState,
-  data: ImportTeacherSchema
+  data: ImportTeacherSchema,
 ) => {
   const file = data.file as File;
   if (!file) {
@@ -441,7 +443,7 @@ export const importTeachers = async (
     const normRow = normalizeRow(rawRow);
     if (!normRow.name || !normRow.phone || !normRow.address) {
       throw new Error(
-        "Tolong pastikan file anda memiliki kolom wajib! (Nama, Alamat, No. Telepon)"
+        "Tolong pastikan file anda memiliki kolom wajib! (Nama, Alamat, No. Telepon)",
       );
     }
 
@@ -501,7 +503,7 @@ export const importTeachers = async (
 
 export const updateTeacher = async (
   currentState: CurrentState,
-  data: UpdateteacherSchema
+  data: UpdateteacherSchema,
 ) => {
   try {
     if (!data.id) {
@@ -524,7 +526,7 @@ export const updateTeacher = async (
         }
       } catch (error) {
         console.warn(
-          "⚠️ Clerk returned no user info. Attempting to create user..."
+          "⚠️ Clerk returned no user info. Attempting to create user...",
         );
         return {
           success: false,
@@ -595,8 +597,8 @@ export const updateTeacher = async (
       error instanceof Error
         ? error.message
         : typeof error === "string"
-        ? error
-        : "Unknown error";
+          ? error
+          : "Unknown error";
 
     console.error("updateTeacher error:", error);
     return { success: false, error: true, message };
@@ -605,7 +607,7 @@ export const updateTeacher = async (
 
 export async function updateManyTeachers(
   prevState: { success: boolean; error: boolean; message?: string },
-  data: MteacherSchema
+  data: MteacherSchema,
 ): Promise<CurrentState> {
   try {
     const parsed = mteacherSchema.safeParse(data);
@@ -633,8 +635,8 @@ export async function updateManyTeachers(
               set: lessons.map((lessonId) => ({ id: lessonId })),
             },
           },
-        })
-      )
+        }),
+      ),
     );
     const updatedTeachers = await prisma.teacher.findMany({
       where: { id: { in: ids } },
@@ -662,7 +664,7 @@ export async function updateManyTeachers(
 
 export const deleteTeacher = async (
   currentState: CurrentState,
-  formData: FormData
+  formData: FormData,
 ): Promise<CurrentState> => {
   const id = formData.get("id") as string;
 
@@ -693,7 +695,7 @@ export const deleteTeacher = async (
       }
     } catch (error) {
       console.warn(
-        "⚠️ Clerk returned no user info. User may already be deleted?"
+        "⚠️ Clerk returned no user info. User may already be deleted?",
       );
     }
 
@@ -703,8 +705,8 @@ export const deleteTeacher = async (
       error instanceof Error
         ? error.message
         : typeof error === "string"
-        ? error
-        : "Unknown error";
+          ? error
+          : "Unknown error";
 
     console.error("Delete Teacher error: ", error);
     return { success: false, error: true, message };
@@ -712,7 +714,7 @@ export const deleteTeacher = async (
 };
 export const deleteTeachers = async (
   currentState: CurrentState,
-  formData: FormData
+  formData: FormData,
 ): Promise<CurrentState> => {
   const ids = formData.getAll("ids") as string[];
 
@@ -759,8 +761,8 @@ export const deleteTeachers = async (
       error instanceof Error
         ? error.message
         : typeof error === "string"
-        ? error
-        : "Unknown error";
+          ? error
+          : "Unknown error";
 
     return { success: false, error: true, message };
   }
@@ -769,7 +771,7 @@ export const deleteTeachers = async (
 export const createStudent = async (
   currentState: CurrentState,
   data: CreatestudentSchema,
-  PPDB: boolean = false
+  PPDB: boolean = false,
 ) => {
   const classItem = await prisma.class.findUnique({
     where: { id: data.classId },
@@ -934,7 +936,7 @@ export const createStudent = async (
 
 export const importStudents = async (
   currentState: CurrentState,
-  data: ImportStudentSchema
+  data: ImportStudentSchema,
 ) => {
   const file = data.file as File;
   if (!file) {
@@ -977,7 +979,7 @@ export const importStudents = async (
     const normRow = normalizeRow(rawRow);
     if (!normRow.name || !normRow.phone || !normRow.address) {
       throw new Error(
-        "Tolong pastikan file anda memiliki kolom wajib! (Nama, Alamat, No. Telepon)"
+        "Tolong pastikan file anda memiliki kolom wajib! (Nama, Alamat, No. Telepon)",
       );
     }
     const studentId = randomUUID();
@@ -1017,7 +1019,7 @@ export const importStudents = async (
 
       // 3. Filter studentDetails hanya untuk ID yang pasti ada
       const validStudentDetails = studentDetails.filter((detail) =>
-        createdStudentIds.includes(detail.studentId)
+        createdStudentIds.includes(detail.studentId),
       );
 
       // 4. Buat student_details
@@ -1058,7 +1060,7 @@ export const importStudents = async (
 
 export const updateStudent = async (
   currentState: CurrentState,
-  data: UpdatestudentSchema
+  data: UpdatestudentSchema,
 ) => {
   try {
     if (!data.id) {
@@ -1082,7 +1084,7 @@ export const updateStudent = async (
         }
       } catch (error) {
         console.warn(
-          "⚠️ Clerk returned no user info. Attempting to create user..."
+          "⚠️ Clerk returned no user info. Attempting to create user...",
         );
         return {
           success: false,
@@ -1183,8 +1185,8 @@ export const updateStudent = async (
       error instanceof Error
         ? error.message
         : typeof error === "string"
-        ? error
-        : "Unknown error";
+          ? error
+          : "Unknown error";
 
     console.error("updateStudent error:", error);
     return { success: false, error: true, message, id: data.id };
@@ -1193,7 +1195,7 @@ export const updateStudent = async (
 
 export const deleteStudent = async (
   currentState: CurrentState,
-  formData: FormData
+  formData: FormData,
 ): Promise<CurrentState> => {
   const id = formData.get("id") as string;
 
@@ -1225,7 +1227,7 @@ export const deleteStudent = async (
       }
     } catch (error) {
       console.warn(
-        "⚠️ Clerk returned no user info. User may already be deleted?"
+        "⚠️ Clerk returned no user info. User may already be deleted?",
       );
     }
 
@@ -1235,8 +1237,8 @@ export const deleteStudent = async (
       error instanceof Error
         ? error.message
         : typeof error === "string"
-        ? error
-        : "Unknown error";
+          ? error
+          : "Unknown error";
 
     console.error("Delete Student error: ", error);
     return { success: false, error: true, message };
@@ -1245,7 +1247,7 @@ export const deleteStudent = async (
 
 export async function updateManyStudents(
   prevState: { success: boolean; error: boolean; message?: string },
-  payload: MstudentSchema
+  payload: MstudentSchema,
 ) {
   try {
     // Get the gradeId from the selected class
@@ -1296,7 +1298,7 @@ export async function updateManyStudents(
 
 export const deleteStudents = async (
   currentState: CurrentState,
-  formData: FormData
+  formData: FormData,
 ): Promise<CurrentState> => {
   const ids = formData.getAll("ids") as string[];
 
@@ -1343,8 +1345,8 @@ export const deleteStudents = async (
       error instanceof Error
         ? error.message
         : typeof error === "string"
-        ? error
-        : "Unknown error";
+          ? error
+          : "Unknown error";
 
     return { success: false, error: true, message };
   }
@@ -1352,7 +1354,7 @@ export const deleteStudents = async (
 
 export const createExam = async (
   currentState: CurrentState,
-  data: ExamSchema
+  data: ExamSchema,
 ) => {
   try {
     const { userId, role } = await getCurrentUser();
@@ -1395,7 +1397,7 @@ export const createExam = async (
 
 export const updateExam = async (
   currentState: CurrentState,
-  data: ExamSchema
+  data: ExamSchema,
 ) => {
   try {
     const { userId, role } = await getCurrentUser();
@@ -1442,8 +1444,8 @@ export const updateExam = async (
       error instanceof Error
         ? error.message
         : typeof error === "string"
-        ? error
-        : "Unknown error";
+          ? error
+          : "Unknown error";
 
     console.error("update Ujian error: ", error);
     return { success: false, error: true, message };
@@ -1452,7 +1454,7 @@ export const updateExam = async (
 
 export const updateExams = async (
   currentState: CurrentState,
-  data: MexamSchema // your bulk update schema including `ids: number[]`
+  data: MexamSchema, // your bulk update schema including `ids: number[]`
 ) => {
   try {
     const { ids, startTime, endTime, exType, title } = data;
@@ -1502,8 +1504,8 @@ export const updateExams = async (
       error instanceof Error
         ? error.message
         : typeof error === "string"
-        ? error
-        : "Unknown error";
+          ? error
+          : "Unknown error";
 
     console.error("updateExams error: ", error);
     return { success: false, error: true, message };
@@ -1512,7 +1514,7 @@ export const updateExams = async (
 
 export const deleteExam = async (
   currentState: CurrentState,
-  formData: FormData
+  formData: FormData,
 ): Promise<CurrentState> => {
   const id = formData.get("id") as string;
 
@@ -1534,7 +1536,7 @@ export const deleteExam = async (
 
 export const deleteExams = async (
   currentState: CurrentState,
-  formData: FormData
+  formData: FormData,
 ): Promise<CurrentState> => {
   const ids = formData.getAll("ids") as string[];
 
@@ -1563,15 +1565,15 @@ export const deleteExams = async (
       error instanceof Error
         ? error.message
         : typeof error === "string"
-        ? error
-        : "Unknown error";
+          ? error
+          : "Unknown error";
 
     return { success: false, error: true, message };
   }
 };
 export const createEvent = async (
   currentState: CurrentState,
-  data: EventSchema
+  data: EventSchema,
 ) => {
   try {
     const classId = data.classId === 0 ? null : data.classId;
@@ -1593,7 +1595,7 @@ export const createEvent = async (
 };
 export const updateEvent = async (
   currentState: CurrentState,
-  data: EventSchema
+  data: EventSchema,
 ) => {
   try {
     const classId = data.classId === 0 ? null : data.classId;
@@ -1616,8 +1618,8 @@ export const updateEvent = async (
       error instanceof Error
         ? error.message
         : typeof error === "string"
-        ? error
-        : "Unknown error";
+          ? error
+          : "Unknown error";
 
     console.error("update Ujian error: ", error);
     return { success: false, error: true, message };
@@ -1626,7 +1628,7 @@ export const updateEvent = async (
 
 export const deleteEvent = async (
   currentState: CurrentState,
-  formData: FormData
+  formData: FormData,
 ): Promise<CurrentState> => {
   const id = formData.get("id") as string;
 
@@ -1645,7 +1647,7 @@ export const deleteEvent = async (
 };
 export const createAnnouncement = async (
   currentState: CurrentState,
-  data: AnnouncementSchema
+  data: AnnouncementSchema,
 ) => {
   try {
     const classId = data.classId === 0 ? null : data.classId;
@@ -1667,7 +1669,7 @@ export const createAnnouncement = async (
 
 export const updateAnnouncement = async (
   currentState: CurrentState,
-  data: AnnouncementSchema
+  data: AnnouncementSchema,
 ) => {
   try {
     const classId = data.classId === 0 ? null : data.classId;
@@ -1689,8 +1691,8 @@ export const updateAnnouncement = async (
       error instanceof Error
         ? error.message
         : typeof error === "string"
-        ? error
-        : "Unknown error";
+          ? error
+          : "Unknown error";
 
     console.error("update Ujian error: ", error);
     return { success: false, error: true, message };
@@ -1699,7 +1701,7 @@ export const updateAnnouncement = async (
 
 export const deleteAnnouncement = async (
   currentState: CurrentState,
-  formData: FormData
+  formData: FormData,
 ): Promise<CurrentState> => {
   const id = formData.get("id") as string;
 
@@ -1719,7 +1721,7 @@ export const deleteAnnouncement = async (
 
 export const createAssignment = async (
   currentState: CurrentState,
-  data: AssignmentSchema
+  data: AssignmentSchema,
 ) => {
   try {
     const { userId, role } = await getCurrentUser();
@@ -1762,7 +1764,7 @@ export const createAssignment = async (
 
 export const updateAssignment = async (
   currentState: CurrentState,
-  data: AssignmentSchema
+  data: AssignmentSchema,
 ) => {
   try {
     const { userId, role } = await getCurrentUser();
@@ -1809,8 +1811,8 @@ export const updateAssignment = async (
       error instanceof Error
         ? error.message
         : typeof error === "string"
-        ? error
-        : "Unknown error";
+          ? error
+          : "Unknown error";
 
     console.error("update Ujian error: ", error);
     return { success: false, error: true, message };
@@ -1819,7 +1821,7 @@ export const updateAssignment = async (
 
 export const updateAssignments = async (
   currentState: CurrentState,
-  data: MassignmentSchema // your bulk update schema including `ids: number[]`
+  data: MassignmentSchema, // your bulk update schema including `ids: number[]`
 ) => {
   try {
     const { ids, dueDate, assType, title } = data;
@@ -1866,8 +1868,8 @@ export const updateAssignments = async (
       error instanceof Error
         ? error.message
         : typeof error === "string"
-        ? error
-        : "Unknown error";
+          ? error
+          : "Unknown error";
 
     console.error("updateAssignments error: ", error);
     return { success: false, error: true, message };
@@ -1876,7 +1878,7 @@ export const updateAssignments = async (
 
 export const deleteAssignment = async (
   currentState: CurrentState,
-  formData: FormData
+  formData: FormData,
 ): Promise<CurrentState> => {
   const id = formData.get("id") as string;
 
@@ -1898,7 +1900,7 @@ export const deleteAssignment = async (
 
 export const deleteAssignments = async (
   currentState: CurrentState,
-  formData: FormData
+  formData: FormData,
 ): Promise<CurrentState> => {
   const ids = formData.getAll("ids") as string[];
 
@@ -1927,8 +1929,8 @@ export const deleteAssignments = async (
       error instanceof Error
         ? error.message
         : typeof error === "string"
-        ? error
-        : "Unknown error";
+          ? error
+          : "Unknown error";
 
     return { success: false, error: true, message };
   }
@@ -1936,7 +1938,7 @@ export const deleteAssignments = async (
 
 export const createParent = async (
   currentState: CurrentState,
-  data: CreateparentSchema
+  data: CreateparentSchema,
 ) => {
   try {
     let user;
@@ -1951,7 +1953,7 @@ export const createParent = async (
         console.log("✅ User Sucessfully created:", user.id);
       } else {
         console.warn(
-          "⚠️ Clerk returned no user info. User may already be created?"
+          "⚠️ Clerk returned no user info. User may already be created?",
         );
       }
     } catch (err: any) {
@@ -2065,7 +2067,7 @@ export const createParent = async (
 
 export const updateParent = async (
   currentState: CurrentState,
-  data: UpdateparentSchema
+  data: UpdateparentSchema,
 ) => {
   try {
     if (!data.id) {
@@ -2090,7 +2092,7 @@ export const updateParent = async (
         }
       } catch (error) {
         console.warn(
-          "⚠️ Clerk returned no user info. Attempting to create user..."
+          "⚠️ Clerk returned no user info. Attempting to create user...",
         );
         return {
           success: false,
@@ -2193,8 +2195,8 @@ export const updateParent = async (
       error instanceof Error
         ? error.message
         : typeof error === "string"
-        ? error
-        : "Unknown error";
+          ? error
+          : "Unknown error";
 
     console.error("updateParent error:", error);
     return { success: false, error: true, message };
@@ -2203,7 +2205,7 @@ export const updateParent = async (
 
 export async function updateManyParents(
   prevState: { success: boolean; error: boolean; message?: string },
-  data: MparentSchema
+  data: MparentSchema,
 ): Promise<CurrentState> {
   try {
     const parsed = mparentSchema.safeParse(data);
@@ -2264,7 +2266,7 @@ export async function updateManyParents(
             ...studentField,
           },
         });
-      })
+      }),
     );
 
     const updatedParents = await prisma.parent.findMany({
@@ -2306,7 +2308,7 @@ export async function updateManyParents(
 
 export const deleteParent = async (
   currentState: CurrentState,
-  formData: FormData
+  formData: FormData,
 ): Promise<CurrentState> => {
   const id = formData.get("id") as string;
 
@@ -2334,7 +2336,7 @@ export const deleteParent = async (
       }
     } catch (error) {
       console.warn(
-        "⚠️ Clerk returned no user info. User may already be deleted?"
+        "⚠️ Clerk returned no user info. User may already be deleted?",
       );
       return { success: true, error: true };
     }
@@ -2345,8 +2347,8 @@ export const deleteParent = async (
       error instanceof Error
         ? error.message
         : typeof error === "string"
-        ? error
-        : "Unknown error";
+          ? error
+          : "Unknown error";
 
     console.error("Delete Parent error: ", error);
     return { success: false, error: true, message };
@@ -2354,7 +2356,7 @@ export const deleteParent = async (
 };
 export const deleteParents = async (
   currentState: CurrentState,
-  formData: FormData
+  formData: FormData,
 ): Promise<CurrentState> => {
   const ids = formData.getAll("ids") as string[];
 
@@ -2391,8 +2393,8 @@ export const deleteParents = async (
       error instanceof Error
         ? error.message
         : typeof error === "string"
-        ? error
-        : "Unknown error";
+          ? error
+          : "Unknown error";
 
     return { success: false, error: true, message };
   }
@@ -2400,7 +2402,7 @@ export const deleteParents = async (
 
 export const createLesson = async (
   currentState: CurrentState,
-  data: LessonSchema
+  data: LessonSchema,
 ) => {
   try {
     const createdLesson = await prisma.lesson.create({
@@ -2428,7 +2430,7 @@ export const createLesson = async (
 
 export const updateLesson = async (
   currentState: CurrentState,
-  data: LessonSchema
+  data: LessonSchema,
 ) => {
   try {
     await prisma.lesson.update({
@@ -2460,8 +2462,8 @@ export const updateLesson = async (
       error instanceof Error
         ? error.message
         : typeof error === "string"
-        ? error
-        : "Unknown error";
+          ? error
+          : "Unknown error";
 
     console.error("update Ujian error: ", error);
     return { success: false, error: true, message };
@@ -2470,7 +2472,7 @@ export const updateLesson = async (
 
 export const deleteLesson = async (
   currentState: CurrentState,
-  formData: FormData
+  formData: FormData,
 ): Promise<CurrentState> => {
   const id = formData.get("id") as string;
 
@@ -2491,7 +2493,7 @@ export const deleteLesson = async (
 
 export const deleteLessons = async (
   currentState: CurrentState,
-  formData: FormData
+  formData: FormData,
 ): Promise<CurrentState> => {
   const ids = formData.getAll("ids") as string[];
 
@@ -2520,8 +2522,8 @@ export const deleteLessons = async (
       error instanceof Error
         ? error.message
         : typeof error === "string"
-        ? error
-        : "Unknown error";
+          ? error
+          : "Unknown error";
 
     return { success: false, error: true, message };
   }
@@ -2529,7 +2531,7 @@ export const deleteLessons = async (
 
 export const createResult = async (
   currentState: CurrentState,
-  data: ResultSchema
+  data: ResultSchema,
 ) => {
   try {
     const createdResult = await prisma.result.create({
@@ -2581,7 +2583,7 @@ export const createResult = async (
 
 export const updateResult = async (
   currentState: CurrentState,
-  data: ResultSchema
+  data: ResultSchema,
 ) => {
   try {
     const safeExamId = data.selectedType === "Ujian" ? data.examId : null;
@@ -2666,8 +2668,8 @@ export const updateResult = async (
       error instanceof Error
         ? error.message
         : typeof error === "string"
-        ? error
-        : "Unknown error";
+          ? error
+          : "Unknown error";
 
     console.error("update Ujian error: ", error);
     return { success: false, error: true, message };
@@ -2676,7 +2678,7 @@ export const updateResult = async (
 
 export const deleteResult = async (
   currentState: CurrentState,
-  formData: FormData
+  formData: FormData,
 ): Promise<CurrentState> => {
   const id = formData.get("id") as string;
 
@@ -2697,7 +2699,7 @@ export const deleteResult = async (
 
 export const deleteResults = async (
   currentState: CurrentState,
-  formData: FormData
+  formData: FormData,
 ): Promise<CurrentState> => {
   const ids = formData.getAll("ids") as string[];
 
@@ -2726,8 +2728,8 @@ export const deleteResults = async (
       error instanceof Error
         ? error.message
         : typeof error === "string"
-        ? error
-        : "Unknown error";
+          ? error
+          : "Unknown error";
 
     return { success: false, error: true, message };
   }
@@ -2735,7 +2737,7 @@ export const deleteResults = async (
 
 export const updateResults = async (
   currentState: CurrentState,
-  data: MresultSchema // your bulk update schema including `ids: number[]`
+  data: MresultSchema, // your bulk update schema including `ids: number[]`
 ) => {
   try {
     const { ids, score, resultType, selectedType, examId, assignmentId } = data;
@@ -2811,8 +2813,8 @@ export const updateResults = async (
       error instanceof Error
         ? error.message
         : typeof error === "string"
-        ? error
-        : "Unknown error";
+          ? error
+          : "Unknown error";
 
     console.error("updateManyResults error: ", error);
     return { success: false, error: true, message };
@@ -2821,7 +2823,7 @@ export const updateResults = async (
 
 export const createPpdb = async (
   currentState: CurrentState,
-  data: PpdbSchema
+  data: PpdbSchema,
 ) => {
   try {
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -2864,7 +2866,7 @@ export const createPpdb = async (
         pekerjaanAyah: data.pekerjaanAyah === "" ? null : data.pekerjaanAyah,
         pendidikanAyah: data.pendidikanAyah === "" ? null : data.pendidikanAyah,
         penghasilanAyah:
-          data.penghasilanAyah === "" ? null : data.penghasilanAyah ?? null,
+          data.penghasilanAyah === "" ? null : (data.penghasilanAyah ?? null),
         telpAyah: data.telpAyah === "" ? null : data.telpAyah,
         namaIbu: data.namaIbu === "" ? null : data.namaIbu,
         tahunLahirIbu:
@@ -2874,7 +2876,7 @@ export const createPpdb = async (
         pekerjaanIbu: data.pekerjaanIbu === "" ? null : data.pekerjaanIbu,
         pendidikanIbu: data.pendidikanIbu === "" ? null : data.pendidikanIbu,
         penghasilanIbu:
-          data.penghasilanIbu === "" ? null : data.penghasilanIbu ?? null,
+          data.penghasilanIbu === "" ? null : (data.penghasilanIbu ?? null),
         telpIbu: data.telpIbu === "" ? null : data.telpIbu,
         namaWali: data.namaWali === "" ? null : data.namaWali,
         tahunLahirWali:
@@ -2884,7 +2886,7 @@ export const createPpdb = async (
         pekerjaanWali: data.pekerjaanWali === "" ? null : data.pekerjaanWali,
         pendidikanWali: data.pendidikanWali === "" ? null : data.pendidikanWali,
         penghasilanWali:
-          data.penghasilanWali === "" ? null : data.penghasilanWali ?? null,
+          data.penghasilanWali === "" ? null : (data.penghasilanWali ?? null),
         telpWali: data.telpWali === "" ? null : data.telpWali,
         postcode: data.postcode,
         awards: data.awards || null,
@@ -2900,7 +2902,7 @@ export const createPpdb = async (
         dokumenPasfoto: data.dokumenPasfoto || null,
         dokumenKKKTP: data.dokumenKKKTP || null,
         isvalid: false,
-        createdAt: new Date()
+        createdAt: new Date(),
       },
     });
 
@@ -2940,7 +2942,7 @@ export const createPpdb = async (
 
 export const updatePpdb = async (
   currentState: CurrentState,
-  data: PpdbSchema
+  data: PpdbSchema,
 ) => {
   try {
     if (!data.id) {
@@ -2990,7 +2992,7 @@ export const updatePpdb = async (
         pekerjaanAyah: data.pekerjaanAyah === "" ? null : data.pekerjaanAyah,
         pendidikanAyah: data.pendidikanAyah === "" ? null : data.pendidikanAyah,
         penghasilanAyah:
-          data.penghasilanAyah === "" ? null : data.penghasilanAyah ?? null,
+          data.penghasilanAyah === "" ? null : (data.penghasilanAyah ?? null),
         telpAyah: data.telpAyah === "" ? null : data.telpAyah,
         namaIbu: data.namaIbu === "" ? null : data.namaIbu,
         tahunLahirIbu:
@@ -3000,7 +3002,7 @@ export const updatePpdb = async (
         pekerjaanIbu: data.pekerjaanIbu === "" ? null : data.pekerjaanIbu,
         pendidikanIbu: data.pendidikanIbu === "" ? null : data.pendidikanIbu,
         penghasilanIbu:
-          data.penghasilanIbu === "" ? null : data.penghasilanIbu ?? null,
+          data.penghasilanIbu === "" ? null : (data.penghasilanIbu ?? null),
         telpIbu: data.telpIbu === "" ? null : data.telpIbu,
         namaWali: data.namaWali === "" ? null : data.namaWali,
         tahunLahirWali:
@@ -3010,14 +3012,16 @@ export const updatePpdb = async (
         pekerjaanWali: data.pekerjaanWali === "" ? null : data.pekerjaanWali,
         pendidikanWali: data.pendidikanWali === "" ? null : data.pendidikanWali,
         penghasilanWali:
-          data.penghasilanWali === "" ? null : data.penghasilanWali ?? null,
+          data.penghasilanWali === "" ? null : (data.penghasilanWali ?? null),
         telpWali: data.telpWali === "" ? null : data.telpWali,
         postcode: data.postcode,
         awards: data.awards || null,
         awards_lvl: data.awards_lvl || null,
         awards_date: data.awards_date ? new Date(data.awards_date) : null,
         scholarship: data.scholarship || null,
-        scholarship_date: data.scholarship_date ? new Date(data.scholarship_date) : null,
+        scholarship_date: data.scholarship_date
+          ? new Date(data.scholarship_date)
+          : null,
         scholarship_detail: data.scholarship_detail || null,
         ...(data.dokumenIjazah !== "" && { dokumenIjazah: data.dokumenIjazah }),
         ...(data.dokumenAkte !== "" && { dokumenAkte: data.dokumenAkte }),
@@ -3034,7 +3038,7 @@ export const updatePpdb = async (
       /** ----------------------------------------------------
        * 1️⃣ Create Clerk user first (must be outside transaction)
        * ---------------------------------------------------- */
-      let clerkUser ;
+      let clerkUser;
       try {
         clerkUser = await client.users.createUser({
           username: data.name,
@@ -3135,7 +3139,7 @@ export const updatePpdb = async (
           degree?: string,
           kerja?: string,
           lahir?: string,
-          phone?: string
+          phone?: string,
         ) => ({
           username: `${data.nik}_${role}`,
           password: encryptPassword(`${data.nik}@${role}`),
@@ -3169,7 +3173,7 @@ export const updatePpdb = async (
             data.pendidikanAyah ?? "",
             data.pekerjaanAyah ?? "",
             data.tahunLahirAyah ?? "",
-            data.telpAyah ?? ""
+            data.telpAyah ?? "",
           );
 
           // 🔥 Create Clerk account
@@ -3209,7 +3213,7 @@ export const updatePpdb = async (
             data.pendidikanIbu ?? "",
             data.pekerjaanIbu ?? "",
             data.tahunLahirIbu ?? "",
-            data.telpIbu ?? ""
+            data.telpIbu ?? "",
           );
 
           // 🔥 Create Clerk account
@@ -3249,7 +3253,7 @@ export const updatePpdb = async (
             data.pendidikanWali ?? "",
             data.pekerjaanWali ?? "",
             data.tahunLahirWali ?? "",
-            data.telpWali ?? ""
+            data.telpWali ?? "",
           );
 
           // 🔥 Create Clerk account
@@ -3314,8 +3318,8 @@ export const updatePpdb = async (
       error instanceof Error
         ? error.message
         : typeof error === "string"
-        ? error
-        : "Unknown error";
+          ? error
+          : "Unknown error";
 
     console.error("updatePpdb error:", error);
     return { success: false, error: true, message };
@@ -3323,7 +3327,7 @@ export const updatePpdb = async (
 };
 export const deletePpdb = async (
   currentState: CurrentState,
-  formData: FormData
+  formData: FormData,
 ): Promise<CurrentState> => {
   const id = formData.get("id") as string;
 
@@ -3341,8 +3345,8 @@ export const deletePpdb = async (
       error instanceof Error
         ? error.message
         : typeof error === "string"
-        ? error
-        : "Unknown error";
+          ? error
+          : "Unknown error";
 
     console.error("Delete Ppdb error: ", error);
     return { success: false, error: true, message };
@@ -3351,7 +3355,7 @@ export const deletePpdb = async (
 
 export const deletePPDBs = async (
   currentState: CurrentState,
-  formData: FormData
+  formData: FormData,
 ): Promise<CurrentState> => {
   const ids = formData.getAll("ids") as string[];
 
@@ -3380,8 +3384,8 @@ export const deletePPDBs = async (
       error instanceof Error
         ? error.message
         : typeof error === "string"
-        ? error
-        : "Unknown error";
+          ? error
+          : "Unknown error";
 
     return { success: false, error: true, message };
   }
@@ -3390,7 +3394,7 @@ export const deletePPDBs = async (
 export const createMeeting = async (
   currentState: CurrentState,
   data: AttendanceSchema,
-  lessonId?: number
+  lessonId?: number,
 ) => {
   const resolvedLessonId = lessonId ?? data.lessonId;
   if (!resolvedLessonId) {
@@ -3456,7 +3460,7 @@ export const createMeeting = async (
         lesson.startTime.getHours(),
         lesson.startTime.getMinutes(),
         0,
-        0
+        0,
       );
 
       const endTime = new Date(date);
@@ -3464,7 +3468,7 @@ export const createMeeting = async (
         lesson.endTime.getHours(),
         lesson.endTime.getMinutes(),
         0,
-        0
+        0,
       );
 
       meetingsData.push({
@@ -3493,7 +3497,7 @@ export const createMeeting = async (
 
 export const updateAttendance = async (
   currentState: CurrentState,
-  data: AttendanceSchema
+  data: AttendanceSchema,
 ) => {
   try {
     const meetingId = data.meetingId!;
@@ -3523,8 +3527,8 @@ export const updateAttendance = async (
               present: status === "HADIR",
             },
           });
-        }
-      )
+        },
+      ),
     );
 
     return { success: true, error: false };
@@ -3535,7 +3539,7 @@ export const updateAttendance = async (
 };
 export const deleteAttendance = async (
   currentState: CurrentState,
-  formData: FormData
+  formData: FormData,
 ): Promise<CurrentState> => {
   const id = formData.get("id") as string;
   try {
@@ -3557,7 +3561,7 @@ export const deleteAttendance = async (
 // Buat tagihan
 export async function createPaymentLog(
   prevState: CurrentState,
-  payload: PaymentLogSchema
+  payload: PaymentLogSchema,
 ): Promise<CurrentState> {
   try {
     const { recipientType, recipientId, ...paymentData } = payload;
@@ -3620,7 +3624,7 @@ export async function createPaymentLog(
 
       // Valid installments (avoid empty or zero values)
       const validNewInstallments = formInstallments.filter(
-        (i) => Number(i.amount) > 0
+        (i) => Number(i.amount) > 0,
       );
 
       // Convert amounts → number
@@ -3632,7 +3636,7 @@ export async function createPaymentLog(
       // Total cicilan
       const totalPaid = normalizedInstallments.reduce(
         (sum, i) => sum + i.amount,
-        0
+        0,
       );
 
       // ❌ Protect from overpayment
@@ -3718,16 +3722,16 @@ export async function createPaymentLog(
       },
     });
 
-    await Promise.all(
-      createdPayments.map((payment) =>
-        logPaymentChange({
-          action: "CREATE",
-          paymentLogId: payment.id,
-          oldValue: null,
-          newValue: payment,
-        })
-      )
-    );
+    // await Promise.all(
+    //   createdPayments.map((payment) =>
+    //     logPaymentChange({
+    //       action: "CREATE",
+    //       paymentLogId: payment.id,
+    //       oldValue: null,
+    //       newValue: payment,
+    //     })
+    //   )
+    // );
 
     function safeDecimal(value: Decimal) {
       return value && typeof value === "object" && value.toNumber
@@ -3769,7 +3773,7 @@ export default withSyncedGradeId;
 // Update tagihan
 export async function updatePaymentLog(
   prevState: CurrentState,
-  data: PaymentLogSchema
+  data: PaymentLogSchema,
 ): Promise<CurrentState> {
   try {
     // 1️⃣ Fetch old record safely
@@ -3833,7 +3837,7 @@ export async function updatePaymentLog(
     }
     // Filter only valid new payments (avoid null/0/empty values)
     const validNewInstallments = formInstallments.filter(
-      (i) => Number(i.amount) > 0
+      (i) => Number(i.amount) > 0,
     );
 
     // MERGE them:
@@ -3848,7 +3852,7 @@ export async function updatePaymentLog(
     // Total already paid (DB + form)
     const totalPaid = normalizedInstallments.reduce(
       (sum, i) => sum + i.amount,
-      0
+      0,
     );
     console.log("SERVER totalPaid:", totalPaid);
 
@@ -3950,7 +3954,7 @@ export async function updatePaymentLog(
       })),
     };
     logPaymentChange({
-      action: "UPDATE",
+      action: "UPDATE_BILL",
       paymentLogId: safePayment.id,
       oldValue: oldRecord,
       newValue: safePayment,
@@ -3973,7 +3977,7 @@ export async function updatePaymentLog(
 
 export async function updatePaymentLogs(
   prevState: CurrentState,
-  data: MpaymentLogSchema
+  data: MpaymentLogSchema,
 ): Promise<CurrentState> {
   try {
     const { ids, ...paymentData } = data;
@@ -4050,7 +4054,7 @@ export async function updatePaymentLogs(
 
 export const deletePaymentLog = async (
   currentState: CurrentState,
-  formData: FormData
+  formData: FormData,
 ): Promise<CurrentState> => {
   const id = formData.get("id") as string;
   const idAsNumber = parseInt(id);
@@ -4066,10 +4070,12 @@ export const deletePaymentLog = async (
         message: "No previous state to recreate",
       };
     }
+    // ✅ Normalize BEFORE logging
+
     await logPaymentChange({
-      action: "DELETE",
-      paymentLogId: before.id,
-      oldValue: before,
+      action: "DELETE_BILL",
+      paymentLogId: idAsNumber!,
+      oldValue: snapshotPayment(before), // ✅ SCHEMA SHAPE
       newValue: null,
     });
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -4088,7 +4094,7 @@ export const deletePaymentLog = async (
 
 export const deletePaymentLogs = async (
   currentState: CurrentState,
-  formData: FormData
+  formData: FormData,
 ): Promise<CurrentState> => {
   const ids = formData.getAll("ids") as string[];
 
@@ -4112,7 +4118,7 @@ export const deletePaymentLogs = async (
           };
         }
         await logPaymentChange({
-          action: "DELETE",
+          action: "DELETE_PAYMENTS",
           paymentLogId: before.id,
           oldValue: before,
           newValue: null,
@@ -4134,8 +4140,8 @@ export const deletePaymentLogs = async (
       error instanceof Error
         ? error.message
         : typeof error === "string"
-        ? error
-        : "Unknown error";
+          ? error
+          : "Unknown error";
 
     return { success: false, error: true, message };
   }
@@ -4143,7 +4149,7 @@ export const deletePaymentLogs = async (
 
 export const createUserDB = async (
   currentState: CurrentState,
-  data: UserSchema
+  data: UserSchema,
 ) => {
   try {
     const user = await client.users.createUser({
@@ -4251,7 +4257,7 @@ export const createUserDB = async (
 // 🔹 Update existing user
 export const updateUserDB = async (
   currentState: CurrentState,
-  data: UserSchema
+  data: UserSchema,
 ) => {
   try {
     // 1. Update Clerk user
@@ -4339,7 +4345,7 @@ export const updateUserDB = async (
 // 🔹 Delete user
 export const deleteUser = async (
   currentState: CurrentState,
-  formData: FormData
+  formData: FormData,
 ) => {
   const id = formData.get("id") as string;
   try {
@@ -4366,7 +4372,7 @@ export const deleteUser = async (
 
 export const activateManyStudents = async (
   ids: string[],
-  form: boolean = false
+  form: boolean = false,
 ) => {
   const created: string[] = [];
   const skipped: string[] = [];
@@ -4443,7 +4449,7 @@ export const activateManyStudents = async (
 };
 export const activateManyTeachers = async (
   ids: string[],
-  form: boolean = false
+  form: boolean = false,
 ) => {
   const created: string[] = [];
   const skipped: string[] = [];
@@ -4518,7 +4524,7 @@ export const activateManyTeachers = async (
 };
 export const activateManyParents = async (
   ids: string[],
-  form: boolean = false
+  form: boolean = false,
 ) => {
   const created: string[] = [];
   const skipped: string[] = [];
@@ -4595,7 +4601,7 @@ export const activateManyParents = async (
 
 export const deleteManyUsers = async (
   currentState: CurrentState,
-  formData: FormData
+  formData: FormData,
 ): Promise<CurrentState> => {
   const ids = formData.getAll("ids") as string[];
 
@@ -4635,7 +4641,7 @@ export const deleteManyUsers = async (
 
 export async function updatePPDBSetting(
   prevState: CurrentState,
-  data: PPDBSettingSchema
+  data: PPDBSettingSchema,
 ): Promise<CurrentState> {
   try {
     const startDate = new Date(data.startDate);
@@ -4681,13 +4687,11 @@ export async function updatePPDBSetting(
   }
 }
 
-
 export async function updateCreditsetting(
   prevState: CurrentState,
-  data: CreditSettingSchema
+  data: CreditSettingSchema,
 ): Promise<CurrentState> {
   try {
-    
     // If PPDB setting table has only ONE ROW:
     const existing = await prisma.homeSetting.findFirst();
 
@@ -4696,16 +4700,16 @@ export async function updateCreditsetting(
       await prisma.homeSetting.create({
         data: {
           show: data.show,
-          updatedAt: new Date()
+          updatedAt: new Date(),
         },
       });
     } else {
       // Update existing setting
       await prisma.homeSetting.update({
         where: { id: existing.id },
-         data: {
+        data: {
           show: data.show,
-          updatedAt: new Date()
+          updatedAt: new Date(),
         },
       });
     }
@@ -4728,7 +4732,7 @@ export async function updateCreditsetting(
 
 export const importPayments = async (
   currentState: CurrentState,
-  data: ImportPaymentsSchema
+  data: ImportPaymentsSchema,
 ) => {
   const file = data.file as File;
   if (!file) {
@@ -4894,7 +4898,7 @@ export const importPayments = async (
 
 export async function exportPaymentsToExcel(
   prev: any,
-  data: ExportPaymentsSchema
+  data: ExportPaymentsSchema,
 ) {
   try {
     const period = data.period;
@@ -4968,7 +4972,7 @@ export async function exportPaymentsToExcel(
     const rows = payments.map((p) => {
       const paidAmount = p.paymentInstallments.reduce(
         (sum, inst) => sum + Number(inst.amount),
-        0
+        0,
       );
 
       let status = "PENDING";
@@ -5010,7 +5014,7 @@ export async function exportPaymentsToExcel(
     summarySheet.addRow([
       "Tanggal",
       `${start.toLocaleDateString("id-ID")} - ${end.toLocaleDateString(
-        "id-ID"
+        "id-ID",
       )}`,
     ]);
 
@@ -5115,7 +5119,7 @@ export async function exportPaymentsToExcel(
     payments.forEach((p) => {
       const paid = p.paymentInstallments.reduce(
         (s, i) => s + Number(i.amount),
-        0
+        0,
       );
 
       const paidDates = p.paymentInstallments
@@ -5235,7 +5239,7 @@ export async function exportPaymentsToExcel(
 
 export const createStaff = async (
   currentState: CurrentState,
-  data: CreatestaffSchema
+  data: CreatestaffSchema,
 ) => {
   try {
     let user;
@@ -5251,7 +5255,7 @@ export const createStaff = async (
         console.log("✅ User Sucessfully created:", user.id);
       } else {
         console.warn(
-          "⚠️ Clerk returned no user info. User may already be created?"
+          "⚠️ Clerk returned no user info. User may already be created?",
         );
       }
     } catch (err: any) {
@@ -5313,7 +5317,7 @@ export const createStaff = async (
 
 export const updateStaff = async (
   currentState: CurrentState,
-  data: UpdatestaffSchema
+  data: UpdatestaffSchema,
 ) => {
   try {
     console.log(data + "Data in update Staff");
@@ -5341,7 +5345,7 @@ export const updateStaff = async (
         }
       } catch (error) {
         console.warn(
-          "⚠️ Clerk returned no user info. Attempting to create user..."
+          "⚠️ Clerk returned no user info. Attempting to create user...",
         );
         return {
           success: false,
@@ -5393,8 +5397,8 @@ export const updateStaff = async (
       error instanceof Error
         ? error.message
         : typeof error === "string"
-        ? error
-        : "Unknown error";
+          ? error
+          : "Unknown error";
 
     console.error("UpdateStaff error:", error);
     return { success: false, error: true, message };
@@ -5403,7 +5407,7 @@ export const updateStaff = async (
 
 export const deleteStaff = async (
   currentState: CurrentState,
-  formData: FormData
+  formData: FormData,
 ): Promise<CurrentState> => {
   const id = formData.get("id") as string;
 
@@ -5434,7 +5438,7 @@ export const deleteStaff = async (
       }
     } catch (error) {
       console.warn(
-        "⚠️ Clerk returned no user info. User may already be deleted?"
+        "⚠️ Clerk returned no user info. User may already be deleted?",
       );
     }
 
@@ -5444,8 +5448,8 @@ export const deleteStaff = async (
       error instanceof Error
         ? error.message
         : typeof error === "string"
-        ? error
-        : "Unknown error";
+          ? error
+          : "Unknown error";
 
     console.error("Delete Staff error: ", error);
     return { success: false, error: true, message };
@@ -5454,7 +5458,7 @@ export const deleteStaff = async (
 
 export const deleteStaffs = async (
   currentState: CurrentState,
-  formData: FormData
+  formData: FormData,
 ): Promise<CurrentState> => {
   const ids = formData.getAll("ids") as string[];
 
@@ -5505,8 +5509,8 @@ export const deleteStaffs = async (
       error instanceof Error
         ? error.message
         : typeof error === "string"
-        ? error
-        : "Unknown error";
+          ? error
+          : "Unknown error";
 
     return { success: false, error: true, message };
   }
@@ -5514,7 +5518,7 @@ export const deleteStaffs = async (
 
 export async function exportResultToExcel(
   prevState: any,
-  data: ExportResultSchema
+  data: ExportResultSchema,
 ) {
   try {
     // Validate input (semester range)
@@ -5715,7 +5719,7 @@ export async function exportResultToExcel(
       if (subjectAverages.length > 0) {
         const overallAverage = Math.round(
           subjectAverages.reduce((acc, curr) => acc + curr, 0) /
-            subjectAverages.length
+            subjectAverages.length,
         );
 
         const footerRow = sheet.addRow([]); // Add empty row
@@ -5783,8 +5787,8 @@ export async function exportResultToExcel(
       error instanceof Error
         ? error.message
         : typeof error === "string"
-        ? error
-        : "Unknown error";
+          ? error
+          : "Unknown error";
 
     return { success: false, error: true, message };
   }
@@ -5792,7 +5796,7 @@ export async function exportResultToExcel(
 
 export async function createPerformance(
   prevState: any,
-  payload: PerformanceSchema
+  payload: PerformanceSchema,
 ) {
   try {
     await prisma.performanceLog.create({
@@ -5814,8 +5818,8 @@ export async function createPerformance(
       error instanceof Error
         ? error.message
         : typeof error === "string"
-        ? error
-        : "Unknown error";
+          ? error
+          : "Unknown error";
 
     return { success: false, error: true, message };
   }
@@ -5823,7 +5827,7 @@ export async function createPerformance(
 
 export async function updatePerformance(
   prevState: any,
-  payload: PerformanceSchema
+  payload: PerformanceSchema,
 ) {
   try {
     await prisma.performanceLog.update({
@@ -5846,8 +5850,8 @@ export async function updatePerformance(
       error instanceof Error
         ? error.message
         : typeof error === "string"
-        ? error
-        : "Unknown error";
+          ? error
+          : "Unknown error";
 
     return { success: false, error: true, message };
   }
@@ -5855,7 +5859,7 @@ export async function updatePerformance(
 
 export const deletePerfomance = async (
   currentState: CurrentState,
-  formData: FormData
+  formData: FormData,
 ): Promise<CurrentState> => {
   const id = formData.get("id") as string;
   try {
@@ -5874,7 +5878,7 @@ export const deletePerfomance = async (
 
 export async function createBill(
   prevState: CurrentState,
-  payload: BillLogSchema
+  payload: BillLogSchema,
 ): Promise<CurrentState> {
   try {
     const { recipientType, recipientId, ...bill } = payload;
@@ -5958,12 +5962,12 @@ export async function createBill(
     await Promise.all(
       createdPayments.map((payment) =>
         logPaymentChange({
-          action: "CREATE",
+          action: "CREATE_BILL",
           paymentLogId: payment.id,
           oldValue: null,
-          newValue: payment,
-        })
-      )
+          newValue: snapshotPayment(payment),
+        }),
+      ),
     );
 
     function safeDecimal(value: Decimal) {
@@ -5996,7 +6000,7 @@ export async function createBill(
 
 export async function updateBill(
   prevState: CurrentState,
-  data: BillLogSchema
+  data: BillLogSchema,
 ): Promise<CurrentState> {
   try {
     // 1️⃣ Fetch old record safely
@@ -6060,6 +6064,10 @@ export async function updateBill(
         gradeId,
       },
     });
+    const after = await prisma.paymentLog.findUnique({
+      where: { id: data.id },
+      include: { paymentInstallments: true },
+    });
 
     const updatedPayment = await prisma.paymentLog.findUnique({
       where: { id: data.id },
@@ -6101,10 +6109,10 @@ export async function updateBill(
       })),
     };
     logPaymentChange({
-      action: "UPDATE",
+      action: "UPDATE_BILL",
       paymentLogId: safePayment.id,
-      oldValue: oldRecord,
-      newValue: safePayment,
+      oldValue: snapshotPayment(oldRecord),
+      newValue: snapshotPayment(after!),
     });
     return {
       success: true,
@@ -6124,7 +6132,7 @@ export async function updateBill(
 
 export async function createPayment(
   prevState: CurrentState,
-  payload: PaymentSchema
+  payload: PaymentSchema,
 ): Promise<CurrentState> {
   try {
     // 1. Fetch bill + existing installments
@@ -6175,12 +6183,12 @@ export async function createPayment(
     // 2. Overpayment check
     const existingTotalPaid = bill.paymentInstallments.reduce(
       (sum, i) => sum + Number(i.amount),
-      0
+      0,
     );
 
     const newTotalPaid = newInstallments.reduce(
       (sum, i) => sum + Number(i.amount),
-      0
+      0,
     );
 
     const finalTotalPaid = existingTotalPaid + newTotalPaid;
@@ -6272,17 +6280,18 @@ export async function createPayment(
       orderBy: { createdAt: "desc" },
       take: newInstallments.length,
     });
+    const after = await prisma.paymentLog.findUnique({
+      where: { id: bill.id },
+      include: { paymentInstallments: true },
+    });
 
     // Log installment creation
     await logPaymentChange({
-      action: "CREATE_INSTALLMENTS",
+      action: "CREATE_PAYMENTS",
       paymentLogId: bill.id,
       installmentId: null, // multiple → null
       oldValue: null,
-      newValue: {
-        paymentLogId: bill.id,
-        installments: createdInstallments,
-      },
+      newValue: snapshotPayment(after!),
     });
 
     return {
@@ -6303,7 +6312,7 @@ export async function createPayment(
 
 export async function updatePayment(
   prevState: CurrentState,
-  payload: PaymentSchema
+  payload: PaymentSchema,
 ): Promise<CurrentState> {
   try {
     const paymentId = payload.id;
@@ -6335,7 +6344,7 @@ export async function updatePayment(
 
     const totalPaid = mergedInstallments.reduce(
       (sum, i) => sum + Number(i.amount || 0),
-      0
+      0,
     );
 
     if (totalPaid > paymentData.amount) {
@@ -6359,7 +6368,7 @@ export async function updatePayment(
     const paidHistory = mergedInstallments
       .filter((i) => i.paidAt)
       .sort(
-        (a, b) => new Date(a.paidAt!).getTime() - new Date(b.paidAt!).getTime()
+        (a, b) => new Date(a.paidAt!).getTime() - new Date(b.paidAt!).getTime(),
       );
 
     const lastPaidAt = paidHistory.length
@@ -6389,7 +6398,7 @@ export async function updatePayment(
 
     // 4️⃣ Log
     await logPaymentChange({
-      action: "UPDATE_INSTALLMENTS",
+      action: "UPDATE_PAYMENTS",
       paymentLogId: paymentId,
 
       oldValue: {

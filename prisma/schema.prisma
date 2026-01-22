@@ -168,10 +168,10 @@ model PPDB {
   sex                UserSex
   religion           Agama
   asalSekolah        String
-  npsn               String    
-  nisn               String    
-  no_ijz             String    
-  nik                String    
+  npsn               String
+  nisn               String
+  no_ijz             String
+  nik                String
   address            String
   rw                 String
   rt                 String
@@ -179,13 +179,13 @@ model PPDB {
   kecamatan          String
   kota               String
   postcode           Int
-  phone              String?   
+  phone              String?
   noWa               String?
   transportation     String
   tempat_tinggal     TTinggal
   kps                KPS?
-  no_kps             String?   
-  email              String?   
+  no_kps             String?
+  email              String?
   height             Int
   weight             Int
   distance_from_home Int
@@ -545,9 +545,10 @@ model PaymentLogChange {
   installmentId     Int?
   paymentIstallment PaymentInstallment? @relation(fields: [installmentId], references: [id], onDelete: SetNull)
 
-  action   ChangeAction
-  oldValue Json?
-  newValue Json?
+  action         ChangeAction
+  oldValue       Json?
+  newValue       Json?
+  revertedFromId Int? // 👈 NEW (points to original change)
 
   changedById   String // Clerk userId
   changedByName String
@@ -557,12 +558,14 @@ model PaymentLogChange {
 }
 
 enum ChangeAction {
-  CREATE
-  CREATE_INSTALLMENTS
-  UPDATE
-  UPDATE_INSTALLMENTS
-  DELETE
+  CREATE_BILL
+  CREATE_PAYMENTS
+  UPDATE_BILL
+  UPDATE_PAYMENTS
+  DELETE_BILL
+  DELETE_PAYMENTS
   REVERT
+  UNREVERT
 }
 
 model PerformanceLog {
@@ -579,7 +582,7 @@ model PerformanceLog {
 }
 
 model HomeSetting {
-  id Int @id @default(autoincrement())
+  id        Int      @id @default(autoincrement())
   show      Boolean  @default(false)
   updatedAt DateTime @updatedAt
 }

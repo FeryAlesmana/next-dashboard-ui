@@ -1,4 +1,5 @@
 import ChangeLogClient from "@/components/ChangeLogClient";
+import PaymentChangeListClient from "@/components/client/PaymentChangeListClient";
 import ClientPageWrapper from "@/components/ClientWrapper";
 import Pagination from "@/components/Pagination";
 import prisma from "@/lib/prisma";
@@ -22,14 +23,48 @@ const ChangeLog = async ({
   }
   const sp = await normalizeSearchParams(searchParams);
   const key = new URLSearchParams(
-    Object.entries(sp).reduce((acc, [k, v]) => {
-      if (v !== undefined) acc[k] = v;
-      return acc;
-    }, {} as Record<string, string>)
+    Object.entries(sp).reduce(
+      (acc, [k, v]) => {
+        if (v !== undefined) acc[k] = v;
+        return acc;
+      },
+      {} as Record<string, string>,
+    ),
   ).toString();
   const { page, limit, ...queryParams } = sp;
   const p = page ? parseInt(page) : 1;
   const perPage = limit === "all" ? 50 : parseInt(limit ?? "10");
+
+  const columns = [
+    {
+      header: "Id Tagihan",
+      accessor: "id",
+    },
+    {
+      // Status Formulir -> Status
+      header: "Nama Staff dan role",
+      accessor: "name",
+    },
+    {
+      header: "Jenis Aksi",
+      accessor: "action",
+    },
+    {
+      // Tanggal Submit -> Tgl Submit
+      header: "Di Ubah pada",
+      accessor: "paymentType",
+    },
+
+    ...(role === "admin"
+      ? [
+          {
+            // 'Aksi' is already short
+            header: "Aksi",
+            accessor: "Caction",
+          },
+        ]
+      : []),
+  ];
   const query: Prisma.PaymentLogChangeWhereInput = {};
   let orderBy: Prisma.PaymentLogChangeOrderByWithRelationInput | undefined;
   const dateSchema = z.object({
@@ -72,7 +107,16 @@ const ChangeLog = async ({
             }
             break;
           case "action":
-            if (Object.values(ChangeAction).includes(value as ChangeAction)) {
+          case "action":
+            if (value === "CREATE") {
+              query.action = { in: ["CREATE_BILL", "CREATE_PAYMENTS"] };
+            } else if (value === "UPDATE") {
+              query.action = { in: ["UPDATE_BILL", "UPDATE_PAYMENTS"] };
+            } else if (value === "DELETE") {
+              query.action = { in: ["DELETE_BILL", "DELETE_PAYMENTS"] };
+            } else if (
+              Object.values(ChangeAction).includes(value as ChangeAction)
+            ) {
               query.action = value as ChangeAction;
             }
             break;
@@ -146,16 +190,29 @@ const ChangeLog = async ({
     roleOptions,
     actOptions,
   };
+  let relatedData = {};
   return (
     <ClientPageWrapper key={key} role={role!}>
-      <ChangeLogClient
+      {/* <ChangeLogClient
         groups={groups}
         options={options}
         hasMore={p * perPage < count}
-      />
-      {/* <div className="">
+      /> */}
+      <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
+        <div>
+          <PaymentChangeListClient
+            options={options}
+            data={logs}
+            role={role!}
+            columns={columns}
+            relatedData={relatedData}
+          />
+        </div>
+      </div>
+
+      <div className="">
         <Pagination page={p} count={count}></Pagination>
-      </div> */}
+      </div>
     </ClientPageWrapper>
   );
 };

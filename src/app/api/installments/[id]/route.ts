@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { logPaymentChange } from "@/lib/paymentLogChange";
 import { PaymentStatus } from "@prisma/client";
+import { mapPaymentLogToPaymentSchema } from "@/lib/utils";
+import { snapshotPayment } from "@/lib/paymentSnapshot";
 
 function safeNumber(val: any) {
   return val && typeof val === "object" && typeof val.toNumber === "function"
@@ -20,7 +22,7 @@ export async function DELETE(req: Request, { params }: Params) {
   if (!installmentId || isNaN(installmentId)) {
     return NextResponse.json(
       { success: false, error: true, message: "Invalid installment id" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -31,7 +33,7 @@ export async function DELETE(req: Request, { params }: Params) {
     if (!inst) {
       return NextResponse.json(
         { success: false, error: true, message: "Installment not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -43,7 +45,7 @@ export async function DELETE(req: Request, { params }: Params) {
     if (!logs) {
       return NextResponse.json(
         { success: false, error: true, message: "Log not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
     // Snapshot BEFORE deletion
@@ -51,6 +53,18 @@ export async function DELETE(req: Request, { params }: Params) {
       ...logs,
       paymentInstallments: inst,
     };
+
+    const before = await prisma.paymentLog.findUnique({
+      where: { id: paymentLogId },
+      include: { paymentInstallments: true },
+    });
+
+    await logPaymentChange({
+      action: "DELETE_PAYMENTS",
+      paymentLogId: logs.id,
+      oldValue: snapshotPayment(before!), // ✅ SCHEMA SHAPE
+      newValue: null,
+    });
 
     await prisma.paymentInstallment.delete({ where: { id: installmentId } });
 
@@ -62,7 +76,7 @@ export async function DELETE(req: Request, { params }: Params) {
     // 6️⃣ Recalculate totalPaid
     const totalPaid = remaining.reduce(
       (sum, item) => sum + Number(item.amount),
-      0
+      0,
     );
 
     // 7️⃣ Determine new payment status
@@ -82,18 +96,18 @@ export async function DELETE(req: Request, { params }: Params) {
       },
     });
 
-    // 9️⃣ NEW SNAPSHOT
-    const newValue = {
-      ...updatedPaymentLog,
-      paymentInstallments: remaining,
-    };
+    // // 9️⃣ NEW SNAPSHOT
+    // const newValue = {
+    //   ...updatedPaymentLog,
+    //   paymentInstallments: remaining,
+    // };
 
-    await logPaymentChange({
-      action: "UPDATE_INSTALLMENTS",
-      paymentLogId,
-      oldValue: oldValue,
-      newValue: newValue,
-    });
+    // await logPaymentChange({
+    //   action: "UPDATE_PAYMENTS",
+    //   paymentLogId,
+    //   oldValue: oldValue,
+    //   newValue: newValue,
+    // });
 
     const mapped = remaining.map((u) => ({
       id: u.id,
@@ -112,7 +126,7 @@ export async function DELETE(req: Request, { params }: Params) {
     console.error("Delete installment error:", err);
     return NextResponse.json(
       { success: false, error: true, message: "Server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

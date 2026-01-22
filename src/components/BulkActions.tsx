@@ -2,6 +2,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import FormModal from "./FormModal";
 import Image from "next/image";
+import { TableName } from "./FormContainer";
 
 export default function BulkActions({
   selectedIds,
@@ -14,25 +15,7 @@ export default function BulkActions({
   relatedData,
 }: {
   selectedIds: string[] | number[];
-  table:
-    | "teacher"
-    | "student"
-    | "parent"
-    | "subject"
-    | "class"
-    | "lesson"
-    | "exam"
-    | "assignment"
-    | "result"
-    | "attendance"
-    | "event"
-    | "announcement"
-    | "ppdb"
-    | "paymentLog"
-    | "user"
-    | "staff"
-    | "bill"
-    | "payment";
+  table: TableName;
   onReset: () => void;
   onDeleted?: (ids: (string | number)[]) => void;
   handleChanged?: (item: any) => void;

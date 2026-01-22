@@ -29,7 +29,8 @@ export type TableName =
   | "exportResults"
   | "staffPerfomance"
   | "bill"
-  | "payment";
+  | "payment"
+  | "changelog";
 
 export type FormContainerProps = {
   table: TableName;

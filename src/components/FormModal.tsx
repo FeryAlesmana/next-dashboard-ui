@@ -79,6 +79,7 @@ const deleteActionMap = {
   announcement: deleteAnnouncement,
   ppdb: deletePpdb,
   paymentLog: deletePaymentLog,
+  bill: deletePaymentLog,
   user: deleteUser,
   staff: deleteStaff,
   staffPerfomance: deletePerfomance,
@@ -99,6 +100,7 @@ const singleDeleteMap = {
   announcement: deleteAnnouncement,
   ppdb: deletePpdb,
   paymentLog: deletePaymentLog,
+  bill: deletePaymentLog,
   user: deleteUser,
   staff: deleteStaff,
   staffPerfomance: deletePerfomance,
@@ -119,6 +121,7 @@ const bulkDeleteMap = {
   announcement: deleteStudents,
   ppdb: deletePPDBs,
   paymentLog: deletePaymentLogs,
+  bill: deletePaymentLogs,
   user: deleteManyUsers,
   staff: deleteStaffs,
   staffPerfomance: deletePPDBs,
@@ -385,7 +388,7 @@ const FormModal = ({
     const ids = rawIds as string[];
 
     // console.log(ids, " ids in handler");
-    // console.log(table, " table in delete handler");
+    console.log(table, " table in delete handler");
 
     if (!table || !Array.isArray(ids)) {
       return { success: false, error: true, message: "Invalid data" };
@@ -567,7 +570,7 @@ const FormModal = ({
             className={`flex items-center gap-2 ${bgColor} text-white font-semibold px-4 py-2 rounded-md hover:bg-blue-700 transition`}
           >
             <Image src={`/${type}.png`} alt="Edit" width={16} height={16} />
-            Isi Absensi Kelas
+            Absensi Kelas
           </button>
         </div>
         {open && (
