@@ -25,9 +25,9 @@ export default async function AttendancePage({
 }) {
   const { userId, role } = await getCurrentUser();
 
-  const sp = normalizeSearchParams(searchParams);
-  const { page, search } = await sp;
-  const p = page ? parseInt(page) : 1;
+  const sp = await normalizeSearchParams(searchParams);
+  const { page, search } = sp;
+  const p = sp.search ? 1 : page ? parseInt(page) : 1;
 
   const query: any = {}; // Prisma.LessonWhereInput (simplified for clarity)
 
@@ -107,7 +107,7 @@ export default async function AttendancePage({
             : [];
 
           return { id: child.id, name: child.name, lessons };
-        })
+        }),
       );
 
       students = studentsWithLessons;

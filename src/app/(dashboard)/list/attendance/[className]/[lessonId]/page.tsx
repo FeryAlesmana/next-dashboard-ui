@@ -2,11 +2,12 @@ import { notFound } from "next/navigation";
 import prisma from "@/lib/prisma";
 import {
   buildStudentLessonAttendance,
+  getCurrentStaff,
   getCurrentUser,
   normalizeSearchParams,
 } from "@/lib/utils";
 import Link from "next/link";
-import { AttendanceStatus, Prisma } from "@prisma/client";
+import { AttendanceStatus, Prisma, staffrole } from "@prisma/client";
 import { ITEM_PER_PAGE } from "@/lib/setting";
 import FormContainer from "@/components/FormContainer";
 import Table from "@/components/Table";
@@ -33,15 +34,25 @@ export default async function AttendanceDetailPage({
   searchParams,
 }: AttendanceDetailPageProps) {
   const { userId, role } = await getCurrentUser();
+  let staffRole: staffrole;
+  if (role === "staff") {
+    const staffrole = await getCurrentStaff(userId!);
+    staffRole = staffrole;
+  }
+  const allowedStaff = role === "staff" && staffRole! === "PENJADWALAN";
+  const allowedRole = role === "admin" || allowedStaff;
   const sp = await normalizeSearchParams(searchParams);
   const key = new URLSearchParams(
-    Object.entries(sp).reduce((acc, [k, v]) => {
-      if (v !== undefined) acc[k] = v;
-      return acc;
-    }, {} as Record<string, string>)
+    Object.entries(sp).reduce(
+      (acc, [k, v]) => {
+        if (v !== undefined) acc[k] = v;
+        return acc;
+      },
+      {} as Record<string, string>,
+    ),
   ).toString();
   const { page, ...queryParams } = sp;
-  const p = page ? parseInt(page) : 1;
+  const p = sp.search ? 1 : page ? parseInt(page) : 1;
   const columns = [
     {
       header: "Pertemuan",
@@ -61,7 +72,7 @@ export default async function AttendanceDetailPage({
       accessor: "endTime",
       className: "hidden md:table-cell",
     },
-    ...(role === "admin"
+    ...(allowedRole
       ? [
           {
             header: "Aksi",
@@ -97,22 +108,22 @@ export default async function AttendanceDetailPage({
   const { className, lessonId } = await params;
   const renderRow = (item: any) => {
     const studentAttendance = item.attendances.find(
-      (att: any) => att.studentId === userId
+      (att: any) => att.studentId === userId,
     );
     const classStudentIds =
       item.lesson.class?.students?.map((s: any) => s.id) || [];
     // console.log("attendances:", JSON.stringify(item, null, 2));
 
     const relevantStudentIds = parentChildrenIds.filter((id) =>
-      classStudentIds.includes(id)
+      classStudentIds.includes(id),
     );
     const parentChildrenAttendances = relevantStudentIds.map((studentId) => {
       const attendance = item.attendances.find(
-        (att: any) => att.student?.id === studentId
+        (att: any) => att.student?.id === studentId,
       );
 
       const student = item.lesson.class.students.find(
-        (s: any) => s.id === studentId
+        (s: any) => s.id === studentId,
       );
 
       return {
@@ -148,7 +159,7 @@ export default async function AttendanceDetailPage({
               : "-"}
           </td>
           <td>
-            {role === "teacher" || role === "admin" ? (
+            {allowedRole ? (
               <div className="flex items-center gap-2">
                 <Link
                   href={`/list/attendance/${className}/${lessonId}/${item.id}`}
@@ -284,22 +295,25 @@ export default async function AttendanceDetailPage({
         },
       }),
     ]);
-  const chartData = attendanceStats.reduce((acc, item) => {
-    const studentId = item.studentId!;
-    if (!acc[studentId]) {
-      acc[studentId] = {
-        HADIR: 0,
-        SAKIT: 0,
-        ABSEN: 0,
-        IZIN: 0,
-      } as AttendanceCount;
-    }
+  const chartData = attendanceStats.reduce(
+    (acc, item) => {
+      const studentId = item.studentId!;
+      if (!acc[studentId]) {
+        acc[studentId] = {
+          HADIR: 0,
+          SAKIT: 0,
+          ABSEN: 0,
+          IZIN: 0,
+        } as AttendanceCount;
+      }
 
-    // ✅ count comes from _all, since you grouped by status
-    acc[studentId][item.status] = (item._count as { _all: number })._all;
+      // ✅ count comes from _all, since you grouped by status
+      acc[studentId][item.status] = (item._count as { _all: number })._all;
 
-    return acc;
-  }, {} as Record<string, AttendanceCount>);
+      return acc;
+    },
+    {} as Record<string, AttendanceCount>,
+  );
 
   return (
     <ClientPageWrapper key={key} role={role!}>
@@ -317,7 +331,7 @@ export default async function AttendanceDetailPage({
 
                 {/* Button: right-aligned on mobile, appears inline on desktop */}
                 <div className="flex justify-end md:justify-start md:ml-2">
-                  {role === "admin" && (
+                  {allowedRole && (
                     <FormContainer
                       table="attendance"
                       type="create"
@@ -350,11 +364,11 @@ export default async function AttendanceDetailPage({
       {role === "parent" &&
         parentChildrenIds
           .filter((id) =>
-            data[0]?.lesson?.class?.students.some((s: any) => s.id === id)
+            data[0]?.lesson?.class?.students.some((s: any) => s.id === id),
           )
           .map((studentId) => {
             const student = data[0]?.lesson?.class?.students.find(
-              (s: any) => s.id === studentId
+              (s: any) => s.id === studentId,
             );
 
             const studentStats = chartData[studentId] || {
@@ -367,7 +381,7 @@ export default async function AttendanceDetailPage({
               ([status, count]) => ({
                 status,
                 count,
-              })
+              }),
             );
             return (
               <div key={studentId} className="my-6 p-4 bg-white rounded shadow">

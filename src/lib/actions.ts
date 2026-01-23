@@ -60,8 +60,8 @@ import extractCloudinaryPublicId, {
   decryptPassword,
   getCurrentUser,
   getPeriodRange,
-  mapPaymentLogToBillSchema,
   mapPaymentType,
+  mergeDateAndTime,
   normalizeAgama,
   normalizeBirthday,
   normalizePaymentRow,
@@ -2433,19 +2433,40 @@ export const updateLesson = async (
   data: LessonSchema,
 ) => {
   try {
-    await prisma.lesson.update({
-      where: {
-        id: data.id,
-      },
-      data: {
-        name: data.name,
-        startTime: data.startTime,
-        day: data.day,
-        endTime: data.endTime,
-        subjectId: data.subjectId,
-        classId: data.classId,
-        teacherId: data.teacherId,
-      },
+    await prisma.$transaction(async (tx) => {
+      // 1. Update lesson
+      await tx.lesson.update({
+        where: { id: data.id },
+        data: {
+          name: data.name,
+          startTime: data.startTime,
+          endTime: data.endTime,
+          day: data.day,
+          subjectId: data.subjectId,
+          classId: data.classId,
+          teacherId: data.teacherId,
+        },
+      });
+
+      // 2. Fetch related meetings
+      const meetings = await tx.meeting.findMany({
+        where: { lessonId: data.id },
+        select: {
+          id: true,
+          date: true,
+        },
+      });
+
+      // 3. Update each meeting with its own date + new times
+      for (const meeting of meetings) {
+        await tx.meeting.update({
+          where: { id: meeting.id },
+          data: {
+            startTime: mergeDateAndTime(meeting.date, new Date(data.startTime)),
+            endTime: mergeDateAndTime(meeting.date, new Date(data.endTime)),
+          },
+        });
+      }
     });
 
     const updatedLesson = await prisma.lesson.findUnique({
@@ -3953,11 +3974,17 @@ export async function updatePaymentLog(
         amount: safeDecimal(inst.amount),
       })),
     };
+
+    const newRecord = await prisma.paymentLog.findUnique({
+      where: { id: data.id },
+      include: { paymentInstallments: true },
+    });
     logPaymentChange({
       action: "UPDATE_BILL",
       paymentLogId: safePayment.id,
-      oldValue: oldRecord,
-      newValue: safePayment,
+      oldValue: snapshotPayment(oldRecord),
+      newValue: snapshotPayment(newRecord!),
+      isReverted: false,
     });
     return {
       success: true,
@@ -4074,9 +4101,10 @@ export const deletePaymentLog = async (
 
     await logPaymentChange({
       action: "DELETE_BILL",
-      paymentLogId: idAsNumber!,
+      paymentLogId: before.id!,
       oldValue: snapshotPayment(before), // ✅ SCHEMA SHAPE
       newValue: null,
+      isReverted: false,
     });
     await new Promise((resolve) => setTimeout(resolve, 1000));
     await prisma.paymentLog.delete({
@@ -4120,8 +4148,9 @@ export const deletePaymentLogs = async (
         await logPaymentChange({
           action: "DELETE_PAYMENTS",
           paymentLogId: before.id,
-          oldValue: before,
+          oldValue: snapshotPayment(before),
           newValue: null,
+          isReverted: false,
         });
         await prisma.paymentLog.delete({ where: { id: idAsNumber } });
       } catch (innerError) {
@@ -5966,6 +5995,7 @@ export async function createBill(
           paymentLogId: payment.id,
           oldValue: null,
           newValue: snapshotPayment(payment),
+          isReverted: false,
         }),
       ),
     );
@@ -6113,6 +6143,7 @@ export async function updateBill(
       paymentLogId: safePayment.id,
       oldValue: snapshotPayment(oldRecord),
       newValue: snapshotPayment(after!),
+      isReverted: false,
     });
     return {
       success: true,
@@ -6292,6 +6323,7 @@ export async function createPayment(
       installmentId: null, // multiple → null
       oldValue: null,
       newValue: snapshotPayment(after!),
+      isReverted: false,
     });
 
     return {
@@ -6375,9 +6407,9 @@ export async function updatePayment(
       ? paidHistory[paidHistory.length - 1].paidAt
       : null;
 
-    const oldInstallments = await prisma.paymentInstallment.findMany({
-      where: { paymentLogId: paymentId },
-      orderBy: { createdAt: "asc" },
+    const oldInstallments = await prisma.paymentLog.findUnique({
+      where: { id: paymentId },
+      include: { paymentInstallments: true },
     });
 
     // 4️⃣ After validation → update installments
@@ -6391,9 +6423,9 @@ export async function updatePayment(
       });
     }
 
-    const newInstallments = await prisma.paymentInstallment.findMany({
-      where: { paymentLogId: paymentId },
-      orderBy: { createdAt: "asc" },
+    const newInstallments = await prisma.paymentLog.findUnique({
+      where: { id: paymentId },
+      include: { paymentInstallments: true },
     });
 
     // 4️⃣ Log
@@ -6401,14 +6433,9 @@ export async function updatePayment(
       action: "UPDATE_PAYMENTS",
       paymentLogId: paymentId,
 
-      oldValue: {
-        paymentId,
-        paymentInstallments: oldInstallments,
-      },
-      newValue: {
-        paymentId,
-        paymentInstallments: newInstallments,
-      },
+      oldValue: snapshotPayment(oldInstallments!),
+      newValue: snapshotPayment(newInstallments!),
+      isReverted: false,
     });
 
     // 5️⃣ Update payment log AFTER installments update

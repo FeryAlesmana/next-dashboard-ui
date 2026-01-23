@@ -34,13 +34,16 @@ const PaymentLogListPage = async ({
   const { role, userId } = await getCurrentUser();
   const sp = await normalizeSearchParams(searchParams);
   const key = new URLSearchParams(
-    Object.entries(sp).reduce((acc, [k, v]) => {
-      if (v !== undefined) acc[k] = v;
-      return acc;
-    }, {} as Record<string, string>)
+    Object.entries(sp).reduce(
+      (acc, [k, v]) => {
+        if (v !== undefined) acc[k] = v;
+        return acc;
+      },
+      {} as Record<string, string>,
+    ),
   ).toString();
   const { page, limit, ...queryParams } = sp;
-  const p = page ? parseInt(page) : 1;
+  const p = sp.search ? 1 : page ? parseInt(page) : 1;
   const perPage = limit === "all" ? 50 : parseInt(limit ?? "10");
   let staffRole: staffrole;
   if (role === "staff") {
@@ -119,7 +122,7 @@ const PaymentLogListPage = async ({
         semesterOptions = generateSemesters(
           oldest.createdAt,
           highest._max.level ?? 3,
-          role
+          role,
         );
       }
       break;
@@ -198,7 +201,7 @@ const PaymentLogListPage = async ({
             ...child,
             payments,
           };
-        })
+        }),
       );
 
       return (
@@ -387,7 +390,7 @@ const PaymentLogListPage = async ({
   safeData.forEach((log) => {
     const totalPaid = log.paymentInstallments.reduce(
       (acc, ins) => acc + ins.amount,
-      0
+      0,
     );
     const remaining = log.amount - totalPaid;
     remainingMap[log.id] = remaining;
@@ -417,8 +420,8 @@ const PaymentLogListPage = async ({
     new Set(
       classesData
         .map((cls) => cls.grade?.level)
-        .filter((level): level is number => level !== undefined)
-    )
+        .filter((level): level is number => level !== undefined),
+    ),
   )
     .sort((a, b) => a - b)
     .map((level) => ({

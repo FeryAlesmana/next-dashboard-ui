@@ -12,6 +12,7 @@ export async function logPaymentChange({
   newValue,
   installmentId,
   revertedFromId,
+  isReverted,
 }: {
   action: ChangeAction;
   paymentLogId?: number;
@@ -19,9 +20,14 @@ export async function logPaymentChange({
   installmentId?: number | null;
   oldValue: any;
   newValue: any;
+  isReverted: boolean;
 }) {
   const user = await currentUser();
   const role = user?.publicMetadata?.role as string | undefined;
+  console.log(paymentLogId, "= Payment log id in logpaymentChange");
+  console.log(isReverted, "= isReverted in logpaymentChange");
+  console.log(revertedFromId, "= revertedFromId in logpaymentChange");
+
   // Clean installments for logging
   const oldSnapshot = oldValue || null;
 
@@ -30,8 +36,11 @@ export async function logPaymentChange({
   return prisma.paymentLogChange.create({
     data: {
       action,
-      paymentLogId,
-      installmentId,
+      paymentLogId: paymentLogId,
+      plogId: paymentLogId,
+      installmentId: installmentId,
+      isReverted: isReverted,
+      revertedFromId: revertedFromId,
       oldValue: oldSnapshot,
       newValue: newSnapshot,
       changedById: user?.id || "unknown",

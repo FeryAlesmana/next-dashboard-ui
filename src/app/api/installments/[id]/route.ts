@@ -3,7 +3,6 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { logPaymentChange } from "@/lib/paymentLogChange";
 import { PaymentStatus } from "@prisma/client";
-import { mapPaymentLogToPaymentSchema } from "@/lib/utils";
 import { snapshotPayment } from "@/lib/paymentSnapshot";
 
 function safeNumber(val: any) {
@@ -64,6 +63,7 @@ export async function DELETE(req: Request, { params }: Params) {
       paymentLogId: logs.id,
       oldValue: snapshotPayment(before!), // ✅ SCHEMA SHAPE
       newValue: null,
+      isReverted: false
     });
 
     await prisma.paymentInstallment.delete({ where: { id: installmentId } });

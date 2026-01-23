@@ -7,7 +7,7 @@ import Table from "./Table";
 import Pagination from "./Pagination";
 
 interface LessonListContainerProps {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
   columns: {
     header: string;
     accessor: string;
@@ -21,9 +21,10 @@ export default async function LessonListContainer({
   columns,
   renderRow,
 }: LessonListContainerProps) {
-  const sp = normalizeSearchParams(searchParams);
-  const { page, ...queryParams } = await sp;
-  const p = page ? parseInt(page) : 1;
+  const sp = await normalizeSearchParams(searchParams);
+  const { page, ...queryParams } = sp;
+
+  const p = sp.search ? 1 : page ? parseInt(page) : 1;
 
   const { role, userId } = await getCurrentUser();
   const query: Prisma.LessonWhereInput = {};
@@ -90,7 +91,7 @@ export default async function LessonListContainer({
               },
             });
             return { ...cls, lessons };
-          })
+          }),
         );
         // Fetch teaching lessons separately
         const [teachingLessons, lessonCount] = await prisma.$transaction([

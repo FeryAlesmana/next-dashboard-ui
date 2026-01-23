@@ -66,7 +66,7 @@ export default function ChangeItemPopover({
               {new Date(item.createdAt).toLocaleString("id-ID")}
             </p>
           </div>
-          {item.revertedFromId === null && (
+          {item.isReverted === false && (
             <button
               disabled={loading}
               onClick={revertChange}

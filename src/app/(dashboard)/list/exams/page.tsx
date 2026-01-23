@@ -42,12 +42,15 @@ const ExamListPage = async ({
   const sp = await normalizeSearchParams(searchParams);
   const { page, limit, ...queryParams } = sp;
   const key = new URLSearchParams(
-    Object.entries(sp).reduce((acc, [k, v]) => {
-      if (v !== undefined) acc[k] = v;
-      return acc;
-    }, {} as Record<string, string>)
+    Object.entries(sp).reduce(
+      (acc, [k, v]) => {
+        if (v !== undefined) acc[k] = v;
+        return acc;
+      },
+      {} as Record<string, string>,
+    ),
   ).toString();
-  const p = page ? parseInt(page) : 1;
+  const p = sp.search ? 1 : page ? parseInt(page) : 1;
   const perPage = limit === "all" ? 50 : parseInt(limit ?? "10");
 
   const { role, userId } = await getCurrentUser();
@@ -206,7 +209,7 @@ const ExamListPage = async ({
         semesterOptions = generateSemesters(
           oldest.createdAt,
           highest._max.level ?? 3,
-          role
+          role,
         );
       }
       break;
@@ -228,13 +231,13 @@ const ExamListPage = async ({
       const Murid = teacher?.classes.flatMap((kelas) => kelas.students) ?? [];
       if (Murid.length > 0) {
         const highest = Murid.reduce((a, b) =>
-          (a.grade?.level ?? 0) > (b.grade?.level ?? 0) ? a : b
+          (a.grade?.level ?? 0) > (b.grade?.level ?? 0) ? a : b,
         );
 
         semesterOptions = generateSemesters(
           highest.createdAt,
           highest.grade?.level ?? 1,
-          role
+          role,
         );
       }
       break;
@@ -260,7 +263,7 @@ const ExamListPage = async ({
         semesterOptions = generateSemesters(
           student.createdAt,
           gradeLevel,
-          role
+          role,
         );
       }
       break;
@@ -325,11 +328,11 @@ const ExamListPage = async ({
               startTime: exam.startTime,
               endTime: exam.endTime,
               exType: exam.exType,
-            }))
+            })),
           );
 
           return { ...child, exams };
-        })
+        }),
       );
 
       students = studentsWithExams;
@@ -397,8 +400,8 @@ const ExamListPage = async ({
     new Set(
       classes
         .map((cls) => cls.grade?.level)
-        .filter((level): level is number => level !== undefined)
-    )
+        .filter((level): level is number => level !== undefined),
+    ),
   )
     .sort((a, b) => a - b)
     .map((level) => ({

@@ -28,19 +28,22 @@ const ResultListPage = async ({
   const { role, userId } = await getCurrentUser();
   const sp = await normalizeSearchParams(searchParams);
   const key = new URLSearchParams(
-    Object.entries(sp).reduce((acc, [k, v]) => {
-      if (v !== undefined) acc[k] = v;
-      return acc;
-    }, {} as Record<string, string>)
+    Object.entries(sp).reduce(
+      (acc, [k, v]) => {
+        if (v !== undefined) acc[k] = v;
+        return acc;
+      },
+      {} as Record<string, string>,
+    ),
   ).toString();
   const { page, limit, ...queryParams } = sp;
-  const p = page ? parseInt(page) : 1;
+  const p = sp.search ? 1 : page ? parseInt(page) : 1;
   const perPage = limit === "all" ? 50 : parseInt(limit ?? "10");
   let staffRole: staffrole;
   let semesterOptions: any = [];
   if (role === "staff") {
     const staffrole = await getCurrentStaff(userId!);
-    staffRole = staffrole; 
+    staffRole = staffrole;
 
     const oldest = await prisma.student.findFirst({
       orderBy: { createdAt: "asc" },
@@ -54,7 +57,7 @@ const ResultListPage = async ({
       semesterOptions = generateSemesters(
         oldest.createdAt,
         highest._max.level ?? 3,
-        role
+        role,
       );
     }
   }
@@ -226,7 +229,7 @@ const ResultListPage = async ({
         semesterOptions = generateSemesters(
           oldest.createdAt,
           highest._max.level ?? 3,
-          role
+          role,
         );
       }
       break;
@@ -251,13 +254,13 @@ const ResultListPage = async ({
       const Murid = teacher?.classes.flatMap((kelas) => kelas.students) ?? [];
       if (Murid.length > 0) {
         const highest = Murid.reduce((a, b) =>
-          (a.grade?.level ?? 0) > (b.grade?.level ?? 0) ? a : b
+          (a.grade?.level ?? 0) > (b.grade?.level ?? 0) ? a : b,
         );
 
         semesterOptions = generateSemesters(
           highest.createdAt,
           highest.grade?.level ?? 1,
-          role
+          role,
         );
       }
       break;
@@ -427,7 +430,7 @@ const ResultListPage = async ({
             ...child,
             results: mappedResults,
           };
-        })
+        }),
       );
 
       return (

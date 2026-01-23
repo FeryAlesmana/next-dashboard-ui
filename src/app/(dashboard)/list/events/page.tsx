@@ -28,12 +28,15 @@ const EventListPage = async ({
   const sp = await normalizeSearchParams(searchParams);
   const { page, limit, ...queryParams } = sp;
   const key = new URLSearchParams(
-    Object.entries(sp).reduce((acc, [k, v]) => {
-      if (v !== undefined) acc[k] = v;
-      return acc;
-    }, {} as Record<string, string>)
+    Object.entries(sp).reduce(
+      (acc, [k, v]) => {
+        if (v !== undefined) acc[k] = v;
+        return acc;
+      },
+      {} as Record<string, string>,
+    ),
   ).toString();
-  const p = page ? parseInt(page) : 1;
+  const p = sp.search ? 1 : page ? parseInt(page) : 1;
   const perPage = limit === "all" ? 50 : parseInt(limit ?? "10");
 
   const { role, userId } = await getCurrentUser();
@@ -212,7 +215,7 @@ const EventListPage = async ({
     if (student) {
       semesters = generateSemesters(
         student.createdAt,
-        student.grade?.level ?? 1
+        student.grade?.level ?? 1,
       );
     }
   }
@@ -242,12 +245,12 @@ const EventListPage = async ({
     if (all.length > 0) {
       // Pick the child with the **highest grade level**
       const highest = all.reduce((a, b) =>
-        (a.grade?.level ?? 0) > (b.grade?.level ?? 0) ? a : b
+        (a.grade?.level ?? 0) > (b.grade?.level ?? 0) ? a : b,
       );
       semesters = generateSemesters(
         highest.createdAt,
         highest.grade?.level ?? 1,
-        role
+        role,
       );
     }
   }
@@ -265,7 +268,7 @@ const EventListPage = async ({
       semesters = generateSemesters(
         oldest.createdAt,
         highest._max.level ?? 3,
-        role
+        role,
       );
     }
   }

@@ -24,13 +24,16 @@ const PpdbPage = async ({
   const { role, userId } = await getCurrentUser();
   const sp = await normalizeSearchParams(searchParams);
   const key = new URLSearchParams(
-    Object.entries(sp).reduce((acc, [k, v]) => {
-      if (v !== undefined) acc[k] = v;
-      return acc;
-    }, {} as Record<string, string>)
+    Object.entries(sp).reduce(
+      (acc, [k, v]) => {
+        if (v !== undefined) acc[k] = v;
+        return acc;
+      },
+      {} as Record<string, string>,
+    ),
   ).toString();
   const { page, limit, ...queryParams } = sp;
-  const p = page ? parseInt(page) : 1;
+  const p = sp.search ? 1 : page ? parseInt(page) : 1;
 
   const perPage = limit === "all" ? 50 : parseInt(limit ?? "10");
   let staffRole: staffrole;
@@ -122,12 +125,12 @@ const PpdbPage = async ({
               const startOfMonth = new Date(
                 now.getFullYear(),
                 now.getMonth(),
-                1
+                1,
               );
               const endOfMonth = new Date(
                 now.getFullYear(),
                 now.getMonth() + 1,
-                0
+                0,
               );
               endOfMonth.setHours(23, 59, 59, 999);
 

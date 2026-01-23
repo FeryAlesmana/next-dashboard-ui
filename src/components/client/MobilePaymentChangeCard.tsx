@@ -53,6 +53,12 @@ export function MobilePaymentChangeCard({
             Tambah Pembayaran
           </span>
         );
+      case "UPDATE_PAYMENTS":
+        return (
+          <span className="px-2 py-1 rounded-full text-xs font-medium bg-cyan-100 text-cyan-700">
+            Edit Pembayaran
+          </span>
+        );
 
       case "UPDATE_BILL":
         return (

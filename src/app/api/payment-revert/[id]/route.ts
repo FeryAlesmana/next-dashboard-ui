@@ -11,7 +11,7 @@ import { PaymentSnapshot } from "@/lib/paymentSnapshot";
 import prisma from "@/lib/prisma";
 import { toPaymentLogUpdateInput } from "@/lib/utils";
 import { currentUser } from "@clerk/nextjs/server";
-import { PaymentStatus } from "@prisma/client";
+import { ChangeAction, PaymentStatus } from "@prisma/client";
 import { NextResponse } from "next/server";
 
 type Params = {
@@ -96,8 +96,8 @@ const REVERT_ACTION_MAP: Record<string, (ctx: RevertContext) => Promise<void>> =
       await restoreSnapshot(oldValue);
     },
     // ✅ REVERT is reversible by swapping values
-    REVERT: async ({ oldValue }) => {
-      await restoreSnapshot(oldValue);
+    REVERT: async ({ newValue }) => {
+      await restoreSnapshot(newValue);
     },
   };
 
@@ -114,6 +114,14 @@ export async function POST(req: Request, { params }: Params) {
     where: { id: changeId },
   });
 
+  let reverted = false;
+  let dAction: ChangeAction = "REVERT";
+
+  if (log?.action === "REVERT") {
+    reverted = true;
+    dAction = "UNREVERT";
+  }
+
   if (!log) {
     return new NextResponse("Not Found", { status: 404 });
   }
@@ -124,7 +132,11 @@ export async function POST(req: Request, { params }: Params) {
       revertedFromId: log.id,
     },
   });
-
+  if (log.isReverted) {
+    return new NextResponse("This change has already been reverted", {
+      status: 400,
+    });
+  }
   if (alreadyReverted) {
     return new NextResponse("This change has already been reverted", {
       status: 400,
@@ -132,6 +144,11 @@ export async function POST(req: Request, { params }: Params) {
   }
 
   const handler = REVERT_ACTION_MAP[log.action];
+  await prisma.paymentLogChange.update({
+    where: { id: log.id },
+    data: { isReverted: true },
+  });
+
   if (!handler) {
     return new NextResponse("Action not revertible", { status: 400 });
   }
@@ -146,11 +163,12 @@ export async function POST(req: Request, { params }: Params) {
 
     // ✅ Mark revert in changelog
     await logPaymentChange({
-      action: "REVERT",
+      action: dAction,
       paymentLogId: log.paymentLogId ?? undefined,
       oldValue: log.newValue,
       newValue: log.oldValue,
       revertedFromId: log.id, // 👈 CRITICAL
+      isReverted: reverted,
     });
 
     return NextResponse.json({

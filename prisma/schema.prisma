@@ -541,6 +541,8 @@ model PaymentLogChange {
   id           Int         @id @default(autoincrement())
   paymentLogId Int?
   paymentLog   PaymentLog? @relation(fields: [paymentLogId], references: [id], onDelete: SetNull)
+  plogId       Int?
+  isReverted   Boolean     @default(false)
 
   installmentId     Int?
   paymentIstallment PaymentInstallment? @relation(fields: [installmentId], references: [id], onDelete: SetNull)

@@ -37,13 +37,16 @@ const LessonListPage = async ({
   const sp = await normalizeSearchParams(searchParams);
   const { page, limit, ...queryParams } = sp;
   const key = new URLSearchParams(
-    Object.entries(sp).reduce((acc, [k, v]) => {
-      if (v !== undefined) acc[k] = v;
-      return acc;
-    }, {} as Record<string, string>)
+    Object.entries(sp).reduce(
+      (acc, [k, v]) => {
+        if (v !== undefined) acc[k] = v;
+        return acc;
+      },
+      {} as Record<string, string>,
+    ),
   ).toString();
 
-  const p = page ? parseInt(page) : 1;
+  const p = sp.search ? 1 : page ? parseInt(page) : 1;
   const perPage = limit === "all" ? 50 : parseInt(limit ?? "10");
 
   const { role, userId } = await getCurrentUser();
@@ -271,7 +274,7 @@ const LessonListPage = async ({
         semesterOptions = generateSemesters(
           oldest.createdAt,
           highest._max.level ?? 3,
-          role
+          role,
         );
       }
       break;
@@ -294,7 +297,7 @@ const LessonListPage = async ({
               },
             });
             return { ...cls, lessons };
-          })
+          }),
         );
         // Fetch teaching lessons separately
         const [teachingLessons, lessonCount] = await prisma.$transaction([
@@ -483,7 +486,7 @@ const LessonListPage = async ({
             : [];
 
           return { ...child, lessons };
-        })
+        }),
       );
 
       return (
@@ -551,8 +554,8 @@ const LessonListPage = async ({
     new Set(
       classesData
         .map((cls) => cls.grade?.level)
-        .filter((level): level is number => level !== undefined)
-    )
+        .filter((level): level is number => level !== undefined),
+    ),
   )
     .sort((a, b) => a - b)
     .map((level) => ({
