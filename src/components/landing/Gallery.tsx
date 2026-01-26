@@ -35,18 +35,26 @@ const Gallery: React.FC<imagesDb> = ({ DBimages, role }) => {
             <Image src="/updateDark.png" alt="edit" width={16} height={16} />
           </Link>
         )}
-        <div className="  grid grid-cols-2 md:grid-cols-3 gap-6">
+
+        <div
+          className={`grid gap-6 ${
+            images.length === 1
+              ? "grid-cols-1 place-items-center"
+              : "grid-cols-2 md:grid-cols-3"
+          }`}
+        >
           {images.map((img, i) => (
             <div
               key={i}
-              className="overflow-hidden rounded-xl border border-white/10 bg-white/10 backdrop-blur-md shadow-md hover:shadow-xl transition-all duration-300"
+              className="relative w-full max-w-md aspect-[16/9] overflow-hidden rounded-xl border border-white/10 bg-white/10 backdrop-blur-md shadow-md hover:shadow-xl transition-all duration-300"
             >
               <Image
-                width={340}
-                height={192}
                 src={img}
                 alt={`Galeri ${i + 1}`}
-                className="w-full h-48 object-cover hover:scale-105 transition-transform duration-500 ease-in-out"
+                fill
+                sizes="(min-width: 768px) 33vw, 50vw"
+                className="object-cover transition-transform duration-500 hover:scale-105"
+                quality={90}
               />
             </div>
           ))}

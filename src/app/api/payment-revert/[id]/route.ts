@@ -12,6 +12,7 @@ import prisma from "@/lib/prisma";
 import { toPaymentLogUpdateInput } from "@/lib/utils";
 import { currentUser } from "@clerk/nextjs/server";
 import { ChangeAction, PaymentStatus } from "@prisma/client";
+import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
 type Params = {
@@ -162,7 +163,7 @@ export async function POST(req: Request, { params }: Params) {
     });
 
     // ✅ Mark revert in changelog
-    await logPaymentChange({
+    const newLogRaw = await logPaymentChange({
       action: dAction,
       paymentLogId: log.paymentLogId ?? undefined,
       oldValue: log.newValue,
@@ -171,9 +172,16 @@ export async function POST(req: Request, { params }: Params) {
       isReverted: reverted,
     });
 
+    const newLog = await prisma.paymentLogChange.findUnique({
+      where: { id: newLogRaw.id },
+    });
+
+    revalidatePath("/list/payment/changelog");
+
     return NextResponse.json({
       success: true,
       revertedPaymentLogId: log.paymentLogId,
+      revertedLog: newLog,
     });
   } catch (err) {
     console.error("REVERT FAILED:", err);

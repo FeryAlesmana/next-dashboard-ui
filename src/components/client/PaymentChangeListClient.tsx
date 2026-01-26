@@ -53,7 +53,10 @@ export default function PaymentChangeListClient({
         }
       });
 
-      return updated;
+      return updated.sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      );
     });
   };
 
@@ -305,6 +308,7 @@ export default function PaymentChangeListClient({
               item={localData.find((r) => r.id === openRow)}
               index={localData.findIndex((r) => r.id === openRow) + 1}
               onClose={() => setOpenRow(null)}
+              onChanged={handleChanged} // 👈 ADD THIS
             />
           )}
         </>

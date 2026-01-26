@@ -1,4 +1,5 @@
-'use client';
+"use client";
+import Image from "next/image";
 import React from "react";
 import { FaChalkboardTeacher, FaTrophy, FaUsers } from "react-icons/fa";
 
@@ -42,11 +43,63 @@ const Features: React.FC = () => {
             >
               <div className="flex flex-col items-center">
                 {item.icon}
-                <h3 className="text-xl font-semibold text-white mb-2">{item.title}</h3>
+                <h3 className="text-xl font-semibold text-white mb-2">
+                  {item.title}
+                </h3>
                 <p className="text-white/90">{item.desc}</p>
               </div>
             </div>
           ))}
+        </div>
+        {/* Program Nasional */}
+        <div className="mt-20">
+          <h3 className="text-2xl font-bold text-white mb-8 drop-shadow">
+            Didukung Program Nasional
+          </h3>
+
+          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            {/* Sekolah Ramah Anak */}
+            <div className="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/10 flex items-center gap-5">
+              {/* Logo box */}
+              <div className="bg-white rounded-xl w-20 h-20 flex items-center justify-center shadow">
+                <Image
+                  src="/sra.png"
+                  alt="Sekolah Ramah Anak"
+                  width={64}
+                  height={64}
+                  className="object-contain"
+                />
+              </div>
+
+              <div className="text-left">
+                <h4 className="font-semibold text-white">Sekolah Ramah Anak</h4>
+                <p className="text-sm text-white/80">
+                  Lingkungan belajar yang aman, inklusif, dan bebas perundungan.
+                </p>
+              </div>
+            </div>
+
+            {/* Kurikulum Merdeka */}
+            <div className="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/10 flex items-center gap-5">
+              <div className="bg-white rounded-xl w-20 h-20 flex items-center justify-center shadow">
+                <Image
+                  src="/Kurikulum_merdeka.png"
+                  alt="Kurikulum Merdeka"
+                  width={64}
+                  height={64}
+                  className="object-contain"
+                />
+              </div>
+
+              <div className="text-left">
+                <h4 className="font-semibold text-white">Kurikulum Merdeka</h4>
+                <p className="text-sm text-white/80">
+                  Pembelajaran fleksibel yang berfokus pada minat dan potensi
+                  siswa.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>

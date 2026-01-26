@@ -10,10 +10,12 @@ export default function ChangeItemPopover({
   item,
   index,
   onClose,
+  onChanged,
 }: {
   item: any;
   index: number;
   onClose: () => void;
+  onChanged: (item: any) => void;
 }) {
   const router = useRouter();
   if (typeof window === "undefined") return null;
@@ -38,12 +40,25 @@ export default function ChangeItemPopover({
 
       setLoading(false);
 
-      if (res.ok) {
-        toast("Berhasil di kembalikan");
-        router.refresh();
-      } else {
+      const data = await res.json();
+
+      if (!res.ok) {
         toast("Gagal di kembalikan");
+        return;
       }
+
+      toast("Berhasil di kembalikan");
+
+      // ✅ Update original row
+      onChanged({
+        ...item,
+        isReverted: true,
+      });
+
+      // ✅ Insert new REVERT row
+      onChanged(data.revertedLog);
+
+      onClose();
     }
 
     return (
