@@ -169,7 +169,12 @@ export function MobilePaymentChangeCard({
         </div>
       )}
       {openRow === data.id && (
-        <ChangeItemPopover item={data} index={1} onClose={onClose} />
+        <ChangeItemPopover
+          item={data}
+          index={1}
+          onClose={onClose}
+          onChanged={onChanged!}
+        />
       )}
     </div>
   );
