@@ -63,7 +63,7 @@ const Features: React.FC = () => {
               {/* Logo box */}
               <div className="bg-white rounded-xl w-20 h-20 flex items-center justify-center shadow">
                 <Image
-                  src="/sra.png"
+                  src="/sraedited.png"
                   alt="Sekolah Ramah Anak"
                   width={64}
                   height={64}
@@ -83,7 +83,7 @@ const Features: React.FC = () => {
             <div className="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/10 flex items-center gap-5">
               <div className="bg-white rounded-xl w-20 h-20 flex items-center justify-center shadow">
                 <Image
-                  src="/Kurikulum_merdeka.png"
+                  src="/Kurikulum_Merdeka1.png"
                   alt="Kurikulum Merdeka"
                   width={64}
                   height={64}
