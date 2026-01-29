@@ -2992,8 +2992,6 @@ export const updatePpdb = async (
   data: PpdbSchema,
 ) => {
   try {
-    
-
     if (!data.id) {
       console.log(data.id + "Data.id");
       return { success: false, error: true, message: "Missing student ID" };
@@ -3003,17 +3001,17 @@ export const updatePpdb = async (
     // If isvalid is true, create a new user and student
     if (data.isvalid === true) {
       const existingPpdb = await prisma.pPDB.findUnique({
-      where: { id: data.id },
-      select: { isvalid: true, studentId: true },
-    });
+        where: { id: data.id },
+        select: { isvalid: true, studentId: true },
+      });
 
-    if (existingPpdb?.isvalid && existingPpdb?.studentId) {
-      return {
-        success: false,
-        error: true,
-        message: "PPDB ini sudah diproses menjadi siswa.",
-      };
-    }
+      if (existingPpdb?.isvalid && existingPpdb?.studentId) {
+        return {
+          success: false,
+          error: true,
+          message: "PPDB ini sudah diproses menjadi siswa.",
+        };
+      }
       const existing = await prisma.student.findFirst({
         where: { student_details: { nisn: data.nisn } },
       });
@@ -4317,6 +4315,8 @@ export const createUserDB = async (
 
     return { success: true, error: false, id: user.id, data: transformedRow };
   } catch (error: any) {
+    const prismaError = handlePrismaError(error);
+    if (prismaError) return prismaError;
     console.error("Create student failed:", error);
     if (error?.errors) {
       console.error("Clerk errors:", JSON.stringify(error.errors, null, 2));
@@ -4415,6 +4415,8 @@ export const updateUserDB = async (
 
     return { success: true, error: false, id: user.id, data: transformedRow };
   } catch (error: any) {
+    const prismaError = handlePrismaError(error);
+    if (prismaError) return prismaError;
     console.error("Update user failed:", error);
     let message = "Unknown error";
     let field: string | undefined;
