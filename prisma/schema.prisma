@@ -10,14 +10,14 @@ datasource db {
 model Admin {
   id       String @id
   username String @unique
-  password String @unique
+  password String
 }
 
 model Staff {
   id         String           @id
   name       String
   username   String           @unique
-  password   String           @unique
+  password   String
   staffroles staffrole?
   email      String?          @unique
   phone      String           @unique
@@ -44,7 +44,7 @@ enum staffrole {
 model Student {
   id        String   @id
   username  String   @unique
-  password  String   @unique
+  password  String
   name      String
   email     String?  @unique
   phone     String?
@@ -75,6 +75,7 @@ model Student {
   attendance      Attendance[]
   results         Result[]
   birthday        DateTime
+  studentDb PPDB?
 
   paymentLogs PaymentLog[]
 }
@@ -82,7 +83,7 @@ model Student {
 model Teacher {
   id        String    @id
   username  String    @unique
-  password  String    @unique
+  password  String
   name      String
   email     String?   @unique
   phone     String    @unique
@@ -105,7 +106,7 @@ model Teacher {
 model Parent {
   id                String    @id
   username          String    @unique
-  password          String    @unique
+  password          String
   name              String
   sex               UserSex
   birthday          DateTime
@@ -221,6 +222,9 @@ model PPDB {
   dokumenPasfoto     String?
   dokumenKKKTP       String?
   createdAt          DateTime  @default(now())
+
+  studentId String?  @unique // 👈 important
+  student   Student? @relation(fields: [studentId], references: [id])
 }
 
 model Grade {

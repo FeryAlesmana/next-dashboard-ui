@@ -1516,6 +1516,12 @@ const FormulirPendaftaran = ({
                   />
                   Formulir Valid?
                 </label>
+                <p className="text-sm text-orange-600 mb-4">
+                  Peringatan: Setelah formulir divalidasi, data tidak dapat
+                  diedit kembali. Pastikan seluruh data sudah benar sebelum
+                  mencentang `&quot;Formulir Valid`&quot;.
+                </p>
+
                 {errors.isvalid && (
                   <p className="text-red-600">{errors.isvalid.message}</p>
                 )}

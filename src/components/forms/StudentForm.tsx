@@ -64,14 +64,14 @@ const StudentForm = ({
   const [showActivateDialog, setShowActivateDialog] = useState(false);
   const createStudentHandler = async (
     prevState: CurrentState,
-    payload: CreatestudentSchema
+    payload: CreatestudentSchema,
   ): Promise<CurrentState> => {
     return await createStudent(prevState, payload);
   };
 
   const updateStudentHandler = async (
     prevState: CurrentState,
-    payload: UpdatestudentSchema
+    payload: UpdatestudentSchema,
   ): Promise<CurrentState> => {
     return await updateStudent(prevState, payload);
   };
@@ -84,12 +84,12 @@ const StudentForm = ({
   };
   const [state, formAction] = useActionState(
     type === "create" ? createStudentHandler : updateStudentHandler,
-    initialState
+    initialState,
   );
 
   const handleFileUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
-    name: keyof typeof dokumen
+    name: keyof typeof dokumen,
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -161,11 +161,11 @@ const StudentForm = ({
       const updatedItem = state.data ?? data; // <- depends on what your action returns
 
       toast(
-        `Siswa telah berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`
+        `Siswa telah berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`,
       );
       setOpen(false);
       if (type === "create") {
-        setTimeout(() => router.push(`/list/students${state.id}`), 3000);
+        setTimeout(() => router.push(`/list/students/${state.id}`), 3000);
       }
       if (onChanged && updatedItem) {
         onChanged(updatedItem); // 🔥 notify parent so it can update localData
@@ -190,7 +190,7 @@ const StudentForm = ({
         <h1 className="text-xl font-semibold">
           {type === "create" ? "Tambah Siswa baru" : "Edit Siswa"}
         </h1>
-        <span className="text-xs text-gray-400 font-medium">
+        <span className="text-xs text-gray-600 font-medium">
           Informasi Autentikasi
         </span>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
@@ -240,7 +240,7 @@ const StudentForm = ({
             </label>
           </div>
         </div>
-        <span className="text-xs text-gray-400 font-medium">
+        <span className="text-xs text-gray-600 font-medium">
           Informasi Personal
         </span>
         <UploadPhoto
@@ -249,11 +249,12 @@ const StudentForm = ({
         />
         <div className="flex justify-center flex-wrap gap-4 gap-x-20">
           <InputField
-            label="Nama depan"
+            label="Nama Lengkap"
             name="name"
             defaultValue={data?.name}
             register={register}
             error={errors?.name}
+            placeholder="Masukkan Nama Siswa"
           ></InputField>
           <InputField
             label="No. Telepon"
@@ -280,7 +281,7 @@ const StudentForm = ({
             placeholder="Contoh: Jl. Menanam No. 37, RT. 02/05, Kelurahan Curug, Kecamatan Bojongsari"
           ></InputField>
           <div className="flex flex-col gap-2 w-full md:w-1/4">
-            <label className="text-xs text-gray-400">Agama</label>
+            <label className="text-xs text-gray-600">Agama</label>
             <select
               className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
               {...register("religion")}
@@ -415,7 +416,7 @@ const StudentForm = ({
             placeholder="Yang dipakai menuju sekolah"
           ></InputField>
           <div className="flex flex-col gap-2 w-full md:w-1/4">
-            <label className="text-xs text-gray-400">Tempat Tinggal</label>
+            <label className="text-xs text-gray-600">Tempat Tinggal</label>
             <select
               {...register("tempat_tinggal")}
               className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
@@ -435,16 +436,36 @@ const StudentForm = ({
               </p>
             )}
           </div>
-          <InputField
+          {/* <InputField
             label="KPS"
             name="kps"
             defaultValue={data?.student_details?.kps}
             register={register}
             error={errors?.kps}
             placeholder="Masukkan KPS"
-          ></InputField>
+          ></InputField> */}
+
+          <div className="flex flex-col gap-2 w-full md:w-1/4">
+            <label className="text-xs text-gray-600">
+              Penerima KPS (KIP/KIS/KKS)
+            </label>
+            <select
+              {...register("kps")}
+              className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
+              defaultValue={data?.student_details?.kps}
+            >
+              <option value="">-- Pilih --</option>
+              <option value="KIP">KIP</option>
+              <option value="KIS">KIS</option>
+              <option value="KKS">KKS</option>
+            </select>
+            {errors.kps && (
+              <p className="text-red-600">{errors.kps.message?.toString()}</p>
+            )}
+          </div>
+
           <InputField
-            label="No KPS"
+            label="No KPS (Opsional)"
             name="no_kps"
             defaultValue={data?.student_details?.no_kps}
             register={register}
@@ -484,7 +505,7 @@ const StudentForm = ({
             placeholder="Isi dengan angka saja"
           ></InputField>
           <InputField
-            label="Penghargaan"
+            label="Jenis Prestasi (Opsional)"
             name="awards"
             defaultValue={data?.student_details?.awards}
             register={register}
@@ -500,7 +521,9 @@ const StudentForm = ({
             placeholder="Isi dengan angka saja"
           ></InputField>
           <div className="flex flex-col gap-2 w-full md:w-1/4">
-            <label className="text-xs text-gray-400">Tingkat Penghargaan</label>
+            <label className="text-xs text-gray-600">
+              Tingkat Penghargaan (Opsional)
+            </label>
             <select
               {...register("awards_lvl")}
               className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
@@ -551,42 +574,47 @@ const StudentForm = ({
             placeholder="Masukkan sumber beasiswa"
           ></InputField>
           <div className="flex flex-col gap-2 w-full md:w-1/4">
-            <label className="text-xs text-gray-400">Orang tua</label>
+            <label className="text-xs text-gray-600">
+              Orang Tua (Ayah & Ibu)
+            </label>
 
             <Controller
-              name="parentId"
+              name="parents"
               control={control}
-              defaultValue={data?.parentId || ""}
+              defaultValue={
+                [data?.parentId, data?.secondParentId].filter(
+                  Boolean,
+                ) as string[]
+              }
               render={({ field }) => {
                 return (
                   <Select
-                    {...field}
+                    isMulti
                     options={parentOption}
                     className="text-sm"
                     classNamePrefix="select"
-                    placeholder="Cari Ortu..."
-                    onChange={(selectedOption) =>
-                      field.onChange(selectedOption?.value)
-                    }
-                    value={
-                      parentOption.find(
-                        (opt: { value: string; label: string }) =>
-                          opt.value === field.value
-                      ) || null
-                    }
+                    placeholder="Pilih Ayah & Ibu (maks. 2)"
+                    value={parentOption.filter((opt:any) =>
+                      field.value?.includes(opt.value),
+                    )}
+                    onChange={(selected) => {
+                      if (selected.length > 2) return; // hard stop
+                      field.onChange(selected.map((opt) => opt.value));
+                    }}
                   />
                 );
               }}
             />
 
-            {errors.parentId?.message && (
+            {errors.parents?.message && (
               <p className="text-xs text-red-400">
-                {errors.parentId.message.toString()}
+                {errors.parents.message.toString()}
               </p>
             )}
           </div>
+
           <div className="flex flex-col gap-2 w-full md:w-1/4">
-            <label className="text-xs text-gray-400">
+            <label className="text-xs text-gray-600">
               Fotokopi Ijazah / STTB
             </label>
 
@@ -676,7 +704,7 @@ const StudentForm = ({
           </div>
 
           <div className="flex flex-col gap-2 w-full md:w-1/4">
-            <label className="text-xs text-gray-400">
+            <label className="text-xs text-gray-600">
               Fotokopi Akte Kelahiran
             </label>
 
@@ -766,7 +794,7 @@ const StudentForm = ({
           </div>
 
           <div className="flex flex-col gap-2 w-full md:w-1/4">
-            <label className="text-xs text-gray-400">
+            <label className="text-xs text-gray-600">
               Fotokopi KK, KTP Orang Tua, SKTM / KIP
             </label>
 
@@ -876,13 +904,13 @@ const StudentForm = ({
           )}
 
           <div className="flex flex-col gap-2 w-full md:w-1/4">
-            <label className="text-xs text-gray-400">Jenis Kelamin</label>
+            <label className="text-xs text-gray-600">Jenis Kelamin</label>
             <select
               className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
               {...register("sex")}
               defaultValue={data?.sex}
             >
-              <option value="MALE">Lelaki</option>
+              <option value="MALE">Laki-laki</option>
               <option value="FEMALE">Perempuan</option>
             </select>
             {errors.sex?.message && (
@@ -893,7 +921,7 @@ const StudentForm = ({
           </div>
           {/* {type !== "create" && (
             <div className="flex flex-col gap-2 w-full md:w-1/4">
-              <label className="text-xs text-gray-400">Tingkat</label>
+              <label className="text-xs text-gray-600">Tingkat</label>
               <select
                 className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
                 {...register("gradeId")}
@@ -914,7 +942,7 @@ const StudentForm = ({
             </div>
           )} */}
           <div className="flex flex-col gap-2 w-full md:w-1/4">
-            <label className="text-xs text-gray-400">Kelas</label>
+            <label className="text-xs text-gray-600">Kelas</label>
             <select
               className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
               {...register("classId")}
@@ -931,7 +959,7 @@ const StudentForm = ({
                     {kelas.name} -{" "}
                     {kelas._count.students + "/" + kelas.capacity} Kapasitas
                   </option>
-                )
+                ),
               )}
             </select>
             {errors.classId?.message && (
@@ -964,8 +992,8 @@ const StudentForm = ({
             {isSubmitting
               ? "Memproses..."
               : type === "create"
-              ? "Tambah murid"
-              : "Update dan Simpan"}
+                ? "Tambah murid"
+                : "Update dan Simpan"}
           </button>
         </div>
       </form>
@@ -990,14 +1018,14 @@ const StudentForm = ({
               toast.success(result.message);
               setTimeout(
                 () => router.push(`/list/students/${result.id}`),
-                3000
+                3000,
               );
             } else if (failed) {
               if (failed.field) {
                 setError(failed.field as any, { message: failed.message });
               }
               toast.error(
-                `${failed.field ? `${failed.field}: ` : ""}${failed.message}`
+                `${failed.field ? `${failed.field}: ` : ""}${failed.message}`,
               );
             } else {
               toast.error(result.message || "Terjadi kesalahan.");

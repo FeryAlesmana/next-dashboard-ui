@@ -14,7 +14,20 @@ export function mergeDateAndTime(date: Date, time: Date) {
   return d;
 }
 
-
+export function handlePrismaError(error: unknown) {
+  if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (error.code === "P2002") {
+      const field = (error.meta?.target as string[])?.[0];
+      return {
+        success: false,
+        error: true,
+        field,
+        message: `${field} sudah digunakan`,
+      };
+    }
+  }
+  return null;
+}
 
 const PAYMENT_LOG_FIELDS = [
   "studentId",

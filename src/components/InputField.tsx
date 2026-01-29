@@ -55,7 +55,7 @@ const InputField = ({
           : ""
       } ${hidden ? "hidden" : ""}`}
     >
-      <label className="text-xs text-gray-400">{label}</label>
+      <label className="text-xs text-gray-600">{label}</label>
       {isPaymentLog && type === "number" && (
         <input
           type="number"

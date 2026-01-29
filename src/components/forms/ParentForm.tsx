@@ -180,7 +180,7 @@ const ParentForm = ({
         <h1 className="text-xl font-semibold">
           {type === "create" ? "Tambah Wali Murid baru" : "Edit Wali Murid"}
         </h1>
-        <span className="text-xs text-gray-400 font-medium">
+        <span className="text-xs text-gray-600 font-medium">
           Informasi Autentikasi
         </span>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
@@ -231,12 +231,12 @@ const ParentForm = ({
           </div>
         </div>
 
-        <span className="text-xs text-gray-400 font-medium">
+        <span className="text-xs text-gray-600 font-medium">
           Informasi Personal
         </span>
         <div className="flex justify-between flex-wrap gap-4">
           <InputField
-            label="Nama depan"
+            label="Nama lengkap"
             name="name"
             defaultValue={data?.name}
             register={register}
@@ -282,13 +282,13 @@ const ParentForm = ({
             placeholder="Contoh: 5.200.000"
           />
           <div className="flex flex-col gap-2 w-full md:w-1/4">
-            <label className="text-xs text-gray-400">Jenis Kelamin</label>
+            <label className="text-xs text-gray-600">Jenis Kelamin</label>
             <select
               className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
               {...register("sex")}
               defaultValue={data?.sex}
             >
-              <option value="MALE">Lelaki</option>
+              <option value="MALE">Laki-laki</option>
               <option value="FEMALE">Perempuan</option>
             </select>
             {errors.sex?.message && (
@@ -299,7 +299,7 @@ const ParentForm = ({
           </div>
           {/* Wali Murid */}
           <div className="flex flex-col gap-2 w-full md:w-1/4">
-            <label className="text-xs text-gray-400">Wali Murid</label>
+            <label className="text-xs text-gray-600">Wali Murid</label>
             <select
               className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
               {...register("waliMurid")}
@@ -317,7 +317,7 @@ const ParentForm = ({
             )}
           </div>
           <div className="flex flex-col gap-2 w-full md:w-1/4">
-            <label className="text-xs text-gray-400">Pendidikan</label>
+            <label className="text-xs text-gray-600">Pendidikan</label>
             <select
               className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
               {...register("degree")}
@@ -340,7 +340,7 @@ const ParentForm = ({
             )}
           </div>
           <div className="flex flex-col gap-2 w-full md:w-1/4">
-            <label className="text-xs text-gray-400">Siswa</label>
+            <label className="text-xs text-gray-600">Siswa</label>
 
             <Controller
               name="students"

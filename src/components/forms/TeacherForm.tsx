@@ -178,7 +178,7 @@ const TeacherForm = ({
         <h1 className="text-xl font-semibold">
           {type === "create" ? "Tambah Guru baru" : "Edit Guru"}
         </h1>
-        <span className="text-xs text-gray-400 font-medium">
+        <span className="text-xs text-gray-600 font-medium">
           Informasi Autentikasi
         </span>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
@@ -229,7 +229,7 @@ const TeacherForm = ({
           </div>
         </div>
 
-        <span className="text-xs text-gray-400 font-medium">
+        <span className="text-xs text-gray-600 font-medium">
           Informasi Personal
         </span>
         <UploadPhoto
@@ -316,7 +316,7 @@ const TeacherForm = ({
             error={errors?.birthday}
           ></InputField>
           <div className="flex flex-col gap-2 w-full md:w-1/4">
-            <label className="text-xs text-gray-400">Agama</label>
+            <label className="text-xs text-gray-600">Agama</label>
             <select
               className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
               {...register("religion")}
@@ -346,13 +346,13 @@ const TeacherForm = ({
           )}
 
           <div className="flex flex-col gap-2 w-full md:w-1/4 ">
-            <label className="text-xs text-gray-400">Jenis Kelamin</label>
+            <label className="text-xs text-gray-600">Jenis Kelamin</label>
             <select
               className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
               {...register("sex")}
               defaultValue={data?.sex}
             >
-              <option value="MALE">Lelaki</option>
+              <option value="MALE">Laki-laki</option>
               <option value="FEMALE">Perempuan</option>
             </select>
             {errors.sex?.message && (
@@ -363,7 +363,7 @@ const TeacherForm = ({
           </div>
 
           <div className="flex flex-col gap-2 w-full md:w-1/4 ">
-            <label className="text-xs text-gray-400">Mata Pelajaran</label>
+            <label className="text-xs text-gray-600">Mata Pelajaran</label>
 
             <Controller
               name="subjects"
@@ -397,7 +397,7 @@ const TeacherForm = ({
             )}
           </div>
           <div className="flex flex-col gap-2 w-full md:w-1/4 ">
-            <label className="text-xs text-gray-400">Jadwal</label>
+            <label className="text-xs text-gray-600">Jadwal</label>
 
             <Controller
               name="lessons"
@@ -438,7 +438,7 @@ const TeacherForm = ({
             )}
           </div>
           <div className="flex flex-col gap-2 w-full md:w-1/4">
-            <label className="text-xs text-gray-400">Pengurus Kelas..</label>
+            <label className="text-xs text-gray-600">Pengurus Kelas..</label>
 
             <Controller
               name="classes"

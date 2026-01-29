@@ -99,7 +99,7 @@ export const importTeacherSchema = z.object({
         file.type === "application/vnd.ms-excel",
       {
         message: "Format file harus .xlsx atau .xls",
-      }
+      },
     ),
 });
 export type ImportTeacherSchema = z.infer<typeof importTeacherSchema>;
@@ -118,7 +118,7 @@ export const importstudentSchema = z.object({
         file.type === "application/vnd.ms-excel",
       {
         message: "Format file harus .xlsx atau .xls",
-      }
+      },
     ),
 });
 export type ImportStudentSchema = z.infer<typeof importstudentSchema>;
@@ -135,7 +135,7 @@ export type UpdateteacherSchema = z.infer<typeof updateTeacherSchema>;
 
 export const studentSchema = z.object({
   id: z.string().optional(),
-  sdId: z.string({ message: "Student details Id harus diisi!" }),
+  sdId: z.string({ message: "Student details Id harus diisi!" }).optional(),
   withUser: z.boolean().optional().default(true),
   username: z
     .string()
@@ -245,11 +245,11 @@ export const studentSchema = z.object({
   dokumenPasfoto: z.string().optional().nullable(),
   dokumenKKKTP: z.string().optional().nullable(),
   classId: z.coerce.number().min(1, { message: "Id kelas wajib diisi!" }),
-  parentId: z
-    .string()
-    .min(1, { message: "Id Orangtua wajib diisi!" })
-    .optional()
-    .nullable(),
+  parents: z
+  .array(z.string())
+  .max(2, "Maksimal 2 orang tua (Ayah & Ibu)")
+  .optional(),
+
 });
 export type StudentSchema = z.infer<typeof studentSchema>;
 
@@ -466,11 +466,10 @@ export const ppdbSchema = z.object({
     .regex(/^\d+$/),
   no_ijz: z
     .string({ message: " No seri Ijazah Calon Siswa wajib diisi!" })
-    .length(12)
-    .regex(/^\d+$/),
+    .min(12, { message: " Panjang No ijazah minimal 12 Karakter" }),
   nik: z
     .string({ message: " NIK Calon Siswa wajib diisi!" })
-    .length(20, {message: " Panjang NIK harus 20 Karakter"})
+    .length(16, { message: " Panjang NIK harus 16 Karakter" })
     .regex(/^\d+$/),
   address: z.string({ message: " Alamat Calon Siswa wajib diisi!" }).min(1),
   postcode: z.coerce
@@ -519,8 +518,8 @@ export const ppdbSchema = z.object({
     .or(z.literal("")),
   no_kps: z
     .string({ message: " Nomor wajib diisi!" })
-    .min(10, {message: "Jumlah digit karakter harus 10-16 digit"})
-    .max(16, {message: "Jumlah digit karakter harus 10-16 digit"})
+    .min(10, { message: "Jumlah digit karakter harus 10-16 digit" })
+    .max(16, { message: "Jumlah digit karakter harus 10-16 digit" })
     .regex(/^\d+$/)
     .optional()
     .nullable()
@@ -813,7 +812,7 @@ export const attendanceSchema = z.object({
         status: z.nativeEnum(AttendanceStatus, {
           required_error: "Status Kehadiran wajib diisi",
         }),
-      })
+      }),
     )
     .optional(),
 });
@@ -847,7 +846,7 @@ export const paymentLogSchema = z
         z.object({
           amount: z.coerce.number().min(1, "Jumlah harus > 0"),
           paidAt: z.string().min(1, "Tanggal harus diisi").optional(),
-        })
+        }),
       )
       .optional(),
     remainingAmount: z.number().optional(),
@@ -860,7 +859,7 @@ export const paymentLogSchema = z
     {
       message: "",
       path: ["installments"],
-    }
+    },
   )
   .refine(
     (data) => {
@@ -874,7 +873,7 @@ export const paymentLogSchema = z
     {
       message: "Jumlah pembayaran harus sama dengan total saat Lunas",
       path: ["installments"],
-    }
+    },
   )
 
   // ⭐ Rule 3: If status is PARTIALLY_PAID → allow empty installments if editing
@@ -898,7 +897,7 @@ export const paymentLogSchema = z
       message:
         "Jumlah pembayaran harus lebih kecil dari total saat Metode Pembayaran Cicilan",
       path: ["installments", "paymentMethod"],
-    }
+    },
   )
 
   // ⭐ Rule 4: Prevent overpayment on new installments only
@@ -909,7 +908,7 @@ export const paymentLogSchema = z
       console.log("installments:", data.installments);
       console.log(
         "total installments:",
-        (data.installments ?? []).reduce((s, i) => s + i.amount, 0)
+        (data.installments ?? []).reduce((s, i) => s + i.amount, 0),
       );
 
       if (data.remainingAmount === undefined) {
@@ -938,7 +937,7 @@ export const paymentLogSchema = z
     {
       message: "Total angsuran tidak boleh melebihi sisa tagihan!",
       path: ["installments"],
-    }
+    },
   );
 
 export type PaymentLogSchema = z.infer<typeof paymentLogSchema>;
@@ -1069,7 +1068,7 @@ export const mexamSchema = z
     {
       message: "Waktu selesai tidak boleh lebih awal dari waktu mulai!",
       path: ["endTime"],
-    }
+    },
   );
 
 export type MexamSchema = z.infer<typeof mexamSchema>;
@@ -1123,7 +1122,7 @@ export const ppdbSettingSchema = z
     {
       message: "Tanggal selesai tidak boleh lebih awal dari tanggal mulai",
       path: ["endDate"],
-    }
+    },
   );
 
 export type PPDBSettingSchema = z.infer<typeof ppdbSettingSchema>;
@@ -1149,7 +1148,7 @@ export const importPaymentsschema = z.object({
         file.type === "application/vnd.ms-excel",
       {
         message: "Format file harus .xlsx atau .xls",
-      }
+      },
     ),
 });
 export type ImportPaymentsSchema = z.infer<typeof importPaymentsschema>;
@@ -1169,7 +1168,7 @@ export const exportPaymentsSchema = z
       message:
         "Tanggal mulai dan tanggal akhir wajib diisi untuk Custom Range.",
       path: ["startDate"], // show error under date fields
-    }
+    },
   )
   .refine(
     (data) => {
@@ -1179,7 +1178,7 @@ export const exportPaymentsSchema = z
     {
       message: "Tanggal mulai tidak boleh lebih besar dari tanggal akhir.",
       path: ["startDate"],
-    }
+    },
   );
 
 export type ExportPaymentsSchema = z.infer<typeof exportPaymentsSchema>;
@@ -1284,7 +1283,7 @@ export const paymentSchema = z
           id: z.coerce.number().optional(),
           amount: z.coerce.number().min(1, "Jumlah harus > 0"),
           paidAt: z.string().min(1, "Tanggal harus diisi").optional(),
-        })
+        }),
       )
       .optional(),
     remainingAmount: z.number().optional(),
@@ -1297,7 +1296,7 @@ export const paymentSchema = z
     {
       message: "",
       path: ["installments"],
-    }
+    },
   )
 
   // ⭐ Rule 4: Prevent overpayment on new installments only
@@ -1308,7 +1307,7 @@ export const paymentSchema = z
       console.log("installments:", data.installments);
       console.log(
         "total installments:",
-        (data.installments ?? []).reduce((s, i) => s + i.amount, 0)
+        (data.installments ?? []).reduce((s, i) => s + i.amount, 0),
       );
 
       if (data.remainingAmount === undefined) {
@@ -1337,7 +1336,7 @@ export const paymentSchema = z
     {
       message: "Total angsuran tidak boleh melebihi sisa tagihan!",
       path: ["installments"],
-    }
+    },
   );
 
 export type PaymentSchema = z.infer<typeof paymentSchema>;

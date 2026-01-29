@@ -2,6 +2,8 @@
 import FormModal from "../FormModal";
 import { FaCheckCircle, FaTimesCircle } from "react-icons/fa";
 import { BaseTableClientProps } from "./AssignmentTableClient";
+import { toast } from "react-toastify";
+import { FaDownload } from "react-icons/fa6";
 
 export default function PpdbTableClient({
   data,
@@ -13,6 +15,23 @@ export default function PpdbTableClient({
   onChanged,
   allowedStaff,
 }: BaseTableClientProps) {
+  const handleDownloadBerkas = async (id: string) => {
+    const res = await fetch(`/api/ppdb/${id}/download`);
+    if (!res.ok) {
+      toast.error("Gagal mengunduh berkas");
+      return;
+    }
+
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.click();
+
+    window.URL.revokeObjectURL(url);
+  };
+
   return (
     <>
       <tr className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight">
@@ -50,19 +69,30 @@ export default function PpdbTableClient({
           <div className="flex items-center gap-2">
             {allowedStaff && (
               <>
-                <FormModal
-                  table="ppdb"
-                  type="update"
-                  data={data}
-                  relatedData={relatedData}
-                  onChanged={onChanged}
-                ></FormModal>
+                {data.isvalid === false && (
+                  <FormModal
+                    table="ppdb"
+                    type="update"
+                    data={data}
+                    relatedData={relatedData}
+                    onChanged={onChanged}
+                  ></FormModal>
+                )}
                 <FormModal
                   table="ppdb"
                   type="delete"
                   id={data.id}
                   onDeleted={() => onDeleted?.([data.id])}
                 ></FormModal>
+                {data.isvalid && (
+                  <button
+                    onClick={() => handleDownloadBerkas(data.id)}
+                    className="text-xs rounded text-white hover:opacity-90"
+                    title="Download Berkas"
+                  >
+                    <FaDownload className="text-gray-500 text-2xl" />
+                  </button>
+                )}
               </>
             )}
           </div>

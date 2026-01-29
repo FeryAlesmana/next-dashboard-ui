@@ -60,6 +60,7 @@ import extractCloudinaryPublicId, {
   decryptPassword,
   getCurrentUser,
   getPeriodRange,
+  handlePrismaError,
   mapPaymentType,
   mergeDateAndTime,
   normalizeAgama,
@@ -306,8 +307,8 @@ export const createTeacher = async (
   currentState: CurrentState,
   data: CreateteacherSchema,
 ) => {
+  let user: any = null;
   try {
-    let user;
     try {
       user = await client.users.createUser({
         username: data.username,
@@ -381,6 +382,17 @@ export const createTeacher = async (
 
     return { success: true, error: false, data: createdTeacher, id: user.id };
   } catch (error: any) {
+    const isPrismaError = error instanceof Prisma.PrismaClientKnownRequestError;
+    if (isPrismaError && user?.id) {
+      try {
+        await client.users.deleteUser(user.id);
+        console.warn("⚠️ Rolled back Clerk user:", user.id);
+      } catch (cleanupError) {
+        console.error("❌ Failed to rollback Clerk user", cleanupError);
+      }
+      const prismaError = handlePrismaError(error);
+      if (prismaError) return prismaError;
+    }
     let message = "Unknown error";
     // Handle Clerk API errors properly
 
@@ -593,6 +605,8 @@ export const updateTeacher = async (
     }
     return { success: true, error: false, data: updatedTeacher };
   } catch (error) {
+    const prismaError = handlePrismaError(error);
+    if (prismaError) return prismaError;
     const message =
       error instanceof Error
         ? error.message
@@ -787,54 +801,30 @@ export const createStudent = async (
   if (classItem && classItem.capacity === classItem._count.students) {
     return { success: false, error: true };
   }
+  let clerkUser: any = null;
   try {
-    let clerkUser: any = null;
+    try {
+      clerkUser = await client.users.createUser({
+        username: data.username,
+        password: data.password,
+        firstName: data.name,
+        publicMetadata: { role: "student" },
+      });
 
-    // ---------------------------------------------
-    // 1️⃣ CHECK PPDB FLAG
-    // ---------------------------------------------
-    if (PPDB) {
-      console.log("🔍 PPDB mode: finding existing Clerk user...");
+      console.log("✅ Clerk user created:", clerkUser.id);
+    } catch (err: any) {
+      console.error("❌ Clerk error:", err);
 
-      clerkUser = await client.users.getUser(data.sdId);
+      const message = err?.errors?.[0]?.message || "Terjadi kesalahan";
 
-      if (!clerkUser) {
-        return {
-          success: false,
-          field: "sdId",
-          message: "Akun PPDB tidak ditemukan di Clerk.",
-          error: true,
-        };
+      if (message.toLowerCase().includes("username")) {
+        return { success: false, field: "username", message, error: true };
+      }
+      if (message.toLowerCase().includes("password")) {
+        return { success: false, field: "password", message, error: true };
       }
 
-      console.log("✅ Existing Clerk user found:", clerkUser.id);
-    } else {
-      // ---------------------------------------------
-      // 2️⃣ NORMAL MODE (create new user)
-      // ---------------------------------------------
-      try {
-        clerkUser = await client.users.createUser({
-          username: data.username,
-          password: data.password,
-          firstName: data.name,
-          publicMetadata: { role: "student" },
-        });
-
-        console.log("✅ Clerk user created:", clerkUser.id);
-      } catch (err: any) {
-        console.error("❌ Clerk error:", err);
-
-        const message = err?.errors?.[0]?.message || "Terjadi kesalahan";
-
-        if (message.toLowerCase().includes("username")) {
-          return { success: false, field: "username", message, error: true };
-        }
-        if (message.toLowerCase().includes("password")) {
-          return { success: false, field: "password", message, error: true };
-        }
-
-        return { success: false, message, error: true };
-      }
+      return { success: false, message, error: true };
     }
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -849,6 +839,9 @@ export const createStudent = async (
         gradeId = cls.gradeId;
       }
     }
+    const parentId = data.parents?.[0] ?? null;
+    const secondParentId = data.parents?.[1] ?? null;
+
     const createdStudent = await prisma.student.create({
       data: {
         id: clerkUser.id,
@@ -869,7 +862,8 @@ export const createStudent = async (
         birthday: data.birthday,
         gradeId,
         classId: data.classId,
-        parentId: data.parentId,
+        parentId: parentId,
+        secondParentId: secondParentId,
         student_details: {
           create: {
             asalSekolah: data.asalSekolah,
@@ -912,6 +906,18 @@ export const createStudent = async (
       data: createdStudent,
     };
   } catch (error: any) {
+    const isPrismaError = error instanceof Prisma.PrismaClientKnownRequestError;
+    if (isPrismaError && clerkUser?.id) {
+      try {
+        await client.users.deleteUser(clerkUser.id);
+        console.warn("⚠️ Rolled back Clerk user:", clerkUser.id);
+      } catch (cleanupError) {
+        console.error("❌ Failed to rollback Clerk user", cleanupError);
+      }
+      const prismaError = handlePrismaError(error);
+      if (prismaError) return prismaError;
+    }
+
     console.error("Create student failed:", error);
     if (error?.errors) {
       console.error("Clerk errors:", JSON.stringify(error.errors, null, 2));
@@ -1107,6 +1113,9 @@ export const updateStudent = async (
         gradeId = cls.gradeId;
       }
     }
+    const parentId = data.parents?.[0] ?? null;
+    const secondParentId = data.parents?.[1] ?? null;
+
     await prisma.student.update({
       where: {
         id: data.id,
@@ -1132,12 +1141,14 @@ export const updateStudent = async (
         birthday: new Date(data.birthday),
         gradeId,
         classId: data.classId,
-        parentId: data.parentId,
+        parentId: parentId,
+
+        secondParentId: secondParentId,
       },
     });
     await prisma.student_details.update({
       where: {
-        id: parseInt(data.sdId),
+        id: parseInt(data.sdId!),
       },
       data: {
         student: {
@@ -1181,6 +1192,8 @@ export const updateStudent = async (
 
     return { success: true, error: false, data: updatedStudent };
   } catch (error) {
+    const prismaError = handlePrismaError(error);
+    if (prismaError) return prismaError;
     const message =
       error instanceof Error
         ? error.message
@@ -1940,8 +1953,8 @@ export const createParent = async (
   currentState: CurrentState,
   data: CreateparentSchema,
 ) => {
+  let user: any = null;
   try {
-    let user;
     try {
       user = await client.users.createUser({
         username: data.username,
@@ -2045,6 +2058,17 @@ export const createParent = async (
       field: undefined,
     };
   } catch (error: any) {
+    const isPrismaError = error instanceof Prisma.PrismaClientKnownRequestError;
+    if (isPrismaError && user?.id) {
+      try {
+        await client.users.deleteUser(user.id);
+        console.warn("⚠️ Rolled back Clerk user:", user.id);
+      } catch (cleanupError) {
+        console.error("❌ Failed to rollback Clerk user", cleanupError);
+      }
+      const prismaError = handlePrismaError(error);
+      if (prismaError) return prismaError;
+    }
     console.log(error + " Di server action");
 
     let message = "Unknown error";
@@ -2191,6 +2215,8 @@ export const updateParent = async (
     }
     return { success: true, error: false, data: updatedParent };
   } catch (error) {
+    const prismaError = handlePrismaError(error);
+    if (prismaError) return prismaError;
     const message =
       error instanceof Error
         ? error.message
@@ -2966,9 +2992,314 @@ export const updatePpdb = async (
   data: PpdbSchema,
 ) => {
   try {
+    
+
     if (!data.id) {
       console.log(data.id + "Data.id");
       return { success: false, error: true, message: "Missing student ID" };
+    }
+
+    let studentId = null;
+    // If isvalid is true, create a new user and student
+    if (data.isvalid === true) {
+      const existingPpdb = await prisma.pPDB.findUnique({
+      where: { id: data.id },
+      select: { isvalid: true, studentId: true },
+    });
+
+    if (existingPpdb?.isvalid && existingPpdb?.studentId) {
+      return {
+        success: false,
+        error: true,
+        message: "PPDB ini sudah diproses menjadi siswa.",
+      };
+    }
+      const existing = await prisma.student.findFirst({
+        where: { student_details: { nisn: data.nisn } },
+      });
+
+      if (existing) {
+        return {
+          success: false,
+          error: true,
+          message: "Siswa sudah terdaftar.",
+        };
+      }
+
+      /** ----------------------------------------------------
+       * 1️⃣ Create Clerk user first (must be outside transaction)
+       * ---------------------------------------------------- */
+      let clerkUser;
+      try {
+        clerkUser = await client.users.createUser({
+          username: data.name,
+          password: data.nisn,
+          firstName: data.name,
+          publicMetadata: { role: "student" },
+        });
+      } catch (err: any) {
+        const message = err?.errors?.[0]?.message || "Terjadi kesalahan";
+        return { success: false, error: true, message };
+      }
+
+      const clerkId = clerkUser.id;
+
+      /** ----------------------------------------------------
+       * 2️⃣ Start Prisma Transaction
+       * ---------------------------------------------------- */
+      const result = await prisma.$transaction(async (tx) => {
+        /** -------------------------
+         * Create Student
+         * ------------------------- */
+        const student = await tx.student.create({
+          data: {
+            id: clerkId,
+            username: clerkUser.username ?? data.name,
+            password: encryptPassword(data.nisn),
+            name: data.name,
+            email: data.email,
+            phone: data.phone,
+            address: data.address,
+            rw: data.rw,
+            rt: data.rt,
+            kelurahan: data.kelurahan,
+            kecamatan: data.kecamatan,
+            kota: data.kota,
+            religion: data.religion,
+            sex: data.sex,
+            img: data.dokumenPasfoto ?? null,
+            birthday: new Date(data.birthday),
+            classId: data.classId ?? null,
+          },
+        });
+
+        studentId = student.id;
+
+        /** -------------------------
+         * Create Student Details
+         * ------------------------- */
+        await tx.student_details.create({
+          data: {
+            studentId: student.id,
+            asalSekolah: data.asalSekolah,
+            birthPlace: data.birthPlace,
+            noWa: data.noWhatsapp,
+            nisn: data.nisn,
+            npsn: data.npsn,
+            no_ijz: data.no_ijz,
+            nik: data.nik,
+            kps: data.kps === "" ? null : data.kps,
+            no_kps: data.no_kps ?? null,
+            height: data.height,
+            weight: data.weight,
+            transportation: data.transportation,
+            tempat_tinggal: data.tempat_tinggal,
+            distance_from_home: data.distance_from_home,
+            time_from_home: data.time_from_home,
+            number_of_siblings: data.number_of_siblings,
+            postcode: data.postcode,
+            awards: data.awards ?? null,
+            awards_lvl: data.awards_lvl ?? null,
+            awards_date: data.awards_date ? new Date(data.awards_date) : null,
+            scholarship: data.scholarship ?? null,
+            scholarship_detail: data.scholarship_detail ?? null,
+            dokumenIjazah: data.dokumenIjazah ?? null,
+            dokumenAkte: data.dokumenAkte ?? null,
+            dokumenPasfoto: data.dokumenPasfoto ?? null,
+            dokumenKKKTP: data.dokumenKKKTP ?? null,
+          },
+        });
+
+        /** Helper: build parent payload */
+        function toDegree(val: any): Degree {
+          const allowed = [
+            "TIDAK_ADA",
+            "SD",
+            "SMP",
+            "SMA",
+            "D3",
+            "S1",
+            "S2",
+            "S3",
+          ];
+          return allowed.includes(val) ? val : "TIDAK_ADA";
+        }
+        const makeParent = (
+          role: parents,
+          name: string,
+          sex: "MALE" | "FEMALE",
+          income: number,
+          degree?: string,
+          kerja?: string,
+          lahir?: string,
+          phone?: string,
+        ) => ({
+          username: `${data.nik}_${role}`,
+          password: encryptPassword(`${data.nik}@${role}`),
+          email: `${data.nik}_${role}@parent.local`,
+          name,
+          phone: phone ?? "",
+          birthday: lahir ? new Date(lahir) : new Date(1970, 0, 1),
+          job: kerja ?? "",
+          income: income,
+          degree: toDegree(degree),
+          waliMurid: role,
+          address: data.address,
+          sex,
+        });
+
+        let fatherId: string | null = null;
+        let motherId: string | null = null;
+        let waliId: string | null = null;
+
+        /** -------------------------
+         * Create Parents (Ayah / Ibu / Wali)
+         * ------------------------- */
+
+        // Ayah
+        if (data.namaAyah) {
+          const parentData = makeParent(
+            "AYAH",
+            data.namaAyah,
+            "MALE",
+            typeof data.penghasilanAyah === "number" ? data.penghasilanAyah : 0,
+            data.pendidikanAyah ?? "",
+            data.pekerjaanAyah ?? "",
+            data.tahunLahirAyah ?? "",
+            data.telpAyah ?? "",
+          );
+
+          // 🔥 Create Clerk account
+          let Father;
+          try {
+            Father = await client.users.createUser({
+              username: parentData.username,
+              password: parentData.password,
+              firstName: parentData.name,
+              publicMetadata: { role: "parent" },
+            });
+          } catch (err: any) {
+            const message =
+              err?.errors?.[0]?.message || "Gagal membuat akun wali.";
+            return { success: false, error: true, message };
+          }
+
+          // 🔥 Create Parent in Prisma with Clerk ID
+          const wali = await tx.parent.create({
+            data: {
+              id: Father.id,
+              ...parentData,
+              students: { connect: { id: student.id } },
+            },
+          });
+
+          fatherId = wali.id;
+        }
+
+        // Ibu
+        if (data.namaIbu) {
+          const parentData = makeParent(
+            "IBU",
+            data.namaIbu,
+            "FEMALE",
+            typeof data.penghasilanIbu === "number" ? data.penghasilanIbu : 0,
+            data.pendidikanIbu ?? "",
+            data.pekerjaanIbu ?? "",
+            data.tahunLahirIbu ?? "",
+            data.telpIbu ?? "",
+          );
+
+          // 🔥 Create Clerk account
+          let mother;
+          try {
+            mother = await client.users.createUser({
+              username: parentData.username,
+              password: parentData.password,
+              firstName: parentData.name,
+              publicMetadata: { role: "parent" },
+            });
+          } catch (err: any) {
+            const message =
+              err?.errors?.[0]?.message || "Gagal membuat akun ibu.";
+            return { success: false, error: true, message };
+          }
+
+          // 🔥 Create Prisma Parent using Clerk ID
+          const ibu = await tx.parent.create({
+            data: {
+              id: mother.id,
+              ...parentData,
+              secondaryStudents: { connect: { id: student.id } },
+            },
+          });
+
+          motherId = ibu.id;
+        }
+
+        // Wali
+        if (data.namaWali) {
+          const parentData = makeParent(
+            "WALI",
+            data.namaWali,
+            "MALE",
+            typeof data.penghasilanWali === "number" ? data.penghasilanWali : 0,
+            data.pendidikanWali ?? "",
+            data.pekerjaanWali ?? "",
+            data.tahunLahirWali ?? "",
+            data.telpWali ?? "",
+          );
+
+          // 🔥 Create Clerk account
+          let clerkUser;
+          try {
+            clerkUser = await client.users.createUser({
+              username: parentData.username,
+              password: parentData.password,
+              firstName: parentData.name,
+              publicMetadata: { role: "parent" },
+            });
+          } catch (err: any) {
+            const message =
+              err?.errors?.[0]?.message || "Gagal membuat akun wali.";
+            return { success: false, error: true, message };
+          }
+
+          // 🔥 Create Parent in Prisma with Clerk ID
+          const wali = await tx.parent.create({
+            data: {
+              id: clerkUser.id,
+              ...parentData,
+              guardianStudents: { connect: { id: student.id } },
+            },
+          });
+
+          waliId = wali.id;
+        }
+
+        /** -------------------------
+         * Update student with parent references
+         * ------------------------- */
+        const parentId = fatherId ?? motherId ?? waliId ?? null;
+
+        const secondParentId = fatherId && motherId ? motherId : null;
+
+        const guardianId = waliId && (fatherId || motherId) ? waliId : null;
+
+        await tx.student.update({
+          where: { id: student.id },
+          data: {
+            parentId,
+            secondParentId,
+            guardianId,
+          },
+        });
+
+        /** -------------------------
+         * Final: Mark PPDB row updated
+         * ------------------------- */
+
+        return { student };
+      });
     }
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -3051,278 +3382,9 @@ export const updatePpdb = async (
         }),
         ...(data.dokumenKKKTP !== "" && { dokumenKKKTP: data.dokumenKKKTP }),
         isvalid: data.isvalid || false,
+        studentId: studentId,
       },
     });
-
-    // If isvalid is true, create a new user and student
-    if (data.isvalid === true) {
-      /** ----------------------------------------------------
-       * 1️⃣ Create Clerk user first (must be outside transaction)
-       * ---------------------------------------------------- */
-      let clerkUser;
-      try {
-        clerkUser = await client.users.createUser({
-          username: data.name,
-          password: data.nisn,
-          firstName: data.name,
-          publicMetadata: { role: "student" },
-        });
-      } catch (err: any) {
-        const message = err?.errors?.[0]?.message || "Terjadi kesalahan";
-        return { success: false, error: true, message };
-      }
-
-      const clerkId = clerkUser.id;
-
-      /** ----------------------------------------------------
-       * 2️⃣ Start Prisma Transaction
-       * ---------------------------------------------------- */
-      const result = await prisma.$transaction(async (tx) => {
-        /** -------------------------
-         * Create Student
-         * ------------------------- */
-        const student = await tx.student.create({
-          data: {
-            id: clerkId,
-            username: clerkUser.username ?? data.name,
-            password: encryptPassword(data.nisn),
-            name: data.name,
-            email: data.email,
-            phone: data.phone,
-            address: data.address,
-            rw: data.rw,
-            rt: data.rt,
-            kelurahan: data.kelurahan,
-            kecamatan: data.kecamatan,
-            kota: data.kota,
-            religion: data.religion,
-            sex: data.sex,
-            img: data.dokumenPasfoto ?? null,
-            birthday: new Date(data.birthday),
-            classId: data.classId ?? null,
-          },
-        });
-
-        /** -------------------------
-         * Create Student Details
-         * ------------------------- */
-        await tx.student_details.create({
-          data: {
-            studentId: student.id,
-            asalSekolah: data.asalSekolah,
-            birthPlace: data.birthPlace,
-            noWa: data.noWhatsapp,
-            nisn: data.nisn,
-            npsn: data.npsn,
-            no_ijz: data.no_ijz,
-            nik: data.nik,
-            kps: data.kps === "" ? null : data.kps,
-            no_kps: data.no_kps ?? null,
-            height: data.height,
-            weight: data.weight,
-            transportation: data.transportation,
-            tempat_tinggal: data.tempat_tinggal,
-            distance_from_home: data.distance_from_home,
-            time_from_home: data.time_from_home,
-            number_of_siblings: data.number_of_siblings,
-            postcode: data.postcode,
-            awards: data.awards ?? null,
-            awards_lvl: data.awards_lvl ?? null,
-            awards_date: data.awards_date ? new Date(data.awards_date) : null,
-            scholarship: data.scholarship ?? null,
-            scholarship_detail: data.scholarship_detail ?? null,
-            dokumenIjazah: data.dokumenIjazah ?? null,
-            dokumenAkte: data.dokumenAkte ?? null,
-            dokumenPasfoto: data.dokumenPasfoto ?? null,
-            dokumenKKKTP: data.dokumenKKKTP ?? null,
-          },
-        });
-
-        /** Helper: build parent payload */
-        function toDegree(val: any): Degree {
-          const allowed = [
-            "TIDAK_ADA",
-            "SD",
-            "SMP",
-            "SMA",
-            "D3",
-            "S1",
-            "S2",
-            "S3",
-          ];
-          return allowed.includes(val) ? val : "TIDAK_ADA";
-        }
-        const makeParent = (
-          role: parents,
-          name: string,
-          sex: "MALE" | "FEMALE",
-          income: number,
-          degree?: string,
-          kerja?: string,
-          lahir?: string,
-          phone?: string,
-        ) => ({
-          username: `${data.nik}_${role}`,
-          password: encryptPassword(`${data.nik}@${role}`),
-          email: `${data.nik}_${role}@parent.local`,
-          name,
-          phone: phone ?? "",
-          birthday: lahir ? new Date(lahir) : new Date(1970, 0, 1),
-          job: kerja ?? "",
-          income: income,
-          degree: toDegree(degree),
-          waliMurid: role,
-          address: data.address,
-          sex,
-        });
-
-        let parentId: string | null = null;
-        let secondParentId: string | null = null;
-        let guardianId: string | null = null;
-
-        /** -------------------------
-         * Create Parents (Ayah / Ibu / Wali)
-         * ------------------------- */
-
-        // Ayah
-        if (data.namaAyah) {
-          const parentData = makeParent(
-            "AYAH",
-            data.namaAyah,
-            "MALE",
-            typeof data.penghasilanAyah === "number" ? data.penghasilanAyah : 0,
-            data.pendidikanAyah ?? "",
-            data.pekerjaanAyah ?? "",
-            data.tahunLahirAyah ?? "",
-            data.telpAyah ?? "",
-          );
-
-          // 🔥 Create Clerk account
-          let Father;
-          try {
-            Father = await client.users.createUser({
-              username: parentData.username,
-              password: parentData.password,
-              firstName: parentData.name,
-              publicMetadata: { role: "parent" },
-            });
-          } catch (err: any) {
-            const message =
-              err?.errors?.[0]?.message || "Gagal membuat akun wali.";
-            return { success: false, error: true, message };
-          }
-
-          // 🔥 Create Parent in Prisma with Clerk ID
-          const wali = await tx.parent.create({
-            data: {
-              id: Father.id,
-              ...parentData,
-              students: { connect: { id: student.id } },
-            },
-          });
-
-          guardianId = wali.id;
-        }
-
-        // Ibu
-        if (data.namaIbu) {
-          const parentData = makeParent(
-            "IBU",
-            data.namaIbu,
-            "FEMALE",
-            typeof data.penghasilanIbu === "number" ? data.penghasilanIbu : 0,
-            data.pendidikanIbu ?? "",
-            data.pekerjaanIbu ?? "",
-            data.tahunLahirIbu ?? "",
-            data.telpIbu ?? "",
-          );
-
-          // 🔥 Create Clerk account
-          let mother;
-          try {
-            mother = await client.users.createUser({
-              username: parentData.username,
-              password: parentData.password,
-              firstName: parentData.name,
-              publicMetadata: { role: "parent" },
-            });
-          } catch (err: any) {
-            const message =
-              err?.errors?.[0]?.message || "Gagal membuat akun ibu.";
-            return { success: false, error: true, message };
-          }
-
-          // 🔥 Create Prisma Parent using Clerk ID
-          const ibu = await tx.parent.create({
-            data: {
-              id: mother.id,
-              ...parentData,
-              secondaryStudents: { connect: { id: student.id } },
-            },
-          });
-
-          secondParentId = ibu.id;
-        }
-
-        // Wali
-        if (data.namaWali) {
-          const parentData = makeParent(
-            "WALI",
-            data.namaWali,
-            "MALE",
-            typeof data.penghasilanWali === "number" ? data.penghasilanWali : 0,
-            data.pendidikanWali ?? "",
-            data.pekerjaanWali ?? "",
-            data.tahunLahirWali ?? "",
-            data.telpWali ?? "",
-          );
-
-          // 🔥 Create Clerk account
-          let clerkUser;
-          try {
-            clerkUser = await client.users.createUser({
-              username: parentData.username,
-              password: parentData.password,
-              firstName: parentData.name,
-              publicMetadata: { role: "parent" },
-            });
-          } catch (err: any) {
-            const message =
-              err?.errors?.[0]?.message || "Gagal membuat akun wali.";
-            return { success: false, error: true, message };
-          }
-
-          // 🔥 Create Parent in Prisma with Clerk ID
-          const wali = await tx.parent.create({
-            data: {
-              id: clerkUser.id,
-              ...parentData,
-              guardianStudents: { connect: { id: student.id } },
-            },
-          });
-
-          guardianId = wali.id;
-        }
-
-        /** -------------------------
-         * Update student with parent references
-         * ------------------------- */
-        await tx.student.update({
-          where: { id: student.id },
-          data: {
-            parentId,
-            secondParentId,
-            guardianId,
-          },
-        });
-
-        /** -------------------------
-         * Final: Mark PPDB row updated
-         * ------------------------- */
-
-        return { student };
-      });
-    }
 
     const updatedPpdb = await prisma.pPDB.findUnique({
       where: { id: data.id },
@@ -5270,8 +5332,8 @@ export const createStaff = async (
   currentState: CurrentState,
   data: CreatestaffSchema,
 ) => {
+  let user: any = null;
   try {
-    let user;
     try {
       user = await client.users.createUser({
         username: data.username,
@@ -5326,6 +5388,17 @@ export const createStaff = async (
 
     return { success: true, error: false, data: createdStaff, id: user.id };
   } catch (error: any) {
+    const isPrismaError = error instanceof Prisma.PrismaClientKnownRequestError;
+    if (isPrismaError && user?.id) {
+      try {
+        await client.users.deleteUser(user.id);
+        console.warn("⚠️ Rolled back Clerk user:", user.id);
+      } catch (cleanupError) {
+        console.error("❌ Failed to rollback Clerk user", cleanupError);
+      }
+      const prismaError = handlePrismaError(error);
+      if (prismaError) return prismaError;
+    }
     let message = "Unknown error";
     // Handle Clerk API errors properly
 
@@ -5422,6 +5495,8 @@ export const updateStaff = async (
     }
     return { success: true, error: false, data: updatedStaff };
   } catch (error) {
+    const prismaError = handlePrismaError(error);
+    if (prismaError) return prismaError;
     const message =
       error instanceof Error
         ? error.message
