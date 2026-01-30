@@ -38,7 +38,7 @@ const HeroSettings = ({
     formData.append("file", resizedFile);
     formData.append(
       "upload_preset",
-      process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET!
+      process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET!,
     );
 
     const res = await fetch(
@@ -46,7 +46,7 @@ const HeroSettings = ({
       {
         method: "POST",
         body: formData,
-      }
+      },
     );
 
     if (!res.ok) throw new Error("Upload failed");
@@ -76,7 +76,7 @@ const HeroSettings = ({
         uploadSingleFile(file, () => {
           uploadedCount++;
           setProgress(Math.round((uploadedCount / files.length) * 100));
-        })
+        }),
       );
 
       const uploaded = await Promise.all(uploadPromises);
@@ -151,7 +151,11 @@ const HeroSettings = ({
           />
         )}
       </div>
-      <div className="mt-4 grid grid-cols-4 gap-4">
+      <div
+        className={`mt-4 grid ${
+          hero.length < 10 ? "grid-cols-1" : "grid-cols-2"
+        } md:grid-cols-4 gap-4`}
+      >
         {hero.length === 0 ? (
           <div className="col-span-4 flex items-center justify-center h-24 border-2 border-dashed border-gray-300 rounded bg-gray-50 text-gray-500">
             Belum ada gambar untuk Komponen ini

@@ -48,6 +48,20 @@ export default function DashboardLayout({
       >
         <Navbar onToggleMenu={() => setSidebarOpen(!sidebarOpen)} />
         <div className="p-4">{children}</div>
+        <footer className="border-t bg-white text-gray-500 text-sm">
+          <div className="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row items-center justify-between gap-2">
+            <p>
+              © {new Date().getFullYear()} SMP Islamiyah Serua. All rights
+              reserved.
+            </p>
+
+            <div className="flex items-center gap-4 text-xs">
+              <span className="text-gray-400">PPDB System</span>
+              <span className="hidden sm:inline">•</span>
+              <span className="text-gray-400">v2.0</span>
+            </div>
+          </div>
+        </footer>
       </div>
 
       {/* BACKDROP ON MOBILE */}

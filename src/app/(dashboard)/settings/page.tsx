@@ -30,7 +30,7 @@ const Settings = () => {
   const resizeImage = (
     file: File,
     maxSize = 1080,
-    quality = 0.8
+    quality = 0.8,
   ): Promise<File> => {
     return new Promise((resolve, reject) => {
       const img = new window.Image();
@@ -69,11 +69,11 @@ const Settings = () => {
             resolve(
               new File([blob], file.name.replace(/\.[^/.]+$/, ".jpg"), {
                 type: "image/jpeg",
-              })
+              }),
             );
           },
           "image/jpeg",
-          quality
+          quality,
         );
       };
 
@@ -91,7 +91,7 @@ const Settings = () => {
     formData.append("file", resizedFile);
     formData.append(
       "upload_preset",
-      process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET!
+      process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET!,
     );
 
     const res = await fetch(
@@ -99,7 +99,7 @@ const Settings = () => {
       {
         method: "POST",
         body: formData,
-      }
+      },
     );
 
     if (!res.ok) throw new Error("Upload failed");
@@ -135,7 +135,7 @@ const Settings = () => {
   };
 
   const handleGalleryUpload = async (
-    e: React.ChangeEvent<HTMLInputElement>
+    e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -151,7 +151,7 @@ const Settings = () => {
         uploadSingleFile(file, () => {
           uploadedCount++;
           setProgress(Math.round((uploadedCount / files.length) * 100));
-        })
+        }),
       );
 
       const uploaded = await Promise.all(uploadPromises);
@@ -247,7 +247,11 @@ const Settings = () => {
               />
             )}
           </div>
-          <div className="mt-4 grid grid-cols-4 gap-4">
+          <div
+            className={`mt-4 grid ${
+              gallery.length < 10 ? "grid-cols-1" : "grid-cols-2"
+            } md:grid-cols-4 gap-4`}
+          >
             {gallery.length === 0 ? (
               <div className="col-span-4 flex items-center justify-center h-24 border-2 border-dashed border-gray-300 rounded bg-gray-50 text-gray-500">
                 Belum ada Item untuk Komponen ini
@@ -282,7 +286,7 @@ const Settings = () => {
                           if (e.key === "Enter") {
                             handleCaptionSave(
                               item.id,
-                              (e.target as HTMLInputElement).value.trim()
+                              (e.target as HTMLInputElement).value.trim(),
                             );
                           }
                         }}
