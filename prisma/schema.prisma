@@ -75,7 +75,7 @@ model Student {
   attendance      Attendance[]
   results         Result[]
   birthday        DateTime
-  studentDb PPDB?
+  studentDb       PPDB?
 
   paymentLogs PaymentLog[]
 }
@@ -538,6 +538,7 @@ model PPDBSetting {
   endDate   DateTime
   quota     Int
   usedQuota Int      @default(0)
+  filePpdb  String?
   updatedAt DateTime @updatedAt
 }
 

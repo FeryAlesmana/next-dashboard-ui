@@ -123,7 +123,7 @@ export default function PpdbListClient({
         selectedIds={selected}
         table="ppdb"
         onReset={() => setSelected([])}
-        data={data}
+        data={localData}
         relatedData={relatedData}
         onDeleted={handleDeleteOptimistic} // pass handler
         handleChanged={handleChanged}

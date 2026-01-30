@@ -164,6 +164,7 @@ const ExamListPage = async ({
                 },
               },
             ];
+            break;
           case "sort":
             switch (value) {
               case "az":

@@ -38,6 +38,7 @@ export async function GET() {
     const now = new Date();
     const start = setting.startDate;
     const end = setting.endDate;
+    const filePpdb = setting.filePpdb;
     let ppdbStatus;
 
     if (now < start) {
@@ -93,7 +94,7 @@ export async function GET() {
     }
 
     // 5. PPDB Buka
-    return NextResponse.json({ ppdbStatus, currentStaffRole });
+    return NextResponse.json({ filePpdb, ppdbStatus, currentStaffRole });
   } catch (err) {
     console.error(err);
     return NextResponse.json(

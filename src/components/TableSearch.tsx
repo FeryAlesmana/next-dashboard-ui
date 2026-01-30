@@ -43,7 +43,7 @@ const TableSearch = () => {
       <Image src="/search.png" alt="Search" width={14} height={14} />
       <input
         type="text"
-        placeholder="Search..."
+        placeholder="Cari..."
         value={value}
         onChange={(e) => setValue(e.target.value)}
         className="flex-1 md:w-[200px] p-2 bg-transparent outline-none min-w-0"

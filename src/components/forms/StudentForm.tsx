@@ -9,7 +9,13 @@ import {
   UpdatestudentSchema,
   updateStudentSchema,
 } from "@/lib/formValidationSchema";
-import { startTransition, useActionState, useEffect, useState } from "react";
+import {
+  startTransition,
+  useActionState,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import {
   activateManyStudents,
   createStudent,
@@ -123,6 +129,11 @@ const StudentForm = ({
     }
     setIsSubmitting(false);
   }, [state, getValues, setError]);
+  const withUserRef = useRef(true);
+
+  useEffect(() => {
+    withUserRef.current = withUser;
+  }, [withUser]);
 
   const handleSubmitForm = handleSubmit(async (data) => {
     setIsSubmitting(true);
@@ -134,7 +145,7 @@ const StudentForm = ({
       dokumenIjazah: dokumen.ijazah,
       dokumenAkte: dokumen.akte,
       dokumenKKKTP: dokumen.kk_ktp_sktm,
-      withUser,
+      withUser: withUserRef.current,
       classId: data.classId ? parseInt(data.classId) : null,
     };
 
@@ -159,6 +170,9 @@ const StudentForm = ({
   useEffect(() => {
     if (state.success) {
       const updatedItem = state.data ?? data; // <- depends on what your action returns
+
+      console.log(state.data, " Data from server");
+      
 
       toast(
         `Siswa telah berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`,
@@ -513,7 +527,7 @@ const StudentForm = ({
             placeholder="Isi penghargaan yang pernah dicapai"
           ></InputField>
           <InputField
-            label="Jumlah saudara"
+            label="Jumlah saudara (Opsional)"
             name="number_of_siblings"
             defaultValue={data?.student_details?.number_of_siblings}
             register={register}
@@ -544,7 +558,7 @@ const StudentForm = ({
             )}
           </div>
           <InputField
-            label="Tanggal penghargaan"
+            label="Tanggal penghargaan (Opsional)"
             name="awards_date"
             type="date"
             defaultValue={
@@ -558,7 +572,7 @@ const StudentForm = ({
             error={errors?.awards_date}
           ></InputField>
           <InputField
-            label="Beasiswa"
+            label="Beasiswa (Opsional)"
             name="scholarship"
             defaultValue={data?.student_details?.scholarship}
             register={register}
@@ -566,16 +580,16 @@ const StudentForm = ({
             placeholder="Masukkan nama beasiswa"
           ></InputField>
           <InputField
-            label="Sumber Beasiswa"
+            label="Sumber Beasiswa (Opsional)"
             name="scholarship_detail"
             defaultValue={data?.student_details?.scholarship_detail}
             register={register}
             error={errors?.scholarship_detail}
-            placeholder="Masukkan sumber beasiswa"
+            placeholder="Masukkan sumber beasiswa (Opsional)"
           ></InputField>
           <div className="flex flex-col gap-2 w-full md:w-1/4">
             <label className="text-xs text-gray-600">
-              Orang Tua (Ayah & Ibu)
+              Orang Tua (Ayah & Ibu) / Wali saja
             </label>
 
             <Controller
@@ -594,7 +608,7 @@ const StudentForm = ({
                     className="text-sm"
                     classNamePrefix="select"
                     placeholder="Pilih Ayah & Ibu (maks. 2)"
-                    value={parentOption.filter((opt:any) =>
+                    value={parentOption.filter((opt: any) =>
                       field.value?.includes(opt.value),
                     )}
                     onChange={(selected) => {
@@ -850,7 +864,7 @@ const StudentForm = ({
                 <button
                   type="button"
                   onClick={() =>
-                    setDokumen((prev) => ({ ...prev, akte: undefined }))
+                    setDokumen((prev) => ({ ...prev, kk_ktp_sktm: undefined }))
                   }
                   className="ml-2 px-2 py-1 bg-red-600 text-white text-xs rounded"
                 >
@@ -1034,33 +1048,11 @@ const StudentForm = ({
             setOpen(false);
             // router.refresh();
           }}
-          onCancel={async () => {
+          onCancel={() => {
             clearErrors();
-            setWithUser(false);
-            formAction({
-              ...pendingData,
-              withUser: false,
-              img: img?.secure_url,
-              awards_date: data.awards_date ? new Date(data.awards_date) : null,
-              dokumenIjazah: dokumen.ijazah,
-              dokumenAkte: dokumen.akte,
-              dokumenKKKTP: dokumen.kk_ktp_sktm,
-              classId: data.classId ? parseInt(data.classId) : null,
-              height: data.height ? parseInt(data.height) : null,
-              weight: data.weight ? parseInt(data.weight) : null,
-              distance_from_home: data.distance_from_home
-                ? parseInt(data.distance_from_home)
-                : null,
-              time_from_home: data.time_from_home
-                ? parseInt(data.time_from_home)
-                : null,
-              number_of_siblings: data.number_of_siblings
-                ? parseInt(data.number_of_siblings)
-                : null,
-              postcode: data.postcode ? parseInt(data.postcode) : null,
-            });
+            withUserRef.current = false;
+            handleSubmitForm();
             setShowActivateDialog(false);
-            router.refresh();
           }}
         />
       )}

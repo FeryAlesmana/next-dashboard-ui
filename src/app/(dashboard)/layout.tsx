@@ -25,7 +25,7 @@ export default function DashboardLayout({
       >
         <Link
           href="/"
-          className="flex items-center justify-center gap-2 lg:justify-start mb-6"
+          className="flex items-center justify-center gap-2 lg:justify-start mb-6 bg-lamaBlue rounded-md p-2 hover:bg-gray-400"
         >
           <Image
             src="https://res.cloudinary.com/dbfascepc/image/upload/v1753534026/favicon_iqgit7.png"
@@ -42,8 +42,10 @@ export default function DashboardLayout({
       </div>
 
       {/* RIGHT CONTENT */}
-      <div className="flex-1 flex flex-col bg-[#F7F8FA] overflow-y-auto"
-       id="scroll-container">
+      <div
+        className="flex-1 flex flex-col bg-[#F7F8FA] overflow-y-auto"
+        id="scroll-container"
+      >
         <Navbar onToggleMenu={() => setSidebarOpen(!sidebarOpen)} />
         <div className="p-4">{children}</div>
       </div>

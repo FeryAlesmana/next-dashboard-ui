@@ -191,7 +191,7 @@ export default function ResultListClient({
         selectedIds={selected}
         table="result"
         onReset={() => setSelected([])}
-        data={data}
+        data={localData}
         relatedData={relatedData}
         onDeleted={handleDeleteOptimistic}
         handleChanged={handleChanged}

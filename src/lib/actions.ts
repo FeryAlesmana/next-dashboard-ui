@@ -214,6 +214,7 @@ export const createClass = async (
         ...rest,
         supervisorId: supervisorId && supervisorId !== "" ? supervisorId : null, // ✅ normalize
       },
+      include: { students: true },
     });
     return { success: true, error: false, data: createdClass };
   } catch (error) {
@@ -240,6 +241,7 @@ export const updateClass = async (
       },
       include: {
         supervisor: true,
+        students: true
       },
     });
     return { success: true, error: false, data: updatedClass };
@@ -1116,75 +1118,82 @@ export const updateStudent = async (
     const parentId = data.parents?.[0] ?? null;
     const secondParentId = data.parents?.[1] ?? null;
 
-    await prisma.student.update({
-      where: {
-        id: data.id,
-      },
-      data: {
-        id: user?.id ?? data.id,
-        username: data.username,
-        ...(data.password !== "" && {
-          password: encryptPassword(data.password!),
-        }),
-        name: data.name,
-        email: data.email || null,
-        phone: data.phone,
-        address: data.address,
-        rw: data.rw,
-        rt: data.rt,
-        kelurahan: data.kelurahan,
-        kecamatan: data.kecamatan,
-        kota: data.kota,
-        religion: data.religion,
-        ...(data.img && { img: data.img }),
-        sex: data.sex,
-        birthday: new Date(data.birthday),
-        gradeId,
-        classId: data.classId,
-        parentId: parentId,
+    const finalStudentId = user?.id ?? data.id;
 
-        secondParentId: secondParentId,
-      },
-    });
-    await prisma.student_details.update({
-      where: {
-        id: parseInt(data.sdId!),
-      },
-      data: {
-        student: {
-          connect: { id: user?.id || data.id },
+    console.log(data, "data in update student");
+
+    await prisma.$transaction(async (tx) => {
+      // 1️⃣ Update student
+      await tx.student.update({
+        where: {
+          id: data.id,
         },
-        asalSekolah: data.asalSekolah,
-        birthPlace: data.birthPlace,
-        nisn: data.nisn,
-        npsn: data.npsn,
-        no_ijz: data.no_ijz,
-        noWa: data.noWa,
-        nik: data.nik,
-        kps: data.kps || null,
-        no_kps: data.no_kps || null,
-        height: data.height,
-        weight: data.weight,
-        transportation: data.transportation,
-        tempat_tinggal: data.tempat_tinggal,
-        distance_from_home: data.distance_from_home,
-        time_from_home: data.time_from_home,
-        number_of_siblings: data.number_of_siblings,
-        postcode: data.postcode,
-        awards: data.awards || null,
-        awards_date: data.awards_date || null,
-        scholarship: data.scholarship || null,
-        scholarship_detail: data.scholarship_detail || null,
-        dokumenIjazah: data.dokumenIjazah || null,
-        dokumenAkte: data.dokumenAkte || null,
-        dokumenPasfoto: data.dokumenPasfoto || null,
-        dokumenKKKTP: data.dokumenKKKTP || null,
-        awards_lvl: data.awards_lvl || null,
-      },
+        data: {
+          id: finalStudentId, // ⚠️ only do this if you REALLY need to change PK
+          username: data.username,
+          ...(data.password !== "" && {
+            password: encryptPassword(data.password!),
+          }),
+          name: data.name,
+          email: data.email || null,
+          phone: data.phone,
+          address: data.address,
+          rw: data.rw,
+          rt: data.rt,
+          kelurahan: data.kelurahan,
+          kecamatan: data.kecamatan,
+          kota: data.kota,
+          religion: data.religion,
+          ...(data.img && { img: data.img }),
+          sex: data.sex,
+          birthday: new Date(data.birthday),
+          gradeId,
+          classId: data.classId,
+          parentId,
+          secondParentId,
+        },
+      });
+
+      // 2️⃣ Update student_details
+      await tx.student_details.update({
+        where: {
+          id: parseInt(data.sdId!, 10),
+        },
+        data: {
+          studentId: finalStudentId, // 👈 MUCH safer than nested connect
+          asalSekolah: data.asalSekolah,
+          birthPlace: data.birthPlace,
+          nisn: data.nisn,
+          npsn: data.npsn,
+          no_ijz: data.no_ijz,
+          noWa: data.noWa,
+          nik: data.nik,
+          kps: data.kps || null,
+          no_kps: data.no_kps || null,
+          height: data.height,
+          weight: data.weight,
+          transportation: data.transportation,
+          tempat_tinggal: data.tempat_tinggal,
+          distance_from_home: data.distance_from_home,
+          time_from_home: data.time_from_home,
+          number_of_siblings: data.number_of_siblings,
+          postcode: data.postcode,
+          awards: data.awards || null,
+          awards_lvl: data.awards_lvl || null,
+          awards_date: data.awards_date || null,
+          scholarship: data.scholarship || null,
+          scholarship_detail: data.scholarship_detail || null,
+          dokumenIjazah: data.dokumenIjazah || null,
+          dokumenAkte: data.dokumenAkte || null,
+          dokumenPasfoto: data.dokumenPasfoto || null,
+          dokumenKKKTP: data.dokumenKKKTP || null,
+        },
+      });
     });
 
     const updatedStudent = await prisma.student.findUnique({
       where: { id: user?.id || data.id },
+      include: { student_details: true },
     });
     if (updatedStudent?.password) {
       updatedStudent.password = decryptPassword(updatedStudent.password);
@@ -4750,6 +4759,7 @@ export async function updatePPDBSetting(
           startDate,
           endDate,
           quota: data.quota,
+          filePpdb: data.filePpdb
         },
       });
     } else {
@@ -4760,6 +4770,7 @@ export async function updatePPDBSetting(
           startDate,
           endDate,
           quota: data.quota,
+          filePpdb: data.filePpdb
         },
       });
     }

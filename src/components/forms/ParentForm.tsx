@@ -28,6 +28,8 @@ import Select from "react-select";
 import z from "zod";
 import ConfirmDialog from "../ConfirmDialog";
 import { BaseFormProps } from "./AssignmentForm";
+import { RupiahInput } from "../RupiahInput";
+import { QuickAddButtons } from "../QuickActButton";
 
 const ParentForm = ({
   setOpen,
@@ -48,6 +50,7 @@ const ParentForm = ({
     trigger,
     setError,
     clearErrors,
+    setValue,
   } = useForm<
     typeof schema extends z.ZodTypeAny ? z.infer<typeof schema> : never
   >({
@@ -56,14 +59,14 @@ const ParentForm = ({
 
   const createParentHandler = async (
     prevState: CurrentState,
-    payload: CreateparentSchema
+    payload: CreateparentSchema,
   ): Promise<CurrentState> => {
     return await createParent(prevState, payload);
   };
 
   const updateParentHandler = async (
     prevState: CurrentState,
-    payload: UpdateparentSchema
+    payload: UpdateparentSchema,
   ): Promise<CurrentState> => {
     return await updateParent(prevState, payload);
   };
@@ -76,7 +79,7 @@ const ParentForm = ({
       message: "",
       field: "",
       code: "",
-    }
+    },
   );
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -150,7 +153,7 @@ const ParentForm = ({
       toast(
         `Wali Murid telah berhasil di ${
           type === "create" ? "Tambah!" : "Edit!"
-        }`
+        }`,
       );
       if (onChanged && updatedItem) {
         onChanged(updatedItem); // 🔥 notify parent so it can update localData
@@ -169,9 +172,16 @@ const ParentForm = ({
     (student: { id: string; name: string }) => ({
       value: student.id,
       label: `${student.name} `,
-    })
+    }),
   );
   const [showPassword, setShowPassword] = useState(false);
+
+  const [income, setIncome] = useState<number | null>(data?.income ?? null);
+
+  const updateIncome = (value: number) => {
+    setIncome(value);
+    setValue("income", value); // React Hook Form sync
+  };
 
   // console.log(data, "data in parentForm");
   return (
@@ -273,14 +283,27 @@ const ParentForm = ({
             error={errors?.job}
             placeholder="Masukkan pekerjaan"
           />
-          <InputField
+          {/* <InputField
             label="Penghasilan"
             name="income"
             defaultValue={data?.income}
             register={register}
             error={errors?.income}
             placeholder="Contoh: 5.200.000"
-          />
+          /> */}
+          <div className="flex flex-col gap-2 w-full md:w-1/4">
+            <label className="text-xs text-gray-500">Penghasilan (per bulan)</label>
+
+            <RupiahInput
+              value={income}
+              onChange={(num: number) => updateIncome(num)}
+            />
+
+            <QuickAddButtons
+              current={income}
+              onChange={(num: number) => updateIncome(num)}
+            />
+          </div>
           <div className="flex flex-col gap-2 w-full md:w-1/4">
             <label className="text-xs text-gray-600">Jenis Kelamin</label>
             <select
@@ -351,7 +374,7 @@ const ParentForm = ({
               }
               render={({ field }) => {
                 const selectedValues = studentOptions.filter((opt: any) =>
-                  field.value?.includes(opt.value)
+                  field.value?.includes(opt.value),
                 );
 
                 return (
@@ -412,8 +435,8 @@ const ParentForm = ({
             {isSubmitting
               ? "Memproses..."
               : type === "create"
-              ? "Tambah Wali Murid"
-              : "Update dan Simpan"}
+                ? "Tambah Wali Murid"
+                : "Update dan Simpan"}
           </button>
         </div>
       </form>
@@ -441,14 +464,14 @@ const ParentForm = ({
               toast.success(result.message);
               setTimeout(
                 () => router.push(`/list/parents?id=${result.id}`),
-                3000
+                3000,
               );
             } else if (failed) {
               if (failed.field) {
                 setError(failed.field as any, { message: failed.message });
               }
               toast.error(
-                `${failed.field ? `${failed.field}: ` : ""}${failed.message}`
+                `${failed.field ? `${failed.field}: ` : ""}${failed.message}`,
               );
             } else {
               toast.error(result.message || "Terjadi kesalahan.");

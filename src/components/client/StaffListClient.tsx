@@ -112,7 +112,7 @@ export default function StaffListClient({
         selectedIds={selected}
         table="staff"
         onReset={() => setSelected([])}
-        data={data}
+        data={localData}
         relatedData={relatedData}
         onDeleted={handleDeleteOptimistic} // pass handler
         handleChanged={handleChanged}

@@ -267,7 +267,7 @@ export default function PaymentChangeListClient({
                   className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight"
                 >
                   <td className="hidden md:table-cell px-5">
-                    {row.paymentLogId || "-"}
+                    {(row.paymentLogId ?? row.plogId) || "-"}
                   </td>
 
                   <td className="p-4">

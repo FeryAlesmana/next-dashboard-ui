@@ -246,10 +246,9 @@ export const studentSchema = z.object({
   dokumenKKKTP: z.string().optional().nullable(),
   classId: z.coerce.number().min(1, { message: "Id kelas wajib diisi!" }),
   parents: z
-  .array(z.string())
-  .max(2, "Maksimal 2 orang tua (Ayah & Ibu)")
-  .optional(),
-
+    .array(z.string())
+    .max(2, "Maksimal 2 orang tua (Ayah & Ibu)")
+    .optional(),
 });
 export type StudentSchema = z.infer<typeof studentSchema>;
 
@@ -1112,6 +1111,7 @@ export const ppdbSettingSchema = z
         invalid_type_error: "Kuota harus berupa angka",
       })
       .min(1, "Kuota minimal 1"),
+    filePpdb: z.string().optional().nullable(),
   })
   .refine(
     (data) => {

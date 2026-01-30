@@ -2,7 +2,13 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import InputField from "../InputField";
-import { startTransition, useActionState, useEffect, useState } from "react";
+import {
+  startTransition,
+  useActionState,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import {
   CreateteacherSchema,
   createTeacherSchema,
@@ -57,14 +63,14 @@ const TeacherForm = ({
   const [img, setImg] = useState<any>();
   const createTeacherHandler = async (
     prevState: CurrentState,
-    payload: CreateteacherSchema
+    payload: CreateteacherSchema,
   ): Promise<CurrentState> => {
     return await createTeacher(prevState, payload);
   };
 
   const updateTeacherHandler = async (
     prevState: CurrentState,
-    payload: UpdateteacherSchema
+    payload: UpdateteacherSchema,
   ): Promise<CurrentState> => {
     return await updateTeacher(prevState, payload);
   };
@@ -76,7 +82,7 @@ const TeacherForm = ({
   };
   const [state, formAction] = useActionState(
     type === "create" ? createTeacherHandler : updateTeacherHandler,
-    initialState
+    initialState,
   );
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -84,6 +90,12 @@ const TeacherForm = ({
   const [showActivateDialog, setShowActivateDialog] = useState(false);
   const [pendingData, setPendingData] = useState<any>(null);
   const [withUser, setWithUser] = useState(true); // default: true (Clerk enabled)
+
+  const withUserRef = useRef(true);
+
+  useEffect(() => {
+    withUserRef.current = withUser;
+  }, [withUser]);
 
   useEffect(() => {
     if (!state.success && state.error) {
@@ -105,7 +117,7 @@ const TeacherForm = ({
     const payload = {
       ...data,
       img: img?.secure_url ?? data?.img,
-      withUser,
+      withUser: withUserRef.current,
     };
 
     startTransition(() => {
@@ -124,7 +136,7 @@ const TeacherForm = ({
     (subject: { id: number; name: string }) => ({
       value: subject.id,
       label: `${subject.name}`,
-    })
+    }),
   );
   const classOptions = classes.map((kelas: { id: number; name: string }) => ({
     value: kelas.id,
@@ -134,31 +146,40 @@ const TeacherForm = ({
     (lesson: { id: number; name: string; day: Day }) => ({
       value: lesson.id,
       label: `${lesson.name} ${lesson.day}`,
-    })
+    }),
   );
 
-  useEffect(() => {
-    console.log("✅ data received:", data);
-    if (type === "update" && data?.subjects) {
-      reset({
-        ...data,
-        birthday: data?.birthday
-          ? new Date(data.birthday).toISOString().split("T")[0]
-          : "",
-        subjects: data.subjects.map((s: { id: number }) => s.id),
-        lessons: data.lessons.map((l: { id: number }) => l.id),
-        classes: data.classes.map((c: { id: number }) => c.id),
-      });
+  const lastIdRef = useRef<string | number | null>(null);
 
-      // 👇 initialize img state from DB
-      if (data.img) {
-        setImg({ secure_url: data.img });
-      }
+  useEffect(() => {
+    if (type !== "update") return;
+    if (!data?.id) return;
+
+    // 🔒 only reset if we're editing a DIFFERENT teacher
+    if (lastIdRef.current === data.id) return;
+
+    reset({
+      ...data,
+      birthday: data.birthday
+        ? new Date(data.birthday).toISOString().split("T")[0]
+        : "",
+      subjects: data.subjects?.map((s: { id: number }) => s.id) ?? [],
+      lessons: data.lessons?.map((l: { id: number }) => l.id) ?? [],
+      classes: data.classes?.map((c: { id: number }) => c.id) ?? [],
+    });
+
+    if (data.img) {
+      setImg({ secure_url: data.img });
     }
+
+    lastIdRef.current = data.id;
+  }, [type, data?.id, reset, data]);
+
+  useEffect(() => {
     if (state.success) {
       const updatedItem = state.data ?? data;
       toast(
-        `Guru telah berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`
+        `Guru telah berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`,
       );
       if (onChanged && updatedItem) {
         onChanged(updatedItem); // 🔥 notify parent so it can update localData
@@ -371,7 +392,7 @@ const TeacherForm = ({
               render={({ field }) => {
                 const selectedValues = subjectOption.filter(
                   (opt: { value: number; label: string }) =>
-                    field.value?.includes(opt.value)
+                    field.value?.includes(opt.value),
                 );
                 return (
                   <Select
@@ -404,13 +425,13 @@ const TeacherForm = ({
               control={control}
               defaultValue={
                 data?.lessons?.map(
-                  (lesson: { id: number; name: string; day: Day }) => lesson.id
+                  (lesson: { id: number; name: string; day: Day }) => lesson.id,
                 ) || []
               }
               render={({ field }) => {
                 const selectedValues = lessonOptions.filter(
                   (opt: { value: number; label: string }) =>
-                    field.value?.includes(opt.value)
+                    field.value?.includes(opt.value),
                 );
                 return (
                   <Select
@@ -423,7 +444,7 @@ const TeacherForm = ({
                     value={selectedValues}
                     onChange={(selectedOptions) => {
                       field.onChange(
-                        selectedOptions.map((opt) => Number(opt.value))
+                        selectedOptions.map((opt) => Number(opt.value)),
                       );
                     }}
                   />
@@ -445,13 +466,13 @@ const TeacherForm = ({
               control={control}
               defaultValue={
                 data?.classes?.map(
-                  (kelas: { id: number; name: string }) => kelas.id
+                  (kelas: { id: number; name: string }) => kelas.id,
                 ) || []
               }
               render={({ field }) => {
                 const selectedValues = classOptions.filter(
                   (opt: { value: number; label: string }) =>
-                    field.value?.includes(opt.value)
+                    field.value?.includes(opt.value),
                 );
 
                 return (
@@ -465,7 +486,7 @@ const TeacherForm = ({
                     value={selectedValues}
                     onChange={(selectedOptions) => {
                       field.onChange(
-                        selectedOptions.map((opt) => Number(opt.value))
+                        selectedOptions.map((opt) => Number(opt.value)),
                       );
                     }}
                   />
@@ -503,8 +524,8 @@ const TeacherForm = ({
             {isSubmitting
               ? "Memproses..."
               : type === "create"
-              ? "Tambah Guru"
-              : "Update Guru"}
+                ? "Tambah Guru"
+                : "Update Guru"}
           </button>
         </div>
       </form>
@@ -527,14 +548,14 @@ const TeacherForm = ({
               toast.success(result.message);
               setTimeout(
                 () => router.push(`/list/teachers/${result.id}`),
-                3000
+                3000,
               );
             } else if (failed) {
               if (failed.field) {
                 setError(failed.field as any, { message: failed.message });
               }
               toast.error(
-                `${failed.field ? `${failed.field}: ` : ""}${failed.message}`
+                `${failed.field ? `${failed.field}: ` : ""}${failed.message}`,
               );
             } else {
               toast.error(result.message || "Terjadi kesalahan.");
@@ -543,16 +564,11 @@ const TeacherForm = ({
             setOpen(false);
             // router.refresh();
           }}
-          onCancel={async () => {
+          onCancel={() => {
             clearErrors();
-            setWithUser(false);
-            formAction({
-              ...pendingData,
-              img: img?.secure_url,
-              withUser: false, // tell server to skip Clerk
-            });
+            withUserRef.current = false;
+            handleSubmitForm();
             setShowActivateDialog(false);
-            router.refresh();
           }}
         />
       )}

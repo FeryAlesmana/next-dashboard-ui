@@ -125,7 +125,7 @@ export default function SubjectListClient({
         selectedIds={selected}
         table="subject"
         onReset={() => setSelected([])}
-        data={data}
+        data={localData}
         relatedData={relatedData}
         onDeleted={handleDeleteOptimistic}
         handleChanged={handleChanged}

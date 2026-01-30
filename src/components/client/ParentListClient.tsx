@@ -97,7 +97,7 @@ export default function ParentListClient({
         selectedIds={selected}
         table="parent"
         onReset={() => setSelected([])}
-        data={data}
+        data={localData}
         relatedData={relatedData}
         onDeleted={handleDeleteOptimistic}
         handleChanged={handleChanged}

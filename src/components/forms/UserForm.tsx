@@ -40,14 +40,14 @@ const UserForm = ({
 
   const createUserHandler = async (
     prevState: CurrentState,
-    payload: UserSchema
+    payload: UserSchema,
   ): Promise<CurrentState> => {
     return await createUserDB(prevState, payload);
   };
 
   const updateUserHandler = async (
     prevState: CurrentState,
-    payload: UserSchema
+    payload: UserSchema,
   ): Promise<CurrentState> => {
     return await updateUserDB(prevState, payload);
   };
@@ -58,7 +58,7 @@ const UserForm = ({
       success: false,
       error: false,
       message: "",
-    }
+    },
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -108,7 +108,7 @@ const UserForm = ({
     if (state.success) {
       const updatedItem = state.data ?? formData;
       toast(
-        `User telah berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`
+        `User telah berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`,
       );
       if (onChanged && updatedItem) {
         onChanged(updatedItem); // 🔥 notify parent so it can update localData
@@ -217,41 +217,44 @@ const UserForm = ({
               </p>
             )}
           </div>
-          <div className="flex flex-col gap-2 w-full md:w-1/4">
-            <label className="text-xs text-gray-400">User di database</label>
 
-            <Controller
-              name="userId"
-              control={control}
-              defaultValue={data?.id || ""}
-              render={({ field }) => {
-                return (
-                  <Select
-                    {...field}
-                    options={filteredUserOptions}
-                    className="text-sm"
-                    classNamePrefix="select"
-                    placeholder="Hubungkan User..."
-                    onChange={(selectedOption) =>
-                      field.onChange(selectedOption?.value)
-                    }
-                    value={
-                      filteredUserOptions.find(
-                        (opt: { value: string; label: string }) =>
-                          opt.value === field.value
-                      ) || null
-                    }
-                  />
-                );
-              }}
-            />
+          {roleValue && (
+            <div className="flex flex-col gap-2 w-full md:w-1/4">
+              <label className="text-xs text-gray-400">User di database</label>
 
-            {errors.userId?.message && (
-              <p className="text-xs text-red-400">
-                {errors.userId.message.toString()}
-              </p>
-            )}
-          </div>
+              <Controller
+                name="userId"
+                control={control}
+                defaultValue={data?.id || ""}
+                render={({ field }) => {
+                  return (
+                    <Select
+                      {...field}
+                      options={filteredUserOptions}
+                      className="text-sm"
+                      classNamePrefix="select"
+                      placeholder="Hubungkan User..."
+                      onChange={(selectedOption) =>
+                        field.onChange(selectedOption?.value)
+                      }
+                      value={
+                        filteredUserOptions.find(
+                          (opt: { value: string; label: string }) =>
+                            opt.value === field.value,
+                        ) || null
+                      }
+                    />
+                  );
+                }}
+              />
+
+              {errors.userId?.message && (
+                <p className="text-xs text-red-400">
+                  {errors.userId.message.toString()}
+                </p>
+              )}
+            </div>
+          )}
         </div>
         {data && (
           <InputField
@@ -286,8 +289,8 @@ const UserForm = ({
             {isSubmitting
               ? "Memproses..."
               : type === "create"
-              ? "Tambah User"
-              : "Update dan Simpan"}
+                ? "Tambah User"
+                : "Update dan Simpan"}
           </button>
         </div>
       </form>

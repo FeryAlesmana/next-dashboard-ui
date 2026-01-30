@@ -20,6 +20,7 @@ export default function PPDBPage() {
     reason: string;
   } | null>(null);
   const [currentStaff, setCurrentStaff] = useState<staffrole>("PENILAIAN");
+  const [filePpdb, setFilePpdb] = useState("/files/FORMULIR-PENERIMAAN-MAHASISWA-BARU-TAHUN-2023.pdf")
 
   useEffect(() => {
     async function fetchStatus() {
@@ -27,7 +28,8 @@ export default function PPDBPage() {
       const data = await res.json();
       setPpdbStatus(data?.ppdbStatus);
       setCurrentStaff(data?.currentStaffRole);
-      console.log(data, "data ppdb");
+      setFilePpdb(data?.filePpdb)
+      // console.log(data, "data ppdb");
     }
     fetchStatus();
   }, []);
@@ -109,7 +111,7 @@ export default function PPDBPage() {
         {selectedMethod === "offline" && (
           <div className="mt-8 text-center">
             <a
-              href="/files/FORMULIR-PENERIMAAN-MAHASISWA-BARU-TAHUN-2023.pdf"
+              href={filePpdb}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-block bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-full shadow-lg"

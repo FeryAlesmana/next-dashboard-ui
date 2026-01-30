@@ -113,7 +113,7 @@ export default function ExamListClient({
         selectedIds={selected}
         table="exam"
         onReset={() => setSelected([])}
-        data={data}
+        data={localData}
         relatedData={relatedData}
         onDeleted={handleDeleteOptimistic} // pass handler
         handleChanged={handleChanged}

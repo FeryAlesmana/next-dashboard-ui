@@ -21,6 +21,7 @@ import {
 
 import { CurrentState, updatePPDBSetting } from "@/lib/actions";
 import InputField from "../InputField";
+import { cloudinaryUpload } from "@/lib/upload/cloudinaryUpload";
 
 type Props = {
   setOpen?: Dispatch<SetStateAction<boolean>>;
@@ -57,7 +58,7 @@ const PPDBSettingForm = ({ setOpen, type, data }: Props) => {
   // Server action wrapper
   const updateHandler = async (
     prevState: CurrentState,
-    payload: PPDBSettingSchema
+    payload: PPDBSettingSchema,
   ) => {
     return await updatePPDBSetting(prevState, payload);
   };
@@ -67,6 +68,31 @@ const PPDBSettingForm = ({ setOpen, type, data }: Props) => {
     error: false,
     message: "",
   });
+
+  const [dokumen, setDokumen] = useState<{
+    filePpdb?: string;
+  }>({});
+  const [uploadingField, setUploadingField] = useState<
+    keyof typeof dokumen | null
+  >(null);
+
+  const handleFileUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    name: keyof typeof dokumen,
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingField(name);
+
+    try {
+      const uploadedUrl = await cloudinaryUpload(file, "ppdb");
+
+      setDokumen((prev) => ({ ...prev, [name]: uploadedUrl }));
+    } catch (err) {
+      toast.error("Upload gagal");
+    }
+  };
 
   // First submit -> validate -> open confirm modal
   const onSubmit = async (e: React.FormEvent) => {
@@ -84,10 +110,14 @@ const PPDBSettingForm = ({ setOpen, type, data }: Props) => {
   // Confirm -> send to server
   const handleConfirmSubmit = () => {
     if (formData) {
+      const payload: PPDBSettingSchema = {
+        ...formData,
+        filePpdb: dokumen.filePpdb,
+      };
       setIsSubmitting(true);
 
       startTransition(() => {
-        formAction(formData);
+        formAction(payload);
       });
     }
     setShowConfirm(false);
@@ -107,7 +137,7 @@ const PPDBSettingForm = ({ setOpen, type, data }: Props) => {
     <>
       <form onSubmit={onSubmit} className="flex flex-col gap-6">
         <h1 className="text-xl font-semibold">Pengaturan PPDB</h1>
-        <div className="flex justify-between flex-wrap gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Start Date */}
           <InputField
             label="Waktu mulai"
@@ -115,6 +145,7 @@ const PPDBSettingForm = ({ setOpen, type, data }: Props) => {
             register={register}
             error={errors?.startDate}
             type="date"
+            table="student"
           />
 
           <InputField
@@ -123,6 +154,7 @@ const PPDBSettingForm = ({ setOpen, type, data }: Props) => {
             register={register}
             error={errors?.endDate}
             type="date"
+            table="student"
           />
 
           {/* Quota */}
@@ -132,7 +164,102 @@ const PPDBSettingForm = ({ setOpen, type, data }: Props) => {
             register={register}
             error={errors?.quota}
             type="number"
+            table="student"
           />
+
+          <div className="flex flex-col gap-2">
+            <label className="text-xs text-gray-600">File PPDB Offline</label>
+
+            {/* Upload input (only shown if no file yet) */}
+            {!dokumen.filePpdb &&
+              !data?.filePpdb &&
+              (uploadingField === "filePpdb" ? (
+                <div className="flex items-center justify-center w-full h-10">
+                  <svg
+                    className="animate-spin h-6 w-6 text-blue-500"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                    />
+                  </svg>
+                  <span className="ml-2 text-sm text-gray-300">
+                    Mengunggah...
+                  </span>
+                </div>
+              ) : (
+                <input
+                  type="file"
+                  accept=".pdf"
+                  onChange={(e) => handleFileUpload(e, "filePpdb")}
+                  className="block w-full text-sm text-gray-700
+                    file:mr-4 file:py-2 file:px-4
+                    file:rounded-md file:border-0
+                    file:text-sm file:font-semibold
+                    file:bg-blue-50 file:text-blue-700
+                    hover:file:bg-blue-100
+                    border border-gray-300 rounded-md"
+                />
+              ))}
+
+            {/* Show preview if file exists in local state */}
+            {dokumen.filePpdb && (
+              <div className="flex items-center justify-between bg-white/10 p-2 rounded shadow">
+                <a
+                  href={dokumen.filePpdb}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-400 underline truncate"
+                >
+                  Lihat Dokumen (File PPDB Offline)
+                </a>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setDokumen((prev) => ({ ...prev, filePpdb: undefined }))
+                  }
+                  className="ml-2 px-2 py-1 bg-red-600 text-white text-xs rounded"
+                >
+                  Hapus
+                </button>
+              </div>
+            )}
+
+            {/* Show preview if file exists in DB but not in local state */}
+            {!dokumen.filePpdb && data?.filePpdb && (
+              <div className="flex items-center justify-between bg-white/10 p-2 rounded shadow">
+                <a
+                  href={data?.filePpdb}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-400 underline truncate"
+                >
+                  Lihat Dokumen (File PPDB Offline)
+                </a>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setDokumen((prev) => ({ ...prev, filePpdb: undefined }))
+                  }
+                  className="ml-2 px-2 py-1 bg-red-600 text-white text-xs rounded"
+                >
+                  Hapus
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="text-center pt-4 justify-items-center">

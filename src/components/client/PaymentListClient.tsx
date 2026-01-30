@@ -267,7 +267,7 @@ export default function PaymentListClient({
         selectedIds={selected}
         table="paymentLog"
         onReset={() => setSelected([])}
-        data={data}
+        data={localData}
         relatedData={relatedData}
         handleChanged={handleChanged}
         handleManyChanged={handleManyChanged}

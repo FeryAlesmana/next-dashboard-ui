@@ -129,7 +129,7 @@ export default function LessonListClient({
         selectedIds={selected}
         table="lesson"
         onReset={() => setSelected([])}
-        data={data}
+        data={localData}
         relatedData={relatedData}
         onDeleted={handleDeleteOptimistic}
         handleChanged={handleChanged}

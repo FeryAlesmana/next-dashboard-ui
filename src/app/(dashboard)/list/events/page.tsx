@@ -154,6 +154,7 @@ const EventListPage = async ({
         switch (key) {
           case "search":
             query.title = { contains: value, mode: "insensitive" };
+            break;
           case "id": {
             const id = toIntOrNotFound(value);
             query.id = id;
