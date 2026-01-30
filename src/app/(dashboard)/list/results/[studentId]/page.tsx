@@ -41,8 +41,14 @@ const SingleResultPage = async ({
           lessons: {
             where: parsed
               ? {
-                  startTime: { gte: new Date(parsed.start) },
-                  endTime: { lte: new Date(parsed.end) },
+                  meetings: {
+                    some: {
+                      startTime: {
+                        gte: new Date(parsed.start),
+                        lte: new Date(parsed.end),
+                      },
+                    },
+                  },
                 }
               : undefined, // no filter if no semester
             include: {
@@ -53,11 +59,11 @@ const SingleResultPage = async ({
           grade: { select: { level: true } },
         },
       },
-      
     },
   });
 
-  if (!student || !student.class || !student.class?.grade?.level) return notFound();
+  if (!student || !student.class || !student.class?.grade?.level)
+    return notFound();
 
   const query: Prisma.ResultWhereInput = {};
   if (queryParams) {
@@ -70,8 +76,14 @@ const SingleResultPage = async ({
               exam: {
                 is: {
                   lesson: {
-                    startTime: { gte: new Date(parsed.start) },
-                    endTime: { lte: new Date(parsed.end) },
+                    meetings: {
+                      some: {
+                        startTime: {
+                          gte: new Date(parsed.start),
+                          lte: new Date(parsed.end),
+                        },
+                      },
+                    },
                   },
                 },
               },
@@ -81,8 +93,14 @@ const SingleResultPage = async ({
               assignment: {
                 is: {
                   lesson: {
-                    startTime: { gte: new Date(parsed.start) },
-                    endTime: { lte: new Date(parsed.end) },
+                    meetings: {
+                      some: {
+                        startTime: {
+                          gte: new Date(parsed.start),
+                          lte: new Date(parsed.end),
+                        },
+                      },
+                    },
                   },
                 },
               },
