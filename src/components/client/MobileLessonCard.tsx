@@ -45,21 +45,11 @@ export function MobileLessonCard({
           <div className="text-sm text-gray-600">Kelas : {data.class.name}</div>
           <div className="text-xs text-gray-400">
             Waktu Mulai :{" "}
-            {data.startTime.toLocaleTimeString("id-ID", {
-              timeZone: "Asia/Jakarta",
-              hour: "2-digit",
-              minute: "2-digit",
-              hour12: false,
-            })}
+            {data.startTime}
           </div>
           <div className="text-xs text-gray-400">
             Waktu Selesai :{" "}
-            {data.endTime.toLocaleTimeString("id-ID", {
-              timeZone: "Asia/Jakarta",
-              hour: "2-digit",
-              minute: "2-digit",
-              hour12: false,
-            })}
+            {data.endTime}
           </div>
         </div>
 

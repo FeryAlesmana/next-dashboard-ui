@@ -33,9 +33,13 @@ export async function GET(req: NextRequest) {
   const lessons = await prisma.lesson.findMany({
     where: {
       class: { students: { some: { id: studentId } } },
-      startTime: {
-        gte: new Date(startDate),
-        lte: new Date(endDate),
+      meetings: {
+        some: {
+          startTime: {
+            gte: new Date(startDate),
+            lte: new Date(endDate),
+          },
+        },
       },
     },
     include: {

@@ -36,17 +36,17 @@ export async function GET(req: NextRequest) {
       OR: [
         {
           exam: {
-            lesson: {
-              startTime: { gte: new Date(startDate) },
-              endTime: { lte: new Date(endDate) },
+            startTime: {
+              gte: new Date(startDate),
+              lte: new Date(endDate),
             },
           },
         },
         {
           assignment: {
-            lesson: {
-              startTime: { gte: new Date(startDate) },
-              endTime: { lte: new Date(endDate) },
+            dueDate: {
+              gte: new Date(startDate),
+              lte: new Date(endDate),
             },
           },
         },

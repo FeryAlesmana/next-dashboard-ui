@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function NotFound() {
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center text-center overflow-hidden bg-gray-50">
@@ -17,18 +19,18 @@ export default function NotFound() {
 
       {/* Buttons */}
       <div className="z-10 mt-10 flex gap-4">
-        <a
+        <Link
           href="/"
           className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
         >
           Kembali ke Beranda
-        </a>
-        <a
+        </Link>
+        <Link
           href="/sign-in"
           className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
         >
           Login
-        </a>
+        </Link>
       </div>
     </div>
   );

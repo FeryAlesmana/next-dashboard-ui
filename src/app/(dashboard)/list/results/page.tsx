@@ -116,17 +116,17 @@ const ResultListPage = async ({
               query.OR = [
                 {
                   exam: {
-                    lesson: {
-                      startTime: { gte: new Date(parsed.start) },
-                      endTime: { lte: new Date(parsed.end) },
+                    startTime: {
+                      gte: new Date(parsed.start),
+                      lte: new Date(parsed.end),
                     },
                   },
                 },
                 {
                   assignment: {
-                    lesson: {
-                      startTime: { gte: new Date(parsed.start) },
-                      endTime: { lte: new Date(parsed.end) },
+                    dueDate: {
+                      gte: new Date(parsed.start),
+                      lte: new Date(parsed.end),
                     },
                   },
                 },
