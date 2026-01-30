@@ -74,18 +74,8 @@ export function MobileSubjectCard({
                 {data.lessons.map((lesson: any) => (
                   <li key={lesson.id} className="flex flex-col">
                     <span className="text-gray-500 text-xs">
-                      {toNormalCase(lesson.day)} •{" "}
-                      {new Date(lesson.startTime).toLocaleTimeString("id-ID", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                        hour12: false, // 24-hour format
-                      })}{" "}
-                      -{" "}
-                      {new Date(lesson.endTime).toLocaleTimeString("id-ID", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                        hour12: false,
-                      })}
+                      {toNormalCase(lesson.day)} • {lesson.startTime} -{" "}
+                      {lesson.endTime}
                     </span>
                   </li>
                 ))}

@@ -207,8 +207,14 @@ const LessonListPage = async ({
           case "semester":
             try {
               const parsed = semesterSchema.parse(JSON.parse(value as string));
-              query.startTime = { gte: new Date(parsed.start) };
-              query.endTime = { lte: new Date(parsed.end) };
+              query.meetings = {
+                some: {
+                  startTime: {
+                    gte: new Date(parsed.start),
+                    lte: new Date(parsed.end),
+                  },
+                },
+              };
             } catch (e) {
               query.id = -1; // block tampered values
             }
@@ -353,15 +359,7 @@ const LessonListPage = async ({
                               </td>
                               <td className="p-2">{lesson.day}</td>
                               <td className="p-2 whitespace-nowrap min-w-[140px]">
-                                {lesson.startTime.toLocaleTimeString("id-ID", {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })}{" "}
-                                -{" "}
-                                {lesson.endTime.toLocaleTimeString("id-ID", {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })}
+                                {lesson.startTime} - {lesson.endTime}
                               </td>
                               <td className="p-2">
                                 {lesson.teacher

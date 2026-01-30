@@ -53,24 +53,8 @@ export default function TeacherListPopover({
                         <td className="border px-2 py-1">
                           {toNormalCase(lesson.day)}
                         </td>
-                        <td className="border px-2 py-1">
-                          {new Date(lesson.startTime).toLocaleTimeString(
-                            "id-ID",
-                            {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            }
-                          )}
-                        </td>
-                        <td className="border px-2 py-1">
-                          {new Date(lesson.endTime).toLocaleTimeString(
-                            "id-ID",
-                            {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            }
-                          )}
-                        </td>
+                        <td className="border px-2 py-1">{lesson.startTime}</td>
+                        <td className="border px-2 py-1">{lesson.endTime}</td>
                       </tr>
                     ))}
                   </tbody>

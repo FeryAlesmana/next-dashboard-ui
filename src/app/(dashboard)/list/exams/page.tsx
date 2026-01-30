@@ -116,7 +116,7 @@ const ExamListPage = async ({
   const query: Prisma.ExamWhereInput = {};
   let orderBy: Prisma.ExamOrderByWithRelationInput | undefined;
 
-  query.lesson = {};
+  query.lesson ??= {};
 
   const semesterSchema = z.object({
     start: z.string().datetime(),
@@ -136,11 +136,9 @@ const ExamListPage = async ({
           case "semester":
             try {
               const parsed = semesterSchema.parse(JSON.parse(value as string));
-              query.lesson = {
-                is: {
-                  startTime: { gte: new Date(parsed.start) },
-                  endTime: { lte: new Date(parsed.end) },
-                },
+              query.startTime = {
+                gte: new Date(parsed.start),
+                lte: new Date(parsed.end),
               };
             } catch {
               query.id = -1; // block tampered values

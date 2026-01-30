@@ -127,10 +127,17 @@ const SubjectListPage = async ({
           case "semester":
             try {
               const parsed = semesterSchema.parse(JSON.parse(value as string));
+
               query.lessons = {
                 some: {
-                  startTime: { gte: new Date(parsed.start) },
-                  endTime: { lte: new Date(parsed.end) },
+                  meetings: {
+                    some: {
+                      startTime: {
+                        gte: new Date(parsed.start),
+                        lte: new Date(parsed.end),
+                      },
+                    },
+                  },
                 },
               };
             } catch {

@@ -209,12 +209,10 @@ export default function ParentLessonViewSemester({
                           {lesson.class?.name}
                         </td>
                         <td className="p-3 hidden md:table-cell">
-                          {new Date(lesson.startTime).toLocaleTimeString(
-                            "id-ID"
-                          )}
+                          {lesson.startTime}
                         </td>
                         <td className="p-3 hidden md:table-cell">
-                          {new Date(lesson.endTime).toLocaleTimeString("id-ID")}
+                          {lesson.endTime}
                         </td>
 
                         <td>{lesson.day}</td>

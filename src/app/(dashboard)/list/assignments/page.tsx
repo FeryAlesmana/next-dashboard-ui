@@ -34,10 +34,13 @@ const AssignmentListPage = async ({
   const sp = await normalizeSearchParams(searchParams);
   const { page, limit, ...queryParams } = sp;
   const key = new URLSearchParams(
-    Object.entries(sp).reduce((acc, [k, v]) => {
-      if (v !== undefined) acc[k] = v;
-      return acc;
-    }, {} as Record<string, string>)
+    Object.entries(sp).reduce(
+      (acc, [k, v]) => {
+        if (v !== undefined) acc[k] = v;
+        return acc;
+      },
+      {} as Record<string, string>,
+    ),
   ).toString();
   const p = sp.search ? 1 : page ? parseInt(page) : 1;
   const perPage = limit === "all" ? 50 : parseInt(limit ?? "10");
@@ -95,6 +98,8 @@ const AssignmentListPage = async ({
     end: z.string().datetime(),
   });
   const query: Prisma.AssignmentWhereInput = {};
+  query.lesson ??= {};
+
   let orderBy: Prisma.AssignmentOrderByWithRelationInput | undefined;
   query.lesson = {};
   if (queryParams) {
@@ -121,11 +126,9 @@ const AssignmentListPage = async ({
           case "semester":
             try {
               const parsed = semesterSchema.parse(JSON.parse(value as string));
-              query.lesson = {
-                is: {
-                  startTime: { gte: new Date(parsed.start) },
-                  endTime: { lte: new Date(parsed.end) },
-                },
+              query.dueDate = {
+                gte: new Date(parsed.start),
+                lte: new Date(parsed.end),
               };
             } catch {
               query.id = -1; // block tampered values
@@ -182,7 +185,7 @@ const AssignmentListPage = async ({
         semesterOptions = generateSemesters(
           oldest.createdAt,
           highest._max.level ?? 3,
-          role
+          role,
         );
       }
 
@@ -216,13 +219,13 @@ const AssignmentListPage = async ({
       const Murid = teacher?.classes.flatMap((kelas) => kelas.students) ?? [];
       if (Murid.length > 0) {
         const highest = Murid.reduce((a, b) =>
-          (a.grade?.level ?? 0) > (b.grade?.level ?? 0) ? a : b
+          (a.grade?.level ?? 0) > (b.grade?.level ?? 0) ? a : b,
         );
 
         semesterOptions = generateSemesters(
           highest.createdAt,
           highest.grade?.level ?? 1,
-          role
+          role,
         );
       }
       break;
@@ -248,7 +251,7 @@ const AssignmentListPage = async ({
         semesterOptions = generateSemesters(
           student.createdAt,
           gradeLevel,
-          role
+          role,
         );
       }
       break;
@@ -311,11 +314,11 @@ const AssignmentListPage = async ({
               startDate: ass.startDate,
               dueDate: ass.dueDate,
               assTypes: ass.assType,
-            }))
+            })),
           );
 
           return { ...child, assignments };
-        })
+        }),
       );
 
       students = studentWithAssignments;
@@ -397,9 +400,9 @@ const AssignmentListPage = async ({
   const gradeOptions = Array.from(
     new Set(
       ClassAssignment.map((cls) => cls.grade?.level).filter(
-        (level): level is number => level !== undefined
-      )
-    )
+        (level): level is number => level !== undefined,
+      ),
+    ),
   )
     .sort((a, b) => a - b)
     .map((level) => ({
@@ -417,8 +420,8 @@ const AssignmentListPage = async ({
             label: ass.lesson!.teacher!.name ?? "Unknown Teacher",
             value: ass.lesson!.teacher!.id.toString(), // always string
           },
-        ])
-    ).values()
+        ]),
+    ).values(),
   );
   let relatedData: any = {};
   relatedData = { lessons: assignLessons, kelas2: ClassAssignment };
