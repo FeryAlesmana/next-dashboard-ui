@@ -68,6 +68,8 @@ export default function PaymentChangeListClient({
         return "Penjadwalan";
       case "ACCOUNTING":
         return "Akuntansi";
+      case "admin":
+        return "admin";
       default:
         return "-";
     }

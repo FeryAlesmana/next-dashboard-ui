@@ -1,7 +1,11 @@
 import { currentUser } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
-import { sanitizePaymentLogSnapshot } from "./utils";
-import { ChangeAction, Prisma } from "@prisma/client";
+import {
+  getCurrentStaff,
+  getCurrentUser,
+  sanitizePaymentLogSnapshot,
+} from "./utils";
+import { ChangeAction, Prisma, staffrole } from "@prisma/client";
 
 // logPaymentChange.ts
 
@@ -23,10 +27,15 @@ export async function logPaymentChange({
   isReverted: boolean;
 }) {
   const user = await currentUser();
-  const role = user?.publicMetadata?.role as string | undefined;
-  console.log(paymentLogId, "= Payment log id in logpaymentChange");
-  console.log(isReverted, "= isReverted in logpaymentChange");
-  console.log(revertedFromId, "= revertedFromId in logpaymentChange");
+  const { role, userId } = await getCurrentUser();
+  let staffRole: staffrole = "ACCOUNTING";
+  if (role === "staff") {
+    const staffrole = await getCurrentStaff(userId!);
+    staffRole = staffrole;
+  }
+  // console.log(paymentLogId, "= Payment log id in logpaymentChange");
+  // console.log(isReverted, "= isReverted in logpaymentChange");
+  // console.log(revertedFromId, "= revertedFromId in logpaymentChange");
 
   // Clean installments for logging
   const oldSnapshot = oldValue || null;
@@ -45,7 +54,7 @@ export async function logPaymentChange({
       newValue: newSnapshot,
       changedById: user?.id || "unknown",
       changedByName: user?.username || user?.firstName || "Unknown User",
-      changedByRole: role || "unknown",
+      changedByRole: staffRole ?? role,
     },
   });
 }
