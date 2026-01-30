@@ -30,7 +30,6 @@ export function encryptPassword(password: string) {
 
 const grades = [];
 async function main() {
-
   // GRADE & CLASS
   for (let gradeLevel = 1; gradeLevel <= 3; gradeLevel++) {
     const grade = await prisma.grade.create({
@@ -98,15 +97,18 @@ async function main() {
         subjects: { connect: [{ id: (i % 10) + 1 }] },
         classes: { connect: [{ id: ((i - 1) % totalClasses) + 1 }] },
         birthday: new Date(
-          new Date().setFullYear(new Date().getFullYear() - 30)
+          new Date().setFullYear(new Date().getFullYear() - 30),
         ),
       },
     });
   }
 
-  // LESSON
+  const startTimes = ["07:00", "08:00", "09:30", "13:00"];
+  const endTimes = ["08:30", "09:30", "11:00", "14:30"];
+
   for (let i = 1; i <= 30; i++) {
-    const classId = ((i - 1) % 18) + 1;
+    const idx = i % startTimes.length;
+
     await prisma.lesson.create({
       data: {
         name: `Lesson${i}`,
@@ -115,11 +117,11 @@ async function main() {
             Math.floor(Math.random() * Object.keys(Day).length)
           ] as keyof typeof Day
         ],
-        startTime: new Date(new Date().setHours(new Date().getHours() + 1)),
-        endTime: new Date(new Date().setHours(new Date().getHours() + 3)),
-        subjectId: (i % 10) + 1,
-        classId: classId,
-        teacherId: `teacher${(i % 15) + 1}`,
+        startTime: startTimes[idx],
+        endTime: endTimes[idx],
+        classId: ((i - 1) % 18) + 1,
+        subjectId: 1,
+        teacherId: "teacher-1",
       },
     });
   }
@@ -145,7 +147,7 @@ async function main() {
             ] as keyof typeof Degree
           ],
         birthday: new Date(
-          new Date().setFullYear(new Date().getFullYear() - 30)
+          new Date().setFullYear(new Date().getFullYear() - 30),
         ),
       },
     });
@@ -196,7 +198,7 @@ async function main() {
         gradeId: gradeId,
         classId: classId,
         birthday: new Date(
-          new Date().setFullYear(new Date().getFullYear() - 10)
+          new Date().setFullYear(new Date().getFullYear() - 10),
         ),
       },
     });
