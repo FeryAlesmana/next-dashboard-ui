@@ -14,6 +14,14 @@ export function mergeDateAndTime(date: Date, time: Date) {
   return d;
 }
 
+export function applyTimeToDate(date: Date, time: string) {
+  const [h, m] = time.split(":").map(Number);
+  const result = new Date(date);
+  result.setHours(h, m, 0, 0);
+  return result;
+}
+
+
 export function handlePrismaError(error: unknown) {
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
     if (error.code === "P2002") {

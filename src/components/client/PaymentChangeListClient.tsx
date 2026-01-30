@@ -268,6 +268,14 @@ export default function PaymentChangeListClient({
                 >
                   <td className="hidden md:table-cell px-5">
                     {(row.paymentLogId ?? row.plogId) || "-"}
+                    {(row.paymentLogId || row.plogId) && (
+                      <Link
+                        href={`/list/payment/?id=${row.paymentLogId ?? row.plogId}`}
+                        className="ml-2 text-blue-600 underline text-xs"
+                      >
+                        Lihat Record
+                      </Link>
+                    )}
                   </td>
 
                   <td className="p-4">

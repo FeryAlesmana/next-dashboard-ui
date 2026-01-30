@@ -83,10 +83,8 @@ const REVERT_ACTION_MAP: Record<string, (ctx: RevertContext) => Promise<void>> =
       await restoreSnapshot(oldValue);
     },
 
-    CREATE_PAYMENTS: async ({ log }) => {
-      await prisma.paymentLog.delete({
-        where: { id: log.paymentLogId },
-      });
+    CREATE_PAYMENTS: async ({ oldValue }) => {
+      await restoreSnapshot(oldValue);
     },
 
     UPDATE_PAYMENTS: async ({ oldValue }) => {

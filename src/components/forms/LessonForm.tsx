@@ -38,14 +38,14 @@ const LessonForm = ({
 
   const createLessonHandler: (
     prevState: CurrentState,
-    payload: LessonSchema
+    payload: LessonSchema,
   ) => Promise<CurrentState> = async (prevState, payload) => {
     return await createLesson(prevState, payload);
   };
 
   const updateLessonHandler: (
     prevState: CurrentState,
-    payload: LessonSchema
+    payload: LessonSchema,
   ) => Promise<CurrentState> = async (prevState, payload) => {
     return await updateLesson(prevState, payload);
   };
@@ -58,7 +58,7 @@ const LessonForm = ({
 
   const [state, formAction] = useActionState(
     type === "create" ? createLessonHandler : updateLessonHandler,
-    initialState
+    initialState,
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -75,7 +75,7 @@ const LessonForm = ({
     if (state.success) {
       const updatedItem = state.data ?? formData;
       toast(
-        `Jadwal telah berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`
+        `Jadwal telah berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`,
       );
       setOpen(false);
       if (onChanged && updatedItem) {
@@ -92,39 +92,8 @@ const LessonForm = ({
     if (!formData) return;
     setIsSubmitting(true);
 
-    const dayMap: Record<LessonSchema["day"], number> = {
-      SENIN: 1,
-      SELASA: 2,
-      RABU: 3,
-      KAMIS: 4,
-      JUMAT: 5,
-    };
-    const targetDayIndex = dayMap[formData.day]; // 1–5 (Senin–Jumat)
-    const today = new Date();
-    const currentWeekMonday = new Date(today);
-    const dayOfWeek = today.getDay();
-
-    currentWeekMonday.setDate(today.getDate() - ((dayOfWeek + 6) % 7));
-    currentWeekMonday.setHours(0, 0, 0, 0);
-
-    const targetDate = new Date(currentWeekMonday);
-    targetDate.setDate(currentWeekMonday.getDate() + (targetDayIndex - 1));
-
-    const toDateTime = (timeStr: string): Date => {
-      const [hour, minute] = timeStr.split(":").map(Number);
-      const result = new Date(targetDate);
-      result.setHours(hour, minute, 0, 0);
-      return result;
-    };
-
-    const payload = {
-      ...formData,
-      startTime: toDateTime(formData.startTime).toISOString(),
-      endTime: toDateTime(formData.endTime).toISOString(),
-    };
-
     startTransition(() => {
-      formAction(payload);
+      formAction(formData);
     });
     setShowConfirm(false);
   };
@@ -149,7 +118,7 @@ const LessonForm = ({
     (subject: { id: number; name: string }) => ({
       value: subject.id,
       label: `${subject.name}`,
-    })
+    }),
   );
   const ClassOptions = classes.map((kelas: { id: number; name: string }) => ({
     value: kelas.id,
@@ -159,7 +128,7 @@ const LessonForm = ({
     (teacher: { id: string; name: string }) => ({
       value: teacher.id,
       label: `${teacher.name} `,
-    })
+    }),
   );
 
   return (
@@ -208,7 +177,7 @@ const LessonForm = ({
                   value={
                     SubjectOptions.find(
                       (opt: { value: number; label: string }) =>
-                        opt.value === field.value
+                        opt.value === field.value,
                     ) || null
                   }
                 />
@@ -224,11 +193,7 @@ const LessonForm = ({
           <InputField
             label="Waktu mulai"
             name="startTime"
-            defaultValue={
-              data?.startTime
-                ? new Date(data.startTime).toTimeString().slice(0, 5)
-                : ""
-            }
+            defaultValue={data?.startTime}
             register={register}
             error={errors?.startTime}
             type="time"
@@ -237,11 +202,7 @@ const LessonForm = ({
           <InputField
             label="Waktu selesai"
             name="endTime"
-            defaultValue={
-              data?.endTime
-                ? new Date(data.endTime).toTimeString().slice(0, 5)
-                : ""
-            }
+            defaultValue={data?.endTime}
             register={register}
             error={errors?.endTime}
             type="time"
@@ -266,7 +227,7 @@ const LessonForm = ({
                   value={
                     ClassOptions.find(
                       (opt: { value: number; label: string }) =>
-                        opt.value === field.value
+                        opt.value === field.value,
                     ) || null
                   }
                 />
@@ -318,7 +279,7 @@ const LessonForm = ({
                   value={
                     teacherOptions.find(
                       (opt: { value: string; label: string }) =>
-                        opt.value === field.value
+                        opt.value === field.value,
                     ) || null
                   }
                 />
@@ -365,8 +326,8 @@ const LessonForm = ({
             {isSubmitting
               ? "Memproses..."
               : type === "create"
-              ? "Tambahkan Jadwal"
-              : "Update dan Simpan"}
+                ? "Tambahkan Jadwal"
+                : "Update dan Simpan"}
           </button>
         </div>
       </form>

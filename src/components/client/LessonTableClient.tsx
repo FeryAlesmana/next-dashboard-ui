@@ -21,6 +21,10 @@ export default function LessonTableClient({
     if (!str) return "";
     return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
   }
+  function formatTime(time: string) {
+    return time.slice(0, 5); // ensures HH:mm
+  }
+
   return (
     <>
       <tr className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight">
@@ -37,24 +41,9 @@ export default function LessonTableClient({
           {data.subject?.name || "-"}
         </td>
         <td className="hidden md:table-cell">{data.class.name}</td>
-        <td className="hidden md:table-cell">
-          {" "}
-          {data.startTime.toLocaleTimeString("id-ID", {
-            timeZone: "Asia/Jakarta",
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: false,
-          })}
-        </td>
-        <td className="hidden md:table-cell">
-          {" "}
-          {data.endTime.toLocaleTimeString("id-ID", {
-            timeZone: "Asia/Jakarta",
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: false,
-          })}
-        </td>
+        <td className="hidden md:table-cell">{formatTime(data.startTime)}</td>
+        <td className="hidden md:table-cell">{formatTime(data.endTime)}</td>
+
         <td className="hidden md:table-cell">{toNormalCase(data.day)}</td>
         <td className="hidden md:table-cell">
           {data.teacher ? `${data.teacher.name} ` : "Tidak ada guru"}

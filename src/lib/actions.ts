@@ -56,6 +56,7 @@ import {
 import prisma from "./prisma";
 import { clerkClient } from "@clerk/nextjs/server";
 import extractCloudinaryPublicId, {
+  applyTimeToDate,
   calculateSubjectScore,
   decryptPassword,
   getCurrentUser,
@@ -241,7 +242,7 @@ export const updateClass = async (
       },
       include: {
         supervisor: true,
-        students: true
+        students: true,
       },
     });
     return { success: true, error: false, data: updatedClass };
@@ -2469,36 +2470,30 @@ export const updateLesson = async (
 ) => {
   try {
     await prisma.$transaction(async (tx) => {
-      // 1. Update lesson
       await tx.lesson.update({
         where: { id: data.id },
         data: {
           name: data.name,
+          day: data.day,
           startTime: data.startTime,
           endTime: data.endTime,
-          day: data.day,
           subjectId: data.subjectId,
           classId: data.classId,
           teacherId: data.teacherId,
         },
       });
 
-      // 2. Fetch related meetings
       const meetings = await tx.meeting.findMany({
         where: { lessonId: data.id },
-        select: {
-          id: true,
-          date: true,
-        },
+        select: { id: true, date: true },
       });
 
-      // 3. Update each meeting with its own date + new times
       for (const meeting of meetings) {
         await tx.meeting.update({
           where: { id: meeting.id },
           data: {
-            startTime: mergeDateAndTime(meeting.date, new Date(data.startTime)),
-            endTime: mergeDateAndTime(meeting.date, new Date(data.endTime)),
+            startTime: applyTimeToDate(meeting.date, data.startTime),
+            endTime: applyTimeToDate(meeting.date, data.endTime),
           },
         });
       }
@@ -2512,17 +2507,11 @@ export const updateLesson = async (
         teacher: { select: { name: true } },
       },
     });
+
     return { success: true, error: false, data: updatedLesson };
   } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : typeof error === "string"
-          ? error
-          : "Unknown error";
-
-    console.error("update Ujian error: ", error);
-    return { success: false, error: true, message };
+    console.error("update Lesson error:", error);
+    return { success: false, error: true };
   }
 };
 
@@ -3544,22 +3533,14 @@ export const createMeeting = async (
 
       const date = new Date(baseDate);
       date.setDate(baseDate.getDate() + i * 7);
+      const [sh, sm] = lesson.startTime.split(":").map(Number);
+      const [eh, em] = lesson.endTime.split(":").map(Number);
 
       const startTime = new Date(date);
-      startTime.setHours(
-        lesson.startTime.getHours(),
-        lesson.startTime.getMinutes(),
-        0,
-        0,
-      );
+      startTime.setHours(sh, sm, 0, 0);
 
       const endTime = new Date(date);
-      endTime.setHours(
-        lesson.endTime.getHours(),
-        lesson.endTime.getMinutes(),
-        0,
-        0,
-      );
+      endTime.setHours(eh, em, 0, 0);
 
       meetingsData.push({
         lessonId: resolvedLessonId,
@@ -4759,7 +4740,7 @@ export async function updatePPDBSetting(
           startDate,
           endDate,
           quota: data.quota,
-          filePpdb: data.filePpdb
+          filePpdb: data.filePpdb,
         },
       });
     } else {
@@ -4770,7 +4751,7 @@ export async function updatePPDBSetting(
           startDate,
           endDate,
           quota: data.quota,
-          filePpdb: data.filePpdb
+          filePpdb: data.filePpdb,
         },
       });
     }
@@ -6409,7 +6390,7 @@ export async function createPayment(
       action: "CREATE_PAYMENTS",
       paymentLogId: bill.id,
       installmentId: null, // multiple → null
-      oldValue: null,
+      oldValue: snapshotPayment(bill),
       newValue: snapshotPayment(after!),
       isReverted: false,
     });

@@ -388,8 +388,13 @@ export const lessonSchema = z
   .object({
     id: z.coerce.number().optional(),
     name: z.string().min(1, { message: "Nama Jadwal wajib diisi!" }),
-    startTime: z.string().min(1, { message: "Waktu mulai wajib diisi!" }), // dulu: z.coerce.date()
-    endTime: z.string().min(1, { message: "Waktu selesai wajib diisi!" }),
+    startTime: z
+      .string()
+      .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Format waktu tidak valid"),
+
+    endTime: z
+      .string()
+      .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Format waktu tidak valid"),
     subjectId: z.coerce.number({ message: "Id pelajaran wajib di isi" }),
     classId: z.coerce.number({ message: "Id Kelas wajib di isi" }),
     teacherId: z.string({ message: "Id guru wajib di isi" }),
