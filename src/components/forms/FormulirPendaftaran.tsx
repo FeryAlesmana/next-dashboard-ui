@@ -62,6 +62,14 @@ const FormulirPendaftaran = ({
   }, [watchedValues, allowAutosave]);
 
   // Load saved data on mount
+  type DokumenKey = "ijazah" | "akte" | "kk_ktp_sktm" | "pasfoto";
+  const [dokumen, setDokumen] = useState<{
+    ijazah?: string;
+    akte?: string;
+    pasfoto?: string;
+    kk_ktp_sktm?: string;
+    deleted?: Partial<Record<DokumenKey, boolean>>;
+  }>({});
   useEffect(() => {
     if (type === "update" && data) {
       localStorage.removeItem(FORM_KEY);
@@ -86,10 +94,10 @@ const FormulirPendaftaran = ({
           : "",
         awards_lvl: data.awards_lvl ?? "",
         distance_from_home: data.distance_from_home ?? 0,
-        dokumenAkte: data.dokumenAkte ?? "",
-        dokumenIjazah: data.dokumenIjazah ?? "",
-        dokumenKKKTP: data.dokumenKKKTP ?? "",
-        dokumenPasfoto: data.dokumenPasfoto ?? "",
+        dokumenIjazah: dokumen.deleted?.ijazah ? null : dokumen.ijazah,
+        dokumenAkte: dokumen.deleted?.akte ? null : dokumen.akte,
+        dokumenKKKTP: dokumen.deleted?.kk_ktp_sktm ? null : dokumen.kk_ktp_sktm,
+        dokumenPasfoto: dokumen.deleted?.pasfoto ? null : dokumen.pasfoto,
         email: data.email ?? "",
         height: data.height ?? 0,
         isvalid: Boolean(data.isvalid),
@@ -157,14 +165,18 @@ const FormulirPendaftaran = ({
         });
       }
     }
-  }, [setValue, data, reset, type, prefilEmail]);
-  const [dokumen, setDokumen] = useState<{
-    ijazah?: string;
-    akte?: string;
-    pasfoto?: string;
-    kk_ktp_sktm?: string;
-  }>({});
+  }, [setValue, data, reset, type, prefilEmail, dokumen]);
 
+  const handleDeleteDokumen = (key: DokumenKey) => {
+    setDokumen((prev) => ({
+      ...prev,
+      [key]: undefined,
+      deleted: {
+        ...prev.deleted,
+        [key]: true,
+      },
+    }));
+  };
   const [showConfirm, setShowConfirm] = useState(false);
 
   // For email feedback
@@ -198,16 +210,25 @@ const FormulirPendaftaran = ({
   >(null);
   const handleFileUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
-    name: keyof typeof dokumen,
+    name: DokumenKey,
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setUploadingField(name); // show spinner for this field
+
+    setUploadingField(name);
+
     try {
       const uploadedUrl = await cloudinaryUpload(file, "ppdb");
 
-      setDokumen((prev) => ({ ...prev, [name]: uploadedUrl }));
-    } catch (err) {
+      setDokumen((prev) => ({
+        ...prev,
+        [name]: uploadedUrl,
+        deleted: {
+          ...prev.deleted,
+          [name]: false,
+        },
+      }));
+    } catch {
       toast.error("Upload gagal");
     }
   };
@@ -233,10 +254,10 @@ const FormulirPendaftaran = ({
     startTransition(() => {
       formAction({
         ...data,
-        dokumenIjazah: dokumen.ijazah ?? "",
-        dokumenAkte: dokumen.akte ?? "",
-        dokumenKKKTP: dokumen.kk_ktp_sktm ?? "",
-        dokumenPasfoto: dokumen.pasfoto ?? "",
+        dokumenIjazah: dokumen.deleted?.ijazah ? null : dokumen.ijazah,
+        dokumenAkte: dokumen.deleted?.akte ? null : dokumen.akte,
+        dokumenKKKTP: dokumen.deleted?.kk_ktp_sktm ? null : dokumen.kk_ktp_sktm,
+        dokumenPasfoto: dokumen.deleted?.pasfoto ? null : dokumen.pasfoto,
       });
     });
   });
@@ -1155,15 +1176,16 @@ const FormulirPendaftaran = ({
 
           {/* ========== Upload Dokumen ========== */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full mb-4 rounded-md p-4">
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 ">
               <label className="font-medium flex items-center gap-1">
-                Fotokopi Ijazah / STTB
-                <span className="text-red-500">*</span>
+                Fotokopi Ijazah / STTB<span className="text-red-500">*</span>
               </label>
               <p className="text-xs text-red-300">Wajib diunggah</p>
 
+              {/* Upload input (only shown if no file yet) */}
               {!dokumen.ijazah &&
-                !data?.dokumenIjazah &&
+                (!data?.student_details?.dokumenIjazah ||
+                  dokumen.deleted?.ijazah) &&
                 (uploadingField === "ijazah" ? (
                   <div className="flex items-center justify-center w-full h-10">
                     <svg
@@ -1198,6 +1220,8 @@ const FormulirPendaftaran = ({
                     className="block w-full text-sm text-white file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-600 file:text-white"
                   />
                 ))}
+
+              {/* Show preview if file exists in local state */}
               {dokumen.ijazah && (
                 <div className="flex items-center justify-between bg-white/10 p-2 rounded shadow">
                   <a
@@ -1210,45 +1234,47 @@ const FormulirPendaftaran = ({
                   </a>
                   <button
                     type="button"
-                    onClick={() =>
-                      setDokumen((prev) => ({ ...prev, ijazah: undefined }))
-                    }
+                    onClick={() => handleDeleteDokumen("ijazah")}
                     className="ml-2 px-2 py-1 bg-red-600 text-white text-xs rounded"
                   >
                     Hapus
                   </button>
                 </div>
               )}
-              {!dokumen.ijazah && data?.dokumenIjazah && (
-                <div className="flex items-center justify-between bg-white/10 p-2 rounded shadow">
-                  <a
-                    href={data?.dokumenIjazah}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-400 underline truncate"
-                  >
-                    Lihat Dokumen (Ijazah)
-                  </a>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setDokumen((prev) => ({ ...prev, ijazah: undefined }))
-                    }
-                    className="ml-2 px-2 py-1 bg-red-600 text-white text-xs rounded"
-                  >
-                    Hapus
-                  </button>
-                </div>
-              )}
+
+              {/* Show preview if file exists in DB but not in local state */}
+              {!dokumen.ijazah &&
+                data?.student_details?.dokumenIjazah &&
+                !dokumen.deleted?.ijazah && (
+                  <div className="flex items-center justify-between bg-white/10 p-2 rounded shadow">
+                    <a
+                      href={data.student_details.dokumenIjazah}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-400 underline truncate"
+                    >
+                      Lihat Dokumen (Ijazah)
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteDokumen("ijazah")}
+                      className="ml-2 px-2 py-1 bg-red-600 text-white text-xs rounded"
+                    >
+                      Hapus
+                    </button>
+                  </div>
+                )}
             </div>
-            <div className="flex flex-col gap-2">
-              <label className="font-medium flex items-center gap-1">
-                Fotokopi Akte Kelahiran
-                <span className="text-red-500">*</span>
+            <div className="flex flex-col gap-2 ">
+              <label className="font-medium flex items-center gap-1 ">
+                Fotokopi Akte Kelahiran<span className="text-red-500">*</span>
               </label>
               <p className="text-xs text-red-300">Wajib diunggah</p>
+
+              {/* Upload input (only shown if no file yet) */}
               {!dokumen.akte &&
-                !data?.dokumenAkte &&
+                (!data?.student_details?.dokumenAkte ||
+                  dokumen.deleted?.akte) &&
                 (uploadingField === "akte" ? (
                   <div className="flex items-center justify-center w-full h-10">
                     <svg
@@ -1283,6 +1309,8 @@ const FormulirPendaftaran = ({
                     className="block w-full text-sm text-white file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-600 file:text-white"
                   />
                 ))}
+
+              {/* Show preview if file exists in local state */}
               {dokumen.akte && (
                 <div className="flex items-center justify-between bg-white/10 p-2 rounded shadow">
                   <a
@@ -1295,45 +1323,49 @@ const FormulirPendaftaran = ({
                   </a>
                   <button
                     type="button"
-                    onClick={() =>
-                      setDokumen((prev) => ({ ...prev, akte: undefined }))
-                    }
+                    onClick={() => handleDeleteDokumen("akte")}
                     className="ml-2 px-2 py-1 bg-red-600 text-white text-xs rounded"
                   >
                     Hapus
                   </button>
                 </div>
               )}
-              {!dokumen.akte && data?.dokumenAkte && (
-                <div className="flex items-center justify-between bg-white/10 p-2 rounded shadow">
-                  <a
-                    href={data?.dokumenAkte}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-400 underline truncate"
-                  >
-                    Lihat Dokumen (Akte)
-                  </a>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setDokumen((prev) => ({ ...prev, akte: undefined }))
-                    }
-                    className="ml-2 px-2 py-1 bg-red-600 text-white text-xs rounded"
-                  >
-                    Hapus
-                  </button>
-                </div>
-              )}
+
+              {/* Show preview if file exists in DB but not in local state */}
+              {!dokumen.akte &&
+                data?.student_details?.dokumenAkte &&
+                !dokumen.deleted?.akte && (
+                  <div className="flex items-center justify-between bg-white/10 p-2 rounded shadow">
+                    <a
+                      href={data.student_details.dokumenAkte}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-400 underline truncate"
+                    >
+                      Lihat Dokumen (Akte)
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteDokumen("akte")}
+                      className="ml-2 px-2 py-1 bg-red-600 text-white text-xs rounded"
+                    >
+                      Hapus
+                    </button>
+                  </div>
+                )}
             </div>
-            <div className="flex flex-col gap-2">
-              <label className="font-medium flex items-center gap-1">
+
+            <div className="flex flex-col gap-2 ">
+              <label className="font-medium flex items-center gap-1 ">
                 Fotokopi KK, KTP Orang Tua, SKTM / KIP
                 <span className="text-red-500">*</span>
               </label>
               <p className="text-xs text-red-300">Wajib diunggah</p>
+
+              {/* Upload input (only shown if no file yet) */}
               {!dokumen.kk_ktp_sktm &&
-                !data?.dokumenKKKTP &&
+                (!data?.student_details?.dokumenKKKTP ||
+                  dokumen.deleted?.kk_ktp_sktm) &&
                 (uploadingField === "kk_ktp_sktm" ? (
                   <div className="flex items-center justify-center w-full h-10">
                     <svg
@@ -1368,6 +1400,8 @@ const FormulirPendaftaran = ({
                     className="block w-full text-sm text-white file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-600 file:text-white"
                   />
                 ))}
+
+              {/* Show preview if file exists in local state */}
               {dokumen.kk_ktp_sktm && (
                 <div className="flex items-center justify-between bg-white/10 p-2 rounded shadow">
                   <a
@@ -1380,42 +1414,36 @@ const FormulirPendaftaran = ({
                   </a>
                   <button
                     type="button"
-                    onClick={() =>
-                      setDokumen((prev) => ({
-                        ...prev,
-                        kk_ktp_sktm: undefined,
-                      }))
-                    }
+                    onClick={() => handleDeleteDokumen("kk_ktp_sktm")}
                     className="ml-2 px-2 py-1 bg-red-600 text-white text-xs rounded"
                   >
                     Hapus
                   </button>
                 </div>
               )}
-              {!dokumen.kk_ktp_sktm && data?.dokumenKKKTP && (
-                <div className="flex items-center justify-between bg-white/10 p-2 rounded shadow">
-                  <a
-                    href={data?.dokumenKKKTP}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-400 underline truncate"
-                  >
-                    Lihat Dokumen (KK, KTP, SKTM/KIP)
-                  </a>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setDokumen((prev) => ({
-                        ...prev,
-                        kk_ktp_sktm: undefined,
-                      }))
-                    }
-                    className="ml-2 px-2 py-1 bg-red-600 text-white text-xs rounded"
-                  >
-                    Hapus
-                  </button>
-                </div>
-              )}
+
+              {/* Show preview if file exists in DB but not in local state */}
+              {!dokumen.kk_ktp_sktm &&
+                data?.student_details?.dokumenKKKTP &&
+                !dokumen.deleted?.kk_ktp_sktm && (
+                  <div className="flex items-center justify-between bg-white/10 p-2 rounded shadow">
+                    <a
+                      href={data.student_details.dokumenKKKTP}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-400 underline truncate"
+                    >
+                      Lihat Dokumen (KK, KTP, SKTM/KIP)
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteDokumen("kk_ktp_sktm")}
+                      className="ml-2 px-2 py-1 bg-red-600 text-white text-xs rounded"
+                    >
+                      Hapus
+                    </button>
+                  </div>
+                )}
             </div>
             <div className="flex flex-col gap-2">
               <label className="font-medium flex items-center gap-1">
@@ -1424,7 +1452,7 @@ const FormulirPendaftaran = ({
               </label>
               <p className="text-xs text-red-300">Wajib diunggah</p>
               {!dokumen.pasfoto &&
-                !data?.dokumenPasfoto &&
+                (!data?.dokumenPasfoto || dokumen.deleted?.pasfoto) &&
                 (uploadingField === "pasfoto" ? (
                   <div className="flex items-center justify-center w-full h-10">
                     <svg
@@ -1454,7 +1482,7 @@ const FormulirPendaftaran = ({
                 ) : (
                   <input
                     type="file"
-                    accept=".jpg,.jpeg,.png,.pdf"
+                    accept=".jpg,.jpeg,.png"
                     onChange={(e) => handleFileUpload(e, "pasfoto")}
                     className="block w-full text-sm text-white file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-600 file:text-white"
                   />
@@ -1471,36 +1499,34 @@ const FormulirPendaftaran = ({
                   </a>
                   <button
                     type="button"
-                    onClick={() =>
-                      setDokumen((prev) => ({ ...prev, pasfoto: undefined }))
-                    }
+                    onClick={() => handleDeleteDokumen("pasfoto")}
                     className="ml-2 px-2 py-1 bg-red-600 text-white text-xs rounded"
                   >
                     Hapus
                   </button>
                 </div>
               )}
-              {!dokumen.pasfoto && data?.dokumenPasfoto && (
-                <div className="flex items-center justify-between bg-white/10 p-2 rounded shadow">
-                  <a
-                    href={data?.dokumenPasfoto}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-400 underline truncate"
-                  >
-                    Lihat Foto Siswa
-                  </a>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setDokumen((prev) => ({ ...prev, pasfoto: undefined }))
-                    }
-                    className="ml-2 px-2 py-1 bg-red-600 text-white text-xs rounded"
-                  >
-                    Hapus
-                  </button>
-                </div>
-              )}
+              {!dokumen.pasfoto &&
+                data?.dokumenPasfoto &&
+                !dokumen.deleted?.pasfoto && (
+                  <div className="flex items-center justify-between bg-white/10 p-2 rounded shadow">
+                    <a
+                      href={data?.dokumenPasfoto}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-400 underline truncate"
+                    >
+                      Lihat Foto Siswa
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteDokumen("pasfoto")}
+                      className="ml-2 px-2 py-1 bg-red-600 text-white text-xs rounded"
+                    >
+                      Hapus
+                    </button>
+                  </div>
+                )}
             </div>
           </div>
 

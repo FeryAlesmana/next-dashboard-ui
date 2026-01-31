@@ -98,6 +98,8 @@ const allPages = [
 
 export default function SearchBar({ role }: { role: string }) {
   const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
+
   const router = useRouter();
 
   const rolePages = allPages.filter((p) => p.roles.includes(role));
@@ -109,6 +111,42 @@ export default function SearchBar({ role }: { role: string }) {
 
   return (
     <div className="relative w-full max-w-md">
+      {/* MOBILE */}
+      <div className="relative flex md:hidden items-center w-full">
+        {/* Search container */}
+        <div
+          className={`
+      absolute left-0 flex items-center gap-2 text-xs rounded-full
+      ring-[1.5px] ring-gray-300 bg-white px-2
+      transition-all duration-300 ease-in-out
+      ${open ? "w-full opacity-100 z-20" : "w-9 opacity-0 pointer-events-none"}
+    `}
+        >
+          <Image src="/search.png" alt="" width={14} height={14} />
+          <input
+            autoFocus={open}
+            type="text"
+            placeholder="Cari Halaman..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onBlur={() => setOpen(false)}
+            className="w-full px-2 py-2 bg-transparent outline-none"
+          />
+        </div>
+
+        {/* Icon button */}
+        <button
+          onClick={() => setOpen(true)}
+          className={`
+      p-2 rounded-full transition-all duration-200
+      hover:bg-gray-100
+      ${open ? "opacity-0 scale-95 pointer-events-none" : "opacity-100"}
+    `}
+        >
+          <Image src="/search.png" alt="Search" width={18} height={18} />
+        </button>
+      </div>
+
       <div className="hidden md:flex items-center gap-2 text-xs rounded-full ring-[1.5px] ring-gray-300 px-2">
         <Image src="/search.png" alt="" width={14} height={14} />
         <input

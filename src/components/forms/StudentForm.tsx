@@ -57,14 +57,30 @@ const StudentForm = ({
   });
 
   const [img, setImg] = useState<any>();
+  type DokumenKey = "ijazah" | "akte" | "kk_ktp_sktm";
+
   const [dokumen, setDokumen] = useState<{
     ijazah?: string;
     akte?: string;
     kk_ktp_sktm?: string;
+    deleted?: Partial<Record<DokumenKey, boolean>>;
   }>({});
+
   const [uploadingField, setUploadingField] = useState<
     keyof typeof dokumen | null
   >(null);
+
+  const handleDeleteDokumen = (key: DokumenKey) => {
+    setDokumen((prev) => ({
+      ...prev,
+      [key]: undefined,
+      deleted: {
+        ...prev.deleted,
+        [key]: true,
+      },
+    }));
+  };
+
   const [pendingData, setPendingData] = useState<any>(null);
   const [withUser, setWithUser] = useState(true);
   const [showActivateDialog, setShowActivateDialog] = useState(false);
@@ -95,7 +111,7 @@ const StudentForm = ({
 
   const handleFileUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
-    name: keyof typeof dokumen,
+    name: DokumenKey,
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -105,11 +121,19 @@ const StudentForm = ({
     try {
       const uploadedUrl = await cloudinaryUpload(file, "ppdb");
 
-      setDokumen((prev) => ({ ...prev, [name]: uploadedUrl }));
-    } catch (err) {
+      setDokumen((prev) => ({
+        ...prev,
+        [name]: uploadedUrl,
+        deleted: {
+          ...prev.deleted,
+          [name]: false,
+        },
+      }));
+    } catch {
       toast.error("Upload gagal");
     }
   };
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const router = useRouter();
@@ -142,9 +166,12 @@ const StudentForm = ({
       ...data,
       img: img?.secure_url,
       awards_date: data.awards_date ? new Date(data.awards_date) : null,
-      dokumenIjazah: dokumen.ijazah,
-      dokumenAkte: dokumen.akte,
-      dokumenKKKTP: dokumen.kk_ktp_sktm,
+
+      dokumenIjazah: dokumen.deleted?.ijazah ? null : dokumen.ijazah,
+
+      dokumenAkte: dokumen.deleted?.akte ? null : dokumen.akte,
+
+      dokumenKKKTP: dokumen.deleted?.kk_ktp_sktm ? null : dokumen.kk_ktp_sktm,
       withUser: withUserRef.current,
       classId: data.classId ? parseInt(data.classId) : null,
     };
@@ -172,7 +199,6 @@ const StudentForm = ({
       const updatedItem = state.data ?? data; // <- depends on what your action returns
 
       console.log(state.data, " Data from server");
-      
 
       toast(
         `Siswa telah berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`,
@@ -634,7 +660,8 @@ const StudentForm = ({
 
             {/* Upload input (only shown if no file yet) */}
             {!dokumen.ijazah &&
-              !data?.student_details?.dokumenIjazah &&
+              (!data?.student_details?.dokumenIjazah ||
+                dokumen.deleted?.ijazah) &&
               (uploadingField === "ijazah" ? (
                 <div className="flex items-center justify-center w-full h-10">
                   <svg
@@ -683,9 +710,7 @@ const StudentForm = ({
                 </a>
                 <button
                   type="button"
-                  onClick={() =>
-                    setDokumen((prev) => ({ ...prev, ijazah: undefined }))
-                  }
+                  onClick={() => handleDeleteDokumen("ijazah")}
                   className="ml-2 px-2 py-1 bg-red-600 text-white text-xs rounded"
                 >
                   Hapus
@@ -694,27 +719,27 @@ const StudentForm = ({
             )}
 
             {/* Show preview if file exists in DB but not in local state */}
-            {!dokumen.ijazah && data?.student_details?.dokumenIjazah && (
-              <div className="flex items-center justify-between bg-white/10 p-2 rounded shadow">
-                <a
-                  href={data.student_details.dokumenIjazah}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-400 underline truncate"
-                >
-                  Lihat Dokumen (Ijazah)
-                </a>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setDokumen((prev) => ({ ...prev, ijazah: undefined }))
-                  }
-                  className="ml-2 px-2 py-1 bg-red-600 text-white text-xs rounded"
-                >
-                  Hapus
-                </button>
-              </div>
-            )}
+            {!dokumen.ijazah &&
+              data?.student_details?.dokumenIjazah &&
+              !dokumen.deleted?.ijazah && (
+                <div className="flex items-center justify-between bg-white/10 p-2 rounded shadow">
+                  <a
+                    href={data.student_details.dokumenIjazah}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-400 underline truncate"
+                  >
+                    Lihat Dokumen (Ijazah)
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteDokumen("ijazah")}
+                    className="ml-2 px-2 py-1 bg-red-600 text-white text-xs rounded"
+                  >
+                    Hapus
+                  </button>
+                </div>
+              )}
           </div>
 
           <div className="flex flex-col gap-2 w-full md:w-1/4">
@@ -724,7 +749,7 @@ const StudentForm = ({
 
             {/* Upload input (only shown if no file yet) */}
             {!dokumen.akte &&
-              !data?.student_details?.dokumenAkte &&
+              (!data?.student_details?.dokumenAkte || dokumen.deleted?.akte) &&
               (uploadingField === "akte" ? (
                 <div className="flex items-center justify-center w-full h-10">
                   <svg
@@ -773,9 +798,7 @@ const StudentForm = ({
                 </a>
                 <button
                   type="button"
-                  onClick={() =>
-                    setDokumen((prev) => ({ ...prev, akte: undefined }))
-                  }
+                  onClick={() => handleDeleteDokumen("akte")}
                   className="ml-2 px-2 py-1 bg-red-600 text-white text-xs rounded"
                 >
                   Hapus
@@ -784,27 +807,27 @@ const StudentForm = ({
             )}
 
             {/* Show preview if file exists in DB but not in local state */}
-            {!dokumen.akte && data?.student_details?.dokumenAkte && (
-              <div className="flex items-center justify-between bg-white/10 p-2 rounded shadow">
-                <a
-                  href={data.student_details.dokumenAkte}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-400 underline truncate"
-                >
-                  Lihat Dokumen (Akte)
-                </a>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setDokumen((prev) => ({ ...prev, akte: undefined }))
-                  }
-                  className="ml-2 px-2 py-1 bg-red-600 text-white text-xs rounded"
-                >
-                  Hapus
-                </button>
-              </div>
-            )}
+            {!dokumen.akte &&
+              data?.student_details?.dokumenAkte &&
+              !dokumen.deleted?.akte && (
+                <div className="flex items-center justify-between bg-white/10 p-2 rounded shadow">
+                  <a
+                    href={data.student_details.dokumenAkte}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-400 underline truncate"
+                  >
+                    Lihat Dokumen (Akte)
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteDokumen("akte")}
+                    className="ml-2 px-2 py-1 bg-red-600 text-white text-xs rounded"
+                  >
+                    Hapus
+                  </button>
+                </div>
+              )}
           </div>
 
           <div className="flex flex-col gap-2 w-full md:w-1/4">
@@ -814,7 +837,8 @@ const StudentForm = ({
 
             {/* Upload input (only shown if no file yet) */}
             {!dokumen.kk_ktp_sktm &&
-              !data?.student_details?.dokumenKKKTP &&
+              (!data?.student_details?.dokumenKKKTP ||
+                dokumen.deleted?.kk_ktp_sktm) &&
               (uploadingField === "kk_ktp_sktm" ? (
                 <div className="flex items-center justify-center w-full h-10">
                   <svg
@@ -863,9 +887,7 @@ const StudentForm = ({
                 </a>
                 <button
                   type="button"
-                  onClick={() =>
-                    setDokumen((prev) => ({ ...prev, kk_ktp_sktm: undefined }))
-                  }
+                  onClick={() => handleDeleteDokumen("kk_ktp_sktm")}
                   className="ml-2 px-2 py-1 bg-red-600 text-white text-xs rounded"
                 >
                   Hapus
@@ -874,27 +896,27 @@ const StudentForm = ({
             )}
 
             {/* Show preview if file exists in DB but not in local state */}
-            {!dokumen.kk_ktp_sktm && data?.student_details?.dokumenKKKTP && (
-              <div className="flex items-center justify-between bg-white/10 p-2 rounded shadow">
-                <a
-                  href={data.student_details.dokumenKKKTP}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-400 underline truncate"
-                >
-                  Lihat Dokumen (KK, KTP, SKTM/KIP)
-                </a>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setDokumen((prev) => ({ ...prev, kk_ktp_sktm: undefined }))
-                  }
-                  className="ml-2 px-2 py-1 bg-red-600 text-white text-xs rounded"
-                >
-                  Hapus
-                </button>
-              </div>
-            )}
+            {!dokumen.kk_ktp_sktm &&
+              data?.student_details?.dokumenKKKTP &&
+              !dokumen.deleted?.kk_ktp_sktm && (
+                <div className="flex items-center justify-between bg-white/10 p-2 rounded shadow">
+                  <a
+                    href={data.student_details.dokumenKKKTP}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-400 underline truncate"
+                  >
+                    Lihat Dokumen (KK, KTP, SKTM/KIP)
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteDokumen("kk_ktp_sktm")}
+                    className="ml-2 px-2 py-1 bg-red-600 text-white text-xs rounded"
+                  >
+                    Hapus
+                  </button>
+                </div>
+              )}
           </div>
           {data && (
             <InputField

@@ -20,7 +20,10 @@ export default function PPDBPage() {
     reason: string;
   } | null>(null);
   const [currentStaff, setCurrentStaff] = useState<staffrole>("PENILAIAN");
-  const [filePpdb, setFilePpdb] = useState("/files/FORMULIR-PENERIMAAN-MAHASISWA-BARU-TAHUN-2023.pdf")
+  const DEFAULT_PDF =
+    "/files/FORMULIR-PENERIMAAN-MAHASISWA-BARU-TAHUN-2023.pdf";
+
+  const [filePpdb, setFilePpdb] = useState(DEFAULT_PDF);
 
   useEffect(() => {
     async function fetchStatus() {
@@ -28,7 +31,9 @@ export default function PPDBPage() {
       const data = await res.json();
       setPpdbStatus(data?.ppdbStatus);
       setCurrentStaff(data?.currentStaffRole);
-      setFilePpdb(data?.filePpdb)
+      if (data?.filePpdb) {
+        setFilePpdb(data.filePpdb);
+      }
       // console.log(data, "data ppdb");
     }
     fetchStatus();

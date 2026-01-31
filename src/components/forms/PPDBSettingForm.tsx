@@ -22,6 +22,7 @@ import {
 import { CurrentState, updatePPDBSetting } from "@/lib/actions";
 import InputField from "../InputField";
 import { cloudinaryUpload } from "@/lib/upload/cloudinaryUpload";
+import Link from "next/link";
 
 type Props = {
   setOpen?: Dispatch<SetStateAction<boolean>>;
@@ -71,7 +72,9 @@ const PPDBSettingForm = ({ setOpen, type, data }: Props) => {
 
   const [dokumen, setDokumen] = useState<{
     filePpdb?: string;
+    deletedFilePpdb?: boolean;
   }>({});
+
   const [uploadingField, setUploadingField] = useState<
     keyof typeof dokumen | null
   >(null);
@@ -112,7 +115,7 @@ const PPDBSettingForm = ({ setOpen, type, data }: Props) => {
     if (formData) {
       const payload: PPDBSettingSchema = {
         ...formData,
-        filePpdb: dokumen.filePpdb,
+        filePpdb: dokumen.deletedFilePpdb ? null : dokumen.filePpdb,
       };
       setIsSubmitting(true);
 
@@ -172,7 +175,7 @@ const PPDBSettingForm = ({ setOpen, type, data }: Props) => {
 
             {/* Upload input (only shown if no file yet) */}
             {!dokumen.filePpdb &&
-              !data?.filePpdb &&
+              (!data?.filePpdb || dokumen.deletedFilePpdb) &&
               (uploadingField === "filePpdb" ? (
                 <div className="flex items-center justify-center w-full h-10">
                   <svg
@@ -228,7 +231,11 @@ const PPDBSettingForm = ({ setOpen, type, data }: Props) => {
                 <button
                   type="button"
                   onClick={() =>
-                    setDokumen((prev) => ({ ...prev, filePpdb: undefined }))
+                    setDokumen((prev) => ({
+                      ...prev,
+                      filePpdb: undefined,
+                      deletedFilePpdb: true,
+                    }))
                   }
                   className="ml-2 px-2 py-1 bg-red-600 text-white text-xs rounded"
                 >
@@ -238,27 +245,33 @@ const PPDBSettingForm = ({ setOpen, type, data }: Props) => {
             )}
 
             {/* Show preview if file exists in DB but not in local state */}
-            {!dokumen.filePpdb && data?.filePpdb && (
-              <div className="flex items-center justify-between bg-white/10 p-2 rounded shadow">
-                <a
-                  href={data?.filePpdb}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-400 underline truncate"
-                >
-                  Lihat Dokumen (File PPDB Offline)
-                </a>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setDokumen((prev) => ({ ...prev, filePpdb: undefined }))
-                  }
-                  className="ml-2 px-2 py-1 bg-red-600 text-white text-xs rounded"
-                >
-                  Hapus
-                </button>
-              </div>
-            )}
+            {!dokumen.filePpdb &&
+              data?.filePpdb &&
+              !dokumen.deletedFilePpdb && (
+                <div className="flex items-center justify-between bg-white/10 p-2 rounded shadow">
+                  <a
+                    href={data?.filePpdb}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-400 underline truncate"
+                  >
+                    Lihat Dokumen (File PPDB Offline)
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setDokumen((prev) => ({
+                        ...prev,
+                        filePpdb: undefined,
+                        deletedFilePpdb: true,
+                      }))
+                    }
+                    className="ml-2 px-2 py-1 bg-red-600 text-white text-xs rounded"
+                  >
+                    Hapus
+                  </button>
+                </div>
+              )}
           </div>
         </div>
 

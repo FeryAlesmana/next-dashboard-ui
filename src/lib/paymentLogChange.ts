@@ -28,10 +28,21 @@ export async function logPaymentChange({
 }) {
   const user = await currentUser();
   const { role, userId } = await getCurrentUser();
-  let staffRole: staffrole = "ACCOUNTING";
-  if (role === "staff") {
+
+  let finalRole: "ADMIN" | "ACCOUNTING";
+
+  if (role === "admin") {
+    finalRole = "ADMIN";
+  } else if (role === "staff") {
     const staffrole = await getCurrentStaff(userId!);
-    staffRole = staffrole;
+
+    if (staffrole !== "ACCOUNTING") {
+      throw new Error("Unauthorized staff role");
+    }
+
+    finalRole = "ACCOUNTING";
+  } else {
+    throw new Error("Unauthorized role");
   }
   // console.log(paymentLogId, "= Payment log id in logpaymentChange");
   // console.log(isReverted, "= isReverted in logpaymentChange");
@@ -54,7 +65,7 @@ export async function logPaymentChange({
       newValue: newSnapshot,
       changedById: user?.id || "unknown",
       changedByName: user?.username || user?.firstName || "Unknown User",
-      changedByRole: staffRole ?? role,
+      changedByRole: finalRole,
     },
   });
 }

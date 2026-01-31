@@ -43,11 +43,12 @@ export default function DashboardLayout({
 
       {/* RIGHT CONTENT */}
       <div
-        className="flex-1 flex flex-col bg-[#F7F8FA] overflow-y-auto"
+        className="flex-1 flex flex-col bg-[#F7F8FA] min-h-screen"
         id="scroll-container"
       >
         <Navbar onToggleMenu={() => setSidebarOpen(!sidebarOpen)} />
-        <div className="p-4">{children}</div>
+        <div className="flex-1 overflow-y-auto p-4">{children}</div>
+
         <footer className="border-t bg-white text-gray-500 text-sm">
           <div className="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row items-center justify-between gap-2">
             <p>
