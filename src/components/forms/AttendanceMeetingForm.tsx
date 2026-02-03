@@ -163,7 +163,7 @@ const AttendanceMeetingForm = ({
         <div className="grid gap-4">
           {students.length > 0 && students[0].class?.name && (
             <div className="text-lg font-medium text-gray-700">
-              Kelas: {students[0].class.name}
+              Kelas: {students[0].class.name || "Tidak Ada Kelas"}
             </div>
           )}
           <div className="overflow-x-auto">

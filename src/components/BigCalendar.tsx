@@ -3,6 +3,7 @@ import { Calendar, momentLocalizer, Views, View } from "react-big-calendar";
 import moment from "moment";
 import { useState, useEffect } from "react";
 import "moment/locale/id"; // ✅ import locale
+import { addDays, startOfWeek } from "date-fns";
 
 moment.locale("id"); // ✅ set locale
 
@@ -26,12 +27,19 @@ const messages = {
   showMore: (total: number) => `+${total} lainnya`,
 };
 
+
+const workWeekWithSaturday = (date: Date) => {
+  const start = startOfWeek(date, { weekStartsOn: 1 }); // Monday
+  const end = addDays(start, 5); // Saturday
+  return { start, end };
+};
+
 const BigCalendar = ({
   data,
 }: {
   data: { title: string; start: Date; end: Date }[];
 }) => {
-  const [view, setView] = useState<View>(Views.WORK_WEEK);
+  const [view, setView] = useState<View>(Views.WEEK);
   const handleOnChangeView = (selectedView: View) => {
     setView(selectedView);
   };
@@ -42,7 +50,7 @@ const BigCalendar = ({
       events={data}
       startAccessor="start"
       endAccessor="end"
-      views={["work_week", "day", "month"]}
+      views={["week", "day", "month"]}
       view={view}
       popup
       popupOffset={{ x: 10, y: 10 }}

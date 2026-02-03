@@ -43,7 +43,7 @@ export function MobileAssignmentCard({
             {data.lesson.subject?.name || "-"}
           </div>
           <div className="text-sm text-gray-600">
-            Kelas : {data.lesson.class.name}
+            Kelas : {data.lesson.class?.name || "Tidak Ada Kelas"}
           </div>
           <div className="text-xs text-gray-400 overflow-hidden text-ellipsis whitespace-nowrap max-w-full">
             Guru :{" "}

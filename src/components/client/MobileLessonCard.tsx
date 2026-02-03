@@ -24,7 +24,7 @@ export function MobileLessonCard({
   }
   return (
     <div className="border rounded-lg p-4 bg-white shadow-sm">
-      <div className="flex items-start justify-between min-w-0">
+      <div className="grid grid-cols-[auto,1fr,auto] gap-3 items-start">
         {/* Checkbox */}
         {allowedStaff && (
           <input
@@ -35,21 +35,21 @@ export function MobileLessonCard({
           />
         )}
 
-        <div className="ml-3 flex-1 min-w-0">
+        <div className="ml-3 min-w-0">
           <div
             className="font-medium overflow-hidden text-ellipsis whitespace-nowrap max-w-full"
             title={data.subject?.name || "-"}
           >
             {data.subject?.name || "-"}
           </div>
-          <div className="text-sm text-gray-600">Kelas : {data.class.name}</div>
-          <div className="text-xs text-gray-400">
-            Waktu Mulai :{" "}
-            {data.startTime}
+          <div className="text-sm text-gray-600">
+            Kelas : {data.class?.name || "Tidak Ada Kelas"}
           </div>
           <div className="text-xs text-gray-400">
-            Waktu Selesai :{" "}
-            {data.endTime}
+            Waktu Mulai : {data.startTime}
+          </div>
+          <div className="text-xs text-gray-400">
+            Waktu Selesai : {data.endTime}
           </div>
         </div>
 
@@ -77,11 +77,13 @@ export function MobileLessonCard({
             </div>
             <div className="font-medium">
               Pertemuan :{" "}
-              <Link href={`/list/attendance/${data.class.name}/${data.id}`}>
-                <button className="w-5 h-5 rounded-full ml-3">
-                  <Image src="/moreDark.png" alt="" width={16} height={16} />
-                </button>
-              </Link>
+              {data.class?.name && (
+                <Link href={`/list/attendance/${data.class.name}/${data.id}`}>
+                  <button className="w-5 h-5 rounded-full ml-3">
+                    <Image src="/moreDark.png" alt="" width={16} height={16} />
+                  </button>
+                </Link>
+              )}
             </div>
           </div>
 

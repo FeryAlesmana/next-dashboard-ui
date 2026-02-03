@@ -206,7 +206,7 @@ export default function ParentLessonViewSemester({
                         {/* <td className="p-3">{lesson.id}</td> */}
                         <td className="p-3">{lesson.subject?.name || "-"}</td>
                         <td className="hidden md:table-cell">
-                          {lesson.class?.name}
+                          {lesson.class?.name || "Tidak Ada Kelas"}
                         </td>
                         <td className="p-3 hidden md:table-cell">
                           {lesson.startTime}

@@ -8,7 +8,7 @@ import FilterSortToggle from "../FilterSortToggle";
 import FormModal from "../FormModal";
 import { staffrole } from "@prisma/client";
 import { useMediaQuery } from "@/lib/useMediaQuery";
-import { MobileAssignmentCard } from "./MobileAssignmentClient";
+import { MobileAssignmentCard } from "./MobileAssignmentCard";
 export type BaseListClientProps = {
   data: any[];
   relatedData?: any;

@@ -30,7 +30,7 @@ const SingleResultPageClient = ({
   const getScore = (
     results: any[],
     lessonId: number,
-    types: resTypes[]
+    types: resTypes[],
   ): number => {
     const matching = results.filter((res) => {
       const source = res.exam ?? res.assignment;
@@ -45,7 +45,7 @@ const SingleResultPageClient = ({
 
   const generateSemesters = (
     createdAt: Date,
-    gradeLevel: number
+    gradeLevel: number,
   ): Semester[] => {
     const now = new Date();
     const currentYear = now.getFullYear();
@@ -53,7 +53,7 @@ const SingleResultPageClient = ({
     // Start from either enrollment year OR calculated grade start year
     const startYear = Math.min(
       createdAt.getFullYear(),
-      currentYear - (gradeLevel - 1)
+      currentYear - (gradeLevel - 1),
     );
 
     const graduationYear = startYear + (gradeLevel - 1);
@@ -107,7 +107,7 @@ const SingleResultPageClient = ({
         start: sem.start.toISOString(),
         end: sem.end.toISOString(),
       }),
-    })
+    }),
   );
 
   const selectedValue = filters["semester"]?.toString() || "";
@@ -126,7 +126,7 @@ const SingleResultPageClient = ({
               ? {
                   label:
                     semesterOptions.find(
-                      (opt) => opt.value.toString() === selectedValue
+                      (opt) => opt.value.toString() === selectedValue,
                     )?.label || "",
                   value: selectedValue,
                 }
@@ -146,7 +146,8 @@ const SingleResultPageClient = ({
       <div className="mb-8 bg-white shadow rounded-lg p-4 border border-gray-200">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-700">
           <p>
-            <span className="font-semibold">Nama Murid:</span> {student.name}{" "}
+            <span className="font-semibold">Nama Murid:</span>{" "}
+            {student.name}{" "}
           </p>
           <p>
             <span className="font-semibold">NISN:</span>{" "}
@@ -154,7 +155,7 @@ const SingleResultPageClient = ({
           </p>
           <p>
             <span className="font-semibold">Kelas:</span>{" "}
-            {student.class?.name || "-"}
+            {student.class?.name || "Tidak Ada Kelas"}
           </p>
         </div>
       </div>
@@ -259,7 +260,7 @@ const SingleResultPageClient = ({
                       <td className="p-3 border-t border-gray-300 text-center">
                         {Math.round(
                           avgList.reduce((acc, curr) => acc + curr, 0) /
-                            avgList.length
+                            avgList.length,
                         )}
                       </td>
                     </tr>
@@ -275,7 +276,7 @@ const SingleResultPageClient = ({
                       <td className="p-3 border-t border-gray-300 text-center">
                         {Math.round(
                           avgList.reduce((acc, curr) => acc + curr, 0) /
-                            avgList.length
+                            avgList.length,
                         )}
                       </td>
                     </tr>

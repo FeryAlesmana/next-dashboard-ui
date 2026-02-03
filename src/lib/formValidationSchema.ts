@@ -3,6 +3,7 @@ import {
   assTypes,
   AttendanceStatus,
   Awards,
+  Day,
   Degree,
   exTypes,
   KPS,
@@ -398,7 +399,7 @@ export const lessonSchema = z
     subjectId: z.coerce.number({ message: "Id pelajaran wajib di isi" }),
     classId: z.coerce.number({ message: "Id Kelas wajib di isi" }),
     teacherId: z.string({ message: "Id guru wajib di isi" }),
-    day: z.enum(["SENIN", "SELASA", "RABU", "KAMIS", "JUMAT"], {
+    day: z.nativeEnum(Day, {
       message: "Hari jadwal wajib diisi!",
     }),
   })

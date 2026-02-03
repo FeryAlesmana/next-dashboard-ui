@@ -56,7 +56,7 @@ export function MobilePaymentCard({
 
               <p className="text-xs text-gray-500 overflow-hidden text-ellipsis whitespace-nowrap max-w-full">
                 {" "}
-                Kelas : {data.student.class?.name || "—"}
+                Kelas : {data.student.class?.name || "Tidak Ada Kelas"}
               </p>
               <div className="text-sm text-gray-600 overflow-hidden text-ellipsis whitespace-nowrap max-w-full">
                 Status :

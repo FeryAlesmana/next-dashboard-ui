@@ -150,7 +150,7 @@ export default function StudentLessonViewSemester({
                 >
                   {/* <td className="p-3">{lsn.id}</td> */}
                   <td className="p-3">{lsn.subject?.name || "-"}</td>
-                  <td className="hidden md:table-cell">{lsn.class?.name}</td>
+                  <td className="hidden md:table-cell">{lsn.class?.name || "Tidak Ada Kelas"}</td>
                   <td className="p-3 hidden md:table-cell">
                     {new Date(lsn.startTime).toLocaleTimeString("id-ID", {
                       hour: "2-digit",
@@ -172,7 +172,7 @@ export default function StudentLessonViewSemester({
                   </td>
                   <td className="text-center lg:text-left ">
                     <Link
-                      href={`/list/attendance/${lsn.class?.name}/${lsn.id}`}
+                      href={lsn.class ? `/list/attendance/${lsn.class?.name}/${lsn.id}`: "#"}
                     >
                       <button className="w-7 h-7 items-center justify-center rounded-full">
                         <Image

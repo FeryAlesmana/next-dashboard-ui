@@ -72,7 +72,7 @@ export default function PaymenTableClient({
 
             {/* Class */}
             <p className="text-xs text-gray-500">
-              {data.student.class?.name || "—"}
+              {data.student.class?.name || "Tidak Ada Kelas"}
             </p>
           </div>
         </td>

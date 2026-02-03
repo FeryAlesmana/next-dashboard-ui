@@ -9,7 +9,7 @@ import FilterSortToggle from "../FilterSortToggle";
 import FormModal from "../FormModal";
 import { staffrole } from "@prisma/client";
 import { useMediaQuery } from "@/lib/useMediaQuery";
-import { MobileExamCard } from "./MobileExamView";
+import { MobileExamCard } from "./MobileExamCard";
 
 export default function ExamListClient({
   columns,

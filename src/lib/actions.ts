@@ -64,6 +64,7 @@ import extractCloudinaryPublicId, {
   handlePrismaError,
   mapPaymentType,
   mergeDateAndTime,
+  moveDateToDay,
   normalizeAgama,
   normalizeBirthday,
   normalizePaymentRow,
@@ -2489,11 +2490,14 @@ export const updateLesson = async (
       });
 
       for (const meeting of meetings) {
+        const newDate = moveDateToDay(meeting.date, data.day);
+
         await tx.meeting.update({
           where: { id: meeting.id },
           data: {
-            startTime: applyTimeToDate(meeting.date, data.startTime),
-            endTime: applyTimeToDate(meeting.date, data.endTime),
+            date: newDate,
+            startTime: applyTimeToDate(newDate, data.startTime),
+            endTime: applyTimeToDate(newDate, data.endTime),
           },
         });
       }

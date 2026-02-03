@@ -34,7 +34,7 @@ const EventDetailPage = async ({
       <p className="text-sm text-gray-500 mb-4">
         Kelas:{" "}
         <span className="font-medium text-gray-700">
-          {event.class?.name || "-"}
+          {event.class?.name || "Semua Kelas"}
         </span>
       </p>
 

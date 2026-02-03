@@ -76,7 +76,7 @@ export function MobileParentCard({
                   id: student.id,
                   img: student.img,
                   name: student.name,
-                  className: student.class?.name,
+                  className: student.class?.name || "Tidak Ada Kelas",
                 }))}
                 label="Murid"
               />

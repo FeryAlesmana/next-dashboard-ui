@@ -206,14 +206,14 @@ export default async function AttendancePage({
               student.lessons.map((lesson: LessonWithRelations) => (
                 <Link
                   key={lesson.id}
-                  href={`/list/attendance/${lesson.class?.name}/${lesson.id}`}
+                  href={lesson.class ? `/list/attendance/${lesson.class?.name}/${lesson.id}` : '#'}
                   className="block p-4 rounded-lg border hover:shadow-md transition bg-white"
                 >
                   <div className="font-semibold text-lg mb-1">
                     {lesson.subject?.name}
                   </div>
                   <div className="text-sm text-gray-500 mb-1">
-                    Kelas: {lesson.class?.name}
+                    Kelas: {lesson.class?.name || "Tidak Ada Kelas"}
                   </div>
                   {/* <div className="text-sm text-gray-500">
                     ID Jadwal: {lesson.id}

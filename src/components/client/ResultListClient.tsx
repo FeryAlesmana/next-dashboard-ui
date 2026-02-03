@@ -38,7 +38,7 @@ export default function ResultListClient({
       student: item.student ? `${item.student.name} ` : "-",
       teacher: lesson?.teacher ? `${lesson.teacher.name} ` : "-",
       score: item.score,
-      class: lesson?.class?.name || "-",
+      class: lesson?.class?.name || "Tidak Ada Kelas",
       selectedType: isExam ? "Ujian" : "Tugas",
       examId: item.examId || undefined,
       assignmentId: item.assignmentId || undefined,

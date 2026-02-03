@@ -249,8 +249,8 @@ model Lesson {
   subjectId   Int?
   classId     Int?
   teacherId   String?
-  startTime   String      @map("start_time_str") @db.VarChar(5)
-  endTime     String      @map("end_time_str") @db.VarChar(5)
+  startTime   String       @map("start_time_str") @db.VarChar(5)
+  endTime     String       @map("end_time_str") @db.VarChar(5)
   assignments Assignment[]
   attendance  Attendance[]
   exams       Exam[]
@@ -299,7 +299,7 @@ model Result {
 model Attendance {
   id        Int              @id @default(autoincrement())
   date      DateTime
-  present   Boolean
+  present   Boolean          @default(false)
   studentId String?
   lessonId  Int?
   meetingId Int?
@@ -546,6 +546,7 @@ enum Day {
   RABU
   KAMIS
   JUMAT
+  SABTU
 }
 
 enum PaymentType {

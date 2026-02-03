@@ -77,7 +77,7 @@ export function MobileResultCard({
               </span>
             </div>
             <div className="font-medium">
-              Kelas: <span className="font-normal">{data.class}</span>
+              Kelas: <span className="font-normal">{data?.class || "Tidak Ada Kelas"}</span>
             </div>
           </div>
 

@@ -99,6 +99,7 @@ export default function LessonListClient({
                     { label: "Rabu", value: "RABU" },
                     { label: "Kamis", value: "KAMIS" },
                     { label: "Jumat", value: "JUMAT" },
+                    { label: "Sabtu", value: "SABTU" },
                     // Add more as needed
                   ],
                 },

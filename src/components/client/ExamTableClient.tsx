@@ -35,7 +35,7 @@ export default function ExamTableClient({
         <td className="flex items-center p-4 gap-4">
           {data.lesson.subject?.name || "-"}
         </td>
-        <td>{data.lesson.class.name}</td>
+        <td>{data.lesson.class?.name || "Tidak Ada Kelas"}</td>
         <td className="hidden md:table-cell">
           {data.lesson.teacher
             ? `${data.lesson.teacher.name}`

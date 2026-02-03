@@ -3,6 +3,28 @@ import prisma from "./prisma";
 
 import crypto from "crypto";
 
+const DAY_INDEX: Record<string, number> = {
+  SUNDAY: 0,
+  MONDAY: 1,
+  TUESDAY: 2,
+  WEDNESDAY: 3,
+  THURSDAY: 4,
+  FRIDAY: 5,
+  SATURDAY: 6,
+};
+
+export function moveDateToDay(baseDate: Date, targetDay: string) {
+  const result = new Date(baseDate);
+  const currentDay = result.getDay(); // 0–6
+  const targetDayIndex = DAY_INDEX[targetDay];
+
+  const diff = targetDayIndex - currentDay;
+  result.setDate(result.getDate() + diff);
+
+  return result;
+}
+
+
 export function mergeDateAndTime(date: Date, time: Date) {
   const d = new Date(date);
   d.setHours(

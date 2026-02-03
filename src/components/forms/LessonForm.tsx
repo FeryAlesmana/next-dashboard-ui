@@ -252,6 +252,7 @@ const LessonForm = ({
               <option value="RABU">RABU</option>
               <option value="KAMIS">KAMIS</option>
               <option value="JUMAT">JUMAT</option>
+              <option value="SABTU">SABTU</option>
             </select>
             {errors.day?.message && (
               <p className="text-xs text-red-400">

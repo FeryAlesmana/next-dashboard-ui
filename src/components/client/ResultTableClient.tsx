@@ -39,7 +39,7 @@ export default function ResultTableClient({
         <td className="hidden md:table-cell">{data.student}</td>
         <td className="hidden md:table-cell">{data.score}</td>
         <td className="hidden md:table-cell">{data.teacher}</td>
-        <td className="hidden md:table-cell">{data.class}</td>
+        <td className="hidden md:table-cell">{data.class || "Tidak Ada Kelas"}</td>
         <td className="hidden md:table-cell">
           <span
             className={`  px-2 py-1 rounded-full text-xs font-medium

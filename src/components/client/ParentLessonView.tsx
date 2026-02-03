@@ -53,7 +53,7 @@ const ParentLessonView = ({
                           {item.subject?.name || "-"}
                         </td>
                         <td className="hidden md:table-cell">
-                          {item.class?.name}
+                          {item.class?.name || "Tidak Ada Kelas"}
                         </td>
                         <td className="hidden md:table-cell">
                           {item.startTime?.toLocaleTimeString("id-ID", {
@@ -79,7 +79,11 @@ const ParentLessonView = ({
                         </td>
                         <td>
                           <Link
-                            href={`/list/attendance/${item.class?.name}/${item.id}`}
+                            href={
+                              item.class?.name
+                                ? `/list/attendance/${item.class?.name}/${item.id}`
+                                : "#"
+                            }
                           >
                             <button className="w-7 h-7 items-center justify-center rounded-full">
                               <Image

@@ -144,7 +144,7 @@ const ExamForm = ({
     }) => ({
       value: lesson.id,
       label: `${lesson.name} - ${lesson.subject?.name ?? "-"} - ${
-        lesson.class?.name ?? "-"
+        lesson.class?.name ?? "Tidak Ada Kelas"
       }`,
     })
   );

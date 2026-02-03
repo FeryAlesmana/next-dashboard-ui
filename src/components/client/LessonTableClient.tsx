@@ -40,7 +40,9 @@ export default function LessonTableClient({
         <td className="hidden md:table-cell items-center p-4 gap-4">
           {data.subject?.name || "-"}
         </td>
-        <td className="hidden md:table-cell">{data.class.name}</td>
+        <td className="hidden md:table-cell">
+          {data.class?.name || "Tidak Ada Kelas"}
+        </td>
         <td className="hidden md:table-cell">{formatTime(data.startTime)}</td>
         <td className="hidden md:table-cell">{formatTime(data.endTime)}</td>
 
@@ -49,11 +51,13 @@ export default function LessonTableClient({
           {data.teacher ? `${data.teacher.name} ` : "Tidak ada guru"}
         </td>
         <td className="hidden md:table-cell">
-          <Link href={`/list/attendance/${data.class.name}/${data.id}`}>
-            <button className="w-7 h-7 flex items-center justify-center rounded-full">
-              <Image src="/moreDark.png" alt="" width={16} height={16} />
-            </button>
-          </Link>
+          {data.class?.name && (
+            <Link href={`/list/attendance/${data.class.name}/${data.id}`}>
+              <button className="w-7 h-7 flex items-center justify-center rounded-full">
+                <Image src="/moreDark.png" alt="" width={16} height={16} />
+              </button>
+            </Link>
+          )}
         </td>
         <td className="hidden md:table-cell">
           <div className="flex items-center gap-2 ">

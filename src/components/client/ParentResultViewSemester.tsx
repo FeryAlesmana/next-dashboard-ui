@@ -262,7 +262,7 @@ export default function ParentResultViewSemester({
                                 <td className="p-4 hidden md:table-cell">
                                   {res?.teacher}
                                 </td>
-                                <td className="p-4">{res?.class}</td>
+                                <td className="p-4">{res?.class || "Tidak Ada Kelas"}</td>
                                 <td className="p-4 hidden md:table-cell">
                                   {res?.resultType
                                     ? resultTypelabel[
@@ -337,7 +337,7 @@ export default function ParentResultViewSemester({
                                     <td className="p-4 hidden md:table-cell">
                                       {res?.teacher}
                                     </td>
-                                    <td className="p-4">{res?.class}</td>
+                                    <td className="p-4">{res?.class || "Tidak Ada Kelas"}</td>
                                   </tr>
                                 ))}
                               </tbody>

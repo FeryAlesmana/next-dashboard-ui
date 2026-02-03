@@ -42,7 +42,7 @@ export default function StudentTableClient({
             >
               {data.name || "Murid"}
             </h3>
-            <p className="text-xs text-gray-500">{data.class?.name || "-"}</p>
+            <p className="text-xs text-gray-500">{data.class?.name || "Tidak Ada Kelas"}</p>
           </div>
         </td>
         <td className="hidden md:table-cell">
