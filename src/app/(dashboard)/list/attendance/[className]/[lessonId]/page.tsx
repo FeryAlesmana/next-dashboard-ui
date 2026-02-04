@@ -132,6 +132,12 @@ export default async function AttendanceDetailPage({
       };
     });
 
+    function formatTimeUTC(date: Date) {
+      const h = date.getUTCHours().toString().padStart(2, "0");
+      const m = date.getUTCMinutes().toString().padStart(2, "0");
+      return `${h}:${m}`;
+    }
+
     return (
       <React.Fragment key={item.id}>
         {/* Main Meeting Row */}
@@ -143,20 +149,10 @@ export default async function AttendanceDetailPage({
               : "-"}
           </td>
           <td className="hidden md:table-cell">
-            {item.startTime
-              ? new Date(item.startTime).toLocaleTimeString("id-ID", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })
-              : "-"}
+            {item.startTime ? formatTimeUTC(item.startTime) : "-"}
           </td>
           <td className="hidden md:table-cell">
-            {item.endTime
-              ? new Date(item.endTime).toLocaleTimeString("id-ID", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })
-              : "-"}
+            {item.endTime ? formatTimeUTC(item.endTime) : "-"}
           </td>
           <td>
             {allowedRole ? (

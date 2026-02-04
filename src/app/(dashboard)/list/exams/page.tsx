@@ -390,10 +390,13 @@ const ExamListPage = async ({
   let relatedData = {};
   relatedData = { lessons: examLessons };
 
-  const classOptions = classes.map((cls) => ({
-    label: cls?.name ?? "Unknown Class",
-    value: cls?.id?.toString() ?? "",
-  }));
+  const classOptions = classes
+    .slice() // avoid mutating original array
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map((cls) => ({
+      label: cls.name ?? "-",
+      value: cls.id.toString(),
+    }));
 
   const gradeOptions = Array.from(
     new Set(

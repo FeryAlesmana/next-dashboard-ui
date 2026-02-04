@@ -1,7 +1,8 @@
 import AttendanceMeetingCard from "@/components/AttendanceMeetingCard";
 import FormContainer from "@/components/FormContainer";
 import prisma from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/utils";
+import { getCurrentStaff, getCurrentUser } from "@/lib/utils";
+import { staffrole } from "@prisma/client";
 import { notFound } from "next/navigation";
 
 interface MeetingAttendancePageProps {
@@ -17,6 +18,13 @@ export default async function MeetingAttendancePage({
 }: MeetingAttendancePageProps) {
   const { userId, role } = await getCurrentUser();
   const { className, lessonId, meetingId } = await params;
+  let staffRole: staffrole;
+    if (role === "staff") {
+      const staffrole = await getCurrentStaff(userId!);
+      staffRole = staffrole;
+    }
+    const allowedStaff = role === "staff" && staffRole! === "PENJADWALAN";
+    const allowedRole = role === "admin" || role === "teacher" || allowedStaff;
   if (!className || !lessonId || !meetingId) {
     return notFound();
   }
@@ -40,7 +48,7 @@ export default async function MeetingAttendancePage({
   );
 
   // Teacher view: show all students
-  if (role === "teacher" || role === "admin") {
+  if (allowedRole) {
     const students = meeting.lesson.class?.students ?? [];
 
     return (

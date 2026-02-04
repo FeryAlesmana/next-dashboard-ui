@@ -552,10 +552,13 @@ const ResultListPage = async ({
       };
     })
     .filter(Boolean);
-  const classOptions = classes.map((cls) => ({
-    label: cls?.name ?? "Unknown Class",
-    value: cls?.id?.toString() ?? "",
-  }));
+  const classOptions = classes
+    .slice() // avoid mutating original array
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map((cls) => ({
+      label: cls.name ?? "-",
+      value: cls.id.toString(),
+    }));
   const gradeOptions = grades.map((level) => ({
     label: level.toString(),
     value: level,

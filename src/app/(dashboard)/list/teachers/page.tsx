@@ -178,10 +178,13 @@ const TeacherListPage = async ({
     password: decryptPassword(teacher.password),
   }));
   // console.log(data, "data in teacher");
-  const classOptions = classes.map((cls) => ({
-    label: cls.name,
-    value: cls.id.toString(),
-  }));
+  const classOptions = classes
+    .slice() // avoid mutating original array
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map((cls) => ({
+      label: cls.name ?? "-",
+      value: cls.id.toString(),
+    }));
   const subjectOptions = Array.from(
     new Map(
       data

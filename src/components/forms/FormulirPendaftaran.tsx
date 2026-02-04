@@ -1564,20 +1564,25 @@ const FormulirPendaftaran = ({
                           {...register("classId")}
                           defaultValue={data?.classId}
                         >
-                          {classes.map(
-                            (kelas: {
-                              id: number;
-                              name: string;
-                              capacity: number;
-                              _count: { students: number };
-                            }) => (
-                              <option value={kelas.id} key={kelas.id}>
-                                {kelas.name} -{" "}
-                                {kelas._count.students + "/" + kelas.capacity}{" "}
-                                Kapasitas
-                              </option>
-                            ),
-                          )}
+                          {classes
+                            .slice() // avoid mutating original array
+                            .sort((a: any, b: any) =>
+                              a.name.localeCompare(b.name),
+                            )
+                            .map(
+                              (kelas: {
+                                id: number;
+                                name: string;
+                                capacity: number;
+                                _count: { students: number };
+                              }) => (
+                                <option value={kelas.id} key={kelas.id}>
+                                  {kelas.name} -{" "}
+                                  {kelas._count.students + "/" + kelas.capacity}{" "}
+                                  Kapasitas
+                                </option>
+                              ),
+                            )}
                         </select>
                         {errors.classId?.message && (
                           <p className="text-xs text-red-400 mt-1">

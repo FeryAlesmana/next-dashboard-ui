@@ -208,10 +208,13 @@ const SubjectListPage = async ({
     label: t.name,
   }));
 
-  const classOptions = classes.map((c) => ({
-    value: c.id,
-    label: c.name,
-  }));
+  const classOptions = classes
+    .slice() // avoid mutating original array
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map((cls) => ({
+      label: cls.name ?? "-",
+      value: cls.id.toString(),
+    }));
 
   const gradeOptions = grades.map((g) => ({
     value: g.id,

@@ -13,15 +13,56 @@ const DAY_INDEX: Record<string, number> = {
   SABTU: 6,
 };
 
+export function buildUTCDate(date: Date, time?: string) {
+  if (!time) {
+    return new Date(
+      Date.UTC(
+        date.getUTCFullYear(),
+        date.getUTCMonth(),
+        date.getUTCDate(),
+        0,
+        0,
+        0,
+      ),
+    );
+  }
+
+  const [h, m] = time.split(":").map(Number);
+
+  return new Date(
+    Date.UTC(
+      date.getUTCFullYear(),
+      date.getUTCMonth(),
+      date.getUTCDate(),
+      h,
+      m,
+      0,
+    ),
+  );
+}
+
 export function moveDateToDay(baseDate: Date, targetDay: string) {
-  const result = new Date(baseDate);
-  const currentDay = result.getDay(); // 0–6
+  // Normalize baseDate to UTC midnight FIRST
+  const normalized = new Date(
+    Date.UTC(
+      baseDate.getUTCFullYear(),
+      baseDate.getUTCMonth(),
+      baseDate.getUTCDate(),
+    ),
+  );
+
+  const currentDay = normalized.getUTCDay() === 0 ? 7 : normalized.getUTCDay();
   const targetDayIndex = DAY_INDEX[targetDay];
 
   const diff = targetDayIndex - currentDay;
-  result.setDate(result.getDate() + diff);
 
-  return result;
+  return new Date(
+    Date.UTC(
+      normalized.getUTCFullYear(),
+      normalized.getUTCMonth(),
+      normalized.getUTCDate() + diff,
+    ),
+  );
 }
 
 export function mergeDateAndTime(date: Date, time: Date) {
@@ -35,11 +76,19 @@ export function mergeDateAndTime(date: Date, time: Date) {
   return d;
 }
 
-export function applyTimeToDate(date: Date, time: string) {
+export function applyTimeToDateUTC(date: Date, time: string) {
   const [h, m] = time.split(":").map(Number);
-  const result = new Date(date);
-  result.setHours(h, m, 0, 0);
-  return result;
+
+  return new Date(
+    Date.UTC(
+      date.getUTCFullYear(),
+      date.getUTCMonth(),
+      date.getUTCDate(),
+      h,
+      m,
+      0,
+    ),
+  );
 }
 
 export function handlePrismaError(error: unknown) {
@@ -592,7 +641,7 @@ export function decryptPassword(encrypted: string) {
   return decrypted;
 }
 
-export const getCurrentUser = async () => {
+export const getCurrentUser: any = async () => {
   const { userId, sessionClaims, actor } = await auth();
   const role = (sessionClaims?.metadata as { role?: string })?.role;
   return { userId, role, actor };

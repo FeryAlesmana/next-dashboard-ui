@@ -412,10 +412,13 @@ const PaymentLogListPage = async ({
     remainingAmount: remainingMap,
   };
 
-  const classOptions = classesData.map((cls) => ({
-    label: cls.name,
-    value: cls.id.toString(),
-  }));
+ const classOptions = classesData
+    .slice() // avoid mutating original array
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map((cls) => ({
+      label: cls.name ?? "-",
+      value: cls.id.toString(),
+    }));
   const gradeOptions = Array.from(
     new Set(
       classesData

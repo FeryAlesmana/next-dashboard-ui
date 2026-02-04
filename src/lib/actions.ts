@@ -56,7 +56,8 @@ import {
 import prisma from "./prisma";
 import { clerkClient } from "@clerk/nextjs/server";
 import extractCloudinaryPublicId, {
-  applyTimeToDate,
+  applyTimeToDateUTC,
+  buildUTCDate,
   calculateSubjectScore,
   decryptPassword,
   getCurrentUser,
@@ -2497,8 +2498,8 @@ export const updateLesson = async (
           where: { id: meeting.id },
           data: {
             date: newDate,
-            startTime: applyTimeToDate(newDate, data.startTime),
-            endTime: applyTimeToDate(newDate, data.endTime),
+            startTime: applyTimeToDateUTC(newDate, data.startTime),
+            endTime: applyTimeToDateUTC(newDate, data.endTime),
           },
         });
       }
@@ -3544,7 +3545,7 @@ export const createMeeting = async (
       baseDate.setDate(today.getDate() + daysUntilNextLessonDay);
     }
 
-    baseDate.setHours(0, 0, 0, 0);
+    baseDate = buildUTCDate(baseDate);
 
     const meetingCount = data.meetingCount ?? 1;
     const meetingsData = [];
@@ -3552,16 +3553,16 @@ export const createMeeting = async (
     for (let i = 0; i < meetingCount; i++) {
       const meetingNo = (lastMeeting?.meetingNo ?? 0) + i + 1;
 
-      const date = new Date(baseDate);
-      date.setDate(baseDate.getDate() + i * 7);
-      const [sh, sm] = lesson.startTime.split(":").map(Number);
-      const [eh, em] = lesson.endTime.split(":").map(Number);
+      const date = new Date(
+        Date.UTC(
+          baseDate.getUTCFullYear(),
+          baseDate.getUTCMonth(),
+          baseDate.getUTCDate() + i * 7,
+        ),
+      );
 
-      const startTime = new Date(date);
-      startTime.setHours(sh, sm, 0, 0);
-
-      const endTime = new Date(date);
-      endTime.setHours(eh, em, 0, 0);
+      const startTime = buildUTCDate(date, lesson.startTime);
+      const endTime = buildUTCDate(date, lesson.endTime);
 
       meetingsData.push({
         lessonId: resolvedLessonId,

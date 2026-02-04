@@ -33,16 +33,28 @@ export default function AttendanceMeetingCard({
     }
   };
 
+  const dateFormatter = new Intl.DateTimeFormat("id-ID", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+    timeZone: "Asia/Jakarta",
+  });
+  function formatTimeUTC(date: Date) {
+    const h = date.getUTCHours().toString().padStart(2, "0");
+    const m = date.getUTCMinutes().toString().padStart(2, "0");
+    return `${h}:${m}`;
+  }
+
   return (
     <div className="border rounded-lg p-4 space-y-2">
       {meeting && (
         <div className="flex flex-col md:flex-row md:justify-between md:items-center space-y-1 md:space-y-0">
           <div className="text-sm text-gray-600">
-            Tanggal : {meeting.date.toLocaleDateString()}
+            Tanggal : {dateFormatter.format(meeting.date)}
           </div>
           <div className="text-sm text-gray-600">
-            Jam : {meeting.startTime.toLocaleTimeString()} -{" "}
-            {meeting.endTime.toLocaleTimeString()}
+            Jam : {formatTimeUTC(meeting.startTime)} -{" "}
+            {formatTimeUTC(meeting.endTime)}
           </div>
         </div>
       )}
