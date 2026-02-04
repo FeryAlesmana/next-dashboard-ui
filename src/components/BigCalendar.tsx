@@ -32,21 +32,38 @@ const messages = {
   noEventsInRange: "Tidak ada acara dalam rentang waktu ini.",
   showMore: (total: number) => `+${total} lainnya`,
 };
+function combineLocalDateTime(dateISO: string, time: string) {
+  const [h, m] = time.split(":").map(Number);
+  const d = new Date(dateISO); // parsed in browser TZ
+  d.setHours(h, m, 0, 0); // LOCAL time
+  return d;
+}
 
 const BigCalendar = ({
   data,
 }: {
-  data: { title: string; start: Date; end: Date }[];
+  data: {
+    title: string;
+    start: string;
+    end: string;
+    date: string;
+  }[];
 }) => {
   const [view, setView] = useState<View>(Views.WEEK);
   const handleOnChangeView = (selectedView: View) => {
     setView(selectedView);
   };
 
+  const calendarData = data.map((item) => ({
+    title: item.title,
+    start: combineLocalDateTime(item.date, item.start),
+    end: combineLocalDateTime(item.date, item.end),
+  }));
+
   return (
     <Calendar
       localizer={localizer}
-      events={data}
+      events={calendarData}
       startAccessor="start"
       endAccessor="end"
       views={["week", "day", "month"]}
