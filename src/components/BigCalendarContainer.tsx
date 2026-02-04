@@ -11,7 +11,7 @@ const BigCalendarContainer = async ({
   function combineLocalDateTime(date: Date, time: string) {
     const [h, m] = time.split(":").map(Number);
     const d = new Date(date);
-    d.setHours(h, m, 0, 0); // LOCAL TIME
+    d.setUTCHours(h, m, 0, 0); // LOCAL TIME
     return d;
   }
 
