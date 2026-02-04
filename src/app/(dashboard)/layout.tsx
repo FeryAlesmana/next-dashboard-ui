@@ -25,7 +25,7 @@ export default function DashboardLayout({
       >
         <Link
           href="/"
-          className="flex items-center justify-center gap-2 lg:justify-start mb-6 bg-lamaBlue rounded-md p-2 hover:bg-gray-400"
+          className="flex items-center justify-center gap-2 lg:justify-start mb-6 bg-lamaBlue shadow-md rounded-md p-2 hover:bg-gray-400"
         >
           <Image
             src="https://res.cloudinary.com/dbfascepc/image/upload/v1753534026/favicon_iqgit7.png"

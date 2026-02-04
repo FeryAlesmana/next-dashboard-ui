@@ -8,6 +8,13 @@ const BigCalendarContainer = async ({
   type: "teacherId" | "classId";
   id: string | number;
 }) => {
+  function combineLocalDateTime(date: Date, time: string) {
+    const [h, m] = time.split(":").map(Number);
+    const d = new Date(date);
+    d.setHours(h, m, 0, 0); // LOCAL TIME
+    return d;
+  }
+
   const meetings = await prisma.meeting.findMany({
     where: {
       lesson: {
@@ -25,8 +32,8 @@ const BigCalendarContainer = async ({
     title: meeting.lesson?.name
       ? `Pertemuan ${meeting.meetingNo} - ${meeting.lesson.name}`
       : `Pertemuan ${meeting.meetingNo}`,
-    start: meeting.startTime,
-    end: meeting.endTime,
+    start: combineLocalDateTime(meeting.date, meeting.lesson.startTime),
+    end: combineLocalDateTime(meeting.date, meeting.lesson.endTime),
   }));
 
   return (

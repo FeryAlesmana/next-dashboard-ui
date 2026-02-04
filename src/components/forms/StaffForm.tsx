@@ -2,7 +2,13 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import InputField from "../InputField";
-import { startTransition, useActionState, useEffect, useState } from "react";
+import {
+  startTransition,
+  useActionState,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import {
   createStaffSchema,
   CreatestaffSchema,
@@ -45,14 +51,14 @@ const StaffForm = ({ type, data, setOpen, onChanged }: BaseFormProps) => {
   const [img, setImg] = useState<any>();
   const createStaffHandler = async (
     prevState: CurrentState,
-    payload: CreatestaffSchema
+    payload: CreatestaffSchema,
   ): Promise<CurrentState> => {
     return await createStaff(prevState, payload);
   };
 
   const updateStaffHandler = async (
     prevState: CurrentState,
-    payload: UpdatestaffSchema
+    payload: UpdatestaffSchema,
   ): Promise<CurrentState> => {
     return await updateStaff(prevState, payload);
   };
@@ -64,7 +70,7 @@ const StaffForm = ({ type, data, setOpen, onChanged }: BaseFormProps) => {
   };
   const [state, formAction] = useActionState(
     type === "create" ? createStaffHandler : updateStaffHandler,
-    initialState
+    initialState,
   );
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -72,6 +78,12 @@ const StaffForm = ({ type, data, setOpen, onChanged }: BaseFormProps) => {
   const [showActivateDialog, setShowActivateDialog] = useState(false);
   const [pendingData, setPendingData] = useState<any>(null);
   const [withUser, setWithUser] = useState(true); // default: true (Clerk enabled)
+
+  const withUserRef = useRef(true);
+
+  useEffect(() => {
+    withUserRef.current = withUser;
+  }, [withUser]);
 
   useEffect(() => {
     if (!state.success && state.error) {
@@ -93,7 +105,7 @@ const StaffForm = ({ type, data, setOpen, onChanged }: BaseFormProps) => {
     const payload = {
       ...data,
       img: img?.secure_url,
-      withUser,
+      withUser: withUserRef.current,
     };
 
     startTransition(() => {
@@ -121,7 +133,7 @@ const StaffForm = ({ type, data, setOpen, onChanged }: BaseFormProps) => {
     if (state.success) {
       const updatedItem = state.data ?? data;
       toast(
-        `Staff telah berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`
+        `Staff telah berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`,
       );
       if (onChanged && updatedItem) {
         onChanged(updatedItem); // 🔥 notify parent so it can update localData
@@ -364,8 +376,8 @@ const StaffForm = ({ type, data, setOpen, onChanged }: BaseFormProps) => {
             {isSubmitting
               ? "Memproses..."
               : type === "create"
-              ? "Tambah Staff"
-              : "Update Staff"}
+                ? "Tambah Staff"
+                : "Update Staff"}
           </button>
         </div>
       </form>
@@ -388,14 +400,14 @@ const StaffForm = ({ type, data, setOpen, onChanged }: BaseFormProps) => {
               toast.success(result.message);
               setTimeout(
                 () => router.push(`/list/teachers/${result.id}`),
-                3000
+                3000,
               );
             } else if (failed) {
               if (failed.field) {
                 setError(failed.field as any, { message: failed.message });
               }
               toast.error(
-                `${failed.field ? `${failed.field}: ` : ""}${failed.message}`
+                `${failed.field ? `${failed.field}: ` : ""}${failed.message}`,
               );
             } else {
               toast.error(result.message || "Terjadi kesalahan.");
@@ -404,16 +416,11 @@ const StaffForm = ({ type, data, setOpen, onChanged }: BaseFormProps) => {
             setOpen(false);
             // router.refresh();
           }}
-          onCancel={async () => {
+          onCancel={() => {
             clearErrors();
-            setWithUser(false);
-            formAction({
-              ...pendingData,
-              img: img?.secure_url,
-              withUser: false, // tell server to skip Clerk
-            });
+            withUserRef.current = false;
+            handleSubmitForm();
             setShowActivateDialog(false);
-            router.refresh();
           }}
         />
       )}

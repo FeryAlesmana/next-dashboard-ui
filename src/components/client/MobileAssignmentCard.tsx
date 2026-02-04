@@ -38,16 +38,16 @@ export function MobileAssignmentCard({
         <div className="ml-3 flex-1 min-w-0">
           <div
             className="font-medium overflow-hidden text-ellipsis whitespace-nowrap max-w-full"
-            title={data.lesson.subject?.name || "-"}
+            title={data.lesson?.subject?.name || "-"}
           >
-            {data.lesson.subject?.name || "-"}
+            {data.lesson?.subject?.name || "-"}
           </div>
           <div className="text-sm text-gray-600">
-            Kelas : {data.lesson.class?.name || "Tidak Ada Kelas"}
+            Kelas : {data.lesson?.class?.name || "Tidak Ada Kelas"}
           </div>
           <div className="text-xs text-gray-400 overflow-hidden text-ellipsis whitespace-nowrap max-w-full">
             Guru :{" "}
-            {data.lesson.teacher
+            {data.lesson?.teacher
               ? `${data.lesson.teacher.name} `
               : "Tidak ada guru"}
           </div>

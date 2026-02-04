@@ -3523,13 +3523,27 @@ export const createMeeting = async (
       orderBy: { meetingNo: "desc" },
     });
 
-    const today = new Date();
-    const dayOfWeek = today.getDay(); // 0 (Sunday) - 6 (Saturday)
-    const daysUntilNextLessonDay =
-      (lessonDayIndex + 7 - (((dayOfWeek + 6) % 7) + 1)) % 7;
+    let baseDate: Date;
 
-    const baseDate = new Date();
-    baseDate.setDate(today.getDate() + daysUntilNextLessonDay);
+    if (lastMeeting) {
+      // 👉 Continue from latest meeting (weekly)
+      baseDate = new Date(lastMeeting.date);
+      baseDate.setDate(baseDate.getDate() + 7);
+    } else {
+      // 👉 First meeting: find next lesson day from today
+      const today = new Date();
+      const dayOfWeek = today.getDay(); // 0 (Sun) - 6 (Sat)
+
+      // Convert JS Sunday=0 → Monday=1..Sunday=7
+      const normalizedToday = dayOfWeek === 0 ? 7 : dayOfWeek;
+
+      const daysUntilNextLessonDay =
+        (lessonDayIndex + 7 - normalizedToday) % 7 || 7;
+
+      baseDate = new Date(today);
+      baseDate.setDate(today.getDate() + daysUntilNextLessonDay);
+    }
+
     baseDate.setHours(0, 0, 0, 0);
 
     const meetingCount = data.meetingCount ?? 1;

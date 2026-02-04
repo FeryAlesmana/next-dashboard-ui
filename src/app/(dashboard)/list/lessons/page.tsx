@@ -178,7 +178,10 @@ const LessonListPage = async ({
   );
 
   const query: Prisma.LessonWhereInput = {};
-  let orderBy: Prisma.LessonOrderByWithRelationInput = {};
+  let orderBy:
+    | Prisma.LessonOrderByWithRelationInput
+    | Prisma.LessonOrderByWithRelationInput[] = {};
+
   const semesterSchema = z.object({
     start: z.string().datetime(),
     end: z.string().datetime(),
@@ -219,13 +222,16 @@ const LessonListPage = async ({
               query.id = -1; // block tampered values
             }
             break;
-          case "day":
-            if (Object.values(Day).includes(value as Day)) {
-              query.day = value as Day;
-            } else {
-              // Ignore the parameter or log a warning if the value is invalid
+          case "day": {
+            const day = value.toString().toUpperCase();
+
+            if (!Object.values(Day).includes(day as Day)) {
               return notFound();
             }
+
+            query.day = day as Day;
+            break;
+          }
           case "search":
             query.OR = [
               { subject: { name: { contains: value, mode: "insensitive" } } },
@@ -248,8 +254,12 @@ const LessonListPage = async ({
                 orderBy = { id: "desc" };
                 break;
               case "day":
-                orderBy = { day: "asc" }; // or "desc" if preferred
+                orderBy = [
+                  { day: "asc" },
+                  { startTime: "asc" }, // 👈 HH:MM string sorts correctly
+                ];
                 break;
+
               default:
                 return notFound();
             }
@@ -544,10 +554,13 @@ const LessonListPage = async ({
     classes: lessonClasses,
     teachers: Lessonteachers,
   };
-  const classOptions = classesData.map((cls) => ({
-    label: cls.name,
-    value: cls.id.toString(),
-  }));
+  const classOptions = classesData
+    .slice() // avoid mutating original array
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map((cls) => ({
+      label: cls.name,
+      value: cls.id.toString(),
+    }));
 
   const gradeOptions = Array.from(
     new Set(

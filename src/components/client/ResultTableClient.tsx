@@ -43,8 +43,8 @@ export default function ResultTableClient({
         <td className="hidden md:table-cell">
           <span
             className={`  px-2 py-1 rounded-full text-xs font-medium
-    ${data?.selectedType === "Ujian" ? "bg-blue-100 text-blue-800" : ""}
-    ${data?.selectedType === "Tugas" ? "bg-green-100 text-green-800" : ""}`}
+                      ${data?.selectedType === "Ujian" ? "bg-blue-100 text-blue-800" : ""}
+                      ${data?.selectedType === "Tugas" ? "bg-green-100 text-green-800" : ""}`}
           >
             {data?.selectedType}
           </span>

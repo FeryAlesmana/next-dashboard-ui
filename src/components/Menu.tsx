@@ -211,7 +211,7 @@ export default function Menu({ onLinkClick }: { onLinkClick: () => void }) {
       ? `/list/students/${userId}`
       : role === "teacher"
       ? `/list/teachers/${userId}`
-      : `/${role}`; // fallback for other roles
+      : `/list/staffs/${userId}`; // fallback for other roles
 
   return (
     <div className="mt-4 text-sm">
