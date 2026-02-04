@@ -6,7 +6,6 @@ import AttendanceChartContainer from "@/components/AttendanceChartContainer";
 import EventCalendarContainer from "@/components/EventCalendarContainer";
 import prisma from "@/lib/prisma";
 import { Decimal } from "@prisma/client/runtime/library";
-import AdminClassSchedule from "@/components/AdminClassesSchedule";
 
 interface AdminPageProps {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
