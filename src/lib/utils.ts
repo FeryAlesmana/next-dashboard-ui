@@ -4,13 +4,13 @@ import prisma from "./prisma";
 import crypto from "crypto";
 
 const DAY_INDEX: Record<string, number> = {
-  SUNDAY: 0,
-  MONDAY: 1,
-  TUESDAY: 2,
-  WEDNESDAY: 3,
-  THURSDAY: 4,
-  FRIDAY: 5,
-  SATURDAY: 6,
+  MINGGU: 0,
+  SENIN: 1,
+  SELASA: 2,
+  RABU: 3,
+  KAMIS: 4,
+  JUMAT: 5,
+  SABTU: 6,
 };
 
 export function moveDateToDay(baseDate: Date, targetDay: string) {
@@ -24,14 +24,13 @@ export function moveDateToDay(baseDate: Date, targetDay: string) {
   return result;
 }
 
-
 export function mergeDateAndTime(date: Date, time: Date) {
   const d = new Date(date);
   d.setHours(
     time.getHours(),
     time.getMinutes(),
     time.getSeconds(),
-    time.getMilliseconds()
+    time.getMilliseconds(),
   );
   return d;
 }
@@ -42,7 +41,6 @@ export function applyTimeToDate(date: Date, time: string) {
   result.setHours(h, m, 0, 0);
   return result;
 }
-
 
 export function handlePrismaError(error: unknown) {
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -429,7 +427,7 @@ export function normalizeRow(row: any) {
 export const generateSemesters = (
   createdAt: Date,
   gradeLevel: number,
-  role: "admin" | "teacher" | "student" | "parent" | "staff" = "student"
+  role: "admin" | "teacher" | "student" | "parent" | "staff" = "student",
 ): Semester[] => {
   const now = new Date();
   const currentYear = now.getFullYear();
@@ -437,7 +435,7 @@ export const generateSemesters = (
   // Start from either enrollment year OR calculated grade start year
   const startYear = Math.min(
     createdAt.getFullYear(),
-    currentYear - (gradeLevel - 1)
+    currentYear - (gradeLevel - 1),
   );
 
   const graduationYear = startYear + (gradeLevel - 1);
@@ -481,7 +479,7 @@ export const generateSemesters = (
 
 // Normalize "agama" field
 export function normalizeAgama(
-  value: any
+  value: any,
 ): "Islam" | "Kristen" | "Buddha" | "Lainnya" {
   if (!value) return "Islam"; // default
 
@@ -511,7 +509,13 @@ export function normalizeSex(value: any): "MALE" | "FEMALE" {
 
 import { parse, isValid, format, subDays, addDays } from "date-fns";
 import { id as localeID } from "date-fns/locale";
-import { Attendance, PaymentType, Prisma, resTypes, staffrole } from "@prisma/client";
+import {
+  Attendance,
+  PaymentType,
+  Prisma,
+  resTypes,
+  staffrole,
+} from "@prisma/client";
 import { Semester } from "@/components/client/StudentPaymentView";
 import { Decimal } from "@prisma/client/runtime/library";
 import { notFound } from "next/navigation";
@@ -674,7 +678,7 @@ const SEMESTERS = [
 
 export const getProfileByClerkIdAndRole = async (
   clerkId: string,
-  role?: string
+  role?: string,
 ) => {
   const defaultImg = "/avatar.png";
 
@@ -1014,7 +1018,7 @@ const currentWorkWeek = () => {
 };
 
 export const adjustScheduleToCurentWeek = (
-  lessons: { title: string; start: Date; end: Date }[]
+  lessons: { title: string; start: Date; end: Date }[],
 ): { title: string; start: Date; end: Date }[] => {
   const startOfWeek = currentWorkWeek();
 
@@ -1029,12 +1033,12 @@ export const adjustScheduleToCurentWeek = (
     adjustedStartDate.setHours(
       lesson.start.getHours(),
       lesson.start.getMinutes(),
-      lesson.start.getSeconds()
+      lesson.start.getSeconds(),
     );
     adjustedEndDate.setHours(
       lesson.end.getHours(),
       lesson.end.getMinutes(),
-      lesson.end.getSeconds()
+      lesson.end.getSeconds(),
     );
 
     return {
@@ -1047,7 +1051,7 @@ export const adjustScheduleToCurentWeek = (
 
 export const generateRecurringLessons = (
   lessons: { title: string; start: Date; end: Date }[],
-  numberOfWeeks: number = 6
+  numberOfWeeks: number = 6,
 ): { title: string; start: Date; end: Date }[] => {
   const today = new Date();
   const currentWeekMonday = new Date(today);
@@ -1104,7 +1108,7 @@ export default function extractCloudinaryPublicId(url: string): string | null {
 export async function normalizeSearchParams(
   searchParams:
     | Promise<{ [key: string]: string | string[] | undefined }>
-    | undefined
+    | undefined,
 ): Promise<{ [key: string]: string | undefined }> {
   const resolved = await searchParams;
   const normalized: { [key: string]: string | undefined } = {};
@@ -1117,7 +1121,7 @@ export async function normalizeSearchParams(
 export const calculateSubjectScore = (
   results: any,
   lessonId: number,
-  resultTypes: string[]
+  resultTypes: string[],
 ) => {
   // Determine the source of lessonId based on the result type
   const filteredResults = results.filter((r: any) => {
@@ -1136,7 +1140,7 @@ export const calculateSubjectScore = (
   // Calculate the average score for the filtered results and round it
   const totalScore = filteredResults.reduce(
     (sum: number, r: any) => sum + r.score,
-    0
+    0,
   );
   return Math.round(totalScore / filteredResults.length);
 };

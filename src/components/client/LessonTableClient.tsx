@@ -51,14 +51,20 @@ export default function LessonTableClient({
           {data.teacher ? `${data.teacher.name} ` : "Tidak ada guru"}
         </td>
         <td className="hidden md:table-cell">
-          {data.class?.name && (
-            <Link href={`/list/attendance/${data.class.name}/${data.id}`}>
-              <button className="w-7 h-7 flex items-center justify-center rounded-full">
-                <Image src="/moreDark.png" alt="" width={16} height={16} />
-              </button>
-            </Link>
-          )}
+          <div className="flex items-center gap-2">
+            {data.class && (
+              <Link href={`/list/attendance/${data.class.name}/${data.id}`}>
+                <button className="w-7 h-7 flex items-center justify-center rounded-full">
+                  <Image src="/moreDark.png" alt="" width={16} height={16} />
+                </button>
+              </Link>
+            )}
+            <span className="text-sm text-gray-600">
+              Jumlah : {data._count?.meetings || "0"}
+            </span>
+          </div>
         </td>
+
         <td className="hidden md:table-cell">
           <div className="flex items-center gap-2 ">
             {allowedStaff && (

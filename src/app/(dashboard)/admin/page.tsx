@@ -6,6 +6,7 @@ import AttendanceChartContainer from "@/components/AttendanceChartContainer";
 import EventCalendarContainer from "@/components/EventCalendarContainer";
 import prisma from "@/lib/prisma";
 import { Decimal } from "@prisma/client/runtime/library";
+import AdminClassSchedule from "@/components/AdminClassesSchedule";
 
 interface AdminPageProps {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -33,6 +34,17 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       paymentInstallments: {
         select: { amount: true },
       },
+    },
+  });
+
+  const classes = await prisma.class.findMany({
+    select: {
+      id: true,
+      name: true,
+      grade: { select: { level: true } },
+    },
+    orderBy: {
+      grade: { level: "asc" },
     },
   });
 
@@ -88,7 +100,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         // add all installment amounts
         const installmentTotal = payment.paymentInstallments.reduce(
           (sum, inst) => sum + safeDecimal(inst.amount),
-          0
+          0,
         );
         monthlyData[monthIdx].sebagian_dibayar += installmentTotal;
       } else {
@@ -118,6 +130,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         <div className="w-full h-[500px]">
           <FinanceChart chartData={monthlyData} />
         </div>
+        {/* <AdminClassSchedule classes={classes} /> */}
       </div>
       {/* RIGHT */}
       <div className="w-full lg:w-1/3 flex flex-col gap-8">

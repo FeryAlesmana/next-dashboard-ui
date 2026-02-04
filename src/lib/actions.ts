@@ -2456,6 +2456,7 @@ export const createLesson = async (
         subject: { select: { name: true } },
         class: { select: { name: true, gradeId: true } },
         teacher: { select: { name: true } },
+        _count: { select: { meetings: true } },
       },
     });
     return { success: true, error: false, data: createdLesson };
@@ -2509,6 +2510,7 @@ export const updateLesson = async (
         subject: { select: { name: true } },
         class: { select: { name: true, gradeId: true } },
         teacher: { select: { name: true } },
+        _count: { select: { meetings: true } },
       },
     });
 
@@ -3508,6 +3510,7 @@ export const createMeeting = async (
       RABU: 3,
       KAMIS: 4,
       JUMAT: 5,
+      SABTU: 6,
     };
 
     const lessonDayIndex = dayMap[lesson.day];

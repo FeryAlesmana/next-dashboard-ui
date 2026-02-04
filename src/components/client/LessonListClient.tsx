@@ -25,7 +25,7 @@ export default function LessonListClient({
   const [currentStaff] = useState<staffrole>(staffrole!);
   const toggleSelection = (id: string) => {
     setSelected((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
     );
   };
   const handleDeleteOptimistic = (ids: (string | number)[]) => {
@@ -49,7 +49,7 @@ export default function LessonListClient({
       prev.map((p) => {
         const updated = items.find((u) => u.id === p.id);
         return updated ? { ...p, ...updated } : p;
-      })
+      }),
     );
   };
 

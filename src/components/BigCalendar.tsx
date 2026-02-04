@@ -7,6 +7,12 @@ import { addDays, startOfWeek } from "date-fns";
 
 moment.locale("id"); // ✅ set locale
 
+moment.updateLocale("id", {
+  week: {
+    dow: 1, // 👈 Monday is first day of week
+  },
+});
+
 const localizer = momentLocalizer(moment);
 const messages = {
   date: "Tanggal",
@@ -25,13 +31,6 @@ const messages = {
   agenda: "Agenda",
   noEventsInRange: "Tidak ada acara dalam rentang waktu ini.",
   showMore: (total: number) => `+${total} lainnya`,
-};
-
-
-const workWeekWithSaturday = (date: Date) => {
-  const start = startOfWeek(date, { weekStartsOn: 1 }); // Monday
-  const end = addDays(start, 5); // Saturday
-  return { start, end };
 };
 
 const BigCalendar = ({

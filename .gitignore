@@ -46,3 +46,5 @@ to-do-list.docx
 production.env
 src/app/test/page.tsx
 test.json
+src/components/AdminClassesSchedule.tsx
+src/components/client/test.text

@@ -510,6 +510,7 @@ const LessonListPage = async ({
         subject: { select: { name: true } },
         class: { select: { name: true, gradeId: true } },
         teacher: { select: { name: true } },
+        _count: { select: { meetings: true } },
       },
       take: perPage,
       skip: perPage ? perPage * (p - 1) : undefined,
