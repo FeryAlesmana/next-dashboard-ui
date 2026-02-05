@@ -84,6 +84,11 @@ const EventListPage = async ({
 
     supervisedClassIds = supervisedClasses.map((cls) => cls.id);
   }
+  function formatTimeUTC(date: Date) {
+    const h = date.getUTCHours().toString().padStart(2, "0");
+    const m = date.getUTCMinutes().toString().padStart(2, "0");
+    return `${h}:${m}`;
+  }
 
   const renderRow = (item: EventList) => {
     const canEdit =
@@ -97,21 +102,13 @@ const EventListPage = async ({
         <td className="flex items-center p-4 gap-4">{item.title}</td>
         <td>{item.class?.name || "Semua Kelas"} </td>
         <td className="hidden md:table-cell">
-          {new Intl.DateTimeFormat("en-US").format(item.startTime)}
+          {new Intl.DateTimeFormat("id-ID").format(item.startTime)}
         </td>
         <td className="hidden md:table-cell">
-          {item.startTime.toLocaleTimeString("en-UK", {
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: false,
-          })}
+          {item.startTime ? formatTimeUTC(item.startTime) : "-"}
         </td>
         <td className="hidden md:table-cell">
-          {item.endTime.toLocaleTimeString("en-UK", {
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: false,
-          })}
+          {item.endTime ? formatTimeUTC(item.endTime) : "-"}
         </td>
 
         <td>

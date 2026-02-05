@@ -9,7 +9,10 @@ type InputFieldProps = {
   error?: FieldError | Merge<FieldError, FieldErrorsImpl<any>> | undefined;
   hidden?: boolean;
   placeholder?: string;
-  inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
+  inputProps?:
+    | React.InputHTMLAttributes<HTMLInputElement>
+    | React.TextareaHTMLAttributes<HTMLTextAreaElement>;
+
   table?:
     | "teacher"
     | "student"
@@ -40,9 +43,13 @@ const InputField = ({
   table,
 }: InputFieldProps) => {
   const isPaymentLog = table === "paymentLog";
-  
+
   // Separate onChange from other inputProps to avoid conflicts
-  const { onChange: customOnChange, ...restInputProps } = inputProps || {};
+  const { onChange, ...restInputProps } = inputProps || {};
+
+  const customOnChange = onChange as
+    | ((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void)
+    | undefined;
 
   return (
     <div

@@ -278,9 +278,17 @@ const FormContainer = async ({
           },
         });
 
+        const ClassOptions = lessonClasses
+          .slice() // avoid mutating original array
+          .sort((a, b) => a.name.localeCompare(b.name))
+          .map((cls) => ({
+            label: cls.name,
+            value: cls.id.toString(),
+          }));
+
         relatedData = {
           subjects: lessonSubjects,
-          classes: lessonClasses,
+          classes: ClassOptions,
           teachers: Lessonteachers,
         };
         break;

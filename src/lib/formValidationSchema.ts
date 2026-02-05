@@ -298,8 +298,13 @@ export const eventSchema = z
     description: z
       .string()
       .min(10, { message: "Deskripsi wajib diisi minimal 10 karakter!" }),
-    startTime: z.coerce.date({ message: "Waktu mulai event wajib diisi!" }),
-    endTime: z.coerce.date({ message: "Waktu ahir event wajib diisi!" }),
+    date: z.coerce.date({ message: "Tanggal wajib diisi!" }),
+    startTime: z
+      .string()
+      .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Format waktu tidak valid"),
+    endTime: z
+      .string()
+      .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Format waktu tidak valid"),
     classId: z.coerce.number().nullable().optional(),
     img: z.string().optional().nullable(),
   })

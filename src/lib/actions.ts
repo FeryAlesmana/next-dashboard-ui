@@ -1602,12 +1602,17 @@ export const createEvent = async (
 ) => {
   try {
     const classId = data.classId === 0 ? null : data.classId;
+    console.log("date:", data.date, data.date instanceof Date, isNaN(data.date.getTime()));
+
+    const startTime = buildUTCDate(data.date, data.startTime);
+    const endTime = buildUTCDate(data.date, data.endTime);
+    
     const createEvent = await prisma.event.create({
       data: {
         title: data.title,
         description: data.description,
-        startTime: new Date(data.startTime),
-        endTime: new Date(data.endTime),
+        startTime: startTime,
+        endTime: endTime,
         classId: classId,
         img: data.img ?? null,
       },
@@ -1624,6 +1629,8 @@ export const updateEvent = async (
 ) => {
   try {
     const classId = data.classId === 0 ? null : data.classId;
+     const startTime = buildUTCDate(data.date, data.startTime);
+    const endTime = buildUTCDate(data.date, data.endTime);
     const updateEvent = await prisma.event.update({
       where: {
         id: data.id,
@@ -1631,8 +1638,8 @@ export const updateEvent = async (
       data: {
         title: data.title,
         description: data.description,
-        startTime: new Date(data.startTime),
-        endTime: new Date(data.endTime),
+        startTime: startTime,
+        endTime: endTime,
         classId: classId,
         ...(data.img && { img: data.img }),
       },

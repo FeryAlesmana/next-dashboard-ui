@@ -120,10 +120,7 @@ const LessonForm = ({
       label: `${subject.name}`,
     }),
   );
-  const ClassOptions = classes.map((kelas: { id: number; name: string }) => ({
-    value: kelas.id,
-    label: `${kelas.name}`,
-  }));
+
   const teacherOptions = teachers.map(
     (teacher: { id: string; name: string }) => ({
       value: teacher.id,
@@ -217,7 +214,7 @@ const LessonForm = ({
               render={({ field }) => (
                 <Select
                   {...field}
-                  options={ClassOptions}
+                  options={classes}
                   className="text-sm"
                   classNamePrefix="select"
                   placeholder="Cari Kelas..."
@@ -225,7 +222,7 @@ const LessonForm = ({
                     field.onChange(selectedOption?.value)
                   }
                   value={
-                    ClassOptions.find(
+                    classes.find(
                       (opt: { value: number; label: string }) =>
                         opt.value === field.value,
                     ) || null

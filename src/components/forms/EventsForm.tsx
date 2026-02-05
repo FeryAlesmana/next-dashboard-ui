@@ -39,21 +39,21 @@ const EventsForm = ({
 
   const createEventHandler = async (
     prevState: CurrentState,
-    payload: EventSchema
+    payload: EventSchema,
   ): Promise<CurrentState> => {
     return await createEvent(prevState, payload);
   };
 
   const updateEventHandler = async (
     prevState: CurrentState,
-    payload: EventSchema
+    payload: EventSchema,
   ): Promise<CurrentState> => {
     return await updateEvent(prevState, payload);
   };
 
   const [state, formAction] = useActionState(
     type === "create" ? createEventHandler : updateEventHandler,
-    { success: false, error: false }
+    { success: false, error: false },
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -69,7 +69,7 @@ const EventsForm = ({
   useEffect(() => {
     if (state.success) {
       toast(
-        `Event telah berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`
+        `Event telah berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`,
       );
       setOpen(false);
       router.refresh();
@@ -106,22 +106,6 @@ const EventsForm = ({
   };
 
   const { classes } = relatedData;
-  const toLocalInputValue = (date: Date | string) => {
-    const d = new Date(date);
-    const pad = (n: number) => n.toString().padStart(2, "0");
-
-    return (
-      d.getFullYear() +
-      "-" +
-      pad(d.getMonth() + 1) +
-      "-" +
-      pad(d.getDate()) +
-      "T" +
-      pad(d.getHours()) +
-      ":" +
-      pad(d.getMinutes())
-    );
-  };
 
   return (
     <>
@@ -132,29 +116,44 @@ const EventsForm = ({
         <span className="text-xs text-gray-400 font-medium">
           Informasi Acara
         </span>
-        <div className="flex justify-between flex-wrap gap-4 m-4 mb-8">
-          <UploadPhoto
-            imageUrl={img?.secure_url || data?.img}
-            onUpload={(url) => setImg({ secure_url: url })}
-          />
-          <InputField
-            label="Nama Event"
-            name="title"
-            defaultValue={data?.title}
-            register={register}
-            error={errors?.title}
-            placeholder="Masukkan judul kegiatan"
-          />
-          <InputField
-            label="Deskripsi"
-            name="description"
-            defaultValue={data?.description}
-            register={register}
-            error={errors?.description}
-            type="textarea"
-            placeholder="Isi dengan setidaknya 10 karakter"
-          />
-          <div className="flex flex-col gap-2 w-full md:w-1/4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 m-4">
+          {/* Upload */}
+          <div className="md:col-span-2 flex justify-center">
+            <UploadPhoto
+              imageUrl={img?.secure_url || data?.img}
+              onUpload={(url) => setImg({ secure_url: url })}
+            />
+          </div>
+
+          {/* Description */}
+          <div className="md:col-span-2">
+            <InputField
+              label="Deskripsi"
+              name="description"
+              defaultValue={data?.description}
+              register={register}
+              error={errors?.description}
+              type="textarea"
+              placeholder="Isi dengan setidaknya 10 karakter"
+              table="student"
+              inputProps={{ rows: 6 }}
+            />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 m-4">
+          <div className="md:col-span-3">
+            <InputField
+              label="Nama Event"
+              name="title"
+              defaultValue={data?.title}
+              register={register}
+              error={errors?.title}
+              placeholder="Masukkan judul kegiatan"
+              table="student"
+            />
+          </div>
+          {/* Kelas */}
+          <div className="md:col-span-1">
             <label className="text-xs text-gray-400">Kelas</label>
             <select
               className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
@@ -162,11 +161,14 @@ const EventsForm = ({
               defaultValue={data?.classId ?? ""}
             >
               <option value="">Semua Kelas</option>
-              {classes.map((kelas: { id: number; name: string }) => (
-                <option value={kelas.id} key={kelas.id}>
-                  {kelas.name}
-                </option>
-              ))}
+              {classes
+                .slice() // avoid mutating original array
+                .sort((a: any, b: any) => a.name.localeCompare(b.name))
+                .map((kelas: { id: number; name: string }) => (
+                  <option key={kelas.id} value={kelas.id}>
+                    {kelas.name}
+                  </option>
+                ))}
             </select>
             {errors.classId?.message && (
               <p className="text-xs text-red-400">
@@ -175,36 +177,70 @@ const EventsForm = ({
             )}
           </div>
         </div>
-        <div className="flex justify-evenly flex-wrap gap-4 m-4 mb-8">
-          <InputField
-            label="Waktu mulai"
-            name="startTime"
-            defaultValue={
-              data?.startTime ? toLocalInputValue(data.startTime) : ""
-            }
-            register={register}
-            error={errors?.startTime}
-            type="datetime-local"
-          />
-          <InputField
-            label="Waktu berakhir"
-            name="endTime"
-            defaultValue={data?.endTime ? toLocalInputValue(data.endTime) : ""}
-            register={register}
-            error={errors?.endTime}
-            type="datetime-local"
-          />
-          {data && (
+
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-6 m-4 mb-8">
+          {/* Tanggal */}
+          <div className="md:col-span-2">
             <InputField
-              label="Id"
-              name="id"
-              defaultValue={data?.id}
+              label="Tanggal"
+              name="date"
+              type="date"
+              defaultValue={
+                data?.startTime
+                  ? new Date(data.startTime).toISOString().slice(0, 10)
+                  : ""
+              }
               register={register}
-              error={errors?.id}
-              hidden
+              error={errors?.date}
+              table="student"
             />
-          )}
+          </div>
+
+          {/* Waktu mulai */}
+          <div className="md:col-span-2">
+            <InputField
+              label="Waktu mulai"
+              name="startTime"
+              type="time"
+              defaultValue={
+                data?.startTime
+                  ? new Date(data.startTime).toTimeString().slice(0, 5)
+                  : ""
+              }
+              register={register}
+              error={errors?.startTime}
+              table="student"
+            />
+          </div>
+
+          {/* Waktu selesai */}
+          <div className="md:col-span-2">
+            <InputField
+              label="Waktu selesai"
+              name="endTime"
+              type="time"
+              defaultValue={
+                data?.endTime
+                  ? new Date(data.endTime).toTimeString().slice(0, 5)
+                  : ""
+              }
+              register={register}
+              error={errors?.endTime}
+              table="student"
+            />
+          </div>
         </div>
+
+        {data && (
+          <InputField
+            label="Id"
+            name="id"
+            defaultValue={data?.id}
+            register={register}
+            error={errors?.id}
+            hidden
+          />
+        )}
         {(state.error || Object.keys(errors).length > 0) && (
           <span className="text-red-500">
             Terjadi Kesalahan! {state.message ?? ""}
@@ -227,8 +263,8 @@ const EventsForm = ({
             {isSubmitting
               ? "Memproses..."
               : type === "create"
-              ? "Tambah Event"
-              : "Update dan Simpan"}
+                ? "Tambah Event"
+                : "Update dan Simpan"}
           </button>
         </div>
       </form>

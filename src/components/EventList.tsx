@@ -13,7 +13,7 @@ const EventList = async ({ dateParam }: { dateParam: string | undefined }) => {
     0,
     0,
     0,
-    0
+    0,
   );
 
   // Last day of the month
@@ -24,7 +24,7 @@ const EventList = async ({ dateParam }: { dateParam: string | undefined }) => {
     23,
     59,
     59,
-    999
+    999,
   );
 
   const { role, userId } = await getCurrentUser();
@@ -67,6 +67,22 @@ const EventList = async ({ dateParam }: { dateParam: string | undefined }) => {
       </div>
     );
   }
+  function formatDateUTC(date: Date) {
+    return date.toLocaleDateString("id-ID", {
+      weekday: "short",
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      timeZone: "UTC",
+    });
+  }
+
+  function formatTimeUTC(date: Date) {
+    const h = date.getUTCHours().toString().padStart(2, "0");
+    const m = date.getUTCMinutes().toString().padStart(2, "0");
+    return `${h}:${m}`;
+  }
+
   return data.map((event) => (
     <div
       className="p-5 mt-2 rounded-md border-2 border-gray-100 odd:border-t-lamaSky even:border-t-lamaPurple"
@@ -76,15 +92,7 @@ const EventList = async ({ dateParam }: { dateParam: string | undefined }) => {
         <div className="flex items-center justify-between">
           <h1 className="font-semibold text-gray-600">{event.title}</h1>
           <span className="text-xs text-gray-500 ">
-            {event.startTime.toLocaleString("id-ID", {
-              weekday: "short", // Mon, Tue
-              day: "2-digit",
-              month: "short", // Jan, Feb
-              year: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-              hour12: false,
-            })}
+            {formatDateUTC(event.startTime)} {formatTimeUTC(event.startTime)}
           </span>
         </div>
         <p className="text-gray-400 mt-2 text-sm">{event.description}</p>
