@@ -231,6 +231,30 @@ export const updateClass = async (
   data: ClassSchema,
 ) => {
   try {
+    const existingClass = await prisma.class.findUnique({
+      where: { id: data.id },
+      include: { students: true },
+    });
+
+    if (!existingClass) {
+      return {
+        success: false,
+        error: true,
+        message: "Kelas tidak ditemukan",
+      };
+    }
+
+    if (
+      typeof data.capacity === "number" &&
+      data.capacity < existingClass.students.length
+    ) {
+      return {
+        success: false,
+        error: true,
+        message: `❌ Kapasitas tidak boleh lebih kecil dari jumlah siswa saat ini (${existingClass.students.length})`,
+      };
+    }
+
     await new Promise((resolve) => setTimeout(resolve, 1000));
     const { supervisorId, ...rest } = data;
 
@@ -346,7 +370,7 @@ export const createTeacher = async (
     await new Promise((resolve) => setTimeout(resolve, 1000));
     const createdTeacher = await prisma.teacher.create({
       data: {
-        id: user.id,
+        clerkId: user.id,
         username: data.username,
         password: encryptPassword(data.password!),
         name: data.name,
@@ -385,7 +409,12 @@ export const createTeacher = async (
       },
     });
 
-    return { success: true, error: false, data: createdTeacher, id: user.id };
+    return {
+      success: true,
+      error: false,
+      data: createdTeacher,
+      id: createdTeacher.id,
+    };
   } catch (error: any) {
     const isPrismaError = error instanceof Prisma.PrismaClientKnownRequestError;
     if (isPrismaError && user?.id) {
@@ -536,7 +565,7 @@ export const updateTeacher = async (
           ...(data.password !== "" && {
             password: data.password,
           }),
-          firstName: data.name,
+          publicMetadata: { fullName: data.name },
         });
         if (user) {
           console.log("✅ User Sucessfully Updated:", user.id);
@@ -562,7 +591,7 @@ export const updateTeacher = async (
         id: data.id,
       },
       data: {
-        id: user?.id ?? data.id,
+        clerkId: user?.id ?? null,
         username: data.username,
         ...(data.password !== "" && {
           password: encryptPassword(data.password!),
@@ -707,7 +736,7 @@ export const deleteTeacher = async (
       },
     });
     try {
-      const deletedUser = await client.users.deleteUser(id);
+      const deletedUser = await client.users.deleteUser(teacher?.clerkId ?? id);
 
       if (deletedUser) {
         console.log("✅ User Sucessfully deleted:", deletedUser.id);
@@ -757,12 +786,16 @@ export const deleteTeachers = async (
         await prisma.teacher.delete({ where: { id } });
 
         try {
-          const deletedUser = await client.users.deleteUser(id);
+          const deletedUser = await client.users.deleteUser(
+            teacher?.clerkId ?? id,
+          );
           if (deletedUser) {
             console.log("✅ Clerk user deleted:", deletedUser.id);
           }
         } catch {
-          console.warn(`⚠️ Clerk user ${id} not found or already deleted.`);
+          console.warn(
+            `⚠️ Clerk user ${teacher?.clerkId ?? id} not found or already deleted.`,
+          );
         }
       } catch (innerError) {
         console.error(`❌ Failed to delete teacher ID = ${id}:`, innerError);
@@ -812,8 +845,7 @@ export const createStudent = async (
       clerkUser = await client.users.createUser({
         username: data.username,
         password: data.password,
-        firstName: data.name,
-        publicMetadata: { role: "student" },
+        publicMetadata: { role: "student", fullName: data.name },
       });
 
       console.log("✅ Clerk user created:", clerkUser.id);
@@ -849,7 +881,7 @@ export const createStudent = async (
 
     const createdStudent = await prisma.student.create({
       data: {
-        id: clerkUser.id,
+        clerkId: clerkUser.id,
         username: data.username,
         password: encryptPassword(data.password),
         name: data.name,
@@ -907,7 +939,7 @@ export const createStudent = async (
     return {
       success: true,
       error: false,
-      id: clerkUser.id,
+      id: createdStudent.id,
       data: createdStudent,
     };
   } catch (error: any) {
@@ -1079,16 +1111,19 @@ export const updateStudent = async (
 
       return { success: false, error: true, message: "Missing student ID" };
     }
+    const student = await prisma.student.findUnique({
+      where: { id: data.id },
+    });
 
     let user;
     if (data.withUser) {
       try {
-        user = await client.users.updateUser(data.id, {
+        user = await client.users.updateUser(student?.clerkId ?? data.id, {
           username: data.username,
           ...(data.password !== "" && {
             password: data.password,
+            publicMetadata: { fullName: data.name },
           }),
-          firstName: data.name,
         });
         if (user) {
           console.log("✅ User Sucessfully Updated:", user.id);
@@ -1121,9 +1156,47 @@ export const updateStudent = async (
     const parentId = data.parents?.[0] ?? null;
     const secondParentId = data.parents?.[1] ?? null;
 
-    const finalStudentId = user?.id ?? data.id;
+    const finalStudentId = user?.id ?? null;
 
     console.log(data, "data in update student");
+    if (data.classId) {
+      const targetClass = await prisma.class.findUnique({
+        where: { id: data.classId },
+        include: {
+          students: { select: { id: true } },
+        },
+      });
+
+      if (!targetClass) {
+        return {
+          success: false,
+          error: true,
+          message: "Kelas tidak ditemukan",
+        };
+      }
+
+      const existingStudent = await prisma.student.findUnique({
+        where: { id: data.id },
+        select: { classId: true },
+      });
+
+      const isSameClass = existingStudent?.classId === data.classId; // you must have this
+      const isAlreadyMember = targetClass.students.some(
+        (s) => s.id === data.id,
+      );
+
+      // ❌ Class is full AND student is not already inside
+      if (
+        targetClass.students.length >= targetClass.capacity &&
+        !isAlreadyMember
+      ) {
+        return {
+          success: false,
+          error: true,
+          message: `❌ Kelas ${targetClass.name} sudah penuh (maks ${targetClass.capacity} siswa)`,
+        };
+      }
+    }
 
     await prisma.$transaction(async (tx) => {
       // 1️⃣ Update student
@@ -1132,7 +1205,7 @@ export const updateStudent = async (
           id: data.id,
         },
         data: {
-          id: finalStudentId, // ⚠️ only do this if you REALLY need to change PK
+          clerkId: finalStudentId,
           username: data.username,
           ...(data.password !== "" && {
             password: encryptPassword(data.password!),
@@ -1163,7 +1236,7 @@ export const updateStudent = async (
           id: parseInt(data.sdId!, 10),
         },
         data: {
-          studentId: finalStudentId, // 👈 MUCH safer than nested connect
+          studentId: data.id, // 👈 MUCH safer than nested connect
           asalSekolah: data.asalSekolah,
           birthPlace: data.birthPlace,
           nisn: data.nisn,
@@ -1245,7 +1318,7 @@ export const deleteStudent = async (
     });
 
     try {
-      const deletedUser = await client.users.deleteUser(id);
+      const deletedUser = await client.users.deleteUser(student?.clerkId ?? id);
 
       if (deletedUser) {
         console.log("✅ User Sucessfully deleted:", deletedUser.id);
@@ -1347,12 +1420,16 @@ export const deleteStudents = async (
         await prisma.student.delete({ where: { id } });
 
         try {
-          const deletedUser = await client.users.deleteUser(id);
+          const deletedUser = await client.users.deleteUser(
+            student?.clerkId ?? id,
+          );
           if (deletedUser) {
             console.log("✅ Clerk user deleted:", deletedUser.id);
           }
         } catch {
-          console.warn(`⚠️ Clerk user ${id} not found or already deleted.`);
+          console.warn(
+            `⚠️ Clerk user ${student?.clerkId ?? id} not found or already deleted.`,
+          );
         }
       } catch (innerError) {
         console.error(`❌ Failed to delete student ID ${id}:`, innerError);
@@ -1602,11 +1679,16 @@ export const createEvent = async (
 ) => {
   try {
     const classId = data.classId === 0 ? null : data.classId;
-    console.log("date:", data.date, data.date instanceof Date, isNaN(data.date.getTime()));
+    console.log(
+      "date:",
+      data.date,
+      data.date instanceof Date,
+      isNaN(data.date.getTime()),
+    );
 
     const startTime = buildUTCDate(data.date, data.startTime);
     const endTime = buildUTCDate(data.date, data.endTime);
-    
+
     const createEvent = await prisma.event.create({
       data: {
         title: data.title,
@@ -1629,7 +1711,7 @@ export const updateEvent = async (
 ) => {
   try {
     const classId = data.classId === 0 ? null : data.classId;
-     const startTime = buildUTCDate(data.date, data.startTime);
+    const startTime = buildUTCDate(data.date, data.startTime);
     const endTime = buildUTCDate(data.date, data.endTime);
     const updateEvent = await prisma.event.update({
       where: {
@@ -1978,8 +2060,7 @@ export const createParent = async (
       user = await client.users.createUser({
         username: data.username,
         password: data.password,
-        firstName: data.name,
-        publicMetadata: { role: "parent" },
+        publicMetadata: { role: "parent", fullName: data.name },
       });
       if (user) {
         console.log("✅ User Sucessfully created:", user.id);
@@ -2036,7 +2117,7 @@ export const createParent = async (
     await new Promise((resolve) => setTimeout(resolve, 1000));
     const createdParent = await prisma.parent.create({
       data: {
-        id: user.id,
+        clerkId: user.id,
         username: data.username,
         password: encryptPassword(data.password),
         name: data.name,
@@ -2072,7 +2153,7 @@ export const createParent = async (
     return {
       success: true,
       error: false,
-      id: user.id,
+      id: createdParent.id,
       data: createdParent,
       field: undefined,
     };
@@ -2118,16 +2199,19 @@ export const updateParent = async (
 
       return { success: false, error: true, message: "Missing teacher ID" };
     }
+    const parent = await prisma.parent.findUnique({
+      where: { id: data.id },
+    });
     let user;
     if (data.withUser) {
       let clerkUserId = data.id;
       try {
-        user = await client.users.updateUser(data.id, {
+        user = await client.users.updateUser(parent?.clerkId ?? data.id, {
           username: data.username,
           ...(data.password !== "" && {
             password: data.password,
           }),
-          firstName: data.name,
+          publicMetadata: { fullName: data.name },
         });
         if (user) {
           console.log("✅ User Sucessfully Updated:", user.id);
@@ -2191,7 +2275,7 @@ export const updateParent = async (
         id: data.id,
       },
       data: {
-        id: user?.id ?? data.id,
+        clerkId: user?.id ?? null,
         username: data.username,
         ...(data.password !== "" && {
           password: encryptPassword(data.password!),
@@ -2363,10 +2447,9 @@ export const deleteParent = async (
       return { success: false, error: true, message: "Missing Parent ID" };
     }
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    // await prisma.student.updateMany({
-    //   where: { parentId: id },
-    //   data: { parentId: "-" },
-    // });
+    const parent = await prisma.parent.findUnique({
+      where: { id: id },
+    });
     await prisma.parent.delete({
       where: {
         id: id,
@@ -2374,7 +2457,7 @@ export const deleteParent = async (
     });
 
     try {
-      const deletedUser = await client.users.deleteUser(id);
+      const deletedUser = await client.users.deleteUser(parent?.clerkId ?? id);
 
       if (deletedUser) {
         console.log("✅ User Sucessfully deleted:", deletedUser.id);
@@ -2412,15 +2495,20 @@ export const deleteParents = async (
   try {
     for (const id of ids) {
       try {
+        const parent = await prisma.parent.findUnique({ where: { id } });
         await prisma.parent.delete({ where: { id } });
 
         try {
-          const deletedUser = await client.users.deleteUser(id);
+          const deletedUser = await client.users.deleteUser(
+            parent?.clerkId ?? id,
+          );
           if (deletedUser) {
             console.log("✅ Clerk user deleted:", deletedUser.id);
           }
         } catch {
-          console.warn(`⚠️ Clerk user ${id} not found or already deleted.`);
+          console.warn(
+            `⚠️ Clerk user ${parent?.clerkId ?? id} not found or already deleted.`,
+          );
         }
       } catch (innerError) {
         console.error(`❌ Failed to delete parent ID = ${id}:`, innerError);
@@ -3035,17 +3123,28 @@ export const updatePpdb = async (
           message: "Siswa sudah terdaftar.",
         };
       }
+      function normalizeUsername(input: string) {
+        return input
+          .toLowerCase()
+          .normalize("NFD") // remove accents
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/[^a-z0-9]/g, "") // remove spaces & symbols
+          .slice(0, 20); // Clerk username length safety
+      }
 
       /** ----------------------------------------------------
        * 1️⃣ Create Clerk user first (must be outside transaction)
        * ---------------------------------------------------- */
+      const baseUsername = normalizeUsername(data.name);
+
+      // fallback if name becomes empty
+      const username = baseUsername || `student${Date.now()}`;
       let clerkUser;
       try {
         clerkUser = await client.users.createUser({
-          username: data.name,
+          username: username,
           password: data.nisn,
-          firstName: data.name,
-          publicMetadata: { role: "student" },
+          publicMetadata: { role: "student", fullName: data.name },
         });
       } catch (err: any) {
         const message = err?.errors?.[0]?.message || "Terjadi kesalahan";
@@ -3058,9 +3157,27 @@ export const updatePpdb = async (
        * 2️⃣ Start Prisma Transaction
        * ---------------------------------------------------- */
       const result = await prisma.$transaction(async (tx) => {
-        /** -------------------------
-         * Create Student
-         * ------------------------- */
+        if (data.classId) {
+          const cls = await tx.class.findUnique({
+            where: { id: data.classId },
+            include: {
+              students: { select: { id: true } },
+            },
+          });
+
+          if (!cls) {
+            return {
+              success: false,
+              error: true,
+              message: "Kelas Tidak di temukan",
+            };
+          }
+
+          if (cls.students.length >= cls.capacity) {
+            const message = `Kelas ${cls.name} sudah penuh (maks ${cls.capacity} siswa)`;
+            return { success: false, error: true, message };
+          }
+        }
         const student = await tx.student.create({
           data: {
             id: clerkId,
@@ -3134,6 +3251,26 @@ export const updatePpdb = async (
           ];
           return allowed.includes(val) ? val : "TIDAK_ADA";
         }
+        function getParentNameByRole(
+          role: parents,
+          names: {
+            namaAyah?: string;
+            namaIbu?: string;
+            namaWali?: string;
+          },
+        ) {
+          switch (role) {
+            case "AYAH":
+              return names.namaAyah;
+            case "IBU":
+              return names.namaIbu;
+            case "WALI":
+              return names.namaWali;
+            default:
+              return undefined;
+          }
+        }
+
         const makeParent = (
           role: parents,
           name: string,
@@ -3143,20 +3280,33 @@ export const updatePpdb = async (
           kerja?: string,
           lahir?: string,
           phone?: string,
-        ) => ({
-          username: `${data.nik}_${role}`,
-          password: encryptPassword(`${data.nik}@${role}`),
-          email: `${data.nik}_${role}@parent.local`,
-          name,
-          phone: phone ?? "",
-          birthday: lahir ? new Date(lahir) : new Date(1970, 0, 1),
-          job: kerja ?? "",
-          income: income,
-          degree: toDegree(degree),
-          waliMurid: role,
-          address: data.address,
-          sex,
-        });
+        ) => {
+          const parentNames = {
+            namaAyah: data.namaAyah ?? undefined,
+            namaIbu: data.namaIbu ?? undefined,
+            namaWali: data.namaWali ?? undefined,
+          };
+
+          const rawName = getParentNameByRole(role, parentNames);
+          const baseUsername = normalizeUsername(rawName ?? name);
+          const username = baseUsername || `parent${Date.now()}`;
+
+          return {
+            username,
+
+            password: encryptPassword(`${data.nik}@${role}`),
+            email: `${data.nik}_${role}@parent.local`,
+            name,
+            phone: phone ?? "",
+            birthday: lahir ? new Date(lahir) : new Date(1970, 0, 1),
+            job: kerja ?? "",
+            income: income,
+            degree: toDegree(degree),
+            waliMurid: role,
+            address: data.address,
+            sex,
+          };
+        };
 
         let fatherId: string | null = null;
         let motherId: string | null = null;
@@ -3185,8 +3335,7 @@ export const updatePpdb = async (
             Father = await client.users.createUser({
               username: parentData.username,
               password: parentData.password,
-              firstName: parentData.name,
-              publicMetadata: { role: "parent" },
+              publicMetadata: { role: "parent", fullName: parentData.name },
             });
           } catch (err: any) {
             const message =
@@ -3225,8 +3374,7 @@ export const updatePpdb = async (
             mother = await client.users.createUser({
               username: parentData.username,
               password: parentData.password,
-              firstName: parentData.name,
-              publicMetadata: { role: "parent" },
+              publicMetadata: { role: "parent", fullName: data.name },
             });
           } catch (err: any) {
             const message =
@@ -3265,8 +3413,7 @@ export const updatePpdb = async (
             clerkUser = await client.users.createUser({
               username: parentData.username,
               password: parentData.password,
-              firstName: parentData.name,
-              publicMetadata: { role: "parent" },
+              publicMetadata: { role: "parent", fullName: data.name },
             });
           } catch (err: any) {
             const message =
@@ -4273,7 +4420,7 @@ export const createUserDB = async (
         updatedUser = await prisma.student.update({
           where: { id: String(data.userId) },
           data: {
-            id: user.id,
+            clerkId: user.id,
             username: data.username,
             email: data.email,
             password: encryptPassword(data.password!), // keep encrypted
@@ -4284,7 +4431,7 @@ export const createUserDB = async (
         updatedUser = await prisma.teacher.update({
           where: { id: String(data.userId) },
           data: {
-            id: user.id,
+            clerkId: user.id,
             username: data.username,
             email: data.email,
             password: encryptPassword(data.password!),
@@ -4295,7 +4442,7 @@ export const createUserDB = async (
         updatedUser = await prisma.parent.update({
           where: { id: String(data.userId) },
           data: {
-            id: user.id,
+            clerkId: user.id,
             username: data.username,
             email: data.email,
             password: encryptPassword(data.password!),
@@ -4306,7 +4453,7 @@ export const createUserDB = async (
         updatedUser = await prisma.staff.update({
           where: { id: String(data.userId) },
           data: {
-            id: user.id,
+            clerkId: user.id,
             username: data.username,
             email: data.email,
             password: encryptPassword(data.password!),
@@ -4380,7 +4527,7 @@ export const updateUserDB = async (
     // 2. Update local DB
     let updatedUser = null;
     const updateData = {
-      id: user.id,
+      clerkId: user.id,
       username: data.username,
       email: data.email,
       password: encryptPassword(data.password!),
@@ -4496,10 +4643,7 @@ export const activateManyStudents = async (
       const student = await prisma.student.findUnique({ where: { id } });
       if (!student) continue;
 
-      // 🔍 Check Clerk by externalId (using Prisma ID as externalId)
-      const existing = await client.users.getUserList({ externalId: [id] });
-
-      if (existing.totalCount > 0) {
+      if (student.clerkId) {
         skipped.push(student.username);
         continue;
       }
@@ -4508,15 +4652,14 @@ export const activateManyStudents = async (
           externalId: id, // 💡 this is how you map to Prisma
           username: student.username,
           password: student.password,
-          firstName: student.name,
-          publicMetadata: { role: "student" },
+          publicMetadata: { role: "student", fullName: student.name },
         });
 
         if (user) {
           console.log("User Berhasil di buat");
           await prisma.student.update({
             where: { id },
-            data: { id: user.id },
+            data: { clerkId: user.id },
           });
           created.push(student.username);
           if (form && !createdStudentId) {
@@ -4568,14 +4711,14 @@ export const activateManyTeachers = async (
   const failed: { username: string; field?: string; message: string }[] = [];
   let createdTeacherId: string | undefined = undefined;
   for (const id of ids) {
+    console.log(id, " ID di activate teacher");
+
     try {
       const teacher = await prisma.teacher.findUnique({ where: { id } });
       if (!teacher) continue;
 
       // 🔍 Check Clerk by externalId (using Prisma ID as externalId)
-      const existing = await client.users.getUserList({ externalId: [id] });
-
-      if (existing.totalCount > 0) {
+      if (teacher.clerkId) {
         skipped.push(teacher.username);
         continue;
       }
@@ -4584,14 +4727,16 @@ export const activateManyTeachers = async (
           externalId: id, // 💡 this is how you map to Prisma
           username: teacher.username,
           password: teacher.password,
-          firstName: teacher.name,
-          publicMetadata: { role: "teacher" },
+          publicMetadata: {
+            role: "teacher",
+            fullName: teacher.name, // store titles here instead
+          },
         });
 
         if (user) {
           await prisma.teacher.update({
             where: { id },
-            data: { id: user.id },
+            data: { clerkId: user.id },
           });
           created.push(teacher.username);
           if (form && !createdTeacherId) {
@@ -4634,6 +4779,77 @@ export const activateManyTeachers = async (
     message: `✅ ${created.length} Di Aktifkan, ⚠️ ${skipped.length} Di Lewati, ❌ ${failed.length} Gagal.`,
   };
 };
+export const activateManyStaffs = async (
+  ids: string[],
+  form: boolean = false,
+) => {
+  const created: string[] = [];
+  const skipped: string[] = [];
+  const failed: { username: string; field?: string; message: string }[] = [];
+  let createdStaffId: string | undefined = undefined;
+  for (const id of ids) {
+    try {
+      const staff = await prisma.staff.findUnique({ where: { id } });
+      if (!staff) continue;
+
+      if (staff.clerkId) {
+        skipped.push(staff.username);
+        continue;
+      }
+      try {
+        const user = await client.users.createUser({
+          externalId: id, // 💡 this is how you map to Prisma
+          username: staff.username,
+          password: staff.password,
+          publicMetadata: { role: "staff", fullName: staff.name },
+        });
+
+        if (user) {
+          await prisma.staff.update({
+            where: { id },
+            data: { clerkId: user.id },
+          });
+          created.push(staff.username);
+          if (form && !createdStaffId) {
+            // ✅ only set once (for single form mode)
+            createdStaffId = user.id;
+          }
+        }
+      } catch (err: any) {
+        console.error("❌ Clerk error:", err);
+
+        const message = err?.errors?.[0]?.message || "Terjadi kesalahan";
+        // Detect which field caused the problem
+        let field: string | undefined;
+        if (message.toLowerCase().includes("username")) field = "username";
+        else if (message.toLowerCase().includes("password")) field = "password";
+
+        console.error(`❌ Clerk error for ${staff.username}:`, message);
+        failed.push({
+          username: staff.username,
+          field,
+          message,
+        });
+        continue; // ✅ Don’t stop the loop
+      }
+    } catch (err) {
+      console.error("❌ Gagal:", err);
+      failed.push({
+        username: "(unknown)",
+        message: `Id Staff yang Gagal: ${id}`,
+      });
+    }
+  }
+
+  return {
+    success: failed.length === 0,
+    created,
+    skipped,
+    failed,
+    id: createdStaffId,
+    message: `✅ ${created.length} Di Aktifkan, ⚠️ ${skipped.length} Di Lewati, ❌ ${failed.length} Gagal.`,
+  };
+};
 export const activateManyParents = async (
   ids: string[],
   form: boolean = false,
@@ -4648,9 +4864,8 @@ export const activateManyParents = async (
       if (!parent) continue;
 
       // 🔍 Check Clerk by externalId (using Prisma ID as externalId)
-      const existing = await client.users.getUserList({ externalId: [id] });
 
-      if (existing.totalCount > 0) {
+      if (parent.clerkId) {
         skipped.push(parent.username);
         continue;
       }
@@ -4659,15 +4874,14 @@ export const activateManyParents = async (
           externalId: id, // 💡 this is how you map to Prisma
           username: parent.username,
           password: parent.password,
-          firstName: parent.name,
-          publicMetadata: { role: "parent" },
+          publicMetadata: { role: "parent", fullName: parent.name },
         });
         if (user) {
           console.log("User Berhasil di buat");
 
           await prisma.parent.update({
             where: { id },
-            data: { id: user.id },
+            data: { clerkId: user.id },
           });
           created.push(parent.username);
           if (form && !createdParentId) {
@@ -5361,9 +5575,7 @@ export const createStaff = async (
       user = await client.users.createUser({
         username: data.username,
         password: data.password,
-        firstName: data.name,
-
-        publicMetadata: { role: "staff" },
+        publicMetadata: { role: "staff", fullName: data.name },
       });
       if (user) {
         console.log("✅ User Sucessfully created:", user.id);
@@ -5389,7 +5601,7 @@ export const createStaff = async (
     await new Promise((resolve) => setTimeout(resolve, 1000));
     const createdStaff = await prisma.staff.create({
       data: {
-        id: user.id,
+        clerkId: user.id,
         username: data.username,
         password: encryptPassword(data.password!),
         name: data.name,
@@ -5451,10 +5663,13 @@ export const updateStaff = async (
 
       return { success: false, error: true, message: "Missing staff ID" };
     }
+    const staff = await prisma.staff.findUnique({
+      where: { id: data.id },
+    });
     let user;
     if (data.withUser) {
       try {
-        user = await client.users.updateUser(data.id, {
+        user = await client.users.updateUser(staff?.clerkId ?? data.id, {
           ...(data.username !== "" && {
             username: data.username,
           }),
@@ -5462,7 +5677,7 @@ export const updateStaff = async (
             password: data.password,
           }),
           ...(data.name !== "" && {
-            firstName: data.name,
+            publicMetadata: { fullName: data.name },
           }),
         });
         if (user) {
@@ -5489,7 +5704,7 @@ export const updateStaff = async (
         id: data.id,
       },
       data: {
-        id: user?.id ?? data.id,
+        clerkId: user?.id ?? null,
         username: data.username,
         ...(data.password !== "" && {
           password: encryptPassword(data.password!),
@@ -5558,7 +5773,7 @@ export const deleteStaff = async (
       },
     });
     try {
-      const deletedUser = await client.users.deleteUser(id);
+      const deletedUser = await client.users.deleteUser(staff?.clerkId ?? id);
 
       if (deletedUser) {
         console.log("✅ User Sucessfully deleted:", deletedUser.id);
@@ -5613,12 +5828,16 @@ export const deleteStaffs = async (
         await prisma.staff.delete({ where: { id } });
 
         try {
-          const deletedUser = await client.users.deleteUser(id);
+          const deletedUser = await client.users.deleteUser(
+            staff?.clerkId ?? id,
+          );
           if (deletedUser) {
             console.log("✅ Clerk user deleted:", deletedUser.id);
           }
         } catch {
-          console.warn(`⚠️ Clerk user ${id} not found or already deleted.`);
+          console.warn(
+            `⚠️ Clerk user ${staff?.clerkId ?? id} not found or already deleted.`,
+          );
         }
       } catch (innerError) {
         console.error(`❌ Failed to delete staff ID = ${id}:`, innerError);

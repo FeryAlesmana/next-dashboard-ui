@@ -1047,6 +1047,8 @@ const StudentForm = ({
           message={state.message || "Aktifkan Akun?"}
           onConfirm={async () => {
             clearErrors();
+            setWithUser(true);
+            withUserRef.current = true;
             // Call a new server action to activate/create the Clerk user
             const result = await activateManyStudents([pendingData.id], true); // ✅ pass as array
             const failed = result.failed?.[0]; // only one expected
@@ -1072,6 +1074,7 @@ const StudentForm = ({
           }}
           onCancel={() => {
             clearErrors();
+            setWithUser(false);
             withUserRef.current = false;
             handleSubmitForm();
             setShowActivateDialog(false);

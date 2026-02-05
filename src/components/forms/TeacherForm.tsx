@@ -48,6 +48,7 @@ const TeacherForm = ({
     getValues,
     setError,
     clearErrors,
+    trigger,
   } = useForm<
     typeof schema extends z.ZodTypeAny ? z.infer<typeof schema> : never
   >({
@@ -113,7 +114,7 @@ const TeacherForm = ({
 
   const handleSubmitForm = handleSubmit((data) => {
     setIsSubmitting(true);
-    setShowConfirm(false);
+
     const payload = {
       ...data,
       img: img?.secure_url ?? data?.img,
@@ -123,10 +124,20 @@ const TeacherForm = ({
     startTransition(() => {
       formAction(payload);
     });
+    setShowConfirm(false);
+    setIsSubmitting(false);
   });
-  const onSubmit = (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setShowConfirm(true); // Show modal before submit
+    // Trigger validasi manual
+    const valid = await trigger();
+    if (valid) {
+      // Jika valid, tampilkan dialog konfirmasi
+      setShowConfirm(true);
+    } else {
+      // Jika tidak valid, jangan tampilkan dialog dan jangan submit
+      setShowConfirm(false);
+    }
   };
 
   const router = useRouter();
@@ -541,6 +552,8 @@ const TeacherForm = ({
           message={state.message || "Aktifkan Akun?"}
           onConfirm={async () => {
             clearErrors();
+            setWithUser(true);
+            withUserRef.current = true;
             // Call a new server action to activate/create the Clerk user
             const result = await activateManyTeachers([pendingData.id], true); // ✅ pass as array
             const failed = result.failed?.[0]; // only one expected
@@ -566,6 +579,7 @@ const TeacherForm = ({
           }}
           onCancel={() => {
             clearErrors();
+            setWithUser(false);
             withUserRef.current = false;
             handleSubmitForm();
             setShowActivateDialog(false);

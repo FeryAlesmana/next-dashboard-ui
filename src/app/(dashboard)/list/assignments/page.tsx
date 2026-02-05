@@ -376,7 +376,7 @@ const AssignmentListPage = async ({
         },
         select: {
           id: true,
-          name: true,
+          day: true,
           subject: { select: { name: true } },
           class: { select: { name: true } },
         },

@@ -55,8 +55,12 @@ export const teacherSchema = z.object({
     .or(z.literal("")),
   phone: z.string().min(1, { message: "Nomor telepon wajib diisi!" }),
   address: z.string().min(1, { message: "Alamat wajib diisi!" }),
-  rt: z.string({ message: " RT Guru wajib diisi!" }).length(2),
-  rw: z.string({ message: " RW Guru wajib diisi!" }).length(2),
+  rt: z
+    .string({ message: " RT Guru wajib diisi!" })
+    .length(2, { message: " RT Guru wajib diisi!" }),
+  rw: z
+    .string({ message: " RW Guru wajib diisi!" })
+    .length(2, { message: " RW Guru wajib diisi!" }),
   kelurahan: z.string({ message: " Nama Kelurahan Guru wajib diisi!" }).min(1),
   kecamatan: z.string({ message: " Nama Kecamatan Guru wajib diisi!" }).min(1),
   kota: z.string({ message: " Nama Kota Guru wajib diisi!" }).min(1),

@@ -18,6 +18,7 @@ import {
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import {
+  activateManyStaffs,
   activateManyTeachers,
   createStaff,
   CurrentState,
@@ -393,8 +394,10 @@ const StaffForm = ({ type, data, setOpen, onChanged }: BaseFormProps) => {
           message={state.message || "Aktifkan Akun?"}
           onConfirm={async () => {
             clearErrors();
+            setWithUser(true);
+            withUserRef.current = true;
             // Call a new server action to activate/create the Clerk user
-            const result = await activateManyTeachers([pendingData.id], true); // ✅ pass as array
+            const result = await activateManyStaffs([pendingData.id], true); // ✅ pass as array
             const failed = result.failed?.[0]; // only one expected
             if (result.success) {
               toast.success(result.message);
@@ -418,6 +421,7 @@ const StaffForm = ({ type, data, setOpen, onChanged }: BaseFormProps) => {
           }}
           onCancel={() => {
             clearErrors();
+            setWithUser(false);
             withUserRef.current = false;
             handleSubmitForm();
             setShowActivateDialog(false);

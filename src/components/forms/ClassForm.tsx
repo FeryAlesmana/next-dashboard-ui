@@ -37,14 +37,14 @@ const ClassForm = ({
 
   const createClassHandler = async (
     prevState: CurrentState,
-    payload: ClassSchema
+    payload: ClassSchema,
   ): Promise<CurrentState> => {
     return await createClass(prevState, payload);
   };
 
   const updateClassHandler = async (
     prevState: CurrentState,
-    payload: ClassSchema
+    payload: ClassSchema,
   ): Promise<CurrentState> => {
     return await updateClass(prevState, payload);
   };
@@ -55,7 +55,7 @@ const ClassForm = ({
       success: false,
       error: false,
       message: "",
-    }
+    },
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -95,7 +95,7 @@ const ClassForm = ({
     if (state.success) {
       const updatedItem = state.data ?? formData;
       toast(
-        `Kelas telah berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`
+        `Kelas telah berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`,
       );
       if (onChanged && updatedItem) {
         onChanged(updatedItem); // 🔥 notify parent so it can update localData
@@ -107,7 +107,7 @@ const ClassForm = ({
     }
   }, [state, type, setOpen, router, onChanged, formData]);
 
-  const { teachers = [], grades = [] } = relatedData ?? {};
+  const { teachers = [], students } = relatedData ?? {};
 
   const defGrades = [
     {
@@ -162,6 +162,7 @@ const ClassForm = ({
             register={register}
             error={errors?.capacity}
             placeholder="Masukkan kapasitas kelas"
+            inputProps={{ min: students }}
           />
           <div className="flex flex-col gap-2 w-full md:w-1/4">
             <label className="text-xs text-gray-400">Wali Kelas</label>
@@ -184,7 +185,7 @@ const ClassForm = ({
                     value={
                       teacherOptions.find(
                         (opt: { value: string; label: string }) =>
-                          opt.value === field.value
+                          opt.value === field.value,
                       ) || null
                     }
                   />
@@ -251,8 +252,8 @@ const ClassForm = ({
             {isSubmitting
               ? "Memproses..."
               : type === "create"
-              ? "Tambah kelas"
-              : "Update dan Simpan"}
+                ? "Tambah kelas"
+                : "Update dan Simpan"}
           </button>
         </div>
       </form>

@@ -454,7 +454,11 @@ const ResultListPage = async ({
   const [dataRes, count, studentData, exams, assignments, classes] =
     await prisma.$transaction([
       prisma.result.findMany({
-        where: query,
+        where: {
+          ...query,
+          studentId: { not: null },
+          OR: [{ examId: { not: null } }, { assignmentId: { not: null } }],
+        },
         orderBy,
         include: {
           student: { select: { name: true } },
@@ -484,7 +488,13 @@ const ResultListPage = async ({
         take: perPage,
         skip: perPage ? perPage * (p - 1) : undefined,
       }),
-      prisma.result.count({ where: query }),
+      prisma.result.count({
+        where: {
+          ...query,
+          studentId: { not: null },
+          OR: [{ examId: { not: null } }, { assignmentId: { not: null } }],
+        },
+      }),
       prisma.student.findMany({
         select: {
           id: true,

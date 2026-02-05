@@ -14,7 +14,8 @@ model Admin {
 }
 
 model Staff {
-  id         String           @id
+  id String @id @default(cuid())
+  clerkId    String?          @unique
   username   String           @unique
   password   String
   createdAt  DateTime         @default(now())
@@ -36,7 +37,8 @@ model Staff {
 }
 
 model Student {
-  id              String           @id
+  id String @id @default(cuid())
+  clerkId         String?          @unique
   username        String           @unique
   name            String
   email           String?          @unique
@@ -71,7 +73,8 @@ model Student {
 }
 
 model Teacher {
-  id        String    @id
+  id String @id @default(cuid())
+  clerkId   String?   @unique
   username  String    @unique
   name      String
   email     String?   @unique
@@ -94,7 +97,8 @@ model Teacher {
 }
 
 model Parent {
-  id                String    @id
+  id String @id @default(cuid())
+  clerkId           String?   @unique
   username          String    @unique
   name              String
   email             String?   @unique

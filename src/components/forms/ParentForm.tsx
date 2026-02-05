@@ -14,6 +14,7 @@ import {
   startTransition,
   useActionState,
   useEffect,
+  useRef,
   useState,
 } from "react";
 import { useRouter } from "next/navigation";
@@ -89,6 +90,12 @@ const ParentForm = ({
   const [withUser, setWithUser] = useState(true); // default: true (Clerk enabled)
   const selectedSex = watch("sex");
 
+  const withUserRef = useRef(true);
+
+  useEffect(() => {
+    withUserRef.current = withUser;
+  }, [withUser]);
+
   const router = useRouter();
 
   useEffect(() => {
@@ -110,7 +117,7 @@ const ParentForm = ({
   // Submit final setelah konfirmasi
   const handleSubmitForm = handleSubmit(async (data) => {
     setIsSubmitting(true);
-    const payload: any = { ...data, withUser };
+    const payload: any = { ...data, withUser: withUserRef.current };
     try {
       startTransition(() => {
         formAction(payload);
@@ -292,7 +299,9 @@ const ParentForm = ({
             placeholder="Contoh: 5.200.000"
           /> */}
           <div className="flex flex-col gap-2 w-full md:w-1/4">
-            <label className="text-xs text-gray-500">Penghasilan (per bulan)</label>
+            <label className="text-xs text-gray-500">
+              Penghasilan (per bulan)
+            </label>
 
             <RupiahInput
               value={income}
@@ -457,6 +466,8 @@ const ParentForm = ({
           message={state.message || "Aktifkan Akun?"}
           onConfirm={async () => {
             clearErrors();
+            setWithUser(true);
+            withUserRef.current = true;
             // Call a new server action to activate/create the Clerk user
             const result = await activateManyParents([pendingData.id], true); // ✅ pass as array
             const failed = result.failed?.[0]; // only one expected
@@ -480,15 +491,12 @@ const ParentForm = ({
             // setOpen(false);
             // router.refresh();
           }}
-          onCancel={async () => {
+          onCancel={() => {
             clearErrors();
             setWithUser(false);
-            formAction({
-              ...pendingData,
-              withUser: false, // tell server to skip Clerk
-            });
+            withUserRef.current = false;
+            handleSubmitForm();
             setShowActivateDialog(false);
-            router.refresh();
           }}
         />
       )}

@@ -71,6 +71,18 @@ const FormulirPendaftaran = ({
     deleted?: Partial<Record<DokumenKey, boolean>>;
   }>({});
   useEffect(() => {
+  if (type === "update" && data) {
+    setDokumen({
+      ijazah: data.dokumenIjazah ?? undefined,
+      akte: data.dokumenAkte ?? undefined,
+      pasfoto: data.dokumenPasfoto ?? undefined,
+      kk_ktp_sktm: data.dokumenKKKTP ?? undefined,
+      deleted: {},
+    });
+  }
+}, [type, data]);
+
+  useEffect(() => {
     if (type === "update" && data) {
       localStorage.removeItem(FORM_KEY);
       setAllowAutosave(false);
@@ -94,10 +106,6 @@ const FormulirPendaftaran = ({
           : "",
         awards_lvl: data.awards_lvl ?? "",
         distance_from_home: data.distance_from_home ?? 0,
-        dokumenIjazah: dokumen.deleted?.ijazah ? null : dokumen.ijazah,
-        dokumenAkte: dokumen.deleted?.akte ? null : dokumen.akte,
-        dokumenKKKTP: dokumen.deleted?.kk_ktp_sktm ? null : dokumen.kk_ktp_sktm,
-        dokumenPasfoto: dokumen.deleted?.pasfoto ? null : dokumen.pasfoto,
         email: data.email ?? "",
         height: data.height ?? 0,
         isvalid: Boolean(data.isvalid),
@@ -165,7 +173,7 @@ const FormulirPendaftaran = ({
         });
       }
     }
-  }, [setValue, data, reset, type, prefilEmail, dokumen]);
+  }, [setValue, data, reset, type, prefilEmail]);
 
   const handleDeleteDokumen = (key: DokumenKey) => {
     setDokumen((prev) => ({
@@ -1008,7 +1016,6 @@ const FormulirPendaftaran = ({
               {...register("namaIbu")}
               className="w-full border rounded px-3 py-2"
               placeholder="Masukkan nama lengkap Ibu"
-              type="number"
             />
             {errors.namaIbu && (
               <p className="text-red-600">{errors.namaIbu.message}</p>
@@ -1175,10 +1182,44 @@ const FormulirPendaftaran = ({
           </div>
 
           {/* ========== Upload Dokumen ========== */}
+          {/* 📢 Notice Upload Dokumen */}
+          <div className="mb-4 bg-amber-50 border border-amber-200 text-amber-800 text-sm p-3 rounded-md">
+            <p className="font-medium mb-1">📂 Ketentuan Upload Dokumen:</p>
+
+            <ul className="list-disc list-inside space-y-1">
+              <li>
+                <span className="font-medium">Semua Dokumen</span> wajib
+                diunggah
+              </li>
+              <li>
+                Untuk KK, KTP Orang Tua, SKTM/KIP di{" "}
+                <span className="font-medium">satukan menjadi 1 file</span>
+              </li>
+              <li>
+                Format file yang didukung:{" "}
+                <span className="font-medium">PDF</span>
+              </li>
+              <li>
+                Dokumen Pas Foto:{" "}
+                <span className="font-medium">
+                  Pas foto 3x4 berpakaian rapi dengan latar belakang biru JPG
+                  atau PNG
+                </span>
+              </li>
+              <li>
+                Ukuran maksimal file: <span className="font-medium">2 MB</span>
+              </li>
+            </ul>
+
+            <p className="mt-2 text-xs text-amber-700">
+              Pastikan dokumen terlihat jelas dan tidak terpotong agar proses
+              verifikasi berjalan lancar.
+            </p>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full mb-4 rounded-md p-4">
             <div className="flex flex-col gap-2 ">
               <label className="font-medium flex items-center gap-1">
-                Fotokopi Ijazah / STTB<span className="text-red-500">*</span>
+                Ijazah / STTB<span className="text-red-500">*</span>
               </label>
               <p className="text-xs text-red-300">Wajib diunggah</p>
 
@@ -1215,7 +1256,7 @@ const FormulirPendaftaran = ({
                 ) : (
                   <input
                     type="file"
-                    accept=".jpg,.jpeg,.png,.pdf"
+                    accept=".pdf"
                     onChange={(e) => handleFileUpload(e, "ijazah")}
                     className="block w-full text-sm text-white file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-600 file:text-white"
                   />
@@ -1267,7 +1308,7 @@ const FormulirPendaftaran = ({
             </div>
             <div className="flex flex-col gap-2 ">
               <label className="font-medium flex items-center gap-1 ">
-                Fotokopi Akte Kelahiran<span className="text-red-500">*</span>
+                Akte Kelahiran<span className="text-red-500">*</span>
               </label>
               <p className="text-xs text-red-300">Wajib diunggah</p>
 
@@ -1304,7 +1345,7 @@ const FormulirPendaftaran = ({
                 ) : (
                   <input
                     type="file"
-                    accept=".jpg,.jpeg,.png,.pdf"
+                    accept=".pdf"
                     onChange={(e) => handleFileUpload(e, "akte")}
                     className="block w-full text-sm text-white file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-600 file:text-white"
                   />
@@ -1357,7 +1398,7 @@ const FormulirPendaftaran = ({
 
             <div className="flex flex-col gap-2 ">
               <label className="font-medium flex items-center gap-1 ">
-                Fotokopi KK, KTP Orang Tua, SKTM / KIP
+                KK, KTP Orang Tua, SKTM / KIP
                 <span className="text-red-500">*</span>
               </label>
               <p className="text-xs text-red-300">Wajib diunggah</p>
@@ -1395,7 +1436,7 @@ const FormulirPendaftaran = ({
                 ) : (
                   <input
                     type="file"
-                    accept=".jpg,.jpeg,.png,.pdf"
+                    accept=".pdf"
                     onChange={(e) => handleFileUpload(e, "kk_ktp_sktm")}
                     className="block w-full text-sm text-white file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-600 file:text-white"
                   />

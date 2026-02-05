@@ -20,6 +20,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import Select from "react-select";
 import ConfirmDialog from "../ConfirmDialog";
+import { Day } from "@prisma/client";
 
 export type BaseFormProps = {
   setOpen: Dispatch<SetStateAction<boolean>>;
@@ -48,14 +49,14 @@ const AssignmentForm = ({
 
   const createAssignmentHandler = async (
     prevState: CurrentState,
-    payload: AssignmentSchema
+    payload: AssignmentSchema,
   ): Promise<CurrentState> => {
     return await createAssignment(prevState, payload);
   };
 
   const updateAssignmentHandler = async (
     prevState: CurrentState,
-    payload: AssignmentSchema
+    payload: AssignmentSchema,
   ): Promise<CurrentState> => {
     return await updateAssignment(prevState, payload);
   };
@@ -67,7 +68,7 @@ const AssignmentForm = ({
   };
   const [state, formAction] = useActionState(
     type === "create" ? createAssignmentHandler : updateAssignmentHandler,
-    initialState
+    initialState,
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -110,7 +111,7 @@ const AssignmentForm = ({
       const updatedItem = state.data ?? formData; // <- depends on what your action returns
 
       toast(
-        `Tugas telah berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`
+        `Tugas telah berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`,
       );
       setOpen(false);
 
@@ -124,24 +125,29 @@ const AssignmentForm = ({
 
   const { lessons = [] } = relatedData ?? {};
 
+  function toNormalCase(str: string): string {
+    if (!str) return "";
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+  }
+
   const lessonOption = lessons.map(
     (lesson: {
       id: number;
-      name: string;
+      day: Day;
       subject: { name: string };
       class: { name: string };
     }) => ({
       value: lesson.id,
-      label: `${lesson.name} - ${lesson.subject?.name ?? " "} - ${
+      label: `${
         lesson.class?.name ?? " "
-      }`,
-    })
+      }  - ${lesson.subject?.name ?? " "} - ${toNormalCase(lesson.day) ?? " "}  `,
+    }),
   );
 
   const formatDateForInput = (dateString: string) => {
     const date = new Date(dateString);
     const jakartaDate = new Date(
-      date.toLocaleString("en-US", { timeZone: "Asia/Jakarta" })
+      date.toLocaleString("en-US", { timeZone: "Asia/Jakarta" }),
     );
     const year = jakartaDate.getFullYear();
     const month = String(jakartaDate.getMonth() + 1).padStart(2, "0");
@@ -158,7 +164,7 @@ const AssignmentForm = ({
           {type === "create" ? "Tambah Tugas Baru" : "Edit Tugas"}
         </h1>
         <span className="text-xs text-gray-400 font-medium">
-          Informasi Autentikasi
+          Informasi Tugas
         </span>
         <div className="flex justify-between flex-wrap gap-4 m-4">
           <InputField
@@ -207,7 +213,7 @@ const AssignmentForm = ({
                     value={
                       lessonOption.find(
                         (opt: { value: number; label: string }) =>
-                          opt.value === field.value
+                          opt.value === field.value,
                       ) || null
                     }
                   />
@@ -261,8 +267,8 @@ const AssignmentForm = ({
             {isSubmitting
               ? "Memproses..."
               : type === "create"
-              ? "Tambah tugas"
-              : "Update dan Simpan"}
+                ? "Tambah tugas"
+                : "Update dan Simpan"}
           </button>
         </div>
       </form>
