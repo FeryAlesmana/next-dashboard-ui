@@ -107,6 +107,12 @@ const EventsForm = ({
 
   const { classes } = relatedData;
 
+  function formatTimeUTC(date: Date) {
+    const h = date.getUTCHours().toString().padStart(2, "0");
+    const m = date.getUTCMinutes().toString().padStart(2, "0");
+    return `${h}:${m}`;
+  }
+
   return (
     <>
       <form action="" className="flex flex-col gap-8" onSubmit={onSubmit}>
@@ -204,7 +210,7 @@ const EventsForm = ({
               type="time"
               defaultValue={
                 data?.startTime
-                  ? new Date(data.startTime).toTimeString().slice(0, 5)
+                  ? formatTimeUTC(data.startTime)
                   : ""
               }
               register={register}
@@ -221,7 +227,7 @@ const EventsForm = ({
               type="time"
               defaultValue={
                 data?.endTime
-                  ? new Date(data.endTime).toTimeString().slice(0, 5)
+                  ? formatTimeUTC(data.endTime)
                   : ""
               }
               register={register}
