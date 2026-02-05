@@ -734,7 +734,7 @@ export const getProfileByClerkIdAndRole = async (
   switch (role) {
     case "student":
       const student = await prisma.student.findUnique({
-        where: { id: clerkId },
+        where: { clerkId: clerkId },
         select: { name: true, img: true },
       });
       return {
@@ -745,7 +745,7 @@ export const getProfileByClerkIdAndRole = async (
 
     case "teacher":
       const teacher = await prisma.teacher.findUnique({
-        where: { id: clerkId },
+        where: { clerkId: clerkId },
         select: { name: true, img: true },
       });
       return {
@@ -756,7 +756,7 @@ export const getProfileByClerkIdAndRole = async (
 
     case "staff":
       const staff = await prisma.staff.findUnique({
-        where: { id: clerkId },
+        where: { clerkId: clerkId },
         select: { name: true, img: true, staffroles: true },
       });
       return {
@@ -767,7 +767,7 @@ export const getProfileByClerkIdAndRole = async (
 
     case "parent":
       const parent = await prisma.parent.findUnique({
-        where: { id: clerkId },
+        where: { clerkId: clerkId },
         select: { name: true },
       });
       return {

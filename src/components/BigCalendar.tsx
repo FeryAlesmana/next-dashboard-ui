@@ -3,7 +3,6 @@ import { Calendar, momentLocalizer, Views, View } from "react-big-calendar";
 import moment from "moment";
 import { useState, useEffect } from "react";
 import "moment/locale/id"; // ✅ import locale
-import { addDays, startOfWeek } from "date-fns";
 
 moment.locale("id"); // ✅ set locale
 

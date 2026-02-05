@@ -91,6 +91,7 @@ export default function UserListClient({
                     { label: "Guru", value: "teacher" },
                     { label: "Murid", value: "student" },
                     { label: "Wali Murid", value: "parent" },
+                    { label: "Staff", value: "staff" },
                   ],
                 },
               ]}

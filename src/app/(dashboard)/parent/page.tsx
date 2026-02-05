@@ -35,7 +35,7 @@ const ParentPage = async ({
   return (
     <div className="p-4 flex flex-1 gap-4 flex-col xl:flex-row">
       {/* left */}
-      <div className="w-full xl:w-2/3flex-col ">
+      <div className="w-full xl:w-2/3 flex-col ">
         {students.map((student) => (
           <div className="mb-8" key={student.id}>
             <div className="h-full bg-white p-4 rounded-md">
@@ -72,13 +72,19 @@ const ParentPage = async ({
                 </p>
               </div>
 
-              <div className="w-full overflow-x-auto">
-                <div className="min-w-[823px]">
-                  <div className="h-full bg-white p-4 rounded-md">
-                    <BigCalendarContainer
-                      type="classId"
-                      id={student.classId!}
-                    />
+              <div className="bg-white p-2 rounded-md flex-1 mr-7 md:m-0 mt-0 w-0 min-w-full">
+                <div className="w-full overflow-hidden">
+                  {/* 3. The scrollable area */}
+                  <div className="overflow-x-auto">
+                    {/* 4. The stubborn wide element */}
+                    <div className="min-w-[823px]">
+                      <div className="h-full bg-white p-4 rounded-md">
+                        <BigCalendarContainer
+                          type="classId"
+                          id={student.classId!}
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

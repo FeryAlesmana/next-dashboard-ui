@@ -15,16 +15,26 @@ const TeacherPage = async () => {
   return (
     <div className="p-4 flex flex-1 gap-4 flex-col xl:flex-row">
       {/* left */}
-
-      <div className="w-full xl:w-2/3flex-col">
+      <div className="w-full xl:w-2/3 flex-col ">
         {classItem.map((teacher) => (
-          <div className="w-full overflow-x-auto" key={teacher.id}>
-            <div className="min-w-[823px]">
-              <div className="h-full bg-white p-4 rounded-md">
-                <h1 className="text-xl font-semibold">
-                  Jadwal Kelas {teacher.name}
-                </h1>
-                <BigCalendarContainer type="classId" id={teacher.id!} />
+          <div
+            key={teacher.id}
+            className="bg-white p-2 rounded-md flex-1 mr-7 md:m-0 mt-0 w-0 min-w-full"
+          >
+            <div className="w-full overflow-hidden">
+              {/* 3. The scrollable area */}
+              <div className="overflow-x-auto">
+                {/* 4. The stubborn wide element */}
+                <div className="min-w-[823px]">
+                  <div className="h-full bg-white p-4 rounded-md">
+                    <h1 className="text-xl font-semibold">
+                      Jadwal Kelas {teacher.name}
+                    </h1>
+                    {teacher.id && (
+                      <BigCalendarContainer type="classId" id={teacher.id!} />
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </div>

@@ -317,23 +317,59 @@ const ResultListPage = async ({
     }
 
     case "parent": {
-      const children = await prisma.student.findMany({
-        where: {
-          OR: [
-            { parentId: userId! },
-            { secondParentId: userId! },
-            { guardianId: userId! },
-          ],
-        },
+      const parent = await prisma.parent.findUnique({
+        where: { clerkId: userId! },
         select: {
-          name: true,
-          id: true,
-          class: {
-            select: { name: true, grade: { select: { level: true } } },
+          students: {
+            select: {
+              id: true,
+              name: true,
+              classId: true,
+              createdAt: true,
+              class: {
+                select: {
+                  name: true,
+                  grade: { select: { level: true } },
+                },
+              },
+            },
           },
-          createdAt: true,
+          secondaryStudents: {
+            select: {
+              id: true,
+              name: true,
+              classId: true,
+              createdAt: true,
+              class: {
+                select: {
+                  name: true,
+                  grade: { select: { level: true } },
+                },
+              },
+            },
+          },
+          guardianStudents: {
+            select: {
+              id: true,
+              name: true,
+              classId: true,
+              createdAt: true,
+              class: {
+                select: {
+                  name: true,
+                  grade: { select: { level: true } },
+                },
+              },
+            },
+          },
         },
       });
+
+      const children = [
+        ...(parent?.students ?? []),
+        ...(parent?.secondaryStudents ?? []),
+        ...(parent?.guardianStudents ?? []),
+      ];
 
       const studentIds = children.map((child) => child.id);
 

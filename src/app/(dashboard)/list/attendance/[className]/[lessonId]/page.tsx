@@ -391,13 +391,23 @@ export default async function AttendanceDetailPage({
           })}
 
       {/* Calendar */}
-      <div className="w-full overflow-x-auto">
-        <div className="min-w-[823px]">
-          <div className="h-full bg-white p-4 rounded-md">
-            <h1 className="text-xl font-semibold">Jadwal ({className})</h1>
-            {classData?.id && (
-              <BigCalendarContainer type="classId" id={classData.id} />
-            )}
+      {/* 1. Wrap the whole calendar section in a container that prevents overflow from leaking */}
+      <div className="bg-white p-2 rounded-md flex-1 mr-7 md:m-0 mt-0 w-0 min-w-full">
+        <div className="w-full overflow-hidden">
+          {/* 3. The scrollable area */}
+          <div className="overflow-x-auto">
+            {/* 4. The stubborn wide element */}
+            <div className="min-w-[823px]">
+              <div className="h-full bg-white p-4 rounded-md">
+                <h1 className="text-xl font-semibold">Jadwal ({className})</h1>
+
+                {classData?.id && (
+                  <div className="h-[600px] mt-4">
+                    <BigCalendarContainer type="classId" id={classData.id} />
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>

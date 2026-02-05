@@ -32,7 +32,7 @@ export function MobileSubjectCard({
           />
         )}
 
-        <div className="ml-3 min-w-0">
+        <div className="ml-3 flex-1 min-w-0">
           <div
             className="font-medium overflow-hidden text-ellipsis whitespace-nowrap max-w-full"
             title={data.name}

@@ -125,7 +125,8 @@ const UserForm = ({
   const usersOptions = usersData.map((user: any) => ({
     value: user.id,
     label: `${user.name} - ${user.role}`,
-    role: user.role, // keep the role here!!
+    role: user.role,
+    email: user.email, // ✅ IMPORTANT
   }));
 
   const filteredUserOptions = roleValue

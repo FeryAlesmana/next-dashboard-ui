@@ -65,7 +65,7 @@ const SingleStudentPage = async ({
 
   const semesters = generateSemesters(
     student ? student.createdAt : new Date(),
-    student?.grade?.level!
+    student?.grade?.level!,
   );
   const now = new Date();
   const currentSemester = semesters.find((s) => now >= s.start && now <= s.end);
@@ -118,16 +118,17 @@ const SingleStudentPage = async ({
             </div>
             <div className="w-2/3 flex flex-col justify-between gap-4">
               <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
-                <h1
-                  className="text-xl font-semibold max-w-full md:max-w-[300px] 
-               overflow-hidden text-ellipsis whitespace-nowrap"
-                >
-                  {student.name}
-                </h1>
+                {/* 1. Group Name and NISN together in a column */}
+                <div className="flex flex-col">
+                  <h1 className="text-xl font-semibold max-w-full md:max-w-[300px] overflow-hidden text-ellipsis whitespace-nowrap">
+                    {student.name}
+                  </h1>
 
-                <span className="px-2 py-0.5 text-xs font-medium rounded bg-gray-100 text-gray-700">
-                  NISN: {student.student_details?.nisn}
-                </span>
+                  {/* NISN is now naturally below the H1 */}
+                  <span className="text-sm font-medium text-gray-500">
+                    NISN: {student.student_details?.nisn}
+                  </span>
+                </div>
 
                 {role === "admin" && (
                   <FormContainer
@@ -228,13 +229,21 @@ const SingleStudentPage = async ({
           </div>
         </div>
         {/* BOTTOM */}
-        <div className="w-full overflow-x-auto">
-          <div className="min-w-[823px]">
-            <div className="h-full bg-white p-4 rounded-md">
-              <h1 className="text-xl font-semibold">
-                Jadwal ({student.class?.name || "-"})
-              </h1>
-              {classId && <BigCalendarContainer type="classId" id={classId} />}
+        <div className="bg-white p-2 rounded-md flex-1 mr-7 md:m-0 mt-0 w-0 min-w-full">
+          <div className="w-full overflow-hidden">
+            {/* 3. The scrollable area */}
+            <div className="overflow-x-auto">
+              {/* 4. The stubborn wide element */}
+              <div className="min-w-[823px]">
+                <div className="h-full bg-white p-4 rounded-md">
+                  <h1 className="text-xl font-semibold">
+                    Jadwal ({student.class?.name || "-"})
+                  </h1>
+                  {classId && (
+                    <BigCalendarContainer type="classId" id={classId} />
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>

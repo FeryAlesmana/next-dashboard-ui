@@ -74,7 +74,7 @@ const Navbar = ({ onToggleMenu }: NavbarProps) => {
         return role;
     }
   }
-
+  const [showDetails, setShowDetails] = useState(false);
   return (
     <div
       className={`
@@ -101,30 +101,46 @@ const Navbar = ({ onToggleMenu }: NavbarProps) => {
       {/* Profile Section */}
       <div className="flex items-center gap-4">
         <NotificationBell />
-        <div className="flex flex-col">
-          <span
-            className="text-xs leading-3 font-medium max-w-full md:max-w-[300px] 
-               overflow-hidden text-ellipsis whitespace-nowrap"
-            title={userProfile.name}
+        <div className="relative flex items-center gap-3">
+          {/* 1. Name and Role Container */}
+          <div
+            className={`
+        ${showDetails ? "flex" : "hidden"} 
+        md:flex flex-col items-end
+        absolute right-12 top-0 bg-white p-2 rounded-md shadow-md border
+        md:static md:bg-transparent md:p-0 md:shadow-none md:border-none
+        z-50 min-w-[120px]
+      `}
           >
-            {userProfile.name}
-          </span>
-          <span className="text-[10px] text-gray-500 text-right p-1">
-            {userProfile.role === "staff" ? (
-              <span>{translateStaffRole(userProfile.staffRole!)}</span>
-            ) : (
-              <span>{userProfile.role}</span>
-            )}
-          </span>
-        </div>
-        <div className="w-9 h-9 rounded-full overflow-hidden">
-          <Image
-            src={userProfile.img}
-            alt="User Avatar"
-            width={36}
-            height={36}
-            className="rounded-full object-cover"
-          />
+            <span
+              className="text-xs leading-3 font-medium max-w-[150px] md:max-w-[300px] 
+                   overflow-hidden text-ellipsis whitespace-nowrap"
+              title={userProfile.name}
+            >
+              {userProfile.name}
+            </span>
+            <span className="text-[10px] text-gray-500 p-1">
+              {userProfile.role === "staff" ? (
+                <span>{translateStaffRole(userProfile.staffRole!)}</span>
+              ) : (
+                <span>{userProfile.role}</span>
+              )}
+            </span>
+          </div>
+
+          {/* 2. Avatar Trigger */}
+          <div
+            className="w-9 h-9 rounded-full overflow-hidden cursor-pointer border-2 border-transparent hover:border-lamaBlue transition-all"
+            onClick={() => setShowDetails(!showDetails)}
+          >
+            <Image
+              src={userProfile.img}
+              alt="User Avatar"
+              width={36}
+              height={36}
+              className="rounded-full object-cover"
+            />
+          </div>
         </div>
       </div>
     </div>

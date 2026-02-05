@@ -103,7 +103,7 @@ const ResultForm = ({
     const updatedItem = state.data ?? data;
     if (state.success) {
       toast(
-        `Ujian telah berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`
+        `Nilai telah berhasil di ${type === "create" ? "Tambah!" : "Edit!"}`
       );
       setOpen(false);
       if (onChanged && updatedItem) {

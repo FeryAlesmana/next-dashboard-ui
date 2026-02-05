@@ -88,7 +88,7 @@ const FormContainer = async ({
       case "class":
         const studentsClass = await prisma.class.findMany({
           select: {
-           _count:{select:{students: true}}
+            _count: { select: { students: true } },
           },
         });
         const classTeacher = await prisma.teacher.findMany({
@@ -435,39 +435,17 @@ const FormContainer = async ({
         };
         break;
       case "user":
-        let foundUser = undefined;
-
-        if (id) {
-          const stringId = String(id);
-
-          const studentUser = await prisma.student.findUnique({
-            where: { id: stringId },
-            select: { id: true, name: true },
-          });
-
-          const teacherUser = await prisma.teacher.findUnique({
-            where: { id: stringId },
-            select: { id: true, name: true },
-          });
-
-          const parentUser = await prisma.parent.findUnique({
-            where: { id: stringId },
-            select: { id: true, name: true },
-          });
-
-          foundUser = studentUser || teacherUser || parentUser || undefined;
-        }
         // for dropdown options
         const students = await prisma.student.findMany({
-          select: { id: true, name: true },
+          select: { id: true, name: true, email: true },
         });
 
         const teachers = await prisma.teacher.findMany({
-          select: { id: true, name: true },
+          select: { id: true, name: true, email: true },
         });
 
         const parents = await prisma.parent.findMany({
-          select: { id: true, name: true },
+          select: { id: true, name: true, email: true },
         });
 
         const usersData = [
@@ -475,13 +453,23 @@ const FormContainer = async ({
             id: s.id,
             name: s.name,
             type: "student",
+            email: s.email,
           })),
-          ...teachers.map((t) => ({ id: t.id, name: t.name, type: "teacher" })),
-          ...parents.map((p) => ({ id: p.id, name: p.name, type: "parent" })),
+          ...teachers.map((t) => ({
+            id: t.id,
+            name: t.name,
+            type: "teacher",
+            email: t.email,
+          })),
+          ...parents.map((p) => ({
+            id: p.id,
+            name: p.name,
+            type: "parent",
+            email: p.email,
+          })),
         ];
 
         relatedData = {
-          foundUser,
           usersData,
         };
         break;

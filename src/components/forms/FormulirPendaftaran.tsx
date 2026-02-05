@@ -836,6 +836,7 @@ const FormulirPendaftaran = ({
               <select
                 {...register("awards_lvl")}
                 className="w-full border rounded px-3 py-2"
+                
               >
                 <option value="">-- Pilih --</option>
                 <option value="kecamatan">Kecamatan</option>

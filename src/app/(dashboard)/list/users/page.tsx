@@ -157,27 +157,38 @@ const UserListPage = async ({
   }
   // Apply pagination here
   const students = await prisma.student.findMany({
-    select: { id: true, name: true },
+    select: { id: true, name: true, email: true },
   });
 
   const teachers = await prisma.teacher.findMany({
-    select: { id: true, name: true },
-  });
-  const staffs = await prisma.staff.findMany({
-    select: { id: true, name: true },
+    select: { id: true, name: true, email: true },
   });
 
   const parents = await prisma.parent.findMany({
-    select: { id: true, name: true },
+    select: { id: true, name: true, email: true },
   });
 
-  // Combine them all into one
   const usersData = [
-    ...students.map((s) => ({ id: s.id, name: s.name, role: "student" })),
-    ...teachers.map((t) => ({ id: t.id, name: t.name, role: "teacher" })),
-    ...staffs.map((t) => ({ id: t.id, name: t.name, role: "staff" })),
-    ...parents.map((p) => ({ id: p.id, name: p.name, role: "parent" })),
+    ...students.map((s) => ({
+      id: s.id,
+      name: s.name,
+      role: "student",
+      email: s.email,
+    })),
+    ...teachers.map((t) => ({
+      id: t.id,
+      name: t.name,
+      role: "teacher",
+      email: t.email,
+    })),
+    ...parents.map((p) => ({
+      id: p.id,
+      name: p.name,
+      role: "parent",
+      email: p.email,
+    })),
   ];
+
   let relatedData = { usersData };
   return (
     <ClientPageWrapper key={key} role={role!}>

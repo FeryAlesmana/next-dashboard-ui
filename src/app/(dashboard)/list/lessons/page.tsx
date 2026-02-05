@@ -24,6 +24,7 @@ import ParentLessonViewSemester from "@/components/client/ParentLessonViewSemest
 import StudentLessonViewSemester from "@/components/client/StudentLessonView";
 import z from "zod";
 import { notFound } from "next/navigation";
+import SupervisedView from "@/components/SupervisedView";
 
 // type LessonList = Lesson & { subject: Subject } & { class: Class } & {
 //   teacher: Teacher;
@@ -123,38 +124,28 @@ const LessonListPage = async ({
       <td className="flex items-center p-4 gap-4">
         {item.subject?.name || "-"}
       </td>
-      <td className="hidden md:table-cell">{item.class.name}</td>
       <td className="hidden md:table-cell">
-        {" "}
-        {item.startTime.toLocaleTimeString("id-ID", {
-          timeZone: "Asia/Jakarta",
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: false,
-        })}
+        {item.class?.name || "Tidak Ada Kelas"}
       </td>
-      <td className="hidden md:table-cell">
-        {" "}
-        {item.endTime.toLocaleTimeString("id-ID", {
-          timeZone: "Asia/Jakarta",
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: false,
-        })}
-      </td>
+      <td className="hidden md:table-cell"> {item.startTime}</td>
+      <td className="hidden md:table-cell"> {item.endTime}</td>
       <td>{item.day}</td>
       <td className="hidden md:table-cell">
         {item.teacher ? `${item.teacher.name}` : "Tidak ada guru"}
       </td>
       <td>
-        <Link href={`/list/attendance/${item.class.name}/${item.id}`}>
-          <button
-            className="w-7 h-7 flex items-center justify-center rounded-full"
-            title="Pertemuan"
-          >
-            <Image src="/morev.png" alt="" width={16} height={16} />
-          </button>
-        </Link>
+        <div className="flex items-center gap-2">
+          {item?.class && (
+            <Link href={`/list/attendance/${item.class.name}/${item.id}`}>
+              <button className="w-7 h-7 flex items-center justify-center rounded-full">
+                <Image src="/moreDark.png" alt="" width={16} height={16} />
+              </button>
+            </Link>
+          )}
+          <span className="hidden md:block text-sm text-gray-600">
+            Jumlah : {item._count?.meetings || "0"}
+          </span>
+        </div>
       </td>
       <td>
         <div className="flex items-center gap-2">
@@ -297,7 +288,7 @@ const LessonListPage = async ({
     case "teacher": {
       if (!hasTeacherIdParam) {
         const teacher = await prisma.teacher.findUnique({
-          where: { id: userId! },
+          where: { clerkId: userId! },
           include: { classes: { select: { id: true, name: true } } },
         });
 
@@ -332,10 +323,9 @@ const LessonListPage = async ({
         teacherLesson = supervisedClassesWithLessons;
         return (
           <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
-            <h1 className="text-lg font-semibold mb-4">Jadwal Guru</h1>
 
             {/* Supervised Classes */}
-            <div className="mb-8">
+            {/* <div className="mb-8">
               <h2 className="text-md font-semibold mb-2">
                 Jadwal Kelas yang Disupervisi
               </h2>
@@ -392,7 +382,9 @@ const LessonListPage = async ({
                   Anda tidak mengawasi kelas manapun.
                 </div>
               )}
-            </div>
+            </div> */}
+
+            <SupervisedView teacherLesson={teacherLesson} />
 
             {/* Teaching Lessons */}
             <div className="mb-8">
@@ -414,7 +406,7 @@ const LessonListPage = async ({
     case "student":
       const student = await prisma.student.findUnique({
         where: {
-          id: userId!,
+          clerkId: userId!,
         },
         select: {
           id: true,

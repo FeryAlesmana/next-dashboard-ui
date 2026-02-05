@@ -24,7 +24,7 @@ export function MobileAssignmentCard({
   const allowedRole = role === "admin" || role === "teacher" || allowedStaff;
   return (
     <div className="border rounded-lg p-4 bg-white shadow-sm">
-      <div className="flex items-start justify-between min-w-0">
+      <div className="grid grid-cols-[auto,1fr,auto] gap-3 items-start">
         {/* Checkbox */}
         {(role === "admin" || allowedStaff) && (
           <input

@@ -480,7 +480,8 @@ export const ppdbSchema = z.object({
     .regex(/^\d+$/),
   no_ijz: z
     .string({ message: " No seri Ijazah Calon Siswa wajib diisi!" })
-    .min(12, { message: " Panjang No ijazah minimal 12 Karakter" }),
+    .min(12, { message: " Panjang No ijazah minimal 12 Karakter" })
+    .max(25, { message: " Panjang No ijazah Maksimal 25 Karakter" }),
   nik: z
     .string({ message: " NIK Calon Siswa wajib diisi!" })
     .length(16, { message: " Panjang NIK harus 16 Karakter" })
@@ -564,7 +565,8 @@ export const ppdbSchema = z.object({
       message: " Jenis Penghargaan Calon Siswa wajib diisi!",
     })
     .optional()
-    .nullable(),
+    .nullable()
+    .or(z.literal("")),
   awards_date: z
     .string({ message: " Tanggal penghargaan Calon Siswa wajib diisi!" })
     .nullable(),

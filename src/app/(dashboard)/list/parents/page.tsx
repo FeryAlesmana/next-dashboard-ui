@@ -84,7 +84,7 @@ const ParentsListPage = async ({
       if (value !== undefined && value !== "")
         switch (key) {
           case "id":
-            query.id = value;
+            query.OR = [{ id: value }, { clerkId: value }];
             break;
           case "search":
             query.OR = [

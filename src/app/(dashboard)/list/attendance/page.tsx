@@ -72,16 +72,38 @@ export default async function AttendancePage({
     }
 
     case "parent": {
-      const children = await prisma.student.findMany({
-        where: {
-          OR: [
-            { parentId: userId! },
-            { secondParentId: userId! },
-            { guardianId: userId! },
-          ],
+      const parent = await prisma.parent.findUnique({
+        where: { clerkId: userId! },
+        select: {
+          students: {
+            select: {
+              id: true,
+              name: true,
+              classId: true,
+            },
+          },
+          secondaryStudents: {
+            select: {
+              id: true,
+              name: true,
+              classId: true,
+            },
+          },
+          guardianStudents: {
+            select: {
+              id: true,
+              name: true,
+              classId: true,
+            },
+          },
         },
-        select: { classId: true, name: true, id: true },
       });
+
+      const children = [
+        ...(parent?.students ?? []),
+        ...(parent?.secondaryStudents ?? []),
+        ...(parent?.guardianStudents ?? []),
+      ];
 
       const classIds = children
         .map((child) => child.classId)
@@ -206,7 +228,11 @@ export default async function AttendancePage({
               student.lessons.map((lesson: LessonWithRelations) => (
                 <Link
                   key={lesson.id}
-                  href={lesson.class ? `/list/attendance/${lesson.class?.name}/${lesson.id}` : '#'}
+                  href={
+                    lesson.class
+                      ? `/list/attendance/${lesson.class?.name}/${lesson.id}`
+                      : "#"
+                  }
                   className="block p-4 rounded-lg border hover:shadow-md transition bg-white"
                 >
                   <div className="font-semibold text-lg mb-1">

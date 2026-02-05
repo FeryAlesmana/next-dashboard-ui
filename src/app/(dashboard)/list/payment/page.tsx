@@ -163,24 +163,62 @@ const PaymentLogListPage = async ({
         </>
       );
     case "parent":
-      const children = await prisma.student.findMany({
-        where: {
-          OR: [
-            { parentId: userId! },
-            { secondParentId: userId! },
-            { guardianId: userId! },
-          ],
-        },
+      const parent = await prisma.parent.findUnique({
+        where: { clerkId: userId! },
         select: {
-          id: true,
-          name: true,
-          class: {
-            select: { name: true, grade: { select: { level: true } } },
+          students: {
+            select: {
+              id: true,
+              name: true,
+              classId: true,
+              createdAt: true,
+              class: {
+                select: {
+                  name: true,
+                  grade: { select: { level: true } },
+                },
+              },
+              student_details: { select: { nisn: true } },
+            },
           },
-          student_details: { select: { nisn: true } },
-          createdAt: true,
+          secondaryStudents: {
+            select: {
+              id: true,
+              name: true,
+              classId: true,
+              createdAt: true,
+              class: {
+                select: {
+                  name: true,
+                  grade: { select: { level: true } },
+                },
+              },
+              student_details: { select: { nisn: true } },
+            },
+          },
+          guardianStudents: {
+            select: {
+              id: true,
+              name: true,
+              classId: true,
+              createdAt: true,
+              class: {
+                select: {
+                  name: true,
+                  grade: { select: { level: true } },
+                },
+              },
+              student_details: { select: { nisn: true } },
+            },
+          },
         },
       });
+
+      const children = [
+        ...(parent?.students ?? []),
+        ...(parent?.secondaryStudents ?? []),
+        ...(parent?.guardianStudents ?? []),
+      ];
 
       if (children.length === 0) {
         return (
@@ -412,7 +450,7 @@ const PaymentLogListPage = async ({
     remainingAmount: remainingMap,
   };
 
- const classOptions = classesData
+  const classOptions = classesData
     .slice() // avoid mutating original array
     .sort((a, b) => a.name.localeCompare(b.name))
     .map((cls) => ({

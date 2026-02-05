@@ -215,7 +215,7 @@ const ExamListPage = async ({
     case "teacher":
       query.lesson.teacherId = userId!;
       const teacher = await prisma.teacher.findUnique({
-        where: { id: userId! },
+        where: { clerkId: userId! },
         select: {
           classes: {
             select: {
@@ -242,7 +242,7 @@ const ExamListPage = async ({
       break;
     case "student":
       const student = await prisma.student.findUnique({
-        where: { id: userId! },
+        where: { clerkId: userId! },
         select: {
           class: { select: { grade: { select: { level: true } } } },
           createdAt: true,
@@ -253,7 +253,7 @@ const ExamListPage = async ({
       query.lesson.class = {
         students: {
           some: {
-            id: userId!,
+            clerkId: userId!,
           },
         },
       };
@@ -267,24 +267,59 @@ const ExamListPage = async ({
       }
       break;
     case "parent":
-      const children = await prisma.student.findMany({
-        where: {
-          OR: [
-            { parentId: userId! },
-            { secondParentId: userId! },
-            { guardianId: userId! },
-          ],
-        },
+      const parent = await prisma.parent.findUnique({
+        where: { clerkId: userId! },
         select: {
-          classId: true,
-          name: true,
-          id: true,
-          class: {
-            select: { name: true, grade: { select: { level: true } } },
+          students: {
+            select: {
+              id: true,
+              name: true,
+              classId: true,
+              createdAt: true,
+              class: {
+                select: {
+                  name: true,
+                  grade: { select: { level: true } },
+                },
+              },
+            },
           },
-          createdAt: true,
+          secondaryStudents: {
+            select: {
+              id: true,
+              name: true,
+              classId: true,
+              createdAt: true,
+              class: {
+                select: {
+                  name: true,
+                  grade: { select: { level: true } },
+                },
+              },
+            },
+          },
+          guardianStudents: {
+            select: {
+              id: true,
+              name: true,
+              classId: true,
+              createdAt: true,
+              class: {
+                select: {
+                  name: true,
+                  grade: { select: { level: true } },
+                },
+              },
+            },
+          },
         },
       });
+
+      const children = [
+        ...(parent?.students ?? []),
+        ...(parent?.secondaryStudents ?? []),
+        ...(parent?.guardianStudents ?? []),
+      ];
 
       const classIds = children
         .map((child) => child.classId)

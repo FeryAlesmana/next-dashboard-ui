@@ -565,7 +565,7 @@ export const updateTeacher = async (
           ...(data.password !== "" && {
             password: data.password,
           }),
-          publicMetadata: { fullName: data.name },
+          publicMetadata: { fullName: data.name, role:"teacher" },
         });
         if (user) {
           console.log("✅ User Sucessfully Updated:", user.id);
@@ -1122,7 +1122,7 @@ export const updateStudent = async (
           username: data.username,
           ...(data.password !== "" && {
             password: data.password,
-            publicMetadata: { fullName: data.name },
+            publicMetadata: { fullName: data.name, role:"student" },
           }),
         });
         if (user) {
@@ -2211,7 +2211,7 @@ export const updateParent = async (
           ...(data.password !== "" && {
             password: data.password,
           }),
-          publicMetadata: { fullName: data.name },
+          publicMetadata: { fullName: data.name, role:"parent" },
         });
         if (user) {
           console.log("✅ User Sucessfully Updated:", user.id);
@@ -3180,7 +3180,7 @@ export const updatePpdb = async (
         }
         const student = await tx.student.create({
           data: {
-            id: clerkId,
+            clerkId: clerkId,
             username: clerkUser.username ?? data.name,
             password: encryptPassword(data.nisn),
             name: data.name,
@@ -3205,6 +3205,9 @@ export const updatePpdb = async (
         /** -------------------------
          * Create Student Details
          * ------------------------- */
+        const emptyToNull = <T>(v: T) =>
+          v === "" || v === undefined ? null : v;
+
         await tx.student_details.create({
           data: {
             studentId: student.id,
@@ -3226,7 +3229,7 @@ export const updatePpdb = async (
             number_of_siblings: data.number_of_siblings,
             postcode: data.postcode,
             awards: data.awards ?? null,
-            awards_lvl: data.awards_lvl ?? null,
+            awards_lvl: data.awards_lvl === "" ? null : data.awards_lvl,
             awards_date: data.awards_date ? new Date(data.awards_date) : null,
             scholarship: data.scholarship ?? null,
             scholarship_detail: data.scholarship_detail ?? null,
@@ -3293,8 +3296,7 @@ export const updatePpdb = async (
 
           return {
             username,
-
-            password: encryptPassword(`${data.nik}@${role}`),
+            password: `${data.nik}@${role}`,
             email: `${data.nik}_${role}@parent.local`,
             name,
             phone: phone ?? "",
@@ -3346,8 +3348,9 @@ export const updatePpdb = async (
           // 🔥 Create Parent in Prisma with Clerk ID
           const wali = await tx.parent.create({
             data: {
-              id: Father.id,
+              clerkId: Father.id,
               ...parentData,
+              password: encryptPassword(parentData.password),
               students: { connect: { id: student.id } },
             },
           });
@@ -3381,12 +3384,15 @@ export const updatePpdb = async (
               err?.errors?.[0]?.message || "Gagal membuat akun ibu.";
             return { success: false, error: true, message };
           }
+          // encryptPassword(
+          // )
 
           // 🔥 Create Prisma Parent using Clerk ID
           const ibu = await tx.parent.create({
             data: {
-              id: mother.id,
+              clerkId: mother.id,
               ...parentData,
+              password: encryptPassword(parentData.password),
               secondaryStudents: { connect: { id: student.id } },
             },
           });
@@ -3424,8 +3430,9 @@ export const updatePpdb = async (
           // 🔥 Create Parent in Prisma with Clerk ID
           const wali = await tx.parent.create({
             data: {
-              id: clerkUser.id,
+              clerkId: clerkUser.id,
               ...parentData,
+              password: encryptPassword(parentData.password),
               guardianStudents: { connect: { id: student.id } },
             },
           });
@@ -4711,7 +4718,7 @@ export const activateManyTeachers = async (
   const failed: { username: string; field?: string; message: string }[] = [];
   let createdTeacherId: string | undefined = undefined;
   for (const id of ids) {
-    console.log(id, " ID di activate teacher");
+    
 
     try {
       const teacher = await prisma.teacher.findUnique({ where: { id } });
@@ -4732,7 +4739,6 @@ export const activateManyTeachers = async (
             fullName: teacher.name, // store titles here instead
           },
         });
-
         if (user) {
           await prisma.teacher.update({
             where: { id },
@@ -5677,7 +5683,7 @@ export const updateStaff = async (
             password: data.password,
           }),
           ...(data.name !== "" && {
-            publicMetadata: { fullName: data.name },
+            publicMetadata: { fullName: data.name , role:"staff"},
           }),
         });
         if (user) {
