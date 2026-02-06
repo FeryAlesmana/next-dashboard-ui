@@ -431,7 +431,7 @@ const LessonListPage = async ({
       return (
         <>
           <StudentLessonViewSemester
-            userId={userId!}
+            userId={student.id!}
             gradeLevel={gradeLevel!}
             createdAt={createdAt}
           ></StudentLessonViewSemester>

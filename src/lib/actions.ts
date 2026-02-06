@@ -52,6 +52,8 @@ import {
   BillLogSchema,
   PaymentSchema,
   CreditSettingSchema,
+  CreateuserSchema,
+  UpdateuserSchema,
 } from "./formValidationSchema";
 import prisma from "./prisma";
 import { clerkClient } from "@clerk/nextjs/server";
@@ -3097,9 +3099,18 @@ export const updatePpdb = async (
       return { success: false, error: true, message: "Missing student ID" };
     }
 
+    type clerkUsertype = {
+      id:string,
+      username:string |null,
+      password?:string,
+      publicMetadata?: object
+    }|null
+
     let studentId = null;
+    let clerkUser: clerkUsertype = null;
     // If isvalid is true, create a new user and student
     if (data.isvalid === true) {
+      try {
       const existingPpdb = await prisma.pPDB.findUnique({
         where: { id: data.id },
         select: { isvalid: true, studentId: true },
@@ -3139,7 +3150,7 @@ export const updatePpdb = async (
 
       // fallback if name becomes empty
       const username = baseUsername || `student${Date.now()}`;
-      let clerkUser;
+      
       try {
         clerkUser = await client.users.createUser({
           username: username,
@@ -3181,7 +3192,7 @@ export const updatePpdb = async (
         const student = await tx.student.create({
           data: {
             clerkId: clerkId,
-            username: clerkUser.username ?? data.name,
+            username: clerkUser?.username ?? data.name,
             password: encryptPassword(data.nisn),
             name: data.name,
             email: data.email,
@@ -3205,8 +3216,6 @@ export const updatePpdb = async (
         /** -------------------------
          * Create Student Details
          * ------------------------- */
-        const emptyToNull = <T>(v: T) =>
-          v === "" || v === undefined ? null : v;
 
         await tx.student_details.create({
           data: {
@@ -3463,7 +3472,21 @@ export const updatePpdb = async (
          * ------------------------- */
 
         return { student };
-      });
+        
+      })
+      } catch (error) {
+        const isPrismaError = error instanceof Prisma.PrismaClientKnownRequestError;
+    if (isPrismaError && clerkUser?.id) {
+      try {
+        await client.users.deleteUser(clerkUser.id);
+        console.warn("⚠️ Rolled back Clerk user:", clerkUser.id);
+      } catch (cleanupError) {
+        console.error("❌ Failed to rollback Clerk user", cleanupError);
+      }
+      const prismaError = handlePrismaError(error);
+      if (prismaError) return prismaError;
+    }
+      };
     }
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -4411,7 +4434,7 @@ export const deletePaymentLogs = async (
 
 export const createUserDB = async (
   currentState: CurrentState,
-  data: UserSchema,
+  data: CreateuserSchema,
 ) => {
   try {
     const user = await client.users.createUser({
@@ -4521,13 +4544,15 @@ export const createUserDB = async (
 // 🔹 Update existing user
 export const updateUserDB = async (
   currentState: CurrentState,
-  data: UserSchema,
+  data: UpdateuserSchema,
 ) => {
   try {
     // 1. Update Clerk user
     const user = await client.users.updateUser(data.id!, {
       username: data.username,
-      password: data.password,
+      ...(data.password !== "" && {
+          password: data.password!
+        }),
       publicMetadata: { role: data.role },
     });
 
@@ -4536,7 +4561,10 @@ export const updateUserDB = async (
     const updateData = {
       clerkId: user.id,
       username: data.username,
-      email: data.email,
+      ...(data.email !== "" && { email: data.email }),
+      ...(data.password !== "" && {
+          password: encryptPassword(data.password!),
+        }),
       password: encryptPassword(data.password!),
     };
 
@@ -4572,6 +4600,7 @@ export const updateUserDB = async (
           message: "User Tidak ditemukan di database!",
         };
     }
+
 
     const transformedRow = {
       id: user.id,

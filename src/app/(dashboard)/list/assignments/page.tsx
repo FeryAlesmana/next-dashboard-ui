@@ -233,6 +233,7 @@ const AssignmentListPage = async ({
       const student = await prisma.student.findUnique({
         where: { id: userId! },
         select: {
+          id: true,
           class: { select: { grade: { select: { level: true } } } },
           createdAt: true,
         },
@@ -242,7 +243,7 @@ const AssignmentListPage = async ({
       query.lesson.class = {
         students: {
           some: {
-            id: userId!,
+            id: student?.id!,
           },
         },
       };
@@ -257,58 +258,58 @@ const AssignmentListPage = async ({
       break;
     case "parent": {
       const parent = await prisma.parent.findUnique({
-              where: { clerkId: userId! },
-              select: {
-                students: {
-                  select: {
-                    id: true,
-                    name: true,
-                    classId: true,
-                    createdAt: true,
-                    class: {
-                      select: {
-                        name: true,
-                        grade: { select: { level: true } },
-                      },
-                    },
-                  },
-                },
-                secondaryStudents: {
-                  select: {
-                    id: true,
-                    name: true,
-                    classId: true,
-                    createdAt: true,
-                    class: {
-                      select: {
-                        name: true,
-                        grade: { select: { level: true } },
-                      },
-                    },
-                  },
-                },
-                guardianStudents: {
-                  select: {
-                    id: true,
-                    name: true,
-                    classId: true,
-                    createdAt: true,
-                    class: {
-                      select: {
-                        name: true,
-                        grade: { select: { level: true } },
-                      },
-                    },
-                  },
+        where: { clerkId: userId! },
+        select: {
+          students: {
+            select: {
+              id: true,
+              name: true,
+              classId: true,
+              createdAt: true,
+              class: {
+                select: {
+                  name: true,
+                  grade: { select: { level: true } },
                 },
               },
-            });
-      
-            const children = [
-              ...(parent?.students ?? []),
-              ...(parent?.secondaryStudents ?? []),
-              ...(parent?.guardianStudents ?? []),
-            ];
+            },
+          },
+          secondaryStudents: {
+            select: {
+              id: true,
+              name: true,
+              classId: true,
+              createdAt: true,
+              class: {
+                select: {
+                  name: true,
+                  grade: { select: { level: true } },
+                },
+              },
+            },
+          },
+          guardianStudents: {
+            select: {
+              id: true,
+              name: true,
+              classId: true,
+              createdAt: true,
+              class: {
+                select: {
+                  name: true,
+                  grade: { select: { level: true } },
+                },
+              },
+            },
+          },
+        },
+      });
+
+      const children = [
+        ...(parent?.students ?? []),
+        ...(parent?.secondaryStudents ?? []),
+        ...(parent?.guardianStudents ?? []),
+      ];
 
       const classIds = children
         .map((child) => child.classId)
@@ -427,8 +428,7 @@ const AssignmentListPage = async ({
         },
       }),
     ]);
-   const classOptions = ClassAssignment
-    .slice() // avoid mutating original array
+  const classOptions = ClassAssignment.slice() // avoid mutating original array
     .sort((a, b) => a.name.localeCompare(b.name))
     .map((cls) => ({
       label: cls.name ?? "-",

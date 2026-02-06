@@ -244,6 +244,7 @@ const ExamListPage = async ({
       const student = await prisma.student.findUnique({
         where: { clerkId: userId! },
         select: {
+          id: true,
           class: { select: { grade: { select: { level: true } } } },
           createdAt: true,
         },
@@ -253,7 +254,7 @@ const ExamListPage = async ({
       query.lesson.class = {
         students: {
           some: {
-            clerkId: userId!,
+            id: student?.id!,
           },
         },
       };

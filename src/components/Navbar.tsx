@@ -14,6 +14,7 @@ interface UserProfile {
   img: string;
   role: string;
   staffRole?: string;
+  class?: string;
 }
 
 const Navbar = ({ onToggleMenu }: NavbarProps) => {
@@ -122,8 +123,12 @@ const Navbar = ({ onToggleMenu }: NavbarProps) => {
             <span className="text-[10px] text-gray-500 p-1">
               {userProfile.role === "staff" ? (
                 <span>{translateStaffRole(userProfile.staffRole!)}</span>
+              ) : userProfile.role === "student" ? (
+                /* Display Class for students, fallback to 'student' if class is missing */
+                <span>Kelas {userProfile.class || "Siswa"}</span>
               ) : (
-                <span>{userProfile.role}</span>
+                /* Fallback for teacher and admin */
+                <span className="capitalize">{userProfile.role}</span>
               )}
             </span>
           </div>

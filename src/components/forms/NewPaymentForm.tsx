@@ -469,8 +469,8 @@ export default function NewPaymentForm({
         <ConfirmDialog
           message={
             type === "create"
-              ? "Tambah tagihan baru?"
-              : "Simpan perubahan tagihan?"
+              ? "Tambah Pembayaran baru?"
+              : "Simpan perubahan Pembayaran?"
           }
           onConfirm={handleSubmitForm}
           onCancel={() => setShowConfirm(false)}

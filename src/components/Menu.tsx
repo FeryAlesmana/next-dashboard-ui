@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import MenuSkeleton from "./MenuSkeleton";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 type SidebarChildItem = {
   label: string;
   href: string;
@@ -42,8 +42,19 @@ type SidebarGroup = {
   title: string;
   items: SidebarItem[];
 };
-export default function Menu({ onLinkClick }: { onLinkClick: () => void }) {
-  const { user, isLoaded } = useUser();
+type UserDb = {
+  id?: string;
+  role?: string;
+};
+export default function Menu({
+  onLinkClick,
+  userDb,
+  isLoaded,
+}: {
+  onLinkClick: () => void;
+  userDb: UserDb;
+  isLoaded: boolean;
+}) {
   const pathname = usePathname();
   const [openItems, setOpenItems] = useState<Record<string, boolean>>({});
 
@@ -53,8 +64,8 @@ export default function Menu({ onLinkClick }: { onLinkClick: () => void }) {
       [label]: !prev[label],
     }));
   };
-  const role = user?.publicMetadata?.role as string | undefined;
-  const userId = user?.id;
+  const role = userDb.role as string | undefined;
+  const userId = userDb.id;
 
   if (!isLoaded) return <MenuSkeleton />;
   const menuItems: SidebarGroup[] = [
@@ -206,12 +217,7 @@ export default function Menu({ onLinkClick }: { onLinkClick: () => void }) {
     },
   ];
 
-  const profileHref =
-    role === "student"
-      ? `/list/students/${userId}`
-      : role === "teacher"
-      ? `/list/teachers/${userId}`
-      : `/list/staffs/${userId}`; // fallback for other roles
+  const profileHref = userDb ? `/list/${role}s/${userId}` : "#";
 
   return (
     <div className="mt-4 text-sm">
@@ -231,7 +237,7 @@ export default function Menu({ onLinkClick }: { onLinkClick: () => void }) {
 
               // Parent active if any child is active
               const parentActive = item.children?.some((child) =>
-                pathname?.startsWith(child.href)
+                pathname?.startsWith(child.href),
               );
 
               return (

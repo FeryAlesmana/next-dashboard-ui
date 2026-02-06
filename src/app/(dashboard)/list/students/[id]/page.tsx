@@ -4,11 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import Perfomance from "@/components/Perfomance";
 import BigCalendarContainer from "@/components/BigCalendarContainer";
-import {
-  decryptPassword,
-  generateSemesters,
-  getCurrentUser,
-} from "@/lib/utils";
+import { decryptPassword, getCurrentUser } from "@/lib/utils";
 import { Class, Student, student_details } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
@@ -34,9 +30,7 @@ const SingleStudentPage = async ({
   }
 
   // ✅ If the role is 'student' but trying to access another student's page
-  if (role === "student" && id !== userId) {
-    return <ForbiddenPage />; // Prevent access
-  }
+
   const student:
     | (Student & {
         class: (Class & { _count: { lessons: number } }) | null;
@@ -58,9 +52,55 @@ const SingleStudentPage = async ({
     },
   });
 
+  if (role === "student" && student?.clerkId !== userId) {
+    return <ForbiddenPage />; // Prevent access
+  }
+
   let studentWithDecryptedPassword = {
     ...student,
     password: student?.password ? decryptPassword(student.password) : "",
+  };
+  const generateSemesters = (
+    createdAt: Date,
+    gradeLevel: number,
+  ): Semester[] => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth(); // 0-11
+
+    // 1. Determine the start of the current Academic Year
+    // If we are in Jan-June (0-5), the school year started last year
+    const academicYearStart = currentMonth < 6 ? currentYear - 1 : currentYear;
+
+    // 2. Calculate when the student actually started Grade 1
+    // If they are in Grade 3 now, they started Grade 1 two years ago
+    const studentEntryYear = academicYearStart - (gradeLevel - 1);
+
+    const generated: Semester[] = [];
+
+    // 3. Loop from Entry Year up to the Current Academic Year
+    for (let year = studentEntryYear; year <= academicYearStart; year++) {
+      // Semester Ganjil (July - Dec)
+      generated.push({
+        label: `Ganjil ${year}/${year + 1}`,
+        start: new Date(`${year}-07-01`),
+        end: new Date(`${year}-12-31`),
+      });
+
+      // Semester Genap (Jan - June)
+      // Only add Genap if the year has actually reached that point
+      // Or if it's a past year
+      if (year < academicYearStart || currentMonth < 6) {
+        generated.push({
+          label: `Genap ${year}/${year + 1}`,
+          start: new Date(`${year + 1}-01-01`),
+          end: new Date(`${year + 1}-06-30`),
+        });
+      }
+    }
+
+    // Filter out semesters that start in the future relative to "now"
+    return generated.filter((sem) => sem.start <= now).reverse();
   };
 
   const semesters = generateSemesters(

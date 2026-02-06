@@ -647,7 +647,7 @@ export const getCurrentUser: any = async () => {
   return { userId, role, actor };
 };
 export const getCurrentStaff = async (id: string) => {
-  const staff = await prisma.staff.findUnique({ where: { id } });
+  const staff = await prisma.staff.findUnique({ where: { clerkId: id } });
   const staffrole = staff?.staffroles as staffrole;
   return staffrole;
 };
@@ -735,12 +735,13 @@ export const getProfileByClerkIdAndRole = async (
     case "student":
       const student = await prisma.student.findUnique({
         where: { clerkId: clerkId },
-        select: { name: true, img: true },
+        select: { name: true, img: true, class: { select: { name: true } } },
       });
       return {
         name: student?.name ?? "Siswa",
         img: student?.img ?? defaultImg,
         staffRole: undefined,
+        class: student?.class?.name
       };
 
     case "teacher":
@@ -752,6 +753,7 @@ export const getProfileByClerkIdAndRole = async (
         name: teacher?.name ?? "Guru",
         img: teacher?.img ?? defaultImg,
         staffRole: undefined,
+        class: undefined
       };
 
     case "staff":
@@ -763,6 +765,7 @@ export const getProfileByClerkIdAndRole = async (
         name: staff?.name ?? "Staff",
         img: staff?.img ?? defaultImg,
         staffRole: staff?.staffroles ?? "",
+        class: undefined
       };
 
     case "parent":
@@ -774,6 +777,7 @@ export const getProfileByClerkIdAndRole = async (
         name: parent?.name ?? "Wali Murid",
         img: defaultImg,
         staffRole: undefined,
+        class: undefined
       };
 
     default:
@@ -781,6 +785,7 @@ export const getProfileByClerkIdAndRole = async (
         name: "Admin",
         img: defaultImg,
         staffRole: undefined,
+        class: undefined
       };
   }
 };

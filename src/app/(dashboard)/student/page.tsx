@@ -1,7 +1,10 @@
 import Announcements from "@/components/Announcements";
+import AttendanceChartContainer from "@/components/AttendanceChartContainer";
+import StudentAttendanceContainer from "@/components/AttendancePieCharContainer";
 import BigCalendarContainer from "@/components/BigCalendarContainer";
 import EventCalendarContainer from "@/components/EventCalendarContainer";
 import EventCalender from "@/components/EventCalender";
+import StudentFinanceContainer from "@/components/StudentFinanceContainer";
 import prisma from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
 import "react-big-calendar/lib/css/react-big-calendar.css";
@@ -18,7 +21,7 @@ const StudentPage = async ({
   });
   const { userId } = await auth();
 
-  const classItem = await prisma.class.findFirst({
+  await prisma.class.findFirst({
     where: {
       students: {
         some: {
@@ -27,6 +30,23 @@ const StudentPage = async ({
       },
     },
   });
+  const [student, classItem] = await prisma.$transaction([
+    prisma.student.findUnique({
+      where: { clerkId: userId! },
+      select: { id: true, name: true },
+    }),
+    prisma.class.findFirst({
+      where: {
+        students: {
+          some: {
+            clerkId: userId!,
+          },
+        },
+      },
+    }),
+  ]);
+
+  const studentId = student?.id;
 
   // console.log(classItem);
 
@@ -48,6 +68,14 @@ const StudentPage = async ({
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+        <div className="flex gap-4 flex-col lg:flex-row">
+          <div className="w-full lg:w-1/3 h-[450px] mt-2">
+            <StudentAttendanceContainer id={studentId!} />
+          </div>
+          <div className="w-full lg:w-2/3 h-[450px] mt-2">
+            <StudentFinanceContainer studentId={studentId!}/>
           </div>
         </div>
       </div>

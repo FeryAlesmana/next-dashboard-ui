@@ -87,87 +87,124 @@ const ResultListPage = async ({
     ...(allowedRole ? [{ header: "Aksi", accessor: "action" }] : []),
   ];
 
-  const query: Prisma.ResultWhereInput = {};
+  const query: Prisma.ResultWhereInput = {
+    AND: [
+      { studentId: { not: null } },
+      { OR: [{ examId: { not: null } }, { assignmentId: { not: null } }] },
+    ],
+  };
   let orderBy: Prisma.ResultOrderByWithRelationInput | undefined;
   const semesterSchema = z.object({
     start: z.string().datetime(),
     end: z.string().datetime(),
   });
+
+  const andConditions = query.AND as Prisma.ResultWhereInput[];
   if (queryParams) {
     for (const [key, value] of Object.entries(queryParams)) {
       if (value !== undefined && value !== "")
         switch (key) {
           case "studentId":
-            query.studentId = value;
+            andConditions.push({ studentId: value as string });
             break;
           case "search":
-            query.OR = [
-              { exam: { title: { contains: value, mode: "insensitive" } } },
-              {
-                assignment: { title: { contains: value, mode: "insensitive" } },
-              },
-              { student: { name: { contains: value, mode: "insensitive" } } },
-            ];
+            andConditions.push({
+              OR: [
+                {
+                  exam: {
+                    title: { contains: value as string, mode: "insensitive" },
+                  },
+                },
+                {
+                  assignment: {
+                    title: { contains: value as string, mode: "insensitive" },
+                  },
+                },
+                {
+                  student: {
+                    name: { contains: value as string, mode: "insensitive" },
+                  },
+                },
+              ],
+            });
             break;
           case "semester":
             try {
               const parsed = semesterSchema.parse(JSON.parse(value as string));
 
-              query.OR = [
-                {
-                  exam: {
-                    startTime: {
-                      gte: new Date(parsed.start),
-                      lte: new Date(parsed.end),
+              andConditions.push({
+                OR: [
+                  {
+                    exam: {
+                      startTime: {
+                        gte: new Date(parsed.start),
+                        lte: new Date(parsed.end),
+                      },
                     },
                   },
-                },
-                {
-                  assignment: {
-                    dueDate: {
-                      gte: new Date(parsed.start),
-                      lte: new Date(parsed.end),
+                  {
+                    assignment: {
+                      dueDate: {
+                        gte: new Date(parsed.start),
+                        lte: new Date(parsed.end),
+                      },
                     },
                   },
-                },
-              ];
+                ],
+              });
             } catch (e) {
               query.id = -1; // block tampered values
             }
             break;
           case "classId":
             const classId = toIntOrNotFound(value);
-            query.OR = [
-              { exam: { lesson: { classId: classId } } },
-              { assignment: { lesson: { classId: classId } } },
-            ];
+            console.log(classId, " class ID in params");
+
+            andConditions.push({
+              OR: [
+                { exam: { lesson: { classId } } },
+                { assignment: { lesson: { classId } } },
+              ],
+            });
             break;
           case "gradeId":
             const gradeId = toIntOrNotFound(value);
-            query.OR = [
-              { exam: { lesson: { class: { gradeId: gradeId } } } },
-              {
-                assignment: { lesson: { class: { gradeId: gradeId } } },
-              },
-            ];
+            andConditions.push({
+              OR: [
+                { exam: { lesson: { class: { gradeId: gradeId } } } },
+                {
+                  assignment: { lesson: { class: { gradeId: gradeId } } },
+                },
+              ],
+            });
             break;
           case "stype":
             if (value === "Ujian") {
-              query.examId = { not: null };
+              andConditions.push({
+                examId: { not: null },
+              });
             } else if (value === "Tugas") {
-              query.assignmentId = { not: null };
+              andConditions.push({
+                assignmentId: { not: null },
+              });
             } else return notFound();
             break;
           case "extype":
             switch (value) {
               case "harian":
-                query.resultType = "UJIAN_HARIAN";
+                andConditions.push({
+                  resultType: "UJIAN_HARIAN",
+                });
                 break;
               case "uts":
-                query.resultType = "UJIAN_TENGAH_SEMESTER";
+                andConditions.push({
+                  resultType: "UJIAN_TENGAH_SEMESTER",
+                });
                 break;
               case "uas":
-                query.resultType = "UJIAN_AKHIR_SEMESTER";
+                andConditions.push({
+                  resultType: "UJIAN_AKHIR_SEMESTER",
+                });
                 break;
               default:
                 return notFound();
@@ -176,13 +213,19 @@ const ResultListPage = async ({
           case "asstype":
             switch (value) {
               case "tharian":
-                query.resultType = "TUGAS_HARIAN";
+                andConditions.push({
+                  resultType: "TUGAS_HARIAN",
+                });
                 break;
               case "pr":
-                query.resultType = "PEKERJAAN_RUMAH";
+                andConditions.push({
+                  resultType: "PEKERJAAN_RUMAH",
+                });
                 break;
               case "ta":
-                query.resultType = "TUGAS_AKHIR";
+                andConditions.push({
+                  resultType: "TUGAS_AKHIR",
+                });
                 break;
               default:
                 return notFound();
@@ -265,8 +308,16 @@ const ResultListPage = async ({
       }
       break;
     case "student": {
+      const student = await prisma.student.findUnique({
+        where: { clerkId: userId! },
+        select: {
+          id: true,
+          class: { select: { grade: { select: { level: true } } } },
+          createdAt: true,
+        },
+      });
       const results = await prisma.result.findMany({
-        where: { studentId: userId! },
+        where: { studentId: student?.id! },
         include: {
           exam: {
             include: {
@@ -490,11 +541,7 @@ const ResultListPage = async ({
   const [dataRes, count, studentData, exams, assignments, classes] =
     await prisma.$transaction([
       prisma.result.findMany({
-        where: {
-          ...query,
-          studentId: { not: null },
-          OR: [{ examId: { not: null } }, { assignmentId: { not: null } }],
-        },
+        where: query,
         orderBy,
         include: {
           student: { select: { name: true } },
@@ -525,11 +572,7 @@ const ResultListPage = async ({
         skip: perPage ? perPage * (p - 1) : undefined,
       }),
       prisma.result.count({
-        where: {
-          ...query,
-          studentId: { not: null },
-          OR: [{ examId: { not: null } }, { assignmentId: { not: null } }],
-        },
+        where: query,
       }),
       prisma.student.findMany({
         select: {

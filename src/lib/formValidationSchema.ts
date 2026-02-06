@@ -1092,11 +1092,6 @@ export type MexamSchema = z.infer<typeof mexamSchema>;
 export const userSchema = z.object({
   id: z.string().optional(),
   username: z.string().min(1, { message: "Nama User wajib diisi!" }),
-  password: z
-    .string()
-    .min(8, { message: "Password harus mempunyai 8 karakter!" })
-    .or(z.literal(""))
-    .optional(),
   email: z
     .string()
     .email({ message: "Email anda Tidak valid!" })
@@ -1109,6 +1104,24 @@ export const userSchema = z.object({
 });
 
 export type UserSchema = z.infer<typeof userSchema>;
+
+export const createUserSchema = userSchema.extend({
+  password: z.string().min(8, {
+    message: "Password harus mempunyai 8 karakter!",
+  }),
+});
+
+export type CreateuserSchema = z.infer<typeof createUserSchema>;
+
+export const updateUserSchema = userSchema.extend({
+  password: z
+    .string()
+    .min(8, { message: "Password harus mempunyai 8 karakter!" })
+    .or(z.literal(""))
+    .nullable()
+    .optional(),
+});
+export type UpdateuserSchema = z.infer<typeof updateUserSchema>;
 
 export const eskulSchema = z.object({
   id: z.coerce.number().optional(),

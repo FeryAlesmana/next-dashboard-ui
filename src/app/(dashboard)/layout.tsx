@@ -3,15 +3,36 @@ import Link from "next/link";
 import Image from "next/image";
 import Menu from "@/components/Menu";
 import Navbar from "@/components/Navbar";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useUser } from "@clerk/nextjs";
+type UserDb = {
+  id?: string;
+  role?: string;
+};
 
 export default function DashboardLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const [userDb, setUserDb] = useState<UserDb>({});
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { user, isLoaded } = useUser();
 
+  const fetchUserDB = async (userId: string) => {
+    try {
+      const res = await fetch(`/api/user/find-id?clerkId=${userId}`);
+      const data = await res.json();
+      setUserDb(data);
+    } catch (error) {
+      console.error("Failed to fetch student payments:", error);
+    }
+  };
+  useEffect(() => {
+    if (isLoaded && user?.id) {
+      fetchUserDB(user?.id);
+    }
+  }, [user?.id, isLoaded]); // Only runs when these values change
   return (
     <div className="h-screen flex relative">
       {/* LEFT SIDEBAR */}
@@ -38,7 +59,11 @@ export default function DashboardLayout({
             <span className="inline lg:hidden">SMPI Serua</span>
           </span>
         </Link>
-        <Menu onLinkClick={() => setSidebarOpen(false)} />
+        <Menu
+          onLinkClick={() => setSidebarOpen(false)}
+          isLoaded={isLoaded}
+          userDb={userDb}
+        />
       </div>
 
       {/* RIGHT CONTENT */}

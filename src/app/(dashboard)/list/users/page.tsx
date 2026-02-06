@@ -79,11 +79,11 @@ const UserListPage = async ({
 
     // Try each table
     const studentUser = await prisma.student.findUnique({
-      where: { id: stringId },
+      where: { clerkId: stringId },
       select: {
         id: true,
         name: true,
-
+        clerkId: true,
         password: true,
         email: true,
         img: true,
@@ -91,22 +91,22 @@ const UserListPage = async ({
     });
 
     const teacherUser = await prisma.teacher.findUnique({
-      where: { id: stringId },
+      where: { clerkId: stringId },
       select: {
         id: true,
         name: true,
-
+        clerkId: true,
         password: true,
         email: true,
         img: true,
       },
     });
     const staffUser = await prisma.staff.findUnique({
-      where: { id: stringId },
+      where: { clerkId: stringId },
       select: {
         id: true,
         name: true,
-
+        clerkId: true,
         password: true,
         email: true,
         img: true,
@@ -114,11 +114,11 @@ const UserListPage = async ({
     });
 
     const parentUserRaw = await prisma.parent.findUnique({
-      where: { id: stringId },
+      where: { clerkId: stringId },
       select: {
         id: true,
         name: true,
-
+        clerkId: true,
         password: true,
         email: true,
       },
@@ -131,6 +131,7 @@ const UserListPage = async ({
       id: u.id,
       img: foundUser?.img ?? "",
       name: u.username || "-",
+      clerkId: foundUser?.clerkId ?? "",
       dbName: foundUser?.name || "-",
       email: foundUser?.email ?? "—",
       role: (u.publicMetadata?.role as string | undefined) ?? "—",
@@ -157,15 +158,19 @@ const UserListPage = async ({
   }
   // Apply pagination here
   const students = await prisma.student.findMany({
-    select: { id: true, name: true, email: true },
+    select: { id: true, name: true, email: true, clerkId: true },
   });
 
   const teachers = await prisma.teacher.findMany({
-    select: { id: true, name: true, email: true },
+    select: { id: true, name: true, email: true, clerkId: true },
   });
 
   const parents = await prisma.parent.findMany({
-    select: { id: true, name: true, email: true },
+    select: { id: true, name: true, email: true, clerkId: true },
+  });
+
+  const staffs = await prisma.staff.findMany({
+    select: { id: true, name: true, email: true, clerkId: true },
   });
 
   const usersData = [
@@ -174,18 +179,28 @@ const UserListPage = async ({
       name: s.name,
       role: "student",
       email: s.email,
+      clerkId: s.clerkId,
     })),
     ...teachers.map((t) => ({
       id: t.id,
       name: t.name,
       role: "teacher",
       email: t.email,
+      clerkId: t.clerkId,
+    })),
+    ...staffs.map((stf) => ({
+      id: stf.id,
+      name: stf.name,
+      role: "staff",
+      email: stf.email,
+      clerkId: stf.clerkId,
     })),
     ...parents.map((p) => ({
       id: p.id,
       name: p.name,
       role: "parent",
       email: p.email,
+      clerkId: p.clerkId,
     })),
   ];
 

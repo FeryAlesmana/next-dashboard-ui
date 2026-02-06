@@ -13,10 +13,18 @@ import {
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { createUserDB, CurrentState, updateUserDB } from "@/lib/actions";
-import { userSchema, UserSchema } from "@/lib/formValidationSchema";
+import {
+  CreateuserSchema,
+  createUserSchema,
+  UpdateuserSchema,
+  updateUserSchema,
+  userSchema,
+  UserSchema,
+} from "@/lib/formValidationSchema";
 import ConfirmDialog from "../ConfirmDialog";
 import Select from "react-select";
 import { BaseFormProps } from "./AssignmentForm";
+import z from "zod";
 
 const UserForm = ({
   setOpen,
@@ -25,6 +33,7 @@ const UserForm = ({
   relatedData,
   onChanged,
 }: BaseFormProps) => {
+  const schema = type === "create" ? createUserSchema : updateUserSchema;
   const {
     register,
     handleSubmit,
@@ -33,21 +42,26 @@ const UserForm = ({
     formState: { errors },
     setError,
     watch,
-  } = useForm<UserSchema>({
-    resolver: zodResolver(userSchema),
+  } = useForm<
+    typeof schema extends z.ZodTypeAny ? z.infer<typeof schema> : never
+  >({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      password: data?.password || "", // ✅ Always set as string to avoid `undefined` issues
+    },
   });
   const roleValue = watch("role");
 
   const createUserHandler = async (
     prevState: CurrentState,
-    payload: UserSchema,
+    payload: CreateuserSchema,
   ): Promise<CurrentState> => {
     return await createUserDB(prevState, payload);
   };
 
   const updateUserHandler = async (
     prevState: CurrentState,
-    payload: UserSchema,
+    payload: UpdateuserSchema,
   ): Promise<CurrentState> => {
     return await updateUserDB(prevState, payload);
   };
@@ -62,7 +76,10 @@ const UserForm = ({
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [formData, setFormData] = useState<UserSchema | null>(null);
+  const [formData, setFormData] =
+    useState<
+      typeof schema extends z.ZodTypeAny ? z.infer<typeof schema> : never | null
+    >(null);
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
@@ -123,7 +140,7 @@ const UserForm = ({
   const { usersData = [] } = relatedData ?? {};
 
   const usersOptions = usersData.map((user: any) => ({
-    value: user.id,
+    value: user.clerkId,
     label: `${user.name} - ${user.role}`,
     role: user.role,
     email: user.email, // ✅ IMPORTANT

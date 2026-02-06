@@ -129,12 +129,11 @@ const PaymentLogListPage = async ({
     case "student":
       const student = await prisma.student.findUnique({
         where: {
-          id: userId!,
+          clerkId: userId!,
         },
         select: {
           id: true,
           name: true,
-
           class: {
             select: { name: true, grade: { select: { level: true } } },
           },
@@ -156,7 +155,7 @@ const PaymentLogListPage = async ({
       return (
         <>
           <StudentPaymentView
-            userId={userId!}
+            userId={student.id!}
             gradeLevel={gradeLevel!}
             createdAt={createdAt}
           ></StudentPaymentView>

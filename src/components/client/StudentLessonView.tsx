@@ -26,7 +26,7 @@ export default function StudentLessonViewSemester({
   createdAt: any;
 }) {
   const [selectedSemesters, setSelectedSemesters] = useState<Semester | null>(
-    null
+    null,
   );
   const [semesters, setSemesters] = useState<Semester[]>([]);
   const [lesson, setLesson] = useState<any[]>([]);
@@ -34,38 +34,46 @@ export default function StudentLessonViewSemester({
 
   const generateSemesters = (
     createdAt: Date,
-    gradeLevel: number
+    gradeLevel: number,
   ): Semester[] => {
     const now = new Date();
     const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth(); // 0-11
 
-    // Start from either enrollment year OR calculated grade start year
-    const startYear = Math.min(
-      createdAt.getFullYear(),
-      currentYear - (gradeLevel - 1)
-    );
+    // 1. Determine the start of the current Academic Year
+    // If we are in Jan-June (0-5), the school year started last year
+    const academicYearStart = currentMonth < 6 ? currentYear - 1 : currentYear;
 
-    const graduationYear = startYear + (gradeLevel - 1);
+    // 2. Calculate when the student actually started Grade 1
+    // If they are in Grade 3 now, they started Grade 1 two years ago
+    const studentEntryYear = academicYearStart - (gradeLevel - 1);
+
     const generated: Semester[] = [];
-    const limitStart = Math.max(startYear, currentYear - 2);
-    const limitEnd = Math.min(graduationYear, currentYear);
 
-    for (let year = limitStart; year <= limitEnd; year++) {
+    // 3. Loop from Entry Year up to the Current Academic Year
+    for (let year = studentEntryYear; year <= academicYearStart; year++) {
+      // Semester Ganjil (July - Dec)
       generated.push({
         label: `Ganjil ${year}/${year + 1}`,
         start: new Date(`${year}-07-01`),
         end: new Date(`${year}-12-31`),
       });
-      generated.push({
-        label: `Genap ${year}/${year + 1}`,
-        start: new Date(`${year + 1}-01-01`),
-        end: new Date(`${year + 1}-06-30`),
-      });
+
+      // Semester Genap (Jan - June)
+      // Only add Genap if the year has actually reached that point
+      // Or if it's a past year
+      if (year < academicYearStart || currentMonth < 6) {
+        generated.push({
+          label: `Genap ${year}/${year + 1}`,
+          start: new Date(`${year + 1}-01-01`),
+          end: new Date(`${year + 1}-06-30`),
+        });
+      }
     }
 
-    return generated.reverse();
+    // Filter out semesters that start in the future relative to "now"
+    return generated.filter((sem) => sem.start <= now).reverse();
   };
-
   const fetchLessons = useCallback(async () => {
     if (!selectedSemesters) return;
 
@@ -73,7 +81,7 @@ export default function StudentLessonViewSemester({
 
     try {
       const res = await fetch(
-        `/api/parent-lessons?studentId=${userId}&startDate=${selectedSemesters.start.toISOString()}&endDate=${selectedSemesters.end.toISOString()}`
+        `/api/parent-lessons?studentId=${userId}&startDate=${selectedSemesters.start.toISOString()}&endDate=${selectedSemesters.end.toISOString()}`,
       );
       const data = await res.json();
 
@@ -95,7 +103,10 @@ export default function StudentLessonViewSemester({
     fetchLessons();
   }, [fetchLessons]);
   // console.log(lesson, "lesson in SLV");
-
+  function toNormalCase(str: string): string {
+    if (!str) return "";
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+  }
   return (
     <div className="w-full mx-auto p-6">
       <h1 className="text-2xl font-bold mb-6">Daftar Pelajaran</h1>
@@ -150,29 +161,23 @@ export default function StudentLessonViewSemester({
                 >
                   {/* <td className="p-3">{lsn.id}</td> */}
                   <td className="p-3">{lsn.subject?.name || "-"}</td>
-                  <td className="hidden md:table-cell">{lsn.class?.name || "Tidak Ada Kelas"}</td>
-                  <td className="p-3 hidden md:table-cell">
-                    {new Date(lsn.startTime).toLocaleTimeString("id-ID", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      hour12: false, // remove this if you prefer AM/PM
-                    })}
+                  <td className="hidden md:table-cell">
+                    {lsn.class?.name || "Tidak Ada Kelas"}
                   </td>
-                  <td className="p-3 hidden md:table-cell">
-                    {new Date(lsn.endTime).toLocaleTimeString("id-ID", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      hour12: false,
-                    })}
-                  </td>
+                  <td className="p-3 hidden md:table-cell">{lsn.startTime}</td>
+                  <td className="p-3 hidden md:table-cell">{lsn.endTime}</td>
 
-                  <td>{lsn.day}</td>
+                  <td>{toNormalCase(lsn.day)}</td>
                   <td className="hidden md:table-cell">
                     {lsn.teacherId ? `${lsn.teacher?.name}` : "Tidak ada guru"}
                   </td>
                   <td className="text-center lg:text-left ">
                     <Link
-                      href={lsn.class ? `/list/attendance/${lsn.class?.name}/${lsn.id}`: "#"}
+                      href={
+                        lsn.class
+                          ? `/list/attendance/${lsn.class?.name}/${lsn.id}`
+                          : "#"
+                      }
                     >
                       <button className="w-7 h-7 items-center justify-center rounded-full">
                         <Image
