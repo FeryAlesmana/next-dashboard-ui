@@ -86,7 +86,7 @@ export default async function AttendanceDetailPage({
 
   if (role === "parent") {
     const parent = await prisma.parent.findUnique({
-      where: { id: userId! },
+      where: { clerkId: userId! },
       include: {
         students: true,
         secondaryStudents: true,

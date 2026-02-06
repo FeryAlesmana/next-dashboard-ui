@@ -182,73 +182,110 @@ export default function ParentLessonViewSemester({
                 Tidak ada pelajaran untuk {student?.name || "murid"}.
               </div>
             ) : (
-              <div className="overflow-x-auto border rounded-lg">
-                <table className="min-w-full divide-y divide-gray-200 text-sm">
-                  <thead className="bg-gray-100">
-                    <tr>
-                      {/* <th className="px-4 py-3 text-left">ID Jadwal</th> */}
-                      <th className="px-4 py-3 text-left">Mata Pelajaran</th>
-                      <th className="px-4 py-3 text-left hidden md:table-cell">
-                        Kelas
-                      </th>
-                      <th className="px-4 py-3 text-left hidden md:table-cell">
-                        Mulai
-                      </th>
-                      <th className="px-4 py-3 text-left hidden md:table-cell">
-                        Berakhir
-                      </th>
-                      <th className="px-4 py-3 text-left">Hari</th>
-                      <th className="px-4 py-3 text-left hidden md:table-cell">
-                        Guru
-                      </th>
-                      <th className="px-4 py-3 text-center lg:text-left">
-                        Pertemuan
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-100">
-                    {student.lessons.map((lesson: any) => (
-                      <tr
-                        key={lesson.id}
-                        className="even:bg-slate-50 hover:bg-lamaPurpleLight"
-                      >
-                        {/* <td className="p-3">{lesson.id}</td> */}
-                        <td className="p-3">{lesson.subject?.name || "-"}</td>
-                        <td className="hidden md:table-cell">
-                          {lesson.class?.name || "Tidak Ada Kelas"}
-                        </td>
-                        <td className="p-3 hidden md:table-cell">
-                          {lesson.startTime}
-                        </td>
-                        <td className="p-3 hidden md:table-cell">
-                          {lesson.endTime}
-                        </td>
-
-                        <td>{lesson.day}</td>
-                        <td className="hidden md:table-cell">
-                          {lesson.teacherId
-                            ? `${lesson.teacher?.name} `
-                            : "Tidak ada guru"}
-                        </td>
-                        <td className="text-center lg:text-left ">
-                          <Link
-                            href={`/list/attendance/${lesson.class?.name}/${lesson.id}`}
-                          >
-                            <button className="w-7 h-7 items-center justify-center rounded-full">
-                              <Image
-                                src="/moreDark.png"
-                                alt=""
-                                width={16}
-                                height={16}
-                              />
-                            </button>
-                          </Link>
-                        </td>
+              <>
+                <div className="hidden md:block overflow-x-auto border rounded-lg">
+                  <table className="min-w-full divide-y divide-gray-200 text-sm">
+                    <thead className="bg-gray-100">
+                      <tr>
+                        {/* <th className="px-4 py-3 text-left">ID Jadwal</th> */}
+                        <th className="px-4 py-3 text-left">Mata Pelajaran</th>
+                        <th className="px-4 py-3 text-left hidden md:table-cell">
+                          Kelas
+                        </th>
+                        <th className="px-4 py-3 text-left hidden md:table-cell">
+                          Mulai
+                        </th>
+                        <th className="px-4 py-3 text-left hidden md:table-cell">
+                          Berakhir
+                        </th>
+                        <th className="px-4 py-3 text-left">Hari</th>
+                        <th className="px-4 py-3 text-left hidden md:table-cell">
+                          Guru
+                        </th>
+                        <th className="px-4 py-3 text-center lg:text-left">
+                          Pertemuan
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-100">
+                      {student.lessons.map((lesson: any) => (
+                        <tr
+                          key={lesson.id}
+                          className="even:bg-slate-50 hover:bg-lamaPurpleLight"
+                        >
+                          {/* <td className="p-3">{lesson.id}</td> */}
+                          <td className="p-3">{lesson.subject?.name || "-"}</td>
+                          <td className="hidden md:table-cell">
+                            {lesson.class?.name || "Tidak Ada Kelas"}
+                          </td>
+                          <td className="p-3 hidden md:table-cell">
+                            {lesson.startTime}
+                          </td>
+                          <td className="p-3 hidden md:table-cell">
+                            {lesson.endTime}
+                          </td>
+
+                          <td>{lesson.day}</td>
+                          <td className="hidden md:table-cell">
+                            {lesson.teacherId
+                              ? `${lesson.teacher?.name} `
+                              : "Tidak ada guru"}
+                          </td>
+                          <td className="text-center lg:text-left ">
+                            <Link
+                              href={`/list/attendance/${lesson.class?.name}/${lesson.id}`}
+                            >
+                              <button className="w-7 h-7 items-center justify-center rounded-full">
+                                <Image
+                                  src="/moreDark.png"
+                                  alt=""
+                                  width={16}
+                                  height={16}
+                                />
+                              </button>
+                            </Link>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="md:hidden space-y-3">
+                  {student.lessons.map((lesson: any) => (
+                    <div
+                      key={lesson.id}
+                      className="p-4 rounded-lg border bg-gray-50 shadow-sm"
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <Link
+                          href={`/list/attendance/${lesson.class?.name}/${lesson.id}`}
+                          className="hover:underline decoration-lamaBlue"
+                        >
+                          <span className="font-bold text-lamaBlue text-base">
+                            {lesson.subject?.name || "-"}
+                          </span>
+                        </Link>
+                        <span className="bg-white px-2 py-1 rounded text-[10px] font-bold uppercase border text-gray-400">
+                          {lesson.day}
+                        </span>
+                      </div>
+
+                      <div className="flex flex-col gap-1 text-sm text-gray-600">
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-400">🕒</span>
+                          <span>
+                            {lesson.startTime} - {lesson.endTime}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-400">👤</span>
+                          <span>{lesson.teacher?.name || "-"}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
             )}
           </div>
         );

@@ -324,66 +324,6 @@ const LessonListPage = async ({
         return (
           <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
 
-            {/* Supervised Classes */}
-            {/* <div className="mb-8">
-              <h2 className="text-md font-semibold mb-2">
-                Jadwal Kelas yang Disupervisi
-              </h2>
-
-              {teacherLesson.length > 0 ? (
-                teacherLesson.map((cls) => (
-                  <div
-                    key={cls.id}
-                    className="p-4 rounded-md border mb-6 bg-gray-50 w-full overflow-x-auto"
-                  >
-                    <h3 className="font-semibold mb-3 text-lamaBlue">
-                      <span className="text-black">Kelas : </span>
-                      {cls.name}
-                    </h3>
-
-                    {cls.lessons.length > 0 ? (
-                      <table className="w-full text-sm">
-                        <thead>
-                          <tr className="bg-gray-200">
-                            <th className="p-2 text-left">Mata Pelajaran</th>
-                            <th className="p-2 text-left">Hari</th>
-                            <th className="p-2 text-left">Jam</th>
-                            <th className="p-2 text-left">Guru</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {cls.lessons.map((lesson: any) => (
-                            <tr key={lesson.id} className="border-t">
-                              <td className="p-2">
-                                {lesson.subject?.name || "-"}
-                              </td>
-                              <td className="p-2">{lesson.day}</td>
-                              <td className="p-2 whitespace-nowrap min-w-[140px]">
-                                {lesson.startTime} - {lesson.endTime}
-                              </td>
-                              <td className="p-2">
-                                {lesson.teacher
-                                  ? `${lesson.teacher.name}`
-                                  : "-"}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    ) : (
-                      <div className="text-gray-500 text-sm">
-                        Tidak ada jadwal ditemukan.
-                      </div>
-                    )}
-                  </div>
-                ))
-              ) : (
-                <div className="text-gray-500 text-sm">
-                  Anda tidak mengawasi kelas manapun.
-                </div>
-              )}
-            </div> */}
-
             <SupervisedView teacherLesson={teacherLesson} />
 
             {/* Teaching Lessons */}
@@ -438,26 +378,59 @@ const LessonListPage = async ({
         </>
       );
     case "parent": {
-      const children = await prisma.student.findMany({
-        where: {
-          OR: [
-            { parentId: userId! },
-            { secondParentId: userId! },
-            { guardianId: userId! },
-          ],
-        },
-
+      const parent = await prisma.parent.findUnique({
+        where: { clerkId: userId! },
         select: {
-          classId: true,
-          name: true,
-          id: true,
-          class: {
-            select: { name: true, grade: { select: { level: true } } },
+          students: {
+            select: {
+              id: true,
+              name: true,
+              classId: true,
+              createdAt: true,
+              class: {
+                select: {
+                  name: true,
+                  grade: { select: { level: true } },
+                },
+              },
+            },
           },
-          createdAt: true,
+          secondaryStudents: {
+            select: {
+              id: true,
+              name: true,
+              classId: true,
+              createdAt: true,
+              class: {
+                select: {
+                  name: true,
+                  grade: { select: { level: true } },
+                },
+              },
+            },
+          },
+          guardianStudents: {
+            select: {
+              id: true,
+              name: true,
+              classId: true,
+              createdAt: true,
+              class: {
+                select: {
+                  name: true,
+                  grade: { select: { level: true } },
+                },
+              },
+            },
+          },
         },
       });
 
+      const children = [
+        ...(parent?.students ?? []),
+        ...(parent?.secondaryStudents ?? []),
+        ...(parent?.guardianStudents ?? []),
+      ];
       const classIds = children
         .map((child) => child.classId)
         .filter((id): id is number => id !== null && id !== undefined);

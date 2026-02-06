@@ -29,7 +29,7 @@ export default function ParentAssignmentViewSemester({
     [studentId: string]: Semester;
   }>({});
   const [studentsWithAssignment, setStudentsWithAssignment] = useState<any[]>(
-    []
+    [],
   );
   const [hydrated, setHydrated] = useState(false);
   const [loadingMap, setLoadingMap] = useState<{
@@ -40,7 +40,7 @@ export default function ParentAssignmentViewSemester({
 
   const generateSemesters = (
     createdAt: Date,
-    gradeLevel: number
+    gradeLevel: number,
   ): Semester[] => {
     const now = new Date();
     const currentYear = now.getFullYear();
@@ -48,7 +48,7 @@ export default function ParentAssignmentViewSemester({
     // Start from either enrollment year OR calculated grade start year
     const startYear = Math.min(
       createdAt.getFullYear(),
-      currentYear - (gradeLevel - 1)
+      currentYear - (gradeLevel - 1),
     );
 
     const graduationYear = startYear + (gradeLevel - 1);
@@ -87,7 +87,7 @@ export default function ParentAssignmentViewSemester({
 
       try {
         const res = await fetch(
-          `/api/parent-assignments?studentId=${studentId}&startDate=${semester.start.toISOString()}&endDate=${semester.end.toISOString()}`
+          `/api/parent-assignments?studentId=${studentId}&startDate=${semester.start.toISOString()}&endDate=${semester.end.toISOString()}`,
         );
         const assignments = await res.json();
 
@@ -106,7 +106,7 @@ export default function ParentAssignmentViewSemester({
         setLoadingMap((prev) => ({ ...prev, [studentId]: false }));
       }
     },
-    []
+    [],
   );
 
   useEffect(() => {
@@ -204,11 +204,13 @@ export default function ParentAssignmentViewSemester({
               <div className="text-center text-gray-400">
                 <StudentParentTableSkeleton />
               </div>
-            ) : !student || student.assignment?.length === 0 ? (
+            ) : // ...
+            !student || student.assignments?.length === 0 ? ( // Added 's' to assignments
               <div className="text-center text-gray-500">
                 Belum ada Tugas untuk {student?.name || "murid"}.
               </div>
             ) : (
+              // ...
               <div className="overflow-x-auto border rounded-lg">
                 <table className="min-w-full divide-y divide-gray-200 text-sm">
                   <thead className="bg-gray-100">

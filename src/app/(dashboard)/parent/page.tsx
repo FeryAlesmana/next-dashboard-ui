@@ -19,19 +19,59 @@ const ParentPage = async ({
   });
   const { userId } = await getCurrentUser();
 
-  const students = await prisma.student.findMany({
-    where: {
-      OR: [
-        { parentId: userId! },
-        { secondParentId: userId! },
-        { guardianId: userId! },
-      ],
-    },
-    include: {
-      student_details: true,
-      class: true,
+  const parent = await prisma.parent.findUnique({
+    where: { clerkId: userId! },
+    select: {
+      students: {
+        select: {
+          id: true,
+          name: true,
+          classId: true,
+          createdAt: true,
+          class: {
+            select: {
+              name: true,
+              grade: { select: { level: true } },
+            },
+          },
+        },
+      },
+      secondaryStudents: {
+        select: {
+          id: true,
+          name: true,
+          classId: true,
+          createdAt: true,
+          class: {
+            select: {
+              name: true,
+              grade: { select: { level: true } },
+            },
+          },
+        },
+      },
+      guardianStudents: {
+        select: {
+          id: true,
+          name: true,
+          classId: true,
+          createdAt: true,
+          class: {
+            select: {
+              name: true,
+              grade: { select: { level: true } },
+            },
+          },
+        },
+      },
     },
   });
+
+  const students = [
+    ...(parent?.students ?? []),
+    ...(parent?.secondaryStudents ?? []),
+    ...(parent?.guardianStudents ?? []),
+  ];
   return (
     <div className="p-4 flex flex-1 gap-4 flex-col xl:flex-row">
       {/* left */}
