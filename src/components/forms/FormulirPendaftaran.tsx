@@ -499,7 +499,7 @@ const FormulirPendaftaran = ({
             <label className="block mb-1 font-medium">Nomor Seri Ijazah</label>
             <input
               type="text"
-              maxLength={12}
+              
               {...register("no_ijz")}
               className="w-full border rounded px-3 py-2"
               placeholder="Masukkan nomor seri ijazah SMP/Sederajat"

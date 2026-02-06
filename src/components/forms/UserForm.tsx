@@ -138,17 +138,32 @@ const UserForm = ({
   }, [state, type, setOpen, router, onChanged, formData]);
 
   const { usersData = [] } = relatedData ?? {};
+  console.log(data, "data in users");
+  
 
+  // 1. Map all possible users into Select options
   const usersOptions = usersData.map((user: any) => ({
-    value: user.clerkId,
+    value: user.id, // Internal Prisma ID
     label: `${user.name} - ${user.role}`,
     role: user.role,
-    email: user.email, // ✅ IMPORTANT
+    clerkId: user.clerkId, // To check if they are already "connected"
   }));
 
-  const filteredUserOptions = roleValue
-    ? usersOptions.filter((u: any) => u.role === roleValue)
-    : [];
+  // 2. Filter based on Type (Create vs Update)
+  const filteredUserOptions = usersOptions.filter((u: any) => {
+    // Rule A: Role must match the selected Role Value
+    const isCorrectRole = u.role === roleValue;
+
+    if (type === "create") {
+      // In CREATE mode: Only show users who do NOT have a clerkId yet
+      return isCorrectRole && !u.clerkId;
+    } else {
+      // In UPDATE mode: Show users who are unlinked OR the one currently being edited
+      // 'data.id' is the ID of the record currently in the form
+      const isCurrentlySelected = u.value === data?.dbId;
+      return isCorrectRole && (!u.clerkId || isCurrentlySelected);
+    }
+  });
 
   return (
     <>
@@ -243,7 +258,7 @@ const UserForm = ({
               <Controller
                 name="userId"
                 control={control}
-                defaultValue={data?.id || ""}
+                defaultValue={data?.dbId || ""}
                 render={({ field }) => {
                   return (
                     <Select

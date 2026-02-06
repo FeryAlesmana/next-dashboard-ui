@@ -219,6 +219,8 @@ export default function Menu({
 
   const profileHref = userDb ? `/list/${role}s/${userId}` : "#";
 
+  console.log(role, " role in menu");
+
   return (
     <div className="mt-4 text-sm">
       {menuItems.map((group) => (

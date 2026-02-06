@@ -129,6 +129,7 @@ const UserListPage = async ({
 
     rows.push({
       id: u.id,
+      dbId: foundUser?.id ?? "",
       img: foundUser?.img ?? "",
       name: u.username || "-",
       clerkId: foundUser?.clerkId ?? "",

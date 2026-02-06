@@ -90,7 +90,7 @@ const Navbar = ({ onToggleMenu }: NavbarProps) => {
       {/* Burger button */}
       <button
         onClick={onToggleMenu}
-        className="lg:hidden bg-white p-2 rounded-md border border-gray-300"
+        className="lg:hidden bg-white p-2 rounded-md "
       >
         <Image src="/burger.png" alt="Menu" width={20} height={20} />
       </button>

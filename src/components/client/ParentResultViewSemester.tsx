@@ -35,36 +35,45 @@ export default function ParentResultViewSemester({
 
   const generateSemesters = (
     createdAt: Date,
-    gradeLevel: number
+    gradeLevel: number,
   ): Semester[] => {
     const now = new Date();
     const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth(); // 0-11
 
-    // Start from either enrollment year OR calculated grade start year
-    const startYear = Math.min(
-      createdAt.getFullYear(),
-      currentYear - (gradeLevel - 1)
-    );
+    // 1. Determine the start of the current Academic Year
+    // If we are in Jan-June (0-5), the school year started last year
+    const academicYearStart = currentMonth < 6 ? currentYear - 1 : currentYear;
 
-    const graduationYear = startYear + (gradeLevel - 1);
+    // 2. Calculate when the student actually started Grade 1
+    // If they are in Grade 3 now, they started Grade 1 two years ago
+    const studentEntryYear = academicYearStart - (gradeLevel - 1);
+
     const generated: Semester[] = [];
-    const limitStart = Math.max(startYear, currentYear - 2);
-    const limitEnd = Math.min(graduationYear, currentYear);
 
-    for (let year = limitStart; year <= limitEnd; year++) {
+    // 3. Loop from Entry Year up to the Current Academic Year
+    for (let year = studentEntryYear; year <= academicYearStart; year++) {
+      // Semester Ganjil (July - Dec)
       generated.push({
         label: `Ganjil ${year}/${year + 1}`,
         start: new Date(`${year}-07-01`),
         end: new Date(`${year}-12-31`),
       });
-      generated.push({
-        label: `Genap ${year}/${year + 1}`,
-        start: new Date(`${year + 1}-01-01`),
-        end: new Date(`${year + 1}-06-30`),
-      });
+
+      // Semester Genap (Jan - June)
+      // Only add Genap if the year has actually reached that point
+      // Or if it's a past year
+      if (year < academicYearStart || currentMonth < 6) {
+        generated.push({
+          label: `Genap ${year}/${year + 1}`,
+          start: new Date(`${year + 1}-01-01`),
+          end: new Date(`${year + 1}-06-30`),
+        });
+      }
     }
 
-    return generated.reverse();
+    // Filter out semesters that start in the future relative to "now"
+    return generated.filter((sem) => sem.start <= now).reverse();
   };
 
   const fetchResult = useCallback(
