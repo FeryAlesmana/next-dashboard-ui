@@ -125,7 +125,7 @@ const HeroSettings = ({
     );
 
   return (
-    <section className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
+    <section className="bg-white p-4 md:p-6 rounded-md">
       <h2 className="text-lg font-bold mb-2">Hero Slide</h2>
       <div className="flex flex-col gap-2 w-full max-w-sm">
         {uploading ? (
@@ -142,20 +142,19 @@ const HeroSettings = ({
             </div>
           </>
         ) : (
-          <input
-            type="file"
-            multiple
-            accept="image/*"
-            onChange={handleFileUpload}
-            disabled={uploading}
-          />
+          <div className="w-full max-w-sm">
+            <input
+              type="file"
+              multiple
+              className="w-full text-sm"
+              accept="image/*"
+              onChange={handleFileUpload}
+              disabled={uploading}
+            />
+          </div>
         )}
       </div>
-      <div
-        className={`mt-4 grid ${
-          hero.length < 10 ? "grid-cols-1" : "grid-cols-2"
-        } md:grid-cols-4 gap-4`}
-      >
+      <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         {hero.length === 0 ? (
           <div className="col-span-4 flex items-center justify-center h-24 border-2 border-dashed border-gray-300 rounded bg-gray-50 text-gray-500">
             Belum ada gambar untuk Komponen ini
@@ -169,7 +168,7 @@ const HeroSettings = ({
                 <Image
                   src={item.imageUrl}
                   alt="hero"
-                  className="w-full h-48 object-contain rounded bg-gray-100"
+                  className="w-full h-32 sm:h-40 md:h-48 object-contain rounded bg-gray-100"
                   width={160}
                   height={160}
                 />

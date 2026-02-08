@@ -21,19 +21,24 @@ export async function GET() {
     const ppdbSettings = await prisma.pPDBSetting.findFirst({});
     const creditSetting = await prisma.homeSetting.findFirst({});
 
+    const facility = await prisma.facility.findMany({
+      orderBy: { createdAt: "desc" },
+    });
+
     return NextResponse.json({
       heroSlides,
       gallery,
       eskul,
       penunjang,
       ppdbSettings,
-      creditSetting
+      creditSetting,
+      facility,
     });
   } catch (error) {
     console.error("Failed to fetch homepage data", error);
     return NextResponse.json(
       { error: "Failed to fetch homepage data" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

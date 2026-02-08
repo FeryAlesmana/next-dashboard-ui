@@ -126,7 +126,7 @@ const EskulSettings = ({
 
   if (loading)
     return (
-      <section className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
+      <section className="bg-white p-4 md:p-6 rounded-md">
         <h2 className="text-lg font-bold mb-2">Eskul</h2>
         <div className="mt-4 grid grid-cols-4 gap-4">
           {Array.from({ length: 4 }).map((_, i) => (
@@ -140,7 +140,7 @@ const EskulSettings = ({
     );
 
   return (
-    <section className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
+    <section className="bg-white p-4 md:p-6 rounded-md">
       <h2 className="text-lg font-bold mb-2">Eskul</h2>
       <div className="flex flex-col gap-2 w-full max-w-sm">
         {uploading ? (
@@ -157,21 +157,20 @@ const EskulSettings = ({
             </div>
           </>
         ) : (
-          <input
-            type="file"
-            multiple
-            accept="image/*"
-            onChange={handleFileUpload}
-            disabled={uploading}
-          />
+          <div className="w-full max-w-sm">
+            <input
+              type="file"
+              multiple
+              className="w-full text-sm"
+              accept="image/*"
+              onChange={handleFileUpload}
+              disabled={uploading}
+            />
+          </div>
         )}
       </div>
 
-      <div
-        className={`mt-4 grid ${
-          eskul.length < 10 ? "grid-cols-1" : "grid-cols-2"
-        } md:grid-cols-4 gap-4`}
-      >
+      <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         {eskul.length === 0 ? (
           <div className="col-span-4 flex items-center justify-center h-24 border-2 border-dashed border-gray-300 rounded bg-gray-50 text-gray-500">
             Belum ada Item untuk Komponen ini

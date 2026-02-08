@@ -6,6 +6,8 @@ import PaymentInstallmentsPreview from "../PaymentInstallmentsPreview";
 import { useState } from "react";
 import MobileMenu from "../MobileMenu";
 import { PaymentStatus } from "@prisma/client";
+import { FaDownload } from "react-icons/fa6";
+import { toast } from "react-toastify";
 
 export default function PaymenTableClient({
   data,
@@ -25,6 +27,24 @@ export default function PaymenTableClient({
     paymentStatus = "OVERDUE";
     lewat = true;
   }
+  const handleDownloadBerkas = async (id: string) => {
+      const res = await fetch(`/api/payment/${data.id}/receipt`);
+      if (!res.ok) {
+        toast.error("Gagal mengunduh berkas");
+        return;
+      }
+  
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+  
+      const a = document.createElement("a");
+      a.href = url;
+      a.click();
+  
+      window.URL.revokeObjectURL(url);
+    };
+
+  
 
   return (
     <>
@@ -177,6 +197,14 @@ export default function PaymenTableClient({
                   id={data.id}
                   onDeleted={() => onDeleted?.([data.id])}
                 />
+                {data.status === "PAID" && (
+                  <button
+                    onClick={() => handleDownloadBerkas(data.id)}
+                    className="text-sm text-blue-600 underline"
+                  >
+                    <FaDownload />
+                  </button>
+                )}
               </>
             )}
           </div>

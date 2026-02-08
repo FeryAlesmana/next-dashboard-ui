@@ -1,6 +1,9 @@
+"use client";
+import { useUser } from "@clerk/nextjs";
 import Link from "next/link";
 
 export default function NotFound() {
+  const { isSignedIn } = useUser();
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center text-center overflow-hidden bg-gray-50">
       {/* Background logo */}
@@ -25,12 +28,16 @@ export default function NotFound() {
         >
           Kembali ke Beranda
         </Link>
-        <Link
-          href="/sign-in"
-          className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
-        >
-          Login
-        </Link>
+        {!isSignedIn ? (
+          <Link
+            href="/sign-in"
+            className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
+          >
+            Login
+          </Link>
+        ) : (
+          []
+        )}
       </div>
     </div>
   );

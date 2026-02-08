@@ -1370,3 +1370,14 @@ export const paymentSchema = z
   );
 
 export type PaymentSchema = z.infer<typeof paymentSchema>;
+
+export const facilitySchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(1),
+  icon: z.string(),
+  imageUrl: z.string().optional().nullable(),
+  description: z.string().optional(),
+  isActive: z.boolean().default(true).optional(),
+});
+
+export type FacilitySchema = z.infer<typeof facilitySchema>;

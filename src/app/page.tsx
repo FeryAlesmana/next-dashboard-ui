@@ -9,7 +9,11 @@ import CTA from "../components/landing/CTA";
 import Pendaftaran from "../components/landing/Pendaftaran";
 import VisiMisi from "../components/landing/VisiMisi";
 import Ekstrakurikuler from "../components/landing/Ekstrakurikuler";
-import Fasilitas from "../components/landing/Fasilitas";
+import Fasilitas, {
+  FACILITY_ICON_MAP,
+  FacilityIconKey,
+  UIFacility,
+} from "../components/landing/Fasilitas";
 import Footer from "../components/landing/Footer";
 import NavbarHome from "@/components/NavbarHome";
 import { toast } from "react-toastify";
@@ -18,11 +22,13 @@ import LocationMap from "@/components/landing/LocationMap";
 import AboutUs from "@/components/landing/AboutUs";
 import PromotionBanner from "@/components/PromotionBanner";
 import HeadmasterProfile from "@/components/landing/HeadMasterProfile";
+import { Facility } from "@prisma/client";
 interface TeamMember {
   name: string;
   job: string;
   photo: string; // URL to photo
 }
+
 export default function Home() {
   const { user } = useUser();
   const role = user?.publicMetadata.role as string | undefined;
@@ -30,6 +36,7 @@ export default function Home() {
   const [homeData, setHomeData] = useState<any>();
   const [ppdbStatus, setPpdbStatus] = useState<any>();
   const [csetting, setCsetting] = useState<{ show: boolean } | null>(null);
+  const [facility, setFacility] = useState<Facility[]>([]);
 
   useEffect(() => {
     const fetchHomeData = async () => {
@@ -44,6 +51,7 @@ export default function Home() {
       if (res.ok) {
         const data = await res.json();
         setHomeData(data);
+        setFacility(data.facility);
         setCsetting(data.creditSetting);
       } else {
         toast.error("Fetch Home Data gagal");
@@ -52,6 +60,7 @@ export default function Home() {
 
     fetchHomeData();
   }, []);
+
   const team: TeamMember[] = [
     {
       name: "Fery Ale Lesmana",
@@ -103,7 +112,7 @@ export default function Home() {
             penunjangDb={homeData?.penunjang}
             role={role!}
           />
-          <Fasilitas />
+          <Fasilitas facilities={facility} role={role!} />
           <Gallery DBimages={homeData?.gallery} role={role!} />
           <LocationMap />
           <Kontak />

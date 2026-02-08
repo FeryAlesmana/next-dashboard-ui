@@ -5,9 +5,10 @@ import Image from "next/image";
 import HeroSettings from "@/components/HeroSettingComp";
 import EskulSettings from "@/components/EskulSettingComp";
 import LoadingScreen from "@/components/LoadingScreen";
-import { HomeSetting, PPDBSetting } from "@prisma/client";
+import { Facility, HomeSetting, PPDBSetting } from "@prisma/client";
 import PPDBSettingForm from "@/components/forms/PPDBSettingForm";
 import CreditSettingForm from "@/components/forms/CreditSettingForm";
+import FacilitiesSettingsPage from "@/components/client/FacilitySettingPage";
 
 type GalleryImage = {
   id: number;
@@ -26,6 +27,7 @@ const Settings = () => {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [totalFiles, setTotalFiles] = useState(0);
+  const [facility, setFacility] = useState<Facility[]>([]);
 
   const resizeImage = (
     file: File,
@@ -126,6 +128,7 @@ const Settings = () => {
       setGallery(data.gallery);
       setPsetting(data.ppdbSettings);
       setCsetting(data.creditSetting);
+      setFacility(data.facility);
       setgLoading(false);
     } catch (err) {
       console.error("Failed to load homepage data", err);
@@ -133,6 +136,7 @@ const Settings = () => {
       setLoading(false);
     }
   };
+  console.log(facility, " facility in setting");
 
   const handleGalleryUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -199,7 +203,7 @@ const Settings = () => {
   if (loading) return <LoadingScreen />;
 
   return (
-    <div className="space-y-10 p-6">
+    <div className="space-y-10 px-4 py-6 md:p-6">
       <h1 className="hidden md:block text-lg font-semibold">
         Pengaturan Home Page
       </h1>
@@ -221,7 +225,7 @@ const Settings = () => {
           </div>
         </section>
       ) : (
-        <section className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
+        <section className="bg-white p-4 md:p-6 rounded-md">
           <h2 className="text-lg font-bold mb-2">Gallery</h2>
           <div className="flex flex-col gap-2 w-full max-w-sm">
             {uploading ? (
@@ -238,20 +242,19 @@ const Settings = () => {
                 </div>
               </>
             ) : (
-              <input
-                type="file"
-                multiple
-                accept="image/*"
-                onChange={handleGalleryUpload}
-                disabled={uploading}
-              />
+              <div className="w-full max-w-sm">
+                <input
+                  type="file"
+                  multiple
+                  className="w-full text-sm"
+                  accept="image/*"
+                  onChange={handleGalleryUpload}
+                  disabled={uploading}
+                />
+              </div>
             )}
           </div>
-          <div
-            className={`mt-4 grid ${
-              gallery.length < 10 ? "grid-cols-1" : "grid-cols-2"
-            } md:grid-cols-4 gap-4`}
-          >
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             {gallery.length === 0 ? (
               <div className="col-span-4 flex items-center justify-center h-24 border-2 border-dashed border-gray-300 rounded bg-gray-50 text-gray-500">
                 Belum ada Item untuk Komponen ini
@@ -265,7 +268,7 @@ const Settings = () => {
                     <Image
                       src={item.imageUrl}
                       alt={item.caption ?? "gallery"}
-                      className="w-full h-48 object-contain rounded bg-gray-100"
+                      className="w-full h-32 sm:h-40 md:h-48 object-contain rounded bg-gray-100"
                       width={400}
                       height={400}
                       unoptimized
@@ -319,10 +322,13 @@ const Settings = () => {
 
       {/* Eskul */}
       <EskulSettings resizeImage={resizeImage} />
-      <section>
+      <section className="bg-white p-4 md:p-6 rounded-md">
+        <FacilitiesSettingsPage facilities={facility} />
+      </section>
+      <section className="bg-white p-4 md:p-6 rounded-md">
         <PPDBSettingForm type="update" data={psetting} />
       </section>
-      <section>
+      <section className="bg-white p-4 md:p-6 rounded-md">
         <CreditSettingForm data={csetting} />
       </section>
     </div>

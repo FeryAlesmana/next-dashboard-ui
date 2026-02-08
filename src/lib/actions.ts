@@ -54,6 +54,7 @@ import {
   CreditSettingSchema,
   CreateuserSchema,
   UpdateuserSchema,
+  FacilitySchema,
 } from "./formValidationSchema";
 import prisma from "./prisma";
 import { clerkClient } from "@clerk/nextjs/server";
@@ -1735,7 +1736,7 @@ export const updateEvent = async (
           ? error
           : "Unknown error";
 
-    console.error("update Ujian error: ", error);
+    console.error("update Event error: ", error);
     return { success: false, error: true, message };
   }
 };
@@ -3109,7 +3110,7 @@ export const updatePpdb = async (
     // If isvalid is true, create a new user and student
     if (data.isvalid === true) {
       console.log("This block run");
-      
+
       try {
         const existingPpdb = await prisma.pPDB.findUnique({
           where: { id: data.id },
@@ -3479,7 +3480,7 @@ export const updatePpdb = async (
         });
       } catch (error) {
         console.log(error, " error in updateppdb");
-        
+
         const isPrismaError =
           error instanceof Prisma.PrismaClientKnownRequestError;
         if (isPrismaError && clerkUser?.id) {
@@ -6868,3 +6869,77 @@ export async function updatePayment(
     };
   }
 }
+
+export const createFacility = async (
+  currentState: CurrentState,
+  data: FacilitySchema,
+) => {
+  try {
+    const createdData: any = {
+      name: data.name,
+      description: data.description,
+      icon: data.icon,
+      isActive: data.isActive,
+      ...(data.imageUrl && { imageUrl: data.imageUrl }),
+    };
+    const createdFacility = await prisma.facility.create({
+      data: createdData,
+    });
+    return { success: true, error: false, data: createdFacility };
+  } catch (error) {
+    console.error("Create dFacility error: ", error);
+    return { success: false, error: true };
+  }
+};
+export const updateFacility = async (
+  currentState: CurrentState,
+  data: FacilitySchema,
+) => {
+  try {
+    const updatedData: any = {
+      name: data.name,
+      description: data.description,
+      icon: data.icon,
+      isActive: data.isActive,
+      ...(data.imageUrl && { img: data.imageUrl }),
+      updatedAt: new Date(),
+    };
+    const updatedFacility = await prisma.facility.update({
+      where: {
+        id: data.id,
+      },
+      data: updatedData,
+    });
+    return { success: true, error: false, data: updatedFacility };
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === "string"
+          ? error
+          : "Unknown error";
+
+    console.error("update Fasilitas error: ", error);
+    return { success: false, error: true, message };
+  }
+};
+
+export const deleteFacility = async (
+  currentState: CurrentState,
+  formData: FormData,
+): Promise<CurrentState> => {
+  const id = formData.get("id") as string;
+
+  try {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await prisma.facility.delete({
+      where: {
+        id: id,
+      },
+    });
+    return { success: true, error: false };
+  } catch (error) {
+    console.log(error + " Di server action");
+    return { success: false, error: true };
+  }
+};

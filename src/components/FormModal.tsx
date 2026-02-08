@@ -11,6 +11,7 @@ import {
   deleteEvent,
   deleteExam,
   deleteExams,
+  deleteFacility,
   deleteLesson,
   deleteLessons,
   deleteManyUsers,
@@ -83,6 +84,7 @@ const deleteActionMap = {
   user: deleteUser,
   staff: deleteStaff,
   staffPerfomance: deletePerfomance,
+  facilities: deleteFacility,
 };
 
 const singleDeleteMap = {
@@ -104,6 +106,7 @@ const singleDeleteMap = {
   user: deleteUser,
   staff: deleteStaff,
   staffPerfomance: deletePerfomance,
+  facilities: deleteFacility,
 };
 
 const bulkDeleteMap = {
@@ -125,6 +128,7 @@ const bulkDeleteMap = {
   user: deleteManyUsers,
   staff: deleteStaffs,
   staffPerfomance: deletePPDBs,
+  facilities: deletePPDBs,
 };
 
 const TeacherForm = dynamic(() => import("./forms/TeacherForm"), {
@@ -167,13 +171,13 @@ const FormulirPendaftaran = dynamic(
   () => import("./forms/FormulirPendaftaran"),
   {
     loading: () => <h1>Loading...</h1>,
-  }
+  },
 );
 const AttendanceMeetingForm = dynamic(
   () => import("./forms/AttendanceMeetingForm"),
   {
     loading: () => <h1>Loading...</h1>,
-  }
+  },
 );
 const MeetingForm = dynamic(() => import("./forms/MeetingForm"), {
   loading: () => <h1>Loading...</h1>,
@@ -190,6 +194,9 @@ const BillForm = dynamic(() => import("./forms/BillForm"), {
 const UserForm = dynamic(() => import("./forms/UserForm"), {
   loading: () => <h1>Loading...</h1>,
 });
+const FacilitiesForm = dynamic(() => import("./forms/FacilitesForm"), {
+  loading: () => <h1>Loading...</h1>,
+});
 const PPDBSettingForm = dynamic(() => import("./forms/PPDBSettingForm"), {
   loading: () => <h1>Loading...</h1>,
 });
@@ -202,7 +209,7 @@ const forms: {
     relatedData?: any,
     onChanged?: (item: any) => void,
     role?: string,
-    lessonId?: string
+    lessonId?: string,
   ) => JSX.Element;
 } = {
   teacher: (setOpen, type, data, relatedData, onChanged) => (
@@ -354,6 +361,15 @@ const forms: {
       onChanged={onChanged}
     />
   ),
+  facilities: (setOpen, type, data, relatedData, onChanged) => (
+    <FacilitiesForm
+      type={type}
+      setOpen={setOpen}
+      data={data}
+      relatedData={relatedData}
+      onChanged={onChanged}
+    />
+  ),
 };
 const FormModal = ({
   table,
@@ -374,14 +390,14 @@ const FormModal = ({
     type === "create"
       ? "bg-lamaYellow"
       : type === "update"
-      ? "bg-lamaBlue"
-      : "bg-lamaRed";
+        ? "bg-lamaBlue"
+        : "bg-lamaRed";
 
   const [open, setOpen] = useState(false);
 
   const universalDeleteHandler = async (
     prevState: CurrentState,
-    formData: FormData
+    formData: FormData,
   ): Promise<CurrentState> => {
     const table = formData.get("table") as keyof typeof deleteActionMap;
     const rawIds = formData.getAll("ids");
@@ -670,11 +686,11 @@ const FormModal = ({
     );
   if (table === "payment") {
     const bgColor2 =
-   type === "create"
-     ? "bg-lamaGreen"
-     : type === "update"
-     ? "bg-lamaBlue"
-     : "bg-lamaRed";
+      type === "create"
+        ? "bg-lamaGreen"
+        : type === "update"
+          ? "bg-lamaBlue"
+          : "bg-lamaRed";
     return (
       <>
         <div className="inline-flex items-center gap-2 px-1">
@@ -686,8 +702,8 @@ const FormModal = ({
               type === "create"
                 ? "Tambah Data"
                 : type === "update"
-                ? "Perbarui Data"
-                : "Hapus"
+                  ? "Perbarui Data"
+                  : "Hapus"
             }
             className={`
     w-7 h-7 flex items-center justify-center rounded-full transition
@@ -696,11 +712,7 @@ const FormModal = ({
             onClick={() => setOpen(true)}
           >
             <Image
-              src={
-                type === "create"
-                  ? "/money.png"
-                  : `/${type}.png`
-              }
+              src={type === "create" ? "/money.png" : `/${type}.png`}
               alt=""
               width={15}
               height={15}
@@ -736,7 +748,7 @@ const FormModal = ({
                 </div>
               </div>
             </div>,
-            document.body
+            document.body,
           )}
       </>
     );
@@ -1092,11 +1104,15 @@ const FormModal = ({
               </button>
             </div>
             {open && (
-              <div className="fixed inset-0 z-[5000] bg-black bg-opacity-60 
-        flex items-center justify-center p-4">
-                <div className="bg-white p-4 rounded-md relative
+              <div
+                className="fixed inset-0 z-[5000] bg-black bg-opacity-60 
+        flex items-center justify-center p-4"
+              >
+                <div
+                  className="bg-white p-4 rounded-md relative
     w-[90%] md:w-[70%] lg:w-[60%] xl:w-[50%] 2xl:w-[40%]
-    max-h-[90vh] overflow-y-auto">
+    max-h-[90vh] overflow-y-auto"
+                >
                   <UpdateManyPaymentsForm
                     ids={ids as number[]}
                     setOpen={setOpen}
@@ -1267,10 +1283,10 @@ const FormModal = ({
           type === "create"
             ? "Tambah Data"
             : type === "update"
-            ? "Perbarui Data"
-            : type === "deleteMany"
-            ? "Hapus Banyak"
-            : "Hapus"
+              ? "Perbarui Data"
+              : type === "deleteMany"
+                ? "Hapus Banyak"
+                : "Hapus"
         }
         className={`
     ${size} flex items-center justify-center rounded-full transition
@@ -1287,8 +1303,8 @@ const FormModal = ({
             type === "deleteMany"
               ? "/deleteDark.png"
               : type === "delete"
-              ? "/deletefix.png"
-              : `/${type}.png`
+                ? "/deletefix.png"
+                : `/${type}.png`
           }
           alt=""
           width={15}
@@ -1313,15 +1329,15 @@ const FormModal = ({
         ["delete", "deleteMany", "createMany"].includes(type)
           ? "w-[350px] h-auto"
           : [
-              "student",
-              "ppdb",
-              "teacher",
-              "paymentLog",
-              "parent",
-              "staff",
-            ].includes(table)
-          ? "w-[95%] h-[95%] md:w-[90%] lg:w-[85%] xl:w-[80%] 2xl:w-[75%]"
-          : ""
+                "student",
+                "ppdb",
+                "teacher",
+                "paymentLog",
+                "parent",
+                "staff",
+              ].includes(table)
+            ? "w-[95%] h-[95%] md:w-[90%] lg:w-[85%] xl:w-[80%] 2xl:w-[75%]"
+            : ""
       }
     `}
               >
@@ -1336,7 +1352,7 @@ const FormModal = ({
               </div>
             </div>
           </div>,
-          document.body
+          document.body,
         )}
     </>
   );

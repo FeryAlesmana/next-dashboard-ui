@@ -569,6 +569,7 @@ import { Semester } from "@/components/client/StudentPaymentView";
 import { Decimal } from "@prisma/client/runtime/library";
 import { notFound } from "next/navigation";
 import { BillLogSchema, PaymentSchema } from "./formValidationSchema";
+import { FaBuilding, FaFootball, FaLaptop, FaMosque, FaUtensils } from "react-icons/fa6";
 export function normalizeBirthday(value: any): string {
   if (!value) return "2000-01-01";
 
