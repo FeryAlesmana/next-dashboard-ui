@@ -8,6 +8,7 @@ import MobileMenu from "../MobileMenu";
 import { PaymentStatus } from "@prisma/client";
 import { FaDownload } from "react-icons/fa6";
 import { toast } from "react-toastify";
+import { FaFileDownload } from "react-icons/fa";
 
 export default function PaymenTableClient({
   data,
@@ -27,24 +28,22 @@ export default function PaymenTableClient({
     paymentStatus = "OVERDUE";
     lewat = true;
   }
-  const handleDownloadBerkas = async (id: string) => {
-      const res = await fetch(`/api/payment/${data.id}/receipt`);
-      if (!res.ok) {
-        toast.error("Gagal mengunduh berkas");
-        return;
-      }
-  
-      const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
-  
-      const a = document.createElement("a");
-      a.href = url;
-      a.click();
-  
-      window.URL.revokeObjectURL(url);
-    };
+  const handleDownloadBerkasPembayaran = async (id: string) => {
+    const res = await fetch(`/api/payment/${data.id}/receipt`);
+    if (!res.ok) {
+      toast.error("Gagal mengunduh berkas");
+      return;
+    }
 
-  
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.click();
+
+    window.URL.revokeObjectURL(url);
+  };
 
   return (
     <>
@@ -199,10 +198,10 @@ export default function PaymenTableClient({
                 />
                 {data.status === "PAID" && (
                   <button
-                    onClick={() => handleDownloadBerkas(data.id)}
-                    className="text-sm text-blue-600 underline"
+                    onClick={() => handleDownloadBerkasPembayaran(data.id)}
+                    className="w-7 h-7 text-sm text-white underline bg-lamaGreen flex items-center justify-center rounded-full transition hover:brightness-90 shadow-md"
                   >
-                    <FaDownload />
+                    <FaFileDownload height={16} width={15} />
                   </button>
                 )}
               </>
@@ -228,6 +227,7 @@ export default function PaymenTableClient({
               relatedData={relatedData}
               onChanged={onChanged}
               onDeleted={onDeleted}
+              onDownload={handleDownloadBerkasPembayaran}
             />
           )}
         </td>

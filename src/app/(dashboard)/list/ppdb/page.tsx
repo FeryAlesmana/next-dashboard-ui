@@ -33,7 +33,8 @@ const PpdbPage = async ({
     ),
   ).toString();
   const { page, limit, ...queryParams } = sp;
-  const p = sp.search ? 1 : page ? parseInt(page) : 1;
+  const p = page ? parseInt(page) : 1;
+
 
   const perPage = limit === "all" ? 50 : parseInt(limit ?? "10");
   let staffRole: staffrole;

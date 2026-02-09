@@ -27,7 +27,8 @@ export default async function AttendancePage({
 
   const sp = await normalizeSearchParams(searchParams);
   const { page, search } = sp;
-  const p = sp.search ? 1 : page ? parseInt(page) : 1;
+  const p = page ? parseInt(page) : 1;
+
 
   const query: any = {}; // Prisma.LessonWhereInput (simplified for clarity)
 

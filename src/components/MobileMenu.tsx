@@ -4,6 +4,7 @@ import PaymentInstallmentsPreview from "./PaymentInstallmentsPreview";
 import { TableName } from "./FormContainer";
 import Link from "next/link";
 import Image from "next/image";
+import { FaDownload } from "react-icons/fa6";
 
 export default function MobileMenu({
   table,
@@ -13,6 +14,7 @@ export default function MobileMenu({
   relatedData,
   onChanged,
   onDeleted,
+  onDownload,
 }: {
   table: TableName;
   data: any;
@@ -21,6 +23,7 @@ export default function MobileMenu({
   onDeleted?: ((ids: (string | number)[]) => void) | undefined;
   onChanged?: ((item: any) => void) | undefined;
   onClose?: () => void;
+  onDownload?: (ids: string) => void;
 }) {
   const ref = useRef<HTMLDivElement | null>(null);
 
@@ -137,6 +140,14 @@ export default function MobileMenu({
             />
             <span className="text-sm text-red-600">Hapus</span>
           </div>
+          {data.status === "PAID" && (
+            <button
+              onClick={() => onDownload?.(data.id)}
+              className="text-sm text-blue-600 underline"
+            >
+              <FaDownload />
+            </button>
+          )}
         </>
       )}
     </div>

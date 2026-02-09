@@ -7,6 +7,7 @@ import NameListPopover from "../NamePopover";
 import Link from "next/link";
 import Image from "next/image";
 import PaymentInstallmentsPreview from "../PaymentInstallmentsPreview";
+import { FaFileDownload } from "react-icons/fa";
 
 export function MobilePaymentCard({
   data,
@@ -17,7 +18,8 @@ export function MobilePaymentCard({
   onDeleted,
   role,
   allowedStaff,
-}: BaseTableClientProps) {
+  onDownload,
+}: BaseTableClientProps & { onDownload?: (ids: string) => void }) {
   const [open, setOpen] = useState(false);
   let paymentStatus: PaymentStatus = "PENDING";
   let lewat: boolean = false;
@@ -174,6 +176,14 @@ export function MobilePaymentCard({
                   Hapus
                 </span>
               </div>
+              {data.status === "PAID" && (
+                <button
+                  onClick={() => onDownload?.(data.id)}
+                  className="w-7 h-7 text-sm text-white underline bg-lamaGreen flex items-center justify-center rounded-full transition hover:brightness-90 shadow-md"
+                >
+                  <FaFileDownload height={16} width={15} />
+                </button>
+              )}
             </div>
           )}
         </div>

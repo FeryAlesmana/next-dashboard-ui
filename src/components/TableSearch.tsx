@@ -19,13 +19,17 @@ const TableSearch = () => {
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const params = new URLSearchParams(searchParams.toString());
-    if (value) {
-      params.set("search", value);
-    } else {
-      params.delete("search");
+
+    const params = new URLSearchParams();
+
+    if (value.trim()) {
+      params.set("search", value.trim());
     }
-    router.push(`${pathname}?${params}`);
+
+    // FORCE reset page
+    params.set("page", "1");
+
+    router.push(`${pathname}?${params.toString()}`);
   };
 
   const handleClear = () => {

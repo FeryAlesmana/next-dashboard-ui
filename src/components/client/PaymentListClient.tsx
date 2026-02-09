@@ -12,6 +12,7 @@ import Image from "next/image";
 import { staffrole } from "@prisma/client";
 import { useMediaQuery } from "@/lib/useMediaQuery";
 import { MobilePaymentCard } from "./MobilePaymentCard";
+import { toast } from "react-toastify";
 
 export default function PaymentListClient({
   columns,
@@ -26,7 +27,7 @@ export default function PaymentListClient({
   const [currentStaff] = useState<staffrole>(staffrole!);
   const toggleSelection = (id: string) => {
     setSelected((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
     );
   };
   const handleDeleteOptimistic = (ids: (string | number)[]) => {
@@ -60,7 +61,7 @@ export default function PaymentListClient({
       prev.map((p) => {
         const updated = items.find((u) => u.id === p.id);
         return updated ? { ...p, ...updated } : p;
-      })
+      }),
     );
   };
 
@@ -282,19 +283,38 @@ export default function PaymentListClient({
               </div>
             </div>
           ) : (
-            localData.map((row) => (
-              <MobilePaymentCard
-                key={row.id}
-                data={row}
-                selected={selected}
-                onToggle={toggleSelection}
-                relatedData={relatedData}
-                onDeleted={handleDeleteOptimistic}
-                onChanged={handleChanged}
-                role={role}
-                allowedStaff={allowedRole}
-              />
-            ))
+            localData.map((row) => {
+              const handleDownloadBerkasPembayaran = async (id: string) => {
+                const res = await fetch(`/api/payment/${row.id}/receipt`);
+                if (!res.ok) {
+                  toast.error("Gagal mengunduh berkas");
+                  return;
+                }
+
+                const blob = await res.blob();
+                const url = window.URL.createObjectURL(blob);
+
+                const a = document.createElement("a");
+                a.href = url;
+                a.click();
+
+                window.URL.revokeObjectURL(url);
+              };
+              return (
+                <MobilePaymentCard
+                  key={row.id}
+                  data={row}
+                  selected={selected}
+                  onToggle={toggleSelection}
+                  relatedData={relatedData}
+                  onDeleted={handleDeleteOptimistic}
+                  onChanged={handleChanged}
+                  role={role}
+                  allowedStaff={allowedRole}
+                  onDownload={handleDownloadBerkasPembayaran}
+                />
+              );
+            })
           )}
         </div>
       ) : (

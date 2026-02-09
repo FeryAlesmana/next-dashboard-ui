@@ -1,6 +1,6 @@
 "use client";
 import FormModal from "../FormModal";
-import { FaCheckCircle, FaTimesCircle } from "react-icons/fa";
+import { FaCheckCircle, FaFileDownload, FaTimesCircle } from "react-icons/fa";
 import { BaseTableClientProps } from "./AssignmentTableClient";
 import { toast } from "react-toastify";
 import { FaDownload } from "react-icons/fa6";
@@ -87,10 +87,10 @@ export default function PpdbTableClient({
                 {data.isvalid && (
                   <button
                     onClick={() => handleDownloadBerkas(data.id)}
-                    className="text-xs rounded text-white hover:opacity-90"
+                    className="w-7 h-7 text-sm text-white underline bg-lamaGreen flex items-center justify-center rounded-full transition hover:brightness-90 shadow-md"
                     title="Download Berkas"
                   >
-                    <FaDownload className="text-gray-500 text-2xl" />
+                    <FaFileDownload height={16} width={15} />
                   </button>
                 )}
               </>

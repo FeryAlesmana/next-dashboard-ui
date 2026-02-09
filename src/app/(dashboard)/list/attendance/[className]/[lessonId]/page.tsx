@@ -52,7 +52,8 @@ export default async function AttendanceDetailPage({
     ),
   ).toString();
   const { page, ...queryParams } = sp;
-  const p = sp.search ? 1 : page ? parseInt(page) : 1;
+  const p = page ? parseInt(page) : 1;
+
   const columns = [
     {
       header: "Pertemuan",

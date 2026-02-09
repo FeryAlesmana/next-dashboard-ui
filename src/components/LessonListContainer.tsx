@@ -24,7 +24,8 @@ export default async function LessonListContainer({
   const sp = await normalizeSearchParams(searchParams);
   const { page, ...queryParams } = sp;
 
-  const p = sp.search ? 1 : page ? parseInt(page) : 1;
+  const p = page ? parseInt(page) : 1;
+
 
   const { role, userId } = await getCurrentUser();
   const query: Prisma.LessonWhereInput = {};

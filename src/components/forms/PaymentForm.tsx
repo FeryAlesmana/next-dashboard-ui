@@ -183,7 +183,7 @@ export default function CreatePaymentLogPage({
       }
     );
 
-    console.log(mergedInstallments, "mergedInstallments");
+    // console.log(mergedInstallments, "mergedInstallments");
     const totalPaid = mergedInstallments.reduce(
       (sum, i) => sum + Number(i.amount || 0),
       0
@@ -322,7 +322,7 @@ export default function CreatePaymentLogPage({
       router.refresh();
     }
   }, [state, type, setOpen, router, onChanged, formData]);
-  console.log(errors);
+  // console.log(errors);
 
   return (
     <div className="max-w-4xl mx-auto p-4">
